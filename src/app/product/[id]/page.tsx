@@ -14,7 +14,7 @@ import { useCartStore } from '@/lib/store';
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const rawId = (params?.id as string) || 'intel-core-i9-14900k';
+  const rawId = (params?.id as string) || '';
 
   const [product, setProduct] = useState<ProductDetailData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,12 +45,12 @@ export default function ProductDetailPage() {
             if (json2.products && json2.products.length > 0) {
               setProduct(formatProductDetail(json2.products[0]));
             } else {
-              setProduct(formatProductDetail(null));
+              setProduct(null);
             }
           }
         }
       } catch (e) {
-        if (isMounted) setProduct(formatProductDetail(null));
+        if (isMounted) setProduct(null);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -59,11 +59,23 @@ export default function ProductDetailPage() {
     return () => { isMounted = false; };
   }, [rawId]);
 
-  if (loading || !product) {
+  if (loading) {
     return (
       <div style={{ background: '#f8fafc', color: '#1e293b', minHeight: '100vh', padding: '60px 0', textAlign: 'center' }}>
         <div className="container">
           <p style={{ fontSize: '16px', color: '#64748b', fontWeight: 600 }}>Đang tải thông tin sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div style={{ background: '#f8fafc', minHeight: '60vh', padding: '80px 0', textAlign: 'center' }}>
+        <div className="container">
+          <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px' }}>Không tìm thấy sản phẩm</h1>
+          <p style={{ color: '#64748b', marginBottom: '20px' }}>Mã hoặc đường dẫn này không có trong catalog.</p>
+          <Link href="/search" style={{ color: '#2563eb', fontWeight: 700 }}>Xem tất cả sản phẩm</Link>
         </div>
       </div>
     );
@@ -232,16 +244,8 @@ export default function ProductDetailPage() {
 
             {/* Ratings & SKU */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12.5px', color: '#64748b', marginBottom: '18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f59e0b' }}>
-                <div style={{ display: 'flex' }}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={13} fill="#f59e0b" stroke="none" />
-                  ))}
-                </div>
-                <span style={{ color: '#475569', fontWeight: 700 }}>({product.reviewCount})</span>
-              </div>
-              <span>• SKU: {product.sku}</span>
-              <span>• Đã bán: {product.soldCount}</span>
+              <span>SKU: {product.sku}</span>
+              <span>• Tồn kho: {product.stockCount}</span>
             </div>
 
             {/* Price Area */}

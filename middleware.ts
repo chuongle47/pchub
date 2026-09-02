@@ -6,7 +6,9 @@ const authRoutes = ['/login', '/register', '/dang-nhap', '/dang-ky'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuthenticated = Boolean(request.cookies.get('pchub-token')?.value);
+  const nksToken = request.cookies.get('nks_token')?.value;
+  const pchubToken = request.cookies.get('pchub-token')?.value;
+  const isAuthenticated = Boolean(nksToken || pchubToken);
 
   if (authRoutes.some(route => pathname.startsWith(route)) && isAuthenticated) {
     return NextResponse.redirect(new URL('/tai-khoan', request.url));

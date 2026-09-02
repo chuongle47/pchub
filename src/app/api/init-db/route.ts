@@ -1,11 +1,39 @@
 import { NextResponse } from 'next/server';
-import { initDatabase } from '@/lib/db';
+import { pool } from '@/lib/db';
+import fs from 'fs';
+import path from 'path';
 
 export async function POST() {
   try {
-    const result = await initDatabase();
-    return NextResponse.json(result);
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    const schemaPath = path.join(process.cwd(), 'users-schema.sql');
+    
+    if (!fs.existsSync(schemaPath)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'users-schema.sql file not found' 
+      }, { status: 404 });
+    }
+
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    const client = await pool.connect();
+    
+    try {
+      await client.query(schemaSql);
+      client.release();
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Users table created successfully' 
+      });
+    } catch (dbError) {
+      client.release();
+      throw dbError;
+    }
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Database initialization failed' 
+    }, { status: 500 });
   }
 }

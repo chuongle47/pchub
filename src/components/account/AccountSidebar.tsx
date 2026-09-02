@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bell, Bot, Heart, LayoutDashboard, MapPin, Monitor, Package, ShieldCheck, UserRound, CreditCard } from 'lucide-react';
+import { useAuthStore } from '@/lib/store';
 
 interface AccountSidebarProps {
   userName: string;
@@ -26,17 +27,14 @@ const links = [
 
 export default function AccountSidebar({ userName, userEmail, avatarUrl }: AccountSidebarProps) {
   const router = useRouter();
+  const logout = useAuthStore(state => state.logout);
 
   const handleLogout = () => {
-    // Clear cookies
-    document.cookie = 'nks_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    document.cookie = 'pchub-user=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    
-    // Clear localStorage
+    // Clear localStorage but keep saved emails for quick login
     localStorage.removeItem('pchub-profile-extra');
     
-    // Redirect to login
-    router.push('/login');
+    // Use Zustand logout function which clears cookies, state, and redirects
+    logout();
   };
 
   return (

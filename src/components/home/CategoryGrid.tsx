@@ -1,18 +1,41 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Cpu, HardDrive, Zap, Shield, Monitor } from 'lucide-react';
+import { Cpu, CircuitBoard, MemoryStick, Monitor, HardDrive, Zap, Box, Fan } from 'lucide-react';
+import { fetchCategories } from '@/lib/api';
 
-const CATEGORIES = [
-  { name: 'CPU', icon: Cpu, href: '/search?category=cpu' },
-  { name: 'VGA', icon: Monitor, href: '/search?category=vga' },
-  { name: 'RAM', icon: Zap, href: '/search?category=ram' },
-  { name: 'Ổ cứng', icon: HardDrive, href: '/search?category=ssd' },
-  { name: 'Nguồn', icon: Shield, href: '/search?category=psu' },
-];
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+  cpu: Cpu,
+  mainboard: CircuitBoard,
+  ram: MemoryStick,
+  gpu: Monitor,
+  storage: HardDrive,
+  psu: Zap,
+  case: Box,
+  cooling: Fan,
+};
+
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  product_count?: number;
+}
 
 export default function CategoryGrid() {
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+
+  useEffect(() => {
+    fetchCategories()
+      .then((rows: CategoryItem[]) => {
+        if (Array.isArray(rows)) setCategories(rows);
+      })
+      .catch(() => setCategories([]));
+  }, []);
+
+  if (categories.length === 0) return null;
+
   return (
     <section className="home-category-grid" style={{ background: '#ffffff', padding: '32px 0 40px' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
@@ -28,15 +51,15 @@ export default function CategoryGrid() {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
+          gridTemplateColumns: `repeat(${Math.min(categories.length, 8)}, 1fr)`,
           gap: '16px',
         }}>
-          {CATEGORIES.map((cat) => {
-            const IconComponent = cat.icon;
+          {categories.map(cat => {
+            const IconComponent = ICON_MAP[cat.slug] || Cpu;
             return (
               <Link
-                key={cat.name}
-                href={cat.href}
+                key={cat.id}
+                href={`/search?category=${encodeURIComponent(cat.slug)}`}
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
                 <div style={{
@@ -79,13 +102,12 @@ export default function CategoryGrid() {
                     <IconComponent size={22} />
                   </div>
 
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    color: '#1e293b',
-                  }}>
-                    {cat.name}
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>
+                    {cat.name.split(' - ')[0]}
                   </div>
+                  {typeof cat.product_count === 'number' && (
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{cat.product_count} SP</div>
+                  )}
                 </div>
               </Link>
             );
@@ -95,4 +117,3 @@ export default function CategoryGrid() {
     </section>
   );
 }
-

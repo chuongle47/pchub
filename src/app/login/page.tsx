@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { normalizeUser } from '@/lib/auth';
 import { CompanyApiService } from '@/components/ecard/api';
+import { getUserFromDatabase } from '@/lib/user-service';
 
 function encodeUserToken(user: object): string {
   const encoded = encodeURIComponent(JSON.stringify(user));
@@ -23,6 +24,34 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+
+  // Load saved email on mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('remembered_email');
+    const lastUserEmail = localStorage.getItem('nks_last_user_email');
+    
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    } else if (lastUserEmail) {
+      setEmail(lastUserEmail);
+    }
+    
+    // Try to load from database
+    fetch('/api/remembered-emails')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.accounts.length > 0) {
+          const latestAccount = data.accounts[0];
+          // Only set if not already set from localStorage
+          setEmail(prev => prev || latestAccount.email);
+          if (!rememberedEmail && !lastUserEmail) {
+            setRememberMe(true);
+          }
+        }
+      })
+      .catch(err => console.error('Error loading remembered emails:', err));
+  }, []);
 
   const completeLogin = async (loginEmail: string, loginPassword: string) => {
     const result = await CompanyApiService.login(loginEmail, loginPassword);
@@ -50,6 +79,28 @@ export default function LoginPage() {
 
     if (rememberMe) {
       localStorage.setItem('remembered_email', loginEmail);
+    }
+
+    // Save to Supabase database
+    if (user.email) {
+      try {
+        const { saveUserToDatabase } = await import('@/lib/user-service');
+        await saveUserToDatabase({
+          email: user.email,
+          name: user.name,
+          first_name: user.firstname,
+          last_name: user.lastname,
+          phone: user.phone,
+          dob: user.dob,
+          gender: user.gender !== undefined ? (user.gender === 0 ? 'Nam' : user.gender === 1 ? 'Nữ' : 'Khác') : undefined,
+          avatar_url: user.avatar,
+          nks_user_id: user.id?.toString(),
+          nks_token: result.token,
+          remember_me: rememberMe
+        });
+      } catch (error) {
+        console.error('Error saving to database:', error);
+      }
     }
 
     router.push(searchParams.get('next') || '/tai-khoan');

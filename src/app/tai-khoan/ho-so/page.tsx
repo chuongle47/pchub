@@ -3,6 +3,7 @@
 import React, { FormEvent, useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { CreditCard, QrCode, Shield, CheckCircle2, AlertCircle } from 'lucide-react';
+import { saveUserToDatabase } from '@/lib/user-service';
 
 export default function ProfilePage() {
   const user = useAuthStore(state => state.user);
@@ -145,7 +146,7 @@ export default function ProfilePage() {
     }
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user) return;
 
@@ -181,6 +182,19 @@ export default function ProfilePage() {
 
     // Save extra profile details to localStorage (for legacy support)
     localStorage.setItem('pchub-profile-extra', JSON.stringify({ birthday, gender }));
+
+    // Save to Supabase database
+    if (email) {
+      await saveUserToDatabase({
+        email,
+        name: fullName,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        dob: birthday,
+        gender
+      });
+    }
 
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);

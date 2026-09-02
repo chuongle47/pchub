@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CompanyApiService } from './api';
+import { saveUserToDatabase, getUserFromDatabase, updateLastLogin } from '@/lib/user-service';
 
 // --- Lightweight cookie helpers (no external dependency) ---
 function getCookie(name: string): string | null {
@@ -47,6 +48,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(res.user);
           const userJson = JSON.stringify(res.user);
           setCookie('pchub-user', userJson, 30);
+          
+          // Save to Supabase database
+          if (res.user.email) {
+            await saveUserToDatabase({
+              email: res.user.email,
+              name: res.user.name,
+              first_name: res.user.firstname,
+              last_name: res.user.lastname,
+              phone: res.user.phone,
+              dob: res.user.dob,
+              gender: res.user.gender !== undefined ? (res.user.gender === 0 ? 'Nam' : res.user.gender === 1 ? 'Nữ' : 'Khác') : undefined,
+              avatar_url: res.user.avatar,
+              nks_user_id: res.user.id?.toString(),
+              nks_token: savedToken
+            });
+            await updateLastLogin(res.user.email);
+          }
         } else {
           // Token expired or invalid – clear silently
           removeCookie('nks_token');
@@ -70,6 +88,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(res.user);
         if (res.user) {
           setCookie('pchub-user', JSON.stringify(res.user), 30);
+        }
+
+        // Save to Supabase database
+        if (res.user.email) {
+          await saveUserToDatabase({
+            email: res.user.email,
+            name: res.user.name,
+            first_name: res.user.firstname,
+            last_name: res.user.lastname,
+            phone: res.user.phone,
+            dob: res.user.dob,
+            gender: res.user.gender !== undefined ? (res.user.gender === 0 ? 'Nam' : res.user.gender === 1 ? 'Nữ' : 'Khác') : undefined,
+            avatar_url: res.user.avatar,
+            nks_user_id: res.user.id?.toString(),
+            nks_token: res.token,
+            remember_me: true
+          });
+          await updateLastLogin(res.user.email);
         }
 
         // Persist account history for quick-login cards
@@ -117,6 +153,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     removeCookie('pchub-user');
     setToken(null);
     setUser(null);
+    // Keep nks_saved_accounts and nks_last_user_email for quick login
+    window.location.href = '/login';
   };
 
   const refreshProfile = async () => {

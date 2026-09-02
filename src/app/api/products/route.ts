@@ -4,7 +4,7 @@ import { getProducts } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const category_id = searchParams.get('category_id') || undefined;
+    const category_id = searchParams.get('category_id') || searchParams.get('category') || undefined;
     const brand_id = searchParams.get('brand_id') || undefined;
     const search = searchParams.get('search') || undefined;
     const slug = searchParams.get('slug') || undefined;

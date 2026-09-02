@@ -128,6 +128,8 @@ export const useAuthStore = create<AuthStore>()(
         document.cookie = 'pchub-user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'pchub-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'nks_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        localStorage.removeItem('pchub-profile-extra');
+        // Keep nks_saved_accounts and nks_last_user_email for quick login
         window.location.href = '/login';
       },
     }),

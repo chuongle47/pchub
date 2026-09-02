@@ -135,7 +135,7 @@ export async function getProductBySlugOrId(idOrSlug: string) {
   loadMemoryFallback();
   const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
   const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
-  const p = memoryStore.products.find(prod => prod.slug === idOrSlug || prod.id === idOrSlug) || memoryStore.products[0];
+  const p = memoryStore.products.find(prod => prod.slug === idOrSlug || prod.id === idOrSlug);
   if (!p) return null;
   return {
     ...p,
@@ -285,8 +285,14 @@ export async function getProducts(filter: ProductsFilter) {
       let paramIdx = 1;
 
       if (category_id) {
-        whereConditions.push(`p.category_id = $${paramIdx++}`);
-        params.push(category_id);
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category_id);
+        if (isUuid) {
+          whereConditions.push(`p.category_id = $${paramIdx++}`);
+          params.push(category_id);
+        } else {
+          whereConditions.push(`p.category_id IN (SELECT id FROM categories WHERE slug = $${paramIdx++})`);
+          params.push(category_id);
+        }
       }
 
       if (brandIds.length > 0) {
@@ -336,7 +342,7 @@ export async function getProducts(filter: ProductsFilter) {
       const totalItems = parseInt(countResult.rows[0].count, 10);
 
       const dataQuery = `
-        SELECT p.*, c.name as category_name, b.name as brand_name
+        SELECT p.*, c.name as category_name, c.slug as category_slug, b.name as brand_name
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
@@ -364,10 +370,14 @@ export async function getProducts(filter: ProductsFilter) {
   loadMemoryFallback();
   const brandSet = new Set(brandIds);
   const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
+  const catSlugMap = new Map(memoryStore.categories.map(c => [c.id, c.slug]));
   const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
+  const categoryMatch = category_id
+    ? memoryStore.categories.find(c => c.id === category_id || c.slug === category_id)
+    : undefined;
 
   let filtered = memoryStore.products.filter(p => {
-    if (category_id && p.category_id !== category_id) return false;
+    if (categoryMatch && p.category_id !== categoryMatch.id) return false;
     if (brandSet.size > 0 && !brandSet.has(p.brand_id)) return false;
     if (slug && p.slug !== slug) return false;
     if (ids && ids.length > 0 && !ids.includes(p.id)) return false;
@@ -393,6 +403,7 @@ export async function getProducts(filter: ProductsFilter) {
   const pagedProducts = filtered.slice(offset, offset + limitNum).map(p => ({
     ...p,
     category_name: catMap.get(p.category_id) || 'Danh mục khác',
+    category_slug: catSlugMap.get(p.category_id),
     brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu khác'
   }));
 
