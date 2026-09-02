@@ -19,28 +19,61 @@ export default function ProfilePage() {
   const [hasEcard, setHasEcard] = useState(false);
   const [ecardDetails, setEcardDetails] = useState<any>(null);
 
-  // Sync initial user details
+  // Sync initial user details from NKS API data
   useEffect(() => {
     if (user) {
-      const fullName = user.name ?? 'Khách hàng';
-      const nameParts = fullName.trim().split(/\s+/);
-      const first = nameParts.slice(0, -1).join(' ') || fullName;
-      const last = nameParts.at(-1) || '';
+      // Check if user has NKS data structure
+      const nksUser = (user as any).user || user;
       
-      setFirstName(first);
-      setLastName(last);
-      setEmail(user.email ?? '');
-      setPhone(user.phone ?? '');
+      // Use NKS fields if available, otherwise fallback to legacy format
+      if (nksUser.firstname && nksUser.lastname) {
+        setFirstName(nksUser.firstname);
+        setLastName(nksUser.lastname);
+      } else {
+        // Legacy format: split full name
+        const fullName = user.name ?? 'Khách hàng';
+        const nameParts = fullName.trim().split(/\s+/);
+        const first = nameParts.slice(0, -1).join(' ') || fullName;
+        const last = nameParts.at(-1) || '';
+        setFirstName(first);
+        setLastName(last);
+      }
       
-      // Load extra details if available from cookie/localStorage
-      try {
-        const savedProfile = localStorage.getItem('pchub-profile-extra');
-        if (savedProfile) {
-          const extra = JSON.parse(savedProfile);
-          if (extra.birthday) setBirthday(extra.birthday);
-          if (extra.gender) setGender(extra.gender);
-        }
-      } catch (e) {}
+      setEmail(nksUser.email ?? user.email ?? '');
+      setPhone(nksUser.phone ?? user.phone ?? '');
+      
+      // Use NKS dob field if available
+      if (nksUser.dob) {
+        setBirthday(nksUser.dob);
+      } else {
+        // Load from localStorage as fallback
+        try {
+          const savedProfile = localStorage.getItem('pchub-profile-extra');
+          if (savedProfile) {
+            const extra = JSON.parse(savedProfile);
+            if (extra.birthday) setBirthday(extra.birthday);
+          }
+        } catch (e) {}
+      }
+      
+      // Map NKS gender: 0 = Nam, 1 = Nữ, 2 = Khác
+      if (nksUser.gender !== undefined) {
+        const genderMap: Record<number, string> = {
+          0: 'Nam',
+          1: 'Nữ',
+          2: 'Khác'
+        };
+        setGender(genderMap[nksUser.gender] || 'Nam');
+      } else {
+        // Load from localStorage as fallback
+        try {
+          const savedProfile = localStorage.getItem('pchub-profile-extra');
+          if (savedProfile) {
+            const extra = JSON.parse(savedProfile);
+            if (extra.gender) setGender(extra.gender);
+          }
+        } catch (e) {}
+      }
     }
   }, [user]);
 
@@ -68,12 +101,37 @@ export default function ProfilePage() {
 
   const handleReset = () => {
     if (user) {
-      const fullName = user.name ?? 'Khách hàng';
-      const nameParts = fullName.trim().split(/\s+/);
-      setFirstName(nameParts.slice(0, -1).join(' ') || fullName);
-      setLastName(nameParts.at(-1) || '');
-      setEmail(user.email ?? '');
-      setPhone(user.phone ?? '');
+      const nksUser = (user as any).user || user;
+      
+      // Use NKS fields if available
+      if (nksUser.firstname && nksUser.lastname) {
+        setFirstName(nksUser.firstname);
+        setLastName(nksUser.lastname);
+      } else {
+        // Legacy format: split full name
+        const fullName = user.name ?? 'Khách hàng';
+        const nameParts = fullName.trim().split(/\s+/);
+        setFirstName(nameParts.slice(0, -1).join(' ') || fullName);
+        setLastName(nameParts.at(-1) || '');
+      }
+      
+      setEmail(nksUser.email ?? user.email ?? '');
+      setPhone(nksUser.phone ?? user.phone ?? '');
+      
+      // Reset birthday from NKS data if available
+      if (nksUser.dob) {
+        setBirthday(nksUser.dob);
+      }
+      
+      // Reset gender from NKS data if available
+      if (nksUser.gender !== undefined) {
+        const genderMap: Record<number, string> = {
+          0: 'Nam',
+          1: 'Nữ',
+          2: 'Khác'
+        };
+        setGender(genderMap[nksUser.gender] || 'Nam');
+      }
     }
   };
 
@@ -82,11 +140,27 @@ export default function ProfilePage() {
     if (!user) return;
 
     const fullName = `${firstName} ${lastName}`.trim();
+    
+    // Check if user has NKS data structure
+    const nksUser = (user as any).user || user;
+    
+    // Map gender back to NKS format: Nam = 0, Nữ = 1, Khác = 2
+    const genderMap: Record<string, number> = {
+      'Nam': 0,
+      'Nữ': 1,
+      'Khác': 2
+    };
+    
     const updatedUser = {
       ...user,
       name: fullName,
       email,
-      phone
+      phone,
+      // If NKS structure exists, update those fields too
+      ...(nksUser.firstname && { firstname: firstName }),
+      ...(nksUser.lastname && { lastname: lastName }),
+      ...(nksUser.dob !== undefined && { dob: birthday }),
+      ...(nksUser.gender !== undefined && { gender: genderMap[gender] || 0 })
     };
 
     // Save to Zustand store
@@ -95,7 +169,7 @@ export default function ProfilePage() {
     // Save to cookie so server side can read it
     document.cookie = `pchub-user=${encodeURIComponent(JSON.stringify(updatedUser))}; path=/; max-age=2592000; SameSite=Lax`;
 
-    // Save extra profile details to localStorage
+    // Save extra profile details to localStorage (for legacy support)
     localStorage.setItem('pchub-profile-extra', JSON.stringify({ birthday, gender }));
 
     setSaved(true);
@@ -223,9 +297,19 @@ export default function ProfilePage() {
                       <p className="text-xs uppercase tracking-widest text-indigo-100 font-semibold">NKS Member Card</p>
                       <h3 className="font-bold text-lg mt-1 tracking-wide">PCHUB COLLABORATION</h3>
                     </div>
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-                      <Shield size={20} />
-                    </div>
+                    {ecardDetails?.avatar ? (
+                      <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white/30">
+                        <img 
+                          src={ecardDetails.avatar} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                        <Shield size={20} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Card Body */}
@@ -234,6 +318,9 @@ export default function ProfilePage() {
                       <p className="text-xs text-indigo-100/80">Chủ thẻ</p>
                       <p className="font-bold text-base tracking-wide uppercase mt-0.5">{ecardDetails?.name || user?.name || 'MEMBER'}</p>
                       <p className="text-[10px] text-indigo-200 mt-2 font-mono">{ecardDetails?.email || user?.email}</p>
+                      {ecardDetails?.phone && (
+                        <p className="text-[10px] text-indigo-200 mt-1 font-mono">{ecardDetails.phone}</p>
+                      )}
                     </div>
                     <div className="bg-white p-1.5 rounded-lg flex items-center justify-center shadow-md">
                       <QrCode size={40} className="text-gray-900" />

@@ -6,17 +6,26 @@ import { useAuthStore, useOrderStore } from '@/lib/store';
 export default function OrdersPage() {
   const user = useAuthStore(state => state.user);
   const orders = useOrderStore(state => state.orders);
+  
+  // Extract NKS user data if available
+  const nksUser = (user as any)?.user || user;
+  const avatarUrl = nksUser?.avatar || null;
+  const userName = nksUser?.name || user?.name || 'Khách hàng';
+  const userEmail = nksUser?.email || user?.email || '';
+  const userPhone = nksUser?.phone || user?.phone || '';
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-5">Đơn hàng của tôi</h1>
       
       <div className="order-customer-info">
-        <div className="order-customer-avatar">{user?.name.charAt(0) ?? 'U'}</div>
+        <div className="order-customer-avatar">
+          {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : userName.charAt(0) ?? 'U'}
+        </div>
         <div>
           <strong>Thông tin người nhận</strong>
-          <p>{user?.name || 'Khách hàng'} · {user?.email}</p>
-          <small>{user?.phone || 'Chưa cập nhật số điện thoại'}</small>
+          <p>{userName} · {userEmail}</p>
+          <small>{userPhone || 'Chưa cập nhật số điện thoại'}</small>
         </div>
         <Link href="/tai-khoan/ho-so">Chỉnh sửa</Link>
       </div>
