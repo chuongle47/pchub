@@ -1,16 +1,37 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
+import seed from './seed.json';
 
-// PostgreSQL Connection Pool
-export const pool = new Pool({
-  host: process.env.PGHOST || 'localhost',
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD || 'postgres',
-  database: process.env.PGDATABASE || 'pccomponents',
-  port: parseInt(process.env.PGPORT || '5432', 10),
-  connectionTimeoutMillis: 3000,
-});
+function createPool() {
+  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const isLocalHost = (host?: string) =>
+    !host || host === 'localhost' || host === '127.0.0.1';
+
+  if (connectionString) {
+    const needsSsl = !/localhost|127\.0\.0\.1/.test(connectionString);
+    return new Pool({
+      connectionString,
+      ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+      connectionTimeoutMillis: 5000,
+      max: 3,
+    });
+  }
+
+  const host = process.env.PGHOST || 'localhost';
+  return new Pool({
+    host,
+    user: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD || 'postgres',
+    database: process.env.PGDATABASE || 'linhkien',
+    port: parseInt(process.env.PGPORT || '5432', 10),
+    ssl: !isLocalHost(host) ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: 5000,
+    max: 3,
+  });
+}
+
+export const pool = createPool();
 
 export interface Category {
   id: string;
@@ -83,61 +104,13 @@ export async function testPgConnection(): Promise<boolean> {
 }
 
 export function loadMemoryFallback() {
-  if (memoryStore.products.length > 0) return; // already loaded
+  if (memoryStore.products.length > 0) return;
 
-  memoryStore.categories = [...DEFAULT_CATEGORIES];
-
-  const brandMap = new Map<string, Brand>();
-  const productList: Product[] = [];
-
-  const defaultBrands: Brand[] = [
-    { id: 'b1000000-0000-0000-0000-000000000001', name: 'Intel', slug: 'intel', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000002', name: 'AMD', slug: 'amd', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000003', name: 'ASUS', slug: 'asus', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000004', name: 'MSI', slug: 'msi', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000005', name: 'Gigabyte', slug: 'gigabyte', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000006', name: 'NVIDIA', slug: 'nvidia', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000007', name: 'Corsair', slug: 'corsair', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000008', name: 'Kingston', slug: 'kingston', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000009', name: 'Samsung', slug: 'samsung', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000010', name: 'Western Digital', slug: 'western-digital', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000011', name: 'Cooler Master', slug: 'cooler-master', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000012', name: 'NZXT', slug: 'nzxt', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000013', name: 'Noctua', slug: 'noctua', is_active: true },
-    { id: 'b1000000-0000-0000-0000-000000000014', name: 'Deepcool', slug: 'deepcool', is_active: true }
-  ];
-  defaultBrands.forEach(b => brandMap.set(b.id, b));
-
-  const dataSqlPath = path.join(process.cwd(), '../data.sql');
-  if (fs.existsSync(dataSqlPath)) {
-    const sqlContent = fs.readFileSync(dataSqlPath, { encoding: 'utf8' });
-
-    // Extract brands: ('b2000000-0000-0000-0000-000000000001','Crucial','crucial',true)
-    const brandRegex = /\('([0-9a-f-]+)',\s*'([^']+)',\s*'([^']+)',\s*(true|false)\)/gi;
-    let match;
-    while ((match = brandRegex.exec(sqlContent)) !== null) {
-      const [_, id, name, slug, activeStr] = match;
-      brandMap.set(id, { id, name, slug, is_active: activeStr === 'true' });
-    }
-
-    // Generate products helper
-    let autoProdId = 1;
-    const addProd = (name: string, slug: string, category_id: string, brand_id: string, sku: string, price: string | number, stock: string | number, specs: any) => {
-      productList.push({
-        id: `p-${autoProdId++}`,
-        name,
-        slug,
-        category_id,
-        brand_id,
-        sku,
-        price: parseFloat(price as string),
-        stock: parseInt(stock as string, 10),
-        specs: specs || {}
-      });
-    };
-
-  memoryStore.brands = Array.from(brandMap.values());
-  }
+  memoryStore.categories = (seed.categories as Category[]).length
+    ? (seed.categories as Category[])
+    : [...DEFAULT_CATEGORIES];
+  memoryStore.brands = seed.brands as Brand[];
+  memoryStore.products = seed.products as Product[];
 }
 
 export async function getProductBySlugOrId(idOrSlug: string) {
@@ -191,10 +164,10 @@ export async function getDbStatus() {
   loadMemoryFallback();
   return {
     db_connected: false,
-    source: 'In-Memory Fallback (data.sql)',
+    source: 'In-Memory Fallback (seed.json)',
     product_count: memoryStore.products.length,
     brand_count: memoryStore.brands.length,
-    message: 'Running fallback mode. Configure PostgreSQL in .env.'
+    message: 'Vercel cannot reach localhost PostgreSQL. Add DATABASE_URL (Neon/Supabase) in Vercel env, or this seed catalog will be used.'
   };
 }
 
