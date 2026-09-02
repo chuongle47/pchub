@@ -338,7 +338,7 @@ export default function ProfilePage() {
                   
                   <a 
                     href="/ecard" 
-                    className="w-full mt-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-center py-2.5 rounded-xl text-sm font-semibold transition-all"
+                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-xl text-base font-bold transition-all shadow-md hover:shadow-lg"
                   >
                     Quản lý thông tin Ecard
                   </a>
