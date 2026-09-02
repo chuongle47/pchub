@@ -581,11 +581,15 @@ export default function DashboardPage() {
             <img
               src={getAvatarUrl(user.avatar || user.avatar_url)}
               alt={user.name || user.username}
-              className="w-10 h-10 rounded-full object-cover border-2 border-brand-200"
+              className="rounded-full object-cover border-2 border-brand-200"
+              style={{ width: '40px', height: '40px', minWidth: '40px', maxWidth: '40px', flexShrink: 0 }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-base">
+            <div
+              className="rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-base"
+              style={{ width: '40px', height: '40px', minWidth: '40px', maxWidth: '40px', flexShrink: 0 }}
+            >
               {(user?.name || user?.username || 'U')[0].toUpperCase()}
             </div>
           )}
