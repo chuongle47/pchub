@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/tai-khoan', '/thanh-toan', '/dat-hang-thanh-cong'];
-const authRoutes = ['/login', '/register', '/dang-nhap', '/dang-ky'];
+const protectedRoutes = ['/tai-khoan', '/thanh-toan', '/dat-hang-thanh-cong', '/cart', '/checkout'];
+const authRoutes = ['/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,5 +24,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/tai-khoan/:path*', '/thanh-toan', '/dat-hang-thanh-cong', '/login', '/register', '/dang-nhap', '/dang-ky'],
+  matcher: ['/tai-khoan/:path*', '/thanh-toan', '/dat-hang-thanh-cong', '/cart', '/checkout', '/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'],
 };
