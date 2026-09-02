@@ -303,123 +303,327 @@ export default function ProfilePage() {
 
         {/* NKS E-Card Panel */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm flex flex-col gap-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <CreditCard className="text-blue-600" size={20} />
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e5e7eb',
+            padding: '24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#111827',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              margin: 0
+            }}>
+              <CreditCard style={{ color: '#2563eb' }} size={20} />
               Thẻ NKS E-Card
             </h2>
 
             {hasEcard ? (
-              <div className="flex flex-col gap-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {/* NKS Real Estate Card Design */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 p-5 text-white shadow-lg">
+                <div style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3730a3 100%)',
+                  padding: '20px',
+                  color: '#ffffff',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                }}>
                   {/* Card Header */}
-                  <div className="flex justify-between items-start mb-4">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-blue-200 font-semibold">BẤT ĐỘNG SẢN NKS</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs font-medium text-green-300">VERIFIED</span>
+                      <p style={{
+                        fontSize: '10px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        color: '#bfdbfe',
+                        fontWeight: '600',
+                        margin: 0
+                      }}>BẤT ĐỘNG SẢN NKS</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          backgroundColor: '#4ade80',
+                          borderRadius: '50%'
+                        }}></div>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: '#86efac'
+                        }}>VERIFIED</span>
                       </div>
                     </div>
                     {cardAvatar ? (
-                      <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/20">
-                        <img 
-                          src={cardAvatar} 
-                          alt="Avatar" 
-                          className="w-full h-full object-cover"
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: '2px solid rgba(255,255,255,0.2)'
+                      }}>
+                        <img
+                          src={cardAvatar}
+                          alt="Avatar"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                        <Shield size={20} className="text-white/70" />
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Shield size={20} style={{ color: 'rgba(255,255,255,0.7)' }} />
                       </div>
                     )}
                   </div>
 
                   {/* Member Info */}
-                  <div className="space-y-3">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <p className="text-[10px] text-blue-200 uppercase tracking-wide">Tên thành viên</p>
-                      <p className="font-bold text-lg tracking-wide">{cardName}</p>
+                      <p style={{
+                        fontSize: '10px',
+                        color: '#bfdbfe',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        margin: '0 0 4px 0'
+                      }}>Tên thành viên</p>
+                      <p style={{
+                        fontWeight: 'bold',
+                        fontSize: '18px',
+                        letterSpacing: '0.5px',
+                        margin: 0
+                      }}>{cardName}</p>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
-                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Loại thành viên</p>
-                        <p className="text-xs font-medium">THÀNH VIÊN TÌM KIẾM BĐS</p>
+                        <p style={{
+                          fontSize: '9px',
+                          color: '#bfdbfe',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          margin: '0 0 4px 0'
+                        }}>Loại thành viên</p>
+                        <p style={{ fontSize: '12px', fontWeight: '500', margin: 0 }}>THÀNH VIÊN TÌM KIẾM BĐS</p>
                       </div>
                       <div>
-                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Giới tính</p>
-                        <p className="text-xs font-medium">{cardGender}</p>
+                        <p style={{
+                          fontSize: '9px',
+                          color: '#bfdbfe',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          margin: '0 0 4px 0'
+                        }}>Giới tính</p>
+                        <p style={{ fontSize: '12px', fontWeight: '500', margin: 0 }}>{cardGender}</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
-                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Ngày sinh</p>
-                        <p className="text-xs font-medium">{cardDob}</p>
+                        <p style={{
+                          fontSize: '9px',
+                          color: '#bfdbfe',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          margin: '0 0 4px 0'
+                        }}>Ngày sinh</p>
+                        <p style={{ fontSize: '12px', fontWeight: '500', margin: 0 }}>{cardDob}</p>
                       </div>
                       <div>
-                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Quê quán</p>
-                        <p className="text-xs font-medium truncate">{cardPob}</p>
+                        <p style={{
+                          fontSize: '9px',
+                          color: '#bfdbfe',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          margin: '0 0 4px 0'
+                        }}>Quê quán</p>
+                        <p style={{
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          margin: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>{cardPob}</p>
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-white/10">
-                      <div className="flex justify-between items-center">
+                    <div style={{
+                      paddingTop: '12px',
+                      borderTop: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <p className="text-[9px] text-blue-200 uppercase tracking-wide">Member ID</p>
-                          <p className="text-xs font-mono font-bold">{memberId}</p>
+                          <p style={{
+                            fontSize: '9px',
+                            color: '#bfdbfe',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            margin: '0 0 4px 0'
+                          }}>Member ID</p>
+                          <p style={{
+                            fontSize: '12px',
+                            fontFamily: 'monospace',
+                            fontWeight: 'bold',
+                            margin: 0
+                          }}>{memberId}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-[9px] text-blue-200 uppercase tracking-wide">Ngày tham gia</p>
-                          <p className="text-xs font-medium">{joinDate}</p>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{
+                            fontSize: '9px',
+                            color: '#bfdbfe',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            margin: '0 0 4px 0'
+                          }}>Ngày tham gia</p>
+                          <p style={{ fontSize: '12px', fontWeight: '500', margin: 0 }}>{joinDate}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Verification Badge */}
-                  <div className="mt-4 flex justify-end">
-                    <div className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+                  <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{
+                      backgroundColor: '#22c55e',
+                      color: '#ffffff',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
                       <CheckCircle2 size={12} />
                       ĐÃ XÁC MINH
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center text-sm p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                    <span className="text-gray-500">Trạng thái thẻ:</span>
-                    <span className="font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '14px',
+                    padding: '12px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '12px'
+                  }}>
+                    <span style={{ color: '#6b7280' }}>Trạng thái thẻ:</span>
+                    <span style={{
+                      fontWeight: '600',
+                      color: '#16a34a',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
                       <CheckCircle2 size={14} /> Đã kết nối
                     </span>
                   </div>
-                  
-                  <a 
-                    href="/ecard" 
-                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-xl text-base font-bold transition-all shadow-md hover:shadow-lg"
+
+                  <a
+                    href="/ecard"
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      marginTop: '16px',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      textAlign: 'center',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#1d4ed8';
+                      e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                      e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                    }}
                   >
                     Quản lý thông tin Ecard
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center gap-4">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600">
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px 0',
+                textAlign: 'center',
+                gap: '16px'
+              }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  backgroundColor: '#eff6ff',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2563eb'
+                }}>
                   <CreditCard size={32} />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 dark:text-white">Chưa kết nối Thẻ E-Card</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-[220px]">
+                  <p style={{
+                    fontWeight: 'bold',
+                    color: '#111827',
+                    margin: '0 0 4px 0'
+                  }}>Chưa kết nối Thẻ E-Card</p>
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#6b7280',
+                    marginTop: '4px',
+                    maxWidth: '220px',
+                    margin: '4px auto 0'
+                  }}>
                     Kết nối tài khoản NKS để nhận thẻ thành viên điện tử và nhiều ưu đãi đặc quyền.
                   </p>
                 </div>
-                
-                <a 
-                  href="/ecard" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-all mt-2"
+
+                <a
+                  href="/ecard"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textDecoration: 'none',
+                    marginTop: '8px',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1d4ed8'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
                 >
                   Kết nối ngay
                 </a>
