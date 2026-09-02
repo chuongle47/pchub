@@ -30,14 +30,14 @@ export default function FlashSaleSection() {
         if (data.products && data.products.length > 0) {
           const mapped: FlashProduct[] = data.products.map((p: any) => {
             const price = Number(p.price);
-            const originalPrice = Math.round(price * 1.15);
+            const originalPrice = price;
             return {
               id: p.id,
               name: p.name,
               category: p.category_name || 'Linh kiện PC',
-              price: price,
-              originalPrice: originalPrice,
-              discount: 15,
+              price,
+              originalPrice,
+              discount: 0,
               image: p.image_url || '/images/cpu-box.jpg',
               slug: p.slug
             };
@@ -107,29 +107,9 @@ export default function FlashSaleSection() {
                   letterSpacing: '-0.3px',
                   textTransform: 'uppercase',
                 }}>FLASH SALE</h2>
-                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Nhanh tay kẻo lỡ</span>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Giá tốt trong catalog</span>
               </div>
             </div>
-          </div>
-
-          {/* Countdown Boxes: 07 : 14 : 21 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {['07', '14', '21'].map((val, idx) => (
-              <React.Fragment key={idx}>
-                {idx > 0 && <span style={{ color: '#64748b', fontWeight: 800, fontSize: '14px' }}>:</span>}
-                <div style={{
-                  background: '#e2e8f0',
-                  color: '#1e293b',
-                  borderRadius: '6px',
-                  padding: '4px 10px',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  fontFamily: 'monospace',
-                }}>
-                  {val}
-                </div>
-              </React.Fragment>
-            ))}
           </div>
         </div>
 
@@ -169,23 +149,6 @@ export default function FlashSaleSection() {
                   e.currentTarget.style.transform = 'none';
                 }}
                 >
-                  {/* Top Left Discount Pill Tag */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    zIndex: 2,
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                  }}>
-                    -{p.discount}%
-                  </div>
-
-                  {/* Product Image */}
                   <div style={{
                     background: '#f8fafc',
                     borderRadius: '8px',
@@ -245,9 +208,6 @@ export default function FlashSaleSection() {
                       }}>
                         {p.price.toLocaleString('vi-VN')}₫
                       </div>
-                      <del style={{ fontSize: '11px', color: '#94a3b8' }}>
-                        {p.originalPrice.toLocaleString('vi-VN')}₫
-                      </del>
                     </div>
 
                     {/* Round Shopping Cart Button */}
@@ -286,4 +246,3 @@ export default function FlashSaleSection() {
     </section>
   );
 }
-
