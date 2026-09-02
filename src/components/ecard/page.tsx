@@ -711,8 +711,63 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 p-12 text-center bg-white dark:bg-white/[0.03]">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Bạn chưa có chiếc Ecard nào được đăng ký trên hệ thống.</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 p-8 bg-white dark:bg-white/[0.03]">
+              <div className="flex flex-col items-center justify-center gap-6 py-8">
+                <div className="relative">
+                  {user?.avatar || user?.avatar_url ? (
+                    <img
+                      src={getAvatarUrl(user.avatar || user.avatar_url)}
+                      alt={user.name || user.username}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-brand-200 shadow-lg"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white font-bold text-3xl shadow-lg">
+                      {(user?.name || user?.username || 'U')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white dark:border-gray-800 flex items-center justify-center">
+                    <CheckCircle size={16} className="text-white" />
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {user?.name || user?.username || 'Người dùng NKS'}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {user?.email || ''}
+                  </p>
+                  {user?.phone && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {user.phone}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => window.open('https://account.nks.vn', '_blank')}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-all shadow-md"
+                  >
+                    <ExternalLink size={16} />
+                    Tạo Ecard trên NKS
+                  </button>
+                  <button
+                    onClick={refreshProfile}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold transition-all"
+                  >
+                    <RefreshCw size={16} />
+                    Làm mới
+                  </button>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mt-4 max-w-md">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
+                    <strong>Mẹo:</strong> Bạn cần tạo Ecard trên hệ thống NKS trước khi có thể quản lý tại đây.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
