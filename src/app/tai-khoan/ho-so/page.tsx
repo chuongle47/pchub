@@ -99,6 +99,16 @@ export default function ProfilePage() {
     checkEcard();
   }, []);
 
+  // Extract NKS user data for card display
+  const nksUser = (user as any)?.user || user;
+  const cardName = nksUser?.name || user?.name || 'MEMBER';
+  const cardAvatar = nksUser?.avatar || null;
+  const cardDob = nksUser?.dob ? new Date(nksUser.dob).toLocaleDateString('vi-VN') : '17/08/2004';
+  const cardPob = nksUser?.pob || 'Xuân Thọ, Triệu Sơn, Thanh Hóa';
+  const cardGender = nksUser?.gender !== undefined ? (nksUser.gender === 0 ? 'Nam' : nksUser.gender === 1 ? 'Nữ' : 'Khác') : 'Nam';
+  const memberId = nksUser?.id_number || '0702 **** 1704';
+  const joinDate = nksUser?.created_at ? new Date(nksUser.created_at).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }) : 'Tháng 06/2026';
+
   const handleReset = () => {
     if (user) {
       const nksUser = (user as any).user || user;
@@ -287,43 +297,80 @@ export default function ProfilePage() {
 
             {hasEcard ? (
               <div className="flex flex-col gap-4">
-                {/* 3D Glassmorphic Card View */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 text-white shadow-lg aspect-[1.586/1] flex flex-col justify-between">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-8 -translate-y-8 pointer-events-none"></div>
-                  
+                {/* NKS Real Estate Card Design */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 p-5 text-white shadow-lg">
                   {/* Card Header */}
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-indigo-100 font-semibold">NKS Member Card</p>
-                      <h3 className="font-bold text-lg mt-1 tracking-wide">PCHUB COLLABORATION</h3>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-200 font-semibold">BẤT ĐỘNG SẢN NKS</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs font-medium text-green-300">VERIFIED</span>
+                      </div>
                     </div>
-                    {ecardDetails?.avatar ? (
-                      <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white/30">
+                    {cardAvatar ? (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/20">
                         <img 
-                          src={ecardDetails.avatar} 
+                          src={cardAvatar} 
                           alt="Avatar" 
                           className="w-full h-full object-cover"
                         />
                       </div>
                     ) : (
-                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-                        <Shield size={20} />
+                      <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+                        <Shield size={20} className="text-white/70" />
                       </div>
                     )}
                   </div>
 
-                  {/* Card Body */}
-                  <div className="flex items-end justify-between">
+                  {/* Member Info */}
+                  <div className="space-y-3">
                     <div>
-                      <p className="text-xs text-indigo-100/80">Chủ thẻ</p>
-                      <p className="font-bold text-base tracking-wide uppercase mt-0.5">{ecardDetails?.name || user?.name || 'MEMBER'}</p>
-                      <p className="text-[10px] text-indigo-200 mt-2 font-mono">{ecardDetails?.email || user?.email}</p>
-                      {ecardDetails?.phone && (
-                        <p className="text-[10px] text-indigo-200 mt-1 font-mono">{ecardDetails.phone}</p>
-                      )}
+                      <p className="text-[10px] text-blue-200 uppercase tracking-wide">Tên thành viên</p>
+                      <p className="font-bold text-lg tracking-wide">{cardName}</p>
                     </div>
-                    <div className="bg-white p-1.5 rounded-lg flex items-center justify-center shadow-md">
-                      <QrCode size={40} className="text-gray-900" />
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Loại thành viên</p>
+                        <p className="text-xs font-medium">THÀNH VIÊN TÌM KIẾM BĐS</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Giới tính</p>
+                        <p className="text-xs font-medium">{cardGender}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Ngày sinh</p>
+                        <p className="text-xs font-medium">{cardDob}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-blue-200 uppercase tracking-wide">Quê quán</p>
+                        <p className="text-xs font-medium truncate">{cardPob}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-white/10">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-[9px] text-blue-200 uppercase tracking-wide">Member ID</p>
+                          <p className="text-xs font-mono font-bold">{memberId}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] text-blue-200 uppercase tracking-wide">Ngày tham gia</p>
+                          <p className="text-xs font-medium">{joinDate}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Verification Badge */}
+                  <div className="mt-4 flex justify-end">
+                    <div className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+                      <CheckCircle2 size={12} />
+                      ĐÃ XÁC MINH
                     </div>
                   </div>
                 </div>
