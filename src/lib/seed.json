@@ -1,5 +1,9 @@
 {
-  "brands": [
+  "brands": [],
+  "categories": [],
+  "products": [],
+  "_note": "Seed data removed - using Supabase only",
+  "_legacy": [
     {
       "id": "b1000000-0000-0000-0000-000000000001",
       "name": "Intel",
