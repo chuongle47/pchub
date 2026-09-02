@@ -54,7 +54,7 @@ export default function Footer() {
                 'Cần Thơ — 654 Trần Hưng Đạo',
               ].map(loc => (
                 <li key={loc}>
-                  <Link href="#" style={{
+                  <Link href="/support" style={{
                     color: '#64748b',
                     fontSize: '12px',
                     textDecoration: 'none',

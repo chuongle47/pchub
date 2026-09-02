@@ -11,7 +11,7 @@ const BLOG_POSTS = [
     title: 'Đánh giá chi tiết RTX 4070 Ti Super: Hiệu năng đỉnh cao cho 4K',
     thumbnail: '/images/gpu-white.jpg',
     category: 'ĐÁNH GIÁ',
-    date: '15/05/2024',
+    date: '15/05/2026',
   },
   {
     id: 'bp2',
@@ -19,7 +19,7 @@ const BLOG_POSTS = [
     title: 'Hướng dẫn chọn tản nhiệt nước AIO cho Core i9-14900K',
     thumbnail: '/images/hero-pc.jpg',
     category: 'HƯỚNG DẪN',
-    date: '12/05/2024',
+    date: '12/05/2026',
   },
   {
     id: 'bp3',
@@ -27,7 +27,7 @@ const BLOG_POSTS = [
     title: 'Top 5 cấu hình PC chơi game đáng mua nhất tháng 5',
     thumbnail: '/images/cpu-box.jpg',
     category: 'TỔNG HỢP',
-    date: '10/05/2024',
+    date: '10/05/2026',
   },
 ];
 

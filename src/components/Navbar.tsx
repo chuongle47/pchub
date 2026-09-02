@@ -14,11 +14,11 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
-  { label: 'Build PC', href: '/build-pc', highlight: true },
-  { label: 'Components', href: '/search' },
-  { label: 'Gaming Gear', href: '/search?category=gear' },
-  { label: 'Laptops', href: '/search?category=laptop' },
-  { label: 'Deals', href: '/search?sale=true' },
+  { label: 'Xây dựng PC', href: '/build-pc', highlight: true },
+  { label: 'Linh kiện', href: '/search' },
+  { label: 'Phụ kiện Gaming', href: '/search?category=gear' },
+  { label: 'Laptop', href: '/search?category=laptop' },
+  { label: 'Khuyến mãi', href: '/search?sale=true' },
 ];
 
 export default function Navbar() {
