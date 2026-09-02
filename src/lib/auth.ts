@@ -5,6 +5,10 @@ export interface User {
   phone?: string;
   role: 'member' | 'admin' | 'staff';
   avatar?: string;
+  firstname?: string;
+  lastname?: string;
+  dob?: string;
+  gender?: number;
 }
 
 export function normalizeUser(rawUser: any): User | null {
@@ -21,6 +25,10 @@ export function normalizeUser(rawUser: any): User | null {
     phone: rawUser.phone ?? rawUser.phone_number ?? undefined,
     role: rawUser.role === 'admin' ? 'admin' : rawUser.role === 'staff' ? 'staff' : 'member',
     avatar: rawUser.avatar ?? rawUser.avatar_url ?? undefined,
+    firstname: rawUser.firstname,
+    lastname: rawUser.lastname,
+    dob: rawUser.dob,
+    gender: rawUser.gender,
   };
 }
 
