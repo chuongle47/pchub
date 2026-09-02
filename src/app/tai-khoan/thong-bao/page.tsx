@@ -1,0 +1,3 @@
+export default function NotificationsPage() {
+  return <div><h1 className="text-2xl font-bold mb-5">Thông báo</h1><div className="bg-white border rounded-xl divide-y">{['Đơn hàng ORD-20260820-0089 đang trên đường giao đến bạn.', 'Sản phẩm RTX 4070 Ti Super đã giảm giá 5%.', 'Yêu cầu bảo hành WC-2026-0809 đã được tiếp nhận.'].map((message, index) => <div key={message} className="p-5 flex gap-3"><span className={`w-2 h-2 rounded-full mt-2 ${index === 0 ? 'bg-blue-600' : 'bg-gray-300'}`} /><div><p className="text-sm font-medium">{message}</p><p className="text-xs text-gray-400 mt-1">Hôm nay</p></div></div>)}</div></div>;
+}

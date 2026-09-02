@@ -1,0 +1,10 @@
+'use client';
+
+import { FormEvent, useState } from 'react';
+
+export default function AddressPage() {
+  const [addresses, setAddresses] = useState([{ id: 1, name: 'Nguyễn Văn An', phone: '0901 234 567', address: '123 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh', primary: true }]);
+  const [showForm, setShowForm] = useState(false);
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setShowForm(false); setAddresses(current => [...current, { id: Date.now(), name: 'Địa chỉ mới', phone: 'Chưa cập nhật', address: 'Địa chỉ đang chờ cập nhật', primary: false }]); };
+  return <div><div className="flex items-center justify-between mb-5"><h1 className="text-2xl font-bold">Địa chỉ giao hàng</h1><button type="button" onClick={() => setShowForm(open => !open)} className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-semibold">+ Thêm địa chỉ</button></div>{showForm && <form onSubmit={submit} className="bg-white border rounded-xl p-5 mb-4 space-y-3"><input required placeholder="Họ và tên" className="w-full border rounded-lg px-3 py-2.5" /><input required placeholder="Số điện thoại" className="w-full border rounded-lg px-3 py-2.5" /><textarea required placeholder="Địa chỉ chi tiết" className="w-full border rounded-lg px-3 py-2.5" /><button className="bg-blue-600 text-white rounded-lg px-4 py-2">Lưu địa chỉ</button></form>}<div className="space-y-4">{addresses.map(item => <div key={item.id} className="bg-white border rounded-xl p-5"><div className="flex justify-between gap-3"><div><p className="font-semibold">{item.name} <span className="font-normal text-gray-500">· {item.phone}</span></p><p className="text-sm text-gray-600 mt-2">{item.address}</p></div>{item.primary && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded h-fit">Mặc định</span>}</div><div className="flex gap-4 mt-4 pt-3 border-t text-sm"><button className="text-blue-600">Chỉnh sửa</button><button className="text-red-500">Xóa</button></div></div>)}</div></div>;
+}
