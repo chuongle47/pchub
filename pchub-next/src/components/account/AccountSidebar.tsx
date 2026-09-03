@@ -22,7 +22,6 @@ const links = [
   ['/tai-khoan/build-cua-toi', 'Build PC của tôi', Monitor],
   ['/tai-khoan/ho-so', 'Thông tin cá nhân', UserRound],
   ['/tai-khoan/dia-chi', 'Địa chỉ giao hàng', MapPin],
-  ['/ecard', 'Thẻ E-Card (NKS)', CreditCard],
 ] as const;
 
 export default function AccountSidebar({ userName, userEmail, avatarUrl }: AccountSidebarProps) {
