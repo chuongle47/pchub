@@ -7,7 +7,7 @@ import { Search, ShoppingCart, User, Bot, Heart, Menu, X } from 'lucide-react';
 import { useCartStore, useUIStore, useWishlistStore } from '@/lib/store';
 import CartDrawer from './layout/CartDrawer';
 
-interface NavLink {
+interface NavLink {npm install
   label: string;
   href: string;
   highlight?: boolean;
