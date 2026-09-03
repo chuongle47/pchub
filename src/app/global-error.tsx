@@ -36,7 +36,12 @@ export default function GlobalError({
             Vui lòng bấm nút bên dưới để khôi phục phiên làm việc PCHub.
           </p>
           <button
-            onClick={() => reset()}
+            onClick={() => {
+              reset();
+              if (typeof window !== 'undefined') {
+                window.location.href = '/';
+              }
+            }}
             style={{
               padding: '10px 24px',
               borderRadius: '8px',

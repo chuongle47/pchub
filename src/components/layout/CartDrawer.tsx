@@ -113,100 +113,109 @@ export default function CartDrawer() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {items.map(({ product, quantity }) => (
-                <div key={product.id} style={{
-                  display: 'flex',
-                  gap: '12px',
-                  padding: '12px',
-                  background: '#f8fafc',
-                  borderRadius: '10px',
-                  border: '1px solid #f1f5f9',
-                }}>
-                  {/* Image */}
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    background: '#fff',
-                    borderRadius: '8px',
+              {items.map((item, index) => {
+                const prodId = item.product?.id || item.id || `cart-item-${index}`;
+                const prodName = item.product?.name || item.name || 'Sản phẩm linh kiện';
+                const prodImage = item.product?.image || item.image || '/images/cpu-box.jpg';
+                const prodPrice = item.product?.price || item.price || 0;
+                const quantity = item.quantity || 1;
+
+                return (
+                  <div key={prodId} style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    gap: '12px',
+                    padding: '12px',
+                    background: '#f8fafc',
+                    borderRadius: '10px',
                     border: '1px solid #f1f5f9',
                   }}>
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      style={{ maxWidth: '52px', maxHeight: '52px', objectFit: 'contain' }}
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#1e293b',
-                      lineHeight: '1.4',
-                      marginBottom: '6px',
-                      overflow: 'hidden',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                    }}>{product.name}</p>
-
+                    {/* Image */}
                     <div style={{
-                      fontSize: '14px',
-                      fontWeight: 900,
-                      color: '#2563eb',
-                      fontFamily: 'monospace',
-                      marginBottom: '8px',
+                      width: '64px',
+                      height: '64px',
+                      background: '#fff',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      border: '1px solid #f1f5f9',
                     }}>
-                      {(product.price * quantity).toLocaleString('vi-VN')} ₫
+                      <img
+                        src={prodImage}
+                        alt={prodName}
+                        style={{ maxWidth: '52px', maxHeight: '52px', objectFit: 'contain' }}
+                        onError={(e) => { e.currentTarget.src = '/images/cpu-box.jpg'; }}
+                      />
                     </div>
 
-                    {/* Qty control */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        onClick={() => updateQty(product.id, quantity - 1)}
-                        style={{
-                          width: '26px', height: '26px', borderRadius: '6px',
-                          background: '#fff', border: '1px solid #e2e8f0',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <span style={{ fontSize: '13px', fontWeight: 700, minWidth: '20px', textAlign: 'center' }}>
-                        {quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQty(product.id, quantity + 1)}
-                        style={{
-                          width: '26px', height: '26px', borderRadius: '6px',
-                          background: '#fff', border: '1px solid #e2e8f0',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        <Plus size={12} />
-                      </button>
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#1e293b',
+                        lineHeight: '1.4',
+                        marginBottom: '6px',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}>{prodName}</p>
 
-                      <button
-                        onClick={() => removeItem(product.id)}
-                        style={{
-                          marginLeft: 'auto',
-                          width: '26px', height: '26px', borderRadius: '6px',
-                          background: '#fff', border: '1px solid #fee2e2',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#ef4444',
-                        }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: 900,
+                        color: '#2563eb',
+                        fontFamily: 'monospace',
+                        marginBottom: '8px',
+                      }}>
+                        {(prodPrice * quantity).toLocaleString('vi-VN')} ₫
+                      </div>
+
+                      {/* Qty control */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => updateQty(prodId, quantity - 1)}
+                          style={{
+                            width: '26px', height: '26px', borderRadius: '6px',
+                            background: '#fff', border: '1px solid #e2e8f0',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span style={{ fontSize: '13px', fontWeight: 700, minWidth: '20px', textAlign: 'center' }}>
+                          {quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQty(prodId, quantity + 1)}
+                          style={{
+                            width: '26px', height: '26px', borderRadius: '6px',
+                            background: '#fff', border: '1px solid #e2e8f0',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <Plus size={12} />
+                        </button>
+
+                        <button
+                          onClick={() => removeItem(prodId)}
+                          style={{
+                            marginLeft: 'auto',
+                            width: '26px', height: '26px', borderRadius: '6px',
+                            background: '#fff', border: '1px solid #fee2e2',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#ef4444',
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
