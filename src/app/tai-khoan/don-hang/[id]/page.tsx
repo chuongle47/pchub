@@ -6,6 +6,14 @@ import { useOrderStore } from '@/lib/store';
 
 type Props = { params: Promise<{ id: string }> };
 
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
 export default function OrderDetailPage({ params }: Props) {
   const { id } = use(params);
   const orders = useOrderStore(state => state.orders);
@@ -22,6 +30,8 @@ export default function OrderDetailPage({ params }: Props) {
     );
   }
 
+  const products = (order.products ?? []) as OrderItem[];
+
   const steps = [
     { label: 'Đã đặt hàng', active: true },
     { label: 'Đang chuẩn bị hàng', active: order.status !== 'cancelled' },
@@ -34,7 +44,7 @@ export default function OrderDetailPage({ params }: Props) {
       <Link href="/tai-khoan/don-hang" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
         ← Quay lại đơn hàng
       </Link>
-      
+
       <div className="flex flex-col md:flex-row md:items-center justify-between mt-4 pb-4 border-b border-gray-100">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Chi tiết đơn hàng</h1>
@@ -63,16 +73,15 @@ export default function OrderDetailPage({ params }: Props) {
             <p><span className="text-gray-400">Địa chỉ:</span> {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}</p>
             {order.shippingAddress.note && <p><span className="text-gray-400">Ghi chú:</span> {order.shippingAddress.note}</p>}
           </div>
-
           <strong className="text-gray-900 dark:text-white text-sm block mt-5 mb-2">Thanh toán</strong>
           <p className="text-sm text-gray-600 dark:text-gray-300">{order.paymentMethodLabel}</p>
         </div>
 
-        {/* Dynamic status timeline */}
+        {/* Status timeline */}
         <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl flex flex-col justify-center">
           <strong className="text-gray-900 dark:text-white text-sm block mb-3">Trạng thái xử lý</strong>
           <div className="space-y-4">
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <div key={step.label} className="flex items-center gap-3">
                 <span className={`w-3 h-3 rounded-full flex-shrink-0 ${step.active ? 'bg-green-500 shadow-sm shadow-green-200' : 'bg-gray-300'}`} />
                 <span className={`text-sm ${step.active ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400'}`}>{step.label}</span>
@@ -82,7 +91,27 @@ export default function OrderDetailPage({ params }: Props) {
         </div>
       </div>
 
-        {/* Pricing details */}
+      {/* Products list */}
+      <div className="mt-8">
+        <h3 className="text-base font-bold text-gray-900 mb-4">Sản phẩm đã đặt</h3>
+        <div className="divide-y divide-gray-100 border-t border-b border-gray-100">
+          {products.map((item) => (
+            <div key={item.id} className="py-4 flex gap-4 items-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-lg p-1.5 flex items-center justify-center border border-gray-100 flex-shrink-0">
+                <img src={item.image} alt={item.name} className="max-w-full max-h-full object-contain" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 leading-snug">{item.name}</h4>
+                <p className="text-xs text-gray-500 mt-1 font-mono">{item.price.toLocaleString('vi-VN')} ₫ × {item.quantity}</p>
+              </div>
+              <span className="font-bold text-sm text-blue-600 font-mono flex-shrink-0">
+                {(item.price * item.quantity).toLocaleString('vi-VN')} ₫
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Pricing summary */}
         <div className="mt-6 flex flex-col items-end gap-2 text-sm">
           <div className="flex justify-between w-64 text-gray-500">
             <span>Tiền hàng:</span>
@@ -98,5 +127,6 @@ export default function OrderDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+    </div>
   );
 }
