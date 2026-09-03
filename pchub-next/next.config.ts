@@ -21,8 +21,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Build optimizations
-  swcMinify: true,
 };
 
 export default nextConfig;
