@@ -6,40 +6,56 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
+  category?: string;
   quantity: number;
   image?: string;
   slug?: string;
+  product?: any;
 }
 
 interface CartStore {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'quantity'>) => void;
+  isOpen: boolean;
+  total: number;
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  updateQty: (id: string, quantity: number) => void;
   clearCart: () => void;
   getTotal: () => number;
   getItemCount: () => number;
+  setOpen: (open: boolean) => void;
+  count: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      isOpen: false,
+      get total() {
+        return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
+      },
+
       addItem: (item) => {
         const existingItem = get().items.find((i) => i.id === item.id);
+        const qtyToAdd = item.quantity || 1;
         if (existingItem) {
           set({
             items: get().items.map((i) =>
-              i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === item.id ? { ...i, quantity: i.quantity + qtyToAdd } : i
             ),
           });
         } else {
-          set({ items: [...get().items, { ...item, quantity: 1 }] });
+          set({ items: [...get().items, { ...item, quantity: qtyToAdd }] });
         }
       },
+
       removeItem: (id) => {
         set({ items: get().items.filter((i) => i.id !== id) });
       },
+
       updateQuantity: (id, quantity) => {
         if (quantity <= 0) {
           get().removeItem(id);
@@ -51,18 +67,31 @@ export const useCartStore = create<CartStore>()(
           });
         }
       },
+
+      updateQty: (id, quantity) => {
+        get().updateQuantity(id, quantity);
+      },
+
       clearCart: () => {
         set({ items: [] });
       },
+
       getTotal: () => {
         return get().items.reduce(
           (total, item) => total + item.price * item.quantity,
           0
         );
       },
+
       getItemCount: () => {
         return get().items.reduce((count, item) => count + item.quantity, 0);
       },
+
+      count: () => {
+        return get().getItemCount();
+      },
+
+      setOpen: (open) => set({ isOpen: open }),
     }),
     { name: 'pchub-cart' }
   )
@@ -115,11 +144,13 @@ export interface BuilderProduct {
   name: string;
   price: number;
   category: string;
+  type?: string;
   image?: string;
   slug?: string;
   socket?: string;
   ramType?: string;
   power?: number;
+  wattage?: number;
 }
 
 interface BuilderStore {
@@ -178,6 +209,8 @@ interface UIStore {
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
+  isChatOpen: boolean;
+  setChatOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>()((set) => ({
@@ -185,6 +218,8 @@ export const useUIStore = create<UIStore>()((set) => ({
   openCart: () => set({ isCartOpen: true }),
   closeCart: () => set({ isCartOpen: false }),
   toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
+  isChatOpen: false,
+  setChatOpen: (open) => set({ isChatOpen: open }),
 }));
 
 // ==================== WISHLIST STORE ====================
@@ -193,6 +228,7 @@ interface WishlistStore {
   addWishlist: (id: string) => void;
   removeWishlist: (id: string) => void;
   toggleWishlist: (id: string) => void;
+  toggle: (id: string) => void;
 }
 
 export const useWishlistStore = create<WishlistStore>()(
@@ -209,6 +245,9 @@ export const useWishlistStore = create<WishlistStore>()(
         } else {
           get().addWishlist(id);
         }
+      },
+      toggle: (id) => {
+        get().toggleWishlist(id);
       },
     }),
     { name: 'pchub-wishlist' }
