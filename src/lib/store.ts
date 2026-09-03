@@ -8,6 +8,7 @@ export interface CartItem {
   price: number;
   originalPrice?: number;
   category?: string;
+  brand?: string; // Fix lỗi TS2353 'brand'
   quantity: number;
   image?: string;
   slug?: string;
@@ -17,7 +18,7 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
-  total: number;
+  total: () => number; // Fix lỗi TS2349: This expression is not callable (Type 'Number')
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -34,8 +35,9 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
-      get total() {
-        return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
+      
+      total: () => {
+        return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       },
 
       addItem: (item) => {
@@ -77,10 +79,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       getTotal: () => {
-        return get().items.reduce(
-          (total, item) => total + item.price * item.quantity,
-          0
-        );
+        return get().total();
       },
 
       getItemCount: () => {
@@ -96,7 +95,6 @@ export const useCartStore = create<CartStore>()(
     { name: 'pchub-cart' }
   )
 );
-
 // ==================== AUTH STORE ====================
 export interface User {
   id: string;

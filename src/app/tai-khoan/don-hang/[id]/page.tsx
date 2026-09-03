@@ -86,7 +86,7 @@ export default function OrderDetailPage({ params }: Props) {
       <div className="mt-8">
         <h3 className="text-base font-bold text-gray-900 mb-4">Sản phẩm đã đặt</h3>
         <div className="divide-y divide-gray-100 border-t border-b border-gray-100">
-          {order.products.map(item => (
+          {order.products.map((item: any) => (
             <div key={item.id} className="py-4 flex gap-4 items-center">
               <div className="w-16 h-16 bg-gray-50 rounded-lg p-1.5 flex items-center justify-center border border-gray-100 flex-shrink-0">
                 <img src={item.image} alt={item.name} className="max-w-full max-h-full object-contain" />

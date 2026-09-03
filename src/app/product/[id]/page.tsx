@@ -90,22 +90,23 @@ export default function ProductDetailPage() {
       image: product.mainImage,
       category: product.category,
       brand: product.brand,
-      slug: rawId,
-    }, quantity);
+     quantity,
+});
     setOpen(true);
   };
 
   const handleBuyNow = () => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.oldPrice,
-      image: product.mainImage,
-      category: product.category,
-      brand: product.brand,
-      slug: rawId,
-    }, quantity);
+   addItem({
+  id: product.id,
+  name: product.name,
+  price: product.price,
+  originalPrice: product.oldPrice,
+  image: product.mainImage,
+  category: product.category,
+  brand: product.brand,
+  slug: rawId,
+  quantity,
+});
     router.push('/thanh-toan');
   };
 
