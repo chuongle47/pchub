@@ -10,27 +10,35 @@ function createPool() {
   const isLocalHost = (host?: string) =>
     !host || host === 'localhost' || host === '127.0.0.1';
 
+  let newPool: Pool;
   if (connectionString) {
     const needsSsl = !/localhost|127\.0\.0\.1/.test(connectionString);
-    return new Pool({
+    newPool = new Pool({
       connectionString,
       ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 1500,
+      max: 3,
+    });
+  } else {
+    const host = process.env.PGHOST || 'localhost';
+    newPool = new Pool({
+      host,
+      user: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD || 'postgres',
+      database: process.env.PGDATABASE || 'linhkien',
+      port: parseInt(process.env.PGPORT || '5432', 10),
+      ssl: !isLocalHost(host) ? { rejectUnauthorized: false } : undefined,
+      connectionTimeoutMillis: 1500,
       max: 3,
     });
   }
 
-  const host = process.env.PGHOST || 'localhost';
-  return new Pool({
-    host,
-    user: process.env.PGUSER || 'postgres',
-    password: process.env.PGPASSWORD || 'postgres',
-    database: process.env.PGDATABASE || 'linhkien',
-    port: parseInt(process.env.PGPORT || '5432', 10),
-    ssl: !isLocalHost(host) ? { rejectUnauthorized: false } : undefined,
-    connectionTimeoutMillis: 5000,
-    max: 3,
+  // Prevent unhandled error events from crashing Node.js process on Vercel
+  newPool.on('error', (err) => {
+    console.error('Unexpected error on idle pg client:', err);
   });
+
+  return newPool;
 }
 
 export const pool = createPool();
