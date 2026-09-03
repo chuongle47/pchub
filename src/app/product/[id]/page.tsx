@@ -1,132 +1,95 @@
-'use client';
-
-import React, { use } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useOrderStore } from '@/lib/store';
+import { notFound } from 'next/navigation';
+import { getProductBySlugOrId, getProducts } from '@/lib/db';
+import ProductDetailView from '@/components/product/ProductDetailView';
+import type { Metadata } from 'next';
 
 type Props = { params: Promise<{ id: string }> };
 
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProductBySlugOrId(id);
+
+  if (!product) {
+    return {
+      title: 'Không tìm thấy sản phẩm — PCHub',
+    };
+  }
+
+  return {
+    title: `${product.name} — Linh kiện chính hãng | PCHub`,
+    description: `Mua ${product.name} giá tốt ${Number(product.price).toLocaleString('vi-VN')}₫. Bảo hành chính hãng 36 tháng, giao hàng hỏa tốc 2H tại PCHub.`,
+    openGraph: {
+      title: product.name,
+      description: `Giá tốt ${Number(product.price).toLocaleString('vi-VN')}₫ — PCHub`,
+      images: [product.image_url || '/images/cpu-box.jpg'],
+    },
+  };
 }
 
-export default function OrderDetailPage({ params }: Props) {
-  const { id } = use(params);
-  const orders = useOrderStore(state => state.orders);
-  const order = orders.find(o => o.id === id);
+export default async function ProductPage({ params }: Props) {
+  const { id } = await params;
+  const product = await getProductBySlugOrId(id);
 
-  if (!order) {
+  if (!product) {
     return (
-      <div className="bg-white border rounded-xl p-8 text-center shadow-sm">
-        <p className="text-gray-500">Không tìm thấy thông tin đơn hàng này.</p>
-        <Link href="/tai-khoan/don-hang" className="text-blue-600 font-semibold hover:underline mt-4 inline-block">
-          ← Quay lại danh sách đơn hàng
-        </Link>
+      <div style={{
+        minHeight: '60vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f8fafc',
+        padding: '40px 20px',
+        textAlign: 'center',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{
+          maxWidth: '460px',
+          background: '#fff',
+          borderRadius: '16px',
+          padding: '32px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+        }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+            Không tìm thấy sản phẩm
+          </h2>
+          <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
+            Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã ngừng kinh doanh.
+          </p>
+          <Link
+            href="/search"
+            style={{
+              display: 'inline-block',
+              background: '#2563eb',
+              color: '#fff',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '14px',
+              textDecoration: 'none'
+            }}
+          >
+            Quay lại danh mục sản phẩm
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const products = (order.products ?? []) as OrderItem[];
+  // Fetch related products
+  let relatedProducts = [];
+  try {
+    const res = await getProducts({
+      category_id: product.category_id,
+      limit: 5,
+    });
+    relatedProducts = res.products.filter((p: any) => p.id !== product.id && p.slug !== product.slug);
+  } catch (err) {
+    console.error('Failed to fetch related products:', err);
+  }
 
-  const steps = [
-    { label: 'Đã đặt hàng', active: true },
-    { label: 'Đang chuẩn bị hàng', active: order.status !== 'cancelled' },
-    { label: 'Đang giao hàng', active: order.status === 'shipping' || order.status === 'delivered' },
-    { label: 'Giao hàng thành công', active: order.status === 'delivered' }
-  ];
-
-  return (
-    <div className="bg-white border rounded-2xl p-6 shadow-sm">
-      <Link href="/tai-khoan/don-hang" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
-        ← Quay lại đơn hàng
-      </Link>
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between mt-4 pb-4 border-b border-gray-100">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Chi tiết đơn hàng</h1>
-          <p className="font-mono text-blue-600 mt-1 text-sm font-semibold">{order.id}</p>
-        </div>
-        <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold mt-2 md:mt-0 ${
-          order.status === 'delivered' ? 'bg-green-50 text-green-700' :
-          order.status === 'cancelled' ? 'bg-red-50 text-red-700' :
-          'bg-blue-50 text-blue-700'
-        }`}>
-          {order.status === 'pending' ? 'Chờ xác nhận' :
-           order.status === 'shipping' ? 'Đang giao hàng' :
-           order.status === 'delivered' ? 'Đã giao thành công' :
-           'Đã hủy'}
-        </span>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6 mt-6">
-        {/* Shipping address & payment */}
-        <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl">
-          <strong className="text-gray-900 dark:text-white text-sm block mb-3">Thông tin giao nhận</strong>
-          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-            <p><span className="text-gray-400">Người nhận:</span> {order.shippingAddress.name}</p>
-            <p><span className="text-gray-400">Số điện thoại:</span> {order.shippingAddress.phone}</p>
-            <p><span className="text-gray-400">Email:</span> {order.shippingAddress.email}</p>
-            <p><span className="text-gray-400">Địa chỉ:</span> {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}</p>
-            {order.shippingAddress.note && <p><span className="text-gray-400">Ghi chú:</span> {order.shippingAddress.note}</p>}
-          </div>
-          <strong className="text-gray-900 dark:text-white text-sm block mt-5 mb-2">Thanh toán</strong>
-          <p className="text-sm text-gray-600 dark:text-gray-300">{order.paymentMethodLabel}</p>
-        </div>
-
-        {/* Status timeline */}
-        <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl flex flex-col justify-center">
-          <strong className="text-gray-900 dark:text-white text-sm block mb-3">Trạng thái xử lý</strong>
-          <div className="space-y-4">
-            {steps.map((step) => (
-              <div key={step.label} className="flex items-center gap-3">
-                <span className={`w-3 h-3 rounded-full flex-shrink-0 ${step.active ? 'bg-green-500 shadow-sm shadow-green-200' : 'bg-gray-300'}`} />
-                <span className={`text-sm ${step.active ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400'}`}>{step.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Products list */}
-      <div className="mt-8">
-        <h3 className="text-base font-bold text-gray-900 mb-4">Sản phẩm đã đặt</h3>
-        <div className="divide-y divide-gray-100 border-t border-b border-gray-100">
-          {products.map((item) => (
-            <div key={item.id} className="py-4 flex gap-4 items-center">
-              <div className="w-16 h-16 bg-gray-50 rounded-lg p-1.5 flex items-center justify-center border border-gray-100 flex-shrink-0">
-                <img src={item.image} alt={item.name} className="max-w-full max-h-full object-contain" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 leading-snug">{item.name}</h4>
-                <p className="text-xs text-gray-500 mt-1 font-mono">{item.price.toLocaleString('vi-VN')} ₫ × {item.quantity}</p>
-              </div>
-              <span className="font-bold text-sm text-blue-600 font-mono flex-shrink-0">
-                {(item.price * item.quantity).toLocaleString('vi-VN')} ₫
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Pricing summary */}
-        <div className="mt-6 flex flex-col items-end gap-2 text-sm">
-          <div className="flex justify-between w-64 text-gray-500">
-            <span>Tiền hàng:</span>
-            <span className="font-mono">{(order.total - order.shippingFee).toLocaleString('vi-VN')} ₫</span>
-          </div>
-          <div className="flex justify-between w-64 text-gray-500">
-            <span>Phí vận chuyển:</span>
-            <span className="font-mono">{order.shippingFee.toLocaleString('vi-VN')} ₫</span>
-          </div>
-          <div className="flex justify-between w-64 text-gray-900 font-bold border-t border-gray-100 pt-2 text-base">
-            <span>Tổng cộng:</span>
-            <span className="text-blue-600 font-mono">{order.total.toLocaleString('vi-VN')} ₫</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <ProductDetailView product={product} relatedProducts={relatedProducts} />;
 }

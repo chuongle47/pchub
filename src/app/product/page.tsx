@@ -1,3 +1,5 @@
-'use client';
-import ProductDetailPage from './[id]/page';
-export default ProductDetailPage;
+import { redirect } from 'next/navigation';
+
+export default function ProductIndexPage() {
+  redirect('/search');
+}

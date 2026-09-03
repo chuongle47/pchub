@@ -279,6 +279,38 @@ export function loadMemoryFallback() {
 }
 
 export async function getProductBySlugOrId(idOrSlug: string) {
+  // 1. Try Supabase first
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    let query = supabase
+      .from('products')
+      .select(`
+        *,
+        categories(name, slug),
+        brands(name, slug)
+      `);
+
+    if (isUuid) {
+      query = query.or(`slug.eq.${idOrSlug},id.eq.${idOrSlug}`);
+    } else {
+      query = query.eq('slug', idOrSlug);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (!error && data) {
+      return {
+        ...data,
+        category_name: data.categories?.name || 'Danh mục',
+        category_slug: data.categories?.slug,
+        brand_name: data.brands?.name || 'Thương hiệu'
+      };
+    }
+  } catch (err) {
+    console.error('Supabase getProductBySlugOrId error:', err);
+  }
+
+  // 2. Try PostgreSQL
   const connected = await testPgConnection();
   if (connected) {
     try {
@@ -297,14 +329,17 @@ export async function getProductBySlugOrId(idOrSlug: string) {
     }
   }
 
+  // 3. Fallback to memory store
   loadMemoryFallback();
   const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
+  const catSlugMap = new Map(memoryStore.categories.map(c => [c.id, c.slug]));
   const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
   const p = memoryStore.products.find(prod => prod.slug === idOrSlug || prod.id === idOrSlug);
   if (!p) return null;
   return {
     ...p,
     category_name: catMap.get(p.category_id) || 'Danh mục',
+    category_slug: catSlugMap.get(p.category_id),
     brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu'
   };
 }
