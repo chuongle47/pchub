@@ -111,6 +111,10 @@ export async function getSupabaseProducts(filter: ProductsFilter) {
     brand_name: p.brands?.name || 'Thương hiệu'
   })) || [];
 
+  if (transformedProducts.length === 0) {
+    throw new Error('No products in Supabase, using fallback');
+  }
+
   return {
     products: transformedProducts,
     pagination: {
@@ -127,9 +131,9 @@ export async function getSupabaseCategories() {
     .from('categories')
     .select('*');
 
-  if (error) {
-    console.error('Supabase categories error:', error);
-    throw error;
+  if (error || !data || data.length === 0) {
+    console.error('Supabase categories empty or error:', error);
+    throw error || new Error('No categories in Supabase');
   }
 
   // Get product counts separately
@@ -157,9 +161,9 @@ export async function getSupabaseBrands(categoryId?: string) {
 
   const { data, error } = await query;
 
-  if (error) {
-    console.error('Supabase brands error:', error);
-    throw error;
+  if (error || !data || data.length === 0) {
+    console.error('Supabase brands empty or error:', error);
+    throw error || new Error('No brands in Supabase');
   }
 
   // Get product counts

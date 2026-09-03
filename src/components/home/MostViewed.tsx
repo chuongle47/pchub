@@ -20,10 +20,17 @@ interface HotProduct {
   slug: string;
 }
 
+const DEFAULT_HOT: HotProduct[] = [
+  { id: 'p-2', badge: 'HOT', badgeColor: 'red', image: '/images/gpu-strix.jpg', category: 'GPU - Card Màn Hình', name: 'ASUS ROG Strix GeForce RTX 4090 OC Edition 24GB', specs: 'VRAM: 24GB GDDR6X | Bus: 384-bit', price: 54990000, originalPrice: 59990000, discount: 8, slug: 'asus-rog-strix-geforce-rtx-4090' },
+  { id: 'p-1', badge: 'BÁN CHẠY', badgeColor: 'blue', image: '/images/cpu-box.jpg', category: 'CPU - Bộ Vi Xử Lý', name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)', specs: '24 Cores | 32 Threads | LGA 1700', price: 13990000, originalPrice: 15990000, discount: 12, slug: 'intel-core-i9-14900k' },
+  { id: 'p-3', badge: 'BÁN CHẠY', badgeColor: 'blue', image: '/images/ram-corsair.jpg', category: 'RAM - Bộ Nhớ Trong', name: 'RAM Corsair Dominator Titanium RGB 32GB (2x16GB) DDR5', specs: 'Capacity: 32GB | Speed: 6000MHz', price: 4290000, originalPrice: 4890000, discount: 12, slug: 'corsair-dominator-titanium-rgb-32gb-ddr5' },
+  { id: 'p-4', badge: 'HOT', badgeColor: 'red', image: '/images/ssd-samsung.jpg', category: 'SSD / HDD', name: 'SSD Samsung 990 PRO 2TB PCIe Gen 4.0 x4 NVMe', specs: 'Read: 7450MB/s | Write: 6900MB/s', price: 4690000, originalPrice: 5190000, discount: 10, slug: 'samsung-990-pro-2tb-nvme' }
+];
+
 export default function MostViewed() {
   const addItem = useCartStore(s => s.addItem);
   const setOpen = useCartStore(s => s.setOpen);
-  const [products, setProducts] = useState<HotProduct[]>([]);
+  const [products, setProducts] = useState<HotProduct[]>(DEFAULT_HOT);
   const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {

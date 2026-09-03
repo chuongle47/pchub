@@ -16,9 +16,17 @@ interface FlashProduct {
   slug: string;
 }
 
+const DEFAULT_FLASH: FlashProduct[] = [
+  { id: 'p-1', name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)', category: 'CPU - Bộ Vi Xử Lý', price: 13990000, originalPrice: 15990000, discount: 12, image: '/images/cpu-box.jpg', slug: 'intel-core-i9-14900k' },
+  { id: 'p-2', name: 'ASUS ROG Strix GeForce RTX 4090 OC Edition 24GB', category: 'GPU - Card Màn Hình', price: 54990000, originalPrice: 59990000, discount: 8, image: '/images/gpu-strix.jpg', slug: 'asus-rog-strix-geforce-rtx-4090' },
+  { id: 'p-3', name: 'RAM Corsair Dominator Titanium RGB 32GB (2x16GB) DDR5 6000MHz', category: 'RAM - Bộ Nhớ Trong', price: 4290000, originalPrice: 4890000, discount: 12, image: '/images/ram-corsair.jpg', slug: 'corsair-dominator-titanium-rgb-32gb-ddr5' },
+  { id: 'p-4', name: 'SSD Samsung 990 PRO 2TB PCIe Gen 4.0 x4 NVMe', category: 'SSD / HDD - Ổ Đĩa Cứng', price: 4690000, originalPrice: 5190000, discount: 10, image: '/images/ssd-samsung.jpg', slug: 'samsung-990-pro-2tb-nvme' }
+];
+
 export default function FlashSaleSection() {
   const addItem = useCartStore(s => s.addItem);
-  const [products, setProducts] = useState<FlashProduct[]>([]);
+  const setOpen = useCartStore(s => s.setOpen);
+  const [products, setProducts] = useState<FlashProduct[]>(DEFAULT_FLASH);
   const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {
