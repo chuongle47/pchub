@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>So Sánh Linh Kiện PC - PostgreSQL Hardware Comparator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="navbar">
+    <div class="container navbar-container">
+      <div class="logo">
+        <div class="logo-icon">
+          <i data-lucide="cpu"></i>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">TechSpecs<span class="highlight">Pro</span></span>
+          <span class="logo-subtitle">So Sánh Linh Kiện PC & Lọc Thương Hiệu</span>
+        </div>
+      </div>
+
+      <div class="header-status" id="dbStatusBadge">
+        <span class="status-indicator loading"></span>
+        <span class="status-text">Đang kiểm tra DB...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title">Tra Cứu & So Sánh <span class="gradient-text">Linh Kiện Máy Tính</span> Chi Tiết</h1>
+        <p class="hero-desc">Dữ liệu từ PostgreSQL database. Lọc theo danh mục linh kiện, thương hiệu (Brand), giá thành và đối chiếu thông số kĩ thuật trực quan side-by-side.</p>
+      </div>
+
+      <!-- Quick Category Nav Tabs -->
+      <div class="category-tabs" id="categoryTabs">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <main class="main-layout container">
+    <!-- Sidebar Filters -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-header">
+          <h3><i data-lucide="sliders"></i> Bộ Lọc Tìm Kiếm</h3>
+          <button id="resetFiltersBtn" class="btn-text" title="Đặt lại bộ lọc">
+            <i data-lucide="rotate-ccw"></i> Đặt lại
+          </button>
+        </div>
+
+        <!-- Search input -->
+        <div class="filter-group">
+          <label class="filter-label">Tìm kiếm tên / SKU</label>
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Ví dụ: Core i7, RTX 4070..." autocomplete="off">
+            <button id="clearSearchBtn" class="clear-btn hidden"><i data-lucide="x"></i></button>
+          </div>
+        </div>
+
+        <!-- Category Dropdown / List -->
+        <div class="filter-group">
+          <label class="filter-label">Danh Mục Linh Kiện</label>
+          <select id="categorySelect" class="custom-select">
+            <option value="">Tất cả danh mục</option>
+          </select>
+        </div>
+
+        <!-- Brand Filter (Searchable check pills) -->
+        <div class="filter-group">
+          <div class="filter-label-row">
+            <label class="filter-label">Thương Hiệu (Brand)</label>
+            <span class="brand-count-badge" id="selectedBrandCount">All</span>
+          </div>
+          <div class="brand-search-box">
+            <i data-lucide="search"></i>
+            <input type="text" id="brandSearchInput" placeholder="Lọc thương hiệu...">
+          </div>
+          <div class="brand-list-container" id="brandList">
+            <!-- Brand Checkboxes rendered here -->
+          </div>
+        </div>
+
+        <!-- Price Range Filter -->
+        <div class="filter-group">
+          <label class="filter-label">Khoảng Giá (VND)</label>
+          <div class="price-inputs">
+            <input type="number" id="minPriceInput" placeholder="Từ" min="0" step="500000">
+            <span>-</span>
+            <input type="number" id="maxPriceInput" placeholder="Đến" min="0" step="500000">
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Product Grid & Toolbar Area -->
+    <section class="content-area">
+      <!-- Toolbar -->
+      <div class="toolbar-card">
+        <div class="results-info">
+          <span class="results-count" id="resultsCount">Đang tải sản phẩm...</span>
+          <div class="active-filter-chips" id="activeFilterChips"></div>
+        </div>
+
+        <div class="toolbar-controls">
+          <label for="sortSelect" class="sort-label">Sắp xếp:</label>
+          <select id="sortSelect" class="custom-select sort-select">
+            <option value="price_asc">Giá tăng dần</option>
+            <option value="price_desc">Giá giảm dần</option>
+            <option value="name_asc">Tên (A-Z)</option>
+            <option value="name_desc">Tên (Z-A)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="product-grid" id="productGrid">
+        <!-- Skeleton Loaders rendered initially -->
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container" id="pagination">
+        <!-- Pagination controls -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Comparison Floating Bar -->
+  <div class="compare-bar" id="compareBar">
+    <div class="container compare-bar-content">
+      <div class="compare-bar-info">
+        <div class="compare-badge-icon">
+          <i data-lucide="scale"></i>
+        </div>
+        <div>
+          <h4 class="compare-bar-title">Danh sách so sánh (<span id="compareCount">0</span>/4)</h4>
+          <p class="compare-bar-desc">Chọn tối đa 4 linh kiện cùng loại để so sánh thông số kĩ thuật</p>
+        </div>
+      </div>
+
+      <div class="compare-items-preview" id="compareItemsPreview">
+        <!-- Selected compare items thumbnail pills -->
+      </div>
+
+      <div class="compare-bar-actions">
+        <button id="clearCompareBtn" class="btn btn-outline">Xóa tất cả</button>
+        <button id="openCompareModalBtn" class="btn btn-primary btn-glow" disabled>
+          <i data-lucide="columns"></i> So Sánh Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Comparison Matrix Modal -->
+  <div class="modal-overlay" id="compareModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2><i data-lucide="layers"></i> Bảng So Sánh Chi Tiết Thông Số Kĩ Thuật</h2>
+          <p>Đối chiếu trực tiếp cấu hình & thông số linh kiện từ PostgreSQL Database</p>
+        </div>
+        <button class="modal-close-btn" id="closeCompareModalBtn">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" id="compareModalBody">
+        <!-- Dynamic Side-by-Side Spec Matrix -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
