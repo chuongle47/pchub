@@ -8,6 +8,13 @@ export default function HomePage() {
       </p>
       <div style={{ marginTop: '40px', padding: '20px', background: '#f0f0f0', borderRadius: '8px' }}>
         <p>Test successful: ✅</p>
+        <p>Build completed successfully</p>
+        <p>Runtime working: ✅</p>
+      </div>
+      <div style={{ marginTop: '20px' }}>
+        <a href="/test" style={{ color: '#2563eb', textDecoration: 'underline' }}>
+          Test Page (/test)
+        </a>
       </div>
     </div>
   );
