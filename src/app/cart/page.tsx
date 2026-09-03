@@ -104,7 +104,7 @@ export default function CartPage() {
                   </div>
                   <button 
                     onClick={() => removeItem(item.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 600' }}
+         style={{ fontFamily: 'var(--font-inter)', fontSize: '14px', fontWeight: 600 }}
                   >
                     <Trash2 size={16} />
                     Xóa
