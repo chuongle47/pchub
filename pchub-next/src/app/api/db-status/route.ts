@@ -1,0 +1,13 @@
+import { NextResponse } from 'next/server';
+import { getDbStatus } from '@/lib/db';
+
+export async function GET() {
+  try {
+    const status = await getDbStatus();
+    return NextResponse.json(status);
+  } catch (error) {
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Database check failed' 
+    }, { status: 500 });
+  }
+}
