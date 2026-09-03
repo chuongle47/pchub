@@ -7,7 +7,7 @@ import { Search, ShoppingCart, User, Bot, Heart, Menu, X } from 'lucide-react';
 import { useCartStore, useUIStore, useWishlistStore } from '@/lib/store';
 import CartDrawer from './layout/CartDrawer';
 
-interface NavLink {npm install
+interface NavLink {
   label: string;
   href: string;
   highlight?: boolean;
@@ -26,16 +26,20 @@ export default function Navbar() {
   const pathname = usePathname();
   const [searchVal, setSearchVal] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const { count, setOpen, isOpen } = useCartStore();
-  const setChatOpen = useUIStore(state => state.setChatOpen);
-  const wishlistCount = useWishlistStore(s => s.ids.length);
+
+  // Cart & UI Store State
+  const getItemCount = useCartStore((s) => s.getItemCount);
+  const toggleCart = useUIStore((s) => s.toggleCart);
+  const setChatOpen = useUIStore((s) => s.setChatOpen);
+  const wishlistCount = useWishlistStore((s) => s.ids.length);
+
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
-  const cartCount = isHydrated ? count() : 0;
+  const cartCount = isHydrated ? getItemCount() : 0;
   const visibleWishlistCount = isHydrated ? wishlistCount : 0;
   const isAuthPage = pathname === '/login' || pathname === '/register';
 
@@ -259,7 +263,7 @@ export default function Navbar() {
 
             {/* Cart button */}
             <button
-              onClick={() => setOpen(!isOpen)}
+              onClick={toggleCart}
               style={{
                 position: 'relative',
                 color: 'rgba(255,255,255,0.85)',
