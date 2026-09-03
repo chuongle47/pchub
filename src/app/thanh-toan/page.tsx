@@ -215,29 +215,37 @@ export default function CheckoutPage() {
         </span>
       </div>
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '280px', overflowY: 'auto' }}>
-        {items.map(({ product, quantity }) => (
-          <div key={product.id} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div style={{
-              width: '52px', height: '52px', flexShrink: 0,
-              background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <img src={product.image} alt={product.name} style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }}
-                onError={e => { (e.target as HTMLImageElement).src = '/images/cpu-box.jpg'; }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', lineHeight: '1.4', marginBottom: '4px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                {product.name}
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>×{quantity}</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#2563eb', fontFamily: 'monospace' }}>
-                  {(product.price * quantity).toLocaleString('vi-VN')}₫
-                </span>
+        {items.map((item, idx) => {
+          const prodId = item.product?.id || item.id || `order-item-${idx}`;
+          const prodName = item.product?.name || item.name || 'Sản phẩm linh kiện';
+          const prodImage = item.product?.image || item.image || '/images/cpu-box.jpg';
+          const prodPrice = item.product?.price || item.price || 0;
+          const quantity = item.quantity || 1;
+
+          return (
+            <div key={prodId} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{
+                width: '52px', height: '52px', flexShrink: 0,
+                background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <img src={prodImage} alt={prodName} style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }}
+                  onError={e => { (e.target as HTMLImageElement).src = '/images/cpu-box.jpg'; }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', lineHeight: '1.4', marginBottom: '4px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  {prodName}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>×{quantity}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#2563eb', fontFamily: 'monospace' }}>
+                    {(prodPrice * quantity).toLocaleString('vi-VN')}₫
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{ borderTop: '1px solid #f1f5f9', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>

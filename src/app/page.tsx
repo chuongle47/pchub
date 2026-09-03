@@ -13,13 +13,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PCHub — Linh kiện PC chính hãng',
     description: 'AI tư vấn build PC, kiểm tra tương thích miễn phí',
-    url: 'https://pchub.vn',
+    url: 'https://pchub-iota.vercel.app',
     siteName: 'PCHub',
     locale: 'vi_VN',
     type: 'website',
   },
   alternates: {
-    canonical: 'https://pchub.vn',
+    canonical: 'https://pchub-iota.vercel.app',
   },
 };
 
