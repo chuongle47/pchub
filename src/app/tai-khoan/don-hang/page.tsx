@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore, useOrderStore } from '@/lib/store';
 import { Package, Clock, Truck, CheckCircle2, XCircle, ChevronRight, User } from 'lucide-react';
+import OrderDetailModal from '@/components/account/OrderDetailModal';
 
 export default function OrdersPage() {
   const user = useAuthStore(state => state.user);
   const orders = useOrderStore(state => state.orders);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   
   // Extract NKS user data if available
   const nksUser = (user as any)?.user || user;
@@ -63,11 +66,12 @@ export default function OrdersPage() {
             return (
               <div 
                 key={order.id} 
-                className="bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                onClick={() => setSelectedOrder(order)}
+                className="bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
               >
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-slate-900 text-base">{order.id}</span>
+                    <span className="font-mono font-bold text-slate-900 text-base group-hover:text-blue-600 transition-colors">{order.id}</span>
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                       isDelivered ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                       isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' :
@@ -100,12 +104,16 @@ export default function OrdersPage() {
                       {(Number(order.total) || 0).toLocaleString('vi-VN')} ₫
                     </span>
                   </div>
-                  <Link 
-                    href={`/tai-khoan/don-hang/${order.id}`} 
-                    className="inline-flex items-center gap-1 px-4 py-2.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white rounded-xl text-xs font-extrabold transition-all duration-200"
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedOrder(order);
+                    }}
+                    className="inline-flex items-center gap-1 px-4 py-2.5 bg-blue-50 group-hover:bg-blue-600 text-blue-600 group-hover:text-white rounded-xl text-xs font-extrabold transition-all duration-200"
                   >
                     Xem chi tiết <ChevronRight size={14} />
-                  </Link>
+                  </button>
                 </div>
               </div>
             );
@@ -121,6 +129,14 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Order Detail Popup Modal */}
+      {selectedOrder && (
+        <OrderDetailModal 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)} 
+        />
+      )}
     </div>
   );
 }
