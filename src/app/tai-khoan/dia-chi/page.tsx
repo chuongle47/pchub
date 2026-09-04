@@ -51,40 +51,84 @@ export default function AddressPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Địa chỉ giao hàng</h1>
-          <p className="text-sm text-slate-500 mt-1">Quản lý sổ địa chỉ nhận hàng mua sắm của bạn</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Địa chỉ giao hàng</h1>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Quản lý sổ địa chỉ nhận hàng mua sắm của bạn</p>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(open => !open)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-200"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: '#2563eb',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+            whiteSpace: 'nowrap',
+          }}
         >
           <Plus size={16} /> Thêm địa chỉ mới
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 animate-in fade-in duration-200">
-          <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-            <MapPin size={16} className="text-blue-600" /> Thêm địa chỉ nhận hàng mới
+        <form onSubmit={submit} style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '16px',
+          padding: '24px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MapPin size={16} color="#2563eb" /> Thêm địa chỉ nhận hàng mới
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
             <input
               required
               placeholder="Họ và tên người nhận *"
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-slate-900 text-xs font-semibold outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              style={{
+                border: '1px solid #cbd5e1',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                background: '#ffffff',
+                color: '#0f172a',
+                fontSize: '13px',
+                fontWeight: 600,
+                outline: 'none',
+              }}
             />
             <input
               required
               placeholder="Số điện thoại *"
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-slate-900 text-xs font-semibold font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              style={{
+                border: '1px solid #cbd5e1',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                background: '#ffffff',
+                color: '#0f172a',
+                fontSize: '13px',
+                fontWeight: 600,
+                fontFamily: 'monospace',
+                outline: 'none',
+              }}
             />
           </div>
           <textarea
@@ -93,19 +137,48 @@ export default function AddressPage() {
             placeholder="Địa chỉ chi tiết (Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố) *"
             value={form.address}
             onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-slate-900 text-xs font-semibold outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+            style={{
+              border: '1px solid #cbd5e1',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              background: '#ffffff',
+              color: '#0f172a',
+              fontSize: '13px',
+              fontWeight: 500,
+              outline: 'none',
+              resize: 'none',
+            }}
           />
-          <div className="flex justify-end gap-3 pt-2">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '6px' }}>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors"
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#475569',
+                borderRadius: '10px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+              style={{
+                padding: '8px 20px',
+                background: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
+              }}
             >
               Lưu địa chỉ
             </button>
@@ -113,32 +186,50 @@ export default function AddressPage() {
         </form>
       )}
 
-      {/* Address cards */}
-      <div className="space-y-4">
+      {/* Address Cards List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {addresses.map(item => (
           <div
             key={item.id}
-            className={`bg-white border rounded-2xl p-5 shadow-sm transition-all ${
-              item.primary ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300'
-            }`}
+            style={{
+              background: '#ffffff',
+              border: item.primary ? '2px solid #2563eb' : '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '20px',
+              boxShadow: item.primary ? '0 4px 12px rgba(37,99,235,0.08)' : '0 1px 3px rgba(0,0,0,0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
           >
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-3">
-                  <span className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
-                    <User size={14} className="text-slate-400" /> {item.name}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <User size={15} color="#64748b" /> {item.name}
                   </span>
-                  <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
-                    <Phone size={12} className="text-slate-400" /> {item.phone}
+                  <span style={{ fontSize: '12.5px', color: '#64748b', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Phone size={13} color="#64748b" /> {item.phone}
                   </span>
                   {item.primary && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      color: '#1d4ed8',
+                      background: '#eff6ff',
+                      border: '1px solid #bfdbfe',
+                      padding: '2px 10px',
+                      borderRadius: '20px',
+                    }}>
                       <CheckCircle2 size={12} /> Mặc định
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed flex items-start gap-1.5 pt-1">
-                  <MapPin size={14} className="text-blue-600 shrink-0 mt-0.5" />
+                <p style={{ fontSize: '13px', color: '#475569', margin: '4px 0 0 0', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: '1.5' }}>
+                  <MapPin size={15} color="#2563eb" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>{item.address}</span>
                 </p>
               </div>
@@ -147,33 +238,43 @@ export default function AddressPage() {
                 <button
                   type="button"
                   onClick={() => setPrimary(item.id)}
-                  className="text-xs font-bold text-slate-500 hover:text-blue-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors shrink-0 self-start"
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#2563eb',
+                    background: '#f1f5f9',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   Thiết lập mặc định
                 </button>
               )}
             </div>
 
-            <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-100 text-xs font-bold">
-              <button type="button" className="text-blue-600 hover:underline flex items-center gap-1">
-                <Edit3 size={13} /> Chỉnh sửa
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '12px', borderTop: '1px solid #f1f5f9', fontSize: '12.5px', fontWeight: 700 }}>
+              <button type="button" style={{ color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Edit3 size={14} /> Chỉnh sửa
               </button>
               <button
                 type="button"
                 onClick={() => removeAddress(item.id)}
-                className="text-rose-600 hover:underline flex items-center gap-1"
+                style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
-                <Trash2 size={13} /> Xóa địa chỉ
+                <Trash2 size={14} /> Xóa địa chỉ
               </button>
             </div>
           </div>
         ))}
 
         {addresses.length === 0 && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
-            <MapPin size={48} className="mx-auto text-slate-300 mb-3" />
-            <h3 className="text-base font-bold text-slate-800">Chưa có địa chỉ giao hàng</h3>
-            <p className="text-xs text-slate-500 mt-1">Thêm địa chỉ nhận hàng để rút ngắn thời gian thanh toán đơn hàng.</p>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
+            <MapPin size={48} color="#cbd5e1" style={{ margin: '0 auto 12px' }} />
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0' }}>Chưa có địa chỉ giao hàng</h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Thêm địa chỉ nhận hàng để rút ngắn thời gian thanh toán đơn hàng.</p>
           </div>
         )}
       </div>
