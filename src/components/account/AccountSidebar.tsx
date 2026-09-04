@@ -1,9 +1,9 @@
 'use client';
 
-import { LogOut } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import React from 'react';
 import Link from 'next/link';
-import { Bell, Bot, Heart, LayoutDashboard, MapPin, Monitor, Package, ShieldCheck, UserRound } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { LogOut, Bell, Bot, Heart, LayoutDashboard, MapPin, Monitor, Package, ShieldCheck, UserRound } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 
 interface AccountSidebarProps {
@@ -34,22 +34,51 @@ export default function AccountSidebar({ userName, userEmail, avatarUrl }: Accou
   };
 
   return (
-    <aside className="w-full md:w-72 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm shrink-0">
+    <aside style={{
+      width: '260px',
+      flexShrink: 0,
+      background: '#ffffff',
+      border: '1px solid #e2e8f0',
+      borderRadius: '16px',
+      padding: '20px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
       {/* User profile summary */}
-      <div className="text-center pb-5 mb-4 border-b border-slate-100">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-extrabold text-2xl mx-auto mb-3 shadow-md border-2 border-white overflow-hidden aspect-square">
+      <div style={{
+        textAlign: 'center',
+        paddingBottom: '16px',
+        marginBottom: '16px',
+        borderBottom: '1px solid #f1f5f9',
+      }}>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '20px',
+          fontWeight: 800,
+          margin: '0 auto 10px',
+          boxShadow: '0 4px 10px rgba(37,99,235,0.2)',
+          overflow: 'hidden',
+        }}>
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             userName.charAt(0).toUpperCase() || 'U'
           )}
         </div>
-        <h3 className="font-extrabold text-slate-900 text-base">{userName}</h3>
-        <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[200px] mx-auto">{userEmail}</p>
+        <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 2px 0' }}>{userName}</h3>
+        <p style={{ fontSize: '12px', color: '#64748b', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</p>
       </div>
 
-      {/* Navigation */}
-      <nav className="space-y-1">
+      {/* Navigation Links */}
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {links.map(([href, label, Icon]) => {
           const isActive = pathname === href || (href !== '/tai-khoan' && pathname.startsWith(href));
           
@@ -57,13 +86,22 @@ export default function AccountSidebar({ userName, userEmail, avatarUrl }: Accou
             <Link 
               key={href} 
               href={href} 
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                isActive 
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-200' 
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'
-              }`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: isActive ? 700 : 600,
+                color: isActive ? '#ffffff' : '#475569',
+                background: isActive ? '#2563eb' : 'transparent',
+                textDecoration: 'none',
+                transition: 'all 0.15s ease',
+                boxShadow: isActive ? '0 2px 8px rgba(37,99,235,0.25)' : 'none',
+              }}
             >
-              <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400'} />
+              <Icon size={17} color={isActive ? '#ffffff' : '#64748b'} style={{ flexShrink: 0 }} />
               <span>{label}</span>
             </Link>
           );
@@ -71,16 +109,33 @@ export default function AccountSidebar({ userName, userEmail, avatarUrl }: Accou
       </nav>
 
       {/* Logout */}
-      <div className="mt-5 pt-4 border-t border-slate-100">
+      <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
         <button 
           type="button"
           onClick={handleLogout} 
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '10px 14px',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 700,
+            color: '#dc2626',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'background 0.15s ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
-          <LogOut size={16} className="text-rose-500" />
+          <LogOut size={17} color="#dc2626" style={{ flexShrink: 0 }} />
           <span>Đăng xuất tài khoản</span>
         </button>
       </div>
     </aside>
   );
-}
+}

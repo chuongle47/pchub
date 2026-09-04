@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { ShieldCheck, Plus, Clock, CheckCircle2, Wrench, PackageSearch, X } from 'lucide-react';
+import { ShieldCheck, Plus, Clock, CheckCircle2, Wrench, X } from 'lucide-react';
 
 export default function WarrantyPage() {
   const [showForm, setShowForm] = useState(false);
@@ -16,128 +16,279 @@ export default function WarrantyPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Yêu cầu bảo hành</h1>
-          <p className="text-sm text-slate-500 mt-1">Theo dõi tiến trình bảo hành và sửa chữa linh kiện PC</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Yêu cầu bảo hành</h1>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Theo dõi tiến trình bảo hành và sửa chữa linh kiện PC</p>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-200"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: '#2563eb',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+            whiteSpace: 'nowrap',
+          }}
         >
           <Plus size={16} /> Tạo yêu cầu mới
         </button>
       </div>
 
-      {/* Stats row */}
-      <div className="grid sm:grid-cols-3 gap-4">
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
         {[
-          { label: 'Đang xử lý', value: '1', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100', icon: Clock },
-          { label: 'Đã giải quyết', value: '3', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100', icon: CheckCircle2 },
-          { label: 'Tổng yêu cầu', value: '4', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100', icon: ShieldCheck },
+          { label: 'Đang xử lý', value: '1', color: '#d97706', bg: '#fffbeb', border: '#fef3c7', icon: Clock },
+          { label: 'Đã giải quyết', value: '3', color: '#059669', bg: '#ecfdf5', border: '#d1fae5', icon: CheckCircle2 },
+          { label: 'Tổng yêu cầu', value: '4', color: '#2563eb', bg: '#eff6ff', border: '#dbeafe', icon: ShieldCheck },
         ].map(item => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className={`border rounded-2xl p-4 bg-white shadow-sm flex items-center justify-between`}>
+            <div key={item.label} style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '18px 20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</p>
-                <p className={`text-2xl font-extrabold font-mono mt-1 ${item.color}`}>{item.value}</p>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
+                  {item.label}
+                </span>
+                <span style={{ fontSize: '26px', fontWeight: 900, color: item.color, fontFamily: 'monospace', display: 'block', marginTop: '4px' }}>
+                  {item.value}
+                </span>
               </div>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${item.bg}`}>
-                <Icon size={20} className={item.color} />
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: item.bg,
+                border: `1px solid ${item.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Icon size={20} color={item.color} />
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Active warranty card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+      {/* Active Warranty Card */}
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        padding: '24px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '16px',
+          flexWrap: 'wrap',
+          paddingBottom: '16px',
+          borderBottom: '1px solid #f1f5f9',
+        }}>
           <div>
-            <div className="flex items-center gap-3">
-              <span className="font-mono font-extrabold text-slate-900 text-base">WC-2026-0809</span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+              <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#0f172a', fontSize: '16px' }}>WC-2026-0809</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 700,
+                background: '#fffbeb',
+                color: '#b45309',
+                border: '1px solid #fef3c7',
+              }}>
                 <Clock size={13} /> Đang xử lý
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Sản phẩm: <strong className="text-slate-700">ASUS ROG Strix RTX 4070 Ti Super</strong> · Gửi ngày 20/08/2026
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+              Sản phẩm: <strong style={{ color: '#1e293b' }}>ASUS ROG Strix RTX 4070 Ti Super</strong> · Gửi ngày 20/08/2026
             </p>
           </div>
-          <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 self-start sm:self-auto">
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#475569',
+            background: '#f8fafc',
+            padding: '6px 14px',
+            borderRadius: '10px',
+            border: '1px solid #e2e8f0',
+          }}>
             ⏳ Dự kiến hoàn thành: 3 ngày
           </span>
         </div>
 
-        {/* Progress timeline */}
-        <div className="space-y-2 pt-2">
-          <div className="flex justify-between text-xs font-bold text-slate-500">
-            <span className="text-blue-600 flex items-center gap-1"><CheckCircle2 size={13} /> Tiếp nhận</span>
-            <span className="text-blue-600 flex items-center gap-1"><Wrench size={13} /> Đã kiểm tra</span>
-            <span className="text-amber-600 flex items-center gap-1"><Clock size={13} /> Đang xử lý</span>
-            <span className="text-slate-300">Hoàn tất</span>
+        {/* Timeline Progress */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700 }}>
+            <span style={{ color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={14} /> Tiếp nhận</span>
+            <span style={{ color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px' }}><Wrench size={14} /> Đã kiểm tra</span>
+            <span style={{ color: '#d97706', display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> Đang xử lý</span>
+            <span style={{ color: '#cbd5e1' }}>Hoàn tất</span>
           </div>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full w-2/3 bg-gradient-to-r from-blue-600 to-amber-500 rounded-full transition-all duration-500" />
+          <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: '70%', background: 'linear-gradient(90deg, #2563eb, #f59e0b)', borderRadius: '999px' }} />
           </div>
         </div>
       </div>
 
-      {/* Modal Form */}
+      {/* Modal Popup Form */}
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-slate-100 space-y-4 relative animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                <ShieldCheck size={18} className="text-blue-600" /> Tạo yêu cầu bảo hành
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          zIndex: 999,
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            padding: '28px',
+            width: '100%',
+            maxWidth: '460px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            border: '1px solid #e2e8f0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '14px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={18} color="#2563eb" /> Tạo yêu cầu bảo hành
               </h2>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
               >
                 <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={submit} className="space-y-4">
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Mã đơn hàng / Sản phẩm *</label>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Mã đơn hàng / Sản phẩm *
+                </label>
                 <input
                   required
                   placeholder="Ví dụ: ORD-1788485775504"
                   value={productCode}
                   onChange={e => setProductCode(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-slate-900 text-xs font-semibold font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    fontFamily: 'monospace',
+                    outline: 'none',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Mô tả hiện tượng lỗi *</label>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Mô tả hiện tượng lỗi *
+                </label>
                 <textarea
                   required
                   rows={4}
                   placeholder="Mô tả chi tiết lỗi gặp phải (không lên nguồn, rác hình, quạt không quay...)"
                   value={errorDesc}
                   onChange={e => setErrorDesc(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-white text-slate-900 text-xs font-semibold outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    outline: 'none',
+                    resize: 'none',
+                  }}
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors"
+                  style={{
+                    padding: '10px 18px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#475569',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                  style={{
+                    padding: '10px 20px',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                  }}
                 >
                   Gửi yêu cầu bảo hành
                 </button>
