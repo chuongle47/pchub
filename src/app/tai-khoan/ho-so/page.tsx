@@ -559,7 +559,6 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật thông tin tài khoản</h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updateInfo</code></span>
               </div>
             </div>
 
@@ -777,7 +776,6 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật mật khẩu tài khoản</h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updatePass</code></span>
               </div>
             </div>
 
@@ -940,7 +938,6 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật Ảnh đại diện (Avatar)</h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updateAvatar</code></span>
               </div>
             </div>
 
@@ -1068,7 +1065,6 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật Căn cước công dân (CCCD)</h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updateCccd</code></span>
               </div>
             </div>
 
