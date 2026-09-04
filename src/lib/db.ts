@@ -617,7 +617,7 @@ export async function getProducts(filter: ProductsFilter) {
 
     // Final fallback to memory data
     loadMemoryFallback();
-    const brandSet = new Set(brandIds);
+    const brandTerms = brandIds.map(x => x.toLowerCase());
     const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
     const catSlugMap = new Map(memoryStore.categories.map(c => [c.id, c.slug]));
     const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
@@ -627,7 +627,14 @@ export async function getProducts(filter: ProductsFilter) {
 
     let filtered = memoryStore.products.filter(p => {
       if (categoryMatch && p.category_id !== categoryMatch.id) return false;
-      if (brandSet.size > 0 && !brandSet.has(p.brand_id)) return false;
+      if (brandTerms.length > 0) {
+        const bObj = memoryStore.brands.find(b => b.id === p.brand_id);
+        const bName = bObj ? bObj.name.toLowerCase() : '';
+        const bSlug = bObj ? bObj.slug.toLowerCase() : '';
+        const pBrandId = p.brand_id.toLowerCase();
+        const hasMatch = brandTerms.some(term => term === pBrandId || term === bName || term === bSlug);
+        if (!hasMatch) return false;
+      }
       if (slug && p.slug !== slug) return false;
       if (ids && ids.length > 0 && !ids.includes(p.id)) return false;
       if (min_price && p.price < parseFloat(min_price as any)) return false;
@@ -637,7 +644,9 @@ export async function getProducts(filter: ProductsFilter) {
         const matchName = p.name.toLowerCase().includes(q);
         const matchSku = p.sku && p.sku.toLowerCase().includes(q);
         const matchSlug = p.slug.toLowerCase().includes(q);
-        if (!matchName && !matchSku && !matchSlug) return false;
+        const matchBrand = (brandNameMap.get(p.brand_id) || '').toLowerCase().includes(q);
+        const matchCat = (catMap.get(p.category_id) || '').toLowerCase().includes(q);
+        if (!matchName && !matchSku && !matchSlug && !matchBrand && !matchCat) return false;
       }
       return true;
     });
