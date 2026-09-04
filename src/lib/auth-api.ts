@@ -113,9 +113,39 @@ export const CompanyApiService = {
 
   /**
    * 1. nks/user/updateInfo - Cập nhật thông tin tài khoản
+   * Body Params: firstname, lastname, intro, phone, gender (0|1), website, dob (yyyy-mm-dd), pob, id_number, id_date, id_place, province
    */
-  async updateInfo(token: string | undefined, data: Record<string, any>) {
-    const res = await postApi('nks/user/updateInfo', data, token);
+  async updateInfo(token: string | undefined, data: {
+    firstname?: string;
+    lastname?: string;
+    intro?: string;
+    phone?: string;
+    gender?: number | string;
+    website?: string;
+    dob?: string;
+    pob?: string;
+    id_number?: string;
+    id_date?: string;
+    id_place?: string;
+    province?: string;
+    [key: string]: any;
+  }) {
+    const genderValue = data.gender === 'Nữ' || data.gender === 1 ? 1 : 0;
+    const payload = {
+      firstname: data.firstname ?? '',
+      lastname: data.lastname ?? '',
+      intro: data.intro ?? '',
+      phone: data.phone ?? '',
+      gender: genderValue,
+      website: data.website ?? '',
+      dob: data.dob ?? '',
+      pob: data.pob ?? '',
+      id_number: data.id_number ?? '',
+      id_date: data.id_date ?? '',
+      id_place: data.id_place ?? '',
+      province: data.province ?? '',
+    };
+    const res = await postApi('nks/user/updateInfo', payload, token);
     if (res.success) {
       return {
         success: true as const,
@@ -135,17 +165,17 @@ export const CompanyApiService = {
 
   /**
    * 2. nks/user/updatePass - Cập nhật mật khẩu
+   * Body Params: old_password, password (mật khẩu mới)
    */
   async updatePass(token: string | undefined, data: {
-    old_password?: string;
-    password?: string;
-    current_password?: string;
-    new_password?: string;
-    password_new?: string;
-    confirm_password?: string;
-    [key: string]: any;
+    old_password: string;
+    password: string;
   }) {
-    const res = await postApi('nks/user/updatePass', data, token);
+    const payload = {
+      old_password: data.old_password,
+      password: data.password,
+    };
+    const res = await postApi('nks/user/updatePass', payload, token);
     if (res.success) {
       return {
         success: true as const,
@@ -161,9 +191,10 @@ export const CompanyApiService = {
 
   /**
    * 3. nks/user/updateAvatar - Cập nhật Avatar
+   * Body Params: avatar (Base64)
    */
-  async updateAvatar(token: string | undefined, avatar: string) {
-    const res = await postApi('nks/user/updateAvatar', { avatar, avatar_url: avatar }, token);
+  async updateAvatar(token: string | undefined, avatarBase64: string) {
+    const res = await postApi('nks/user/updateAvatar', { avatar: avatarBase64 }, token);
     if (res.success) {
       return {
         success: true as const,
@@ -179,16 +210,23 @@ export const CompanyApiService = {
 
   /**
    * 4. nks/user/updateCccd - Cập nhật CCCD
+   * Body Params: front (Base64), back (Base64), number, date, place
    */
   async updateCccd(token: string | undefined, data: {
-    cccd: string;
-    issue_date?: string;
-    issue_place?: string;
-    front_image?: string;
-    back_image?: string;
-    [key: string]: any;
+    front?: string;
+    back?: string;
+    number: string;
+    date?: string;
+    place?: string;
   }) {
-    const res = await postApi('nks/user/updateCccd', data, token);
+    const payload = {
+      front: data.front ?? '',
+      back: data.back ?? '',
+      number: data.number ?? '',
+      date: data.date ?? '',
+      place: data.place ?? '',
+    };
+    const res = await postApi('nks/user/updateCccd', payload, token);
     if (res.success) {
       return {
         success: true as const,

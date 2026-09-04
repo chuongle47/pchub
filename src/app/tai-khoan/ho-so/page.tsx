@@ -246,11 +246,7 @@ export default function ProfilePage() {
 
     const payload = {
       old_password: oldPassword,
-      password: oldPassword,
-      current_password: oldPassword,
-      new_password: newPassword,
-      password_new: newPassword,
-      confirm_password: confirmPassword,
+      password: newPassword,
     };
 
     // Call NKS API: nks/user/updatePass
@@ -279,7 +275,7 @@ export default function ProfilePage() {
     setMessage(null);
     const token = getNksToken();
 
-    // Call NKS API: nks/user/updateAvatar
+    // Call NKS API: nks/user/updateAvatar (avatar parameter receives Base64 or image string)
     const res = await CompanyApiService.updateAvatar(token, avatarUrl);
 
     // Update local state regardless
@@ -326,12 +322,13 @@ export default function ProfilePage() {
     setMessage(null);
     const token = getNksToken();
 
+    // Match exact NKS API Spec: front, back, number, date, place
     const payload = {
-      cccd: cccdNumber,
-      issue_date: cccdIssueDate,
-      issue_place: cccdIssuePlace,
-      front_image: cccdFrontImage,
-      back_image: cccdBackImage,
+      front: cccdFrontImage,
+      back: cccdBackImage,
+      number: cccdNumber,
+      date: cccdIssueDate,
+      place: cccdIssuePlace,
     };
 
     // Call NKS API: nks/user/updateCccd
