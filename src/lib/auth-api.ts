@@ -208,27 +208,50 @@ export const CompanyApiService = {
   },
 
   /**
-   * 3. nks/user/updateAvatar - Cập nhật Avatar
-   * Body Params: avatar (Base64)
+   * Helper to clean base64 data URL prefix (e.g. data:image/jpeg;base64,) for PHP backend base64_decode
    */
-  async updateAvatar(token: string | undefined, avatarBase64: string) {
-    const res = await postApi('nks/user/updateAvatar', { avatar: avatarBase64 }, token);
+  cleanBase64(str?: string): string {
+    if (!str) return '';
+    if (str.includes('base64,')) {
+      return str.split('base64,')[1];
+    }
+    return str;
+  },
+
+  /**
+   * 3. nks/user/updateAvatar - Cập nhật Avatar
+   * Body Params: avatar (Base64), access_token
+   */
+  async updateAvatar(token: string | undefined, avatarInput: string) {
+    const rawBase64 = this.cleanBase64(avatarInput);
+    
+    // Send raw Base64 (without data:image/...;base64, prefix) as required by PHP base64_decode
+    const payload = {
+      avatar: rawBase64,
+      avatar_url: avatarInput,
+      avatar_base64: rawBase64,
+    };
+
+    const res = await postApi('nks/user/updateAvatar', payload, token);
+    console.log('[NKS updateAvatar response]:', res);
+
     if (res.success) {
       return {
         success: true as const,
-        message: res.data?.message || 'Cập nhật ảnh đại diện thành công!',
+        message: res.data?.message || res.data?.msg || 'Cập nhật ảnh đại diện thành công!',
         data: res.data,
       };
     }
     return {
       success: false as const,
-      message: res.message || 'Cập nhật ảnh đại diện thất bại.',
+      message: res.message || res.data?.message || res.data?.error || 'Cập nhật ảnh đại diện thất bại.',
+      data: res.data,
     };
   },
 
   /**
    * 4. nks/user/updateCccd - Cập nhật CCCD
-   * Body Params: front (Base64), back (Base64), number, date, place
+   * Body Params: front (Base64), back (Base64), number, date, place, access_token
    */
   async updateCccd(token: string | undefined, data: {
     front?: string;
@@ -236,25 +259,39 @@ export const CompanyApiService = {
     number: string;
     date?: string;
     place?: string;
+    [key: string]: any;
   }) {
+    const rawFront = this.cleanBase64(data.front);
+    const rawBack = this.cleanBase64(data.back);
+
     const payload = {
-      front: data.front ?? '',
-      back: data.back ?? '',
+      front: rawFront,
+      back: rawBack,
       number: data.number ?? '',
       date: data.date ?? '',
       place: data.place ?? '',
+      // Field aliases for compatibility
+      cccd: data.number ?? '',
+      issue_date: data.date ?? '',
+      issue_place: data.place ?? '',
+      front_image: rawFront,
+      back_image: rawBack,
     };
+
     const res = await postApi('nks/user/updateCccd', payload, token);
+    console.log('[NKS updateCccd response]:', res);
+
     if (res.success) {
       return {
         success: true as const,
-        message: res.data?.message || 'Cập nhật CCCD thành công!',
+        message: res.data?.message || res.data?.msg || 'Cập nhật CCCD thành công!',
         data: res.data,
       };
     }
     return {
       success: false as const,
-      message: res.message || 'Cập nhật CCCD thất bại.',
+      message: res.message || res.data?.message || res.data?.error || 'Cập nhật CCCD thất bại.',
+      data: res.data,
     };
   },
 };

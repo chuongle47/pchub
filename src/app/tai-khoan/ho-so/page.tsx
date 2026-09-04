@@ -261,6 +261,25 @@ export default function ProfilePage() {
     setLoading(false);
   };
 
+  const helperUrlToBase64 = async (url: string): Promise<string> => {
+    if (!url || url.startsWith('data:image/')) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string) || url);
+          reader.onerror = () => resolve(url);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        return url;
+      }
+    }
+    return url;
+  };
+
   // --- SUBMIT 3: nks/user/updateAvatar ---
   const handleUpdateAvatar = async (e: FormEvent) => {
     e.preventDefault();
@@ -273,8 +292,11 @@ export default function ProfilePage() {
     setMessage(null);
     const token = getNksToken();
 
-    // Call NKS API: nks/user/updateAvatar (avatar parameter receives Base64 or image string)
-    const res = await CompanyApiService.updateAvatar(token, avatarUrl);
+    // Ensure image is Base64 formatted as required by NKS API spec
+    const avatarBase64 = await helperUrlToBase64(avatarUrl);
+
+    // Call NKS API: nks/user/updateAvatar
+    const res = await CompanyApiService.updateAvatar(token, avatarBase64);
 
     if (res.success) {
       syncLocalUserState({ avatar: avatarUrl });
@@ -323,10 +345,13 @@ export default function ProfilePage() {
     setMessage(null);
     const token = getNksToken();
 
+    const frontBase64 = await helperUrlToBase64(cccdFrontImage);
+    const backBase64 = await helperUrlToBase64(cccdBackImage);
+
     // Match exact NKS API Spec: front, back, number, date, place
     const payload = {
-      front: cccdFrontImage,
-      back: cccdBackImage,
+      front: frontBase64,
+      back: backBase64,
       number: cccdNumber,
       date: cccdIssueDate,
       place: cccdIssuePlace,
