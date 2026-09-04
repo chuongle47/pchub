@@ -22,20 +22,14 @@ import {
   FileCheck2,
   Sparkles
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { CompanyApiService, getNksToken } from '@/lib/auth-api';
 import { saveUserToDatabase } from '@/lib/user-service';
 
 type ActiveTab = 'info' | 'password' | 'avatar' | 'cccd';
 
-const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-];
-
 export default function ProfilePage() {
+  const router = useRouter();
   const user = useAuthStore(state => state.user);
   const setUser = useAuthStore(state => state.setUser);
   
@@ -149,12 +143,13 @@ export default function ProfilePage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  // Helper to persist state updates locally
+  // Helper to persist state updates locally and trigger live UI refresh
   const syncLocalUserState = (updatedFields: Partial<typeof user>) => {
     if (!user) return;
     const newProfile = { ...user, ...updatedFields };
     setUser(newProfile as any);
     document.cookie = `pchub-user=${encodeURIComponent(JSON.stringify(newProfile))}; path=/; max-age=2592000; SameSite=Lax`;
+    router.refresh();
   };
 
   // --- SUBMIT 1: nks/user/updateInfo ---

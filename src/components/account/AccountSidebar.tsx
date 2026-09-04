@@ -24,9 +24,16 @@ const links = [
   ['/tai-khoan/dia-chi', 'Địa chỉ giao hàng', MapPin],
 ] as const;
 
-export default function AccountSidebar({ userName, userEmail, avatarUrl }: AccountSidebarProps) {
+export default function AccountSidebar({ userName: initialName, userEmail: initialEmail, avatarUrl: initialAvatar }: AccountSidebarProps) {
   const pathname = usePathname();
   const logout = useAuthStore(state => state.logout);
+  const storeUser = useAuthStore(state => state.user);
+
+  // Subscribe to live updated user state from Zustand store first, fallback to server props
+  const nksUser = (storeUser as any)?.user || storeUser;
+  const avatarUrl = nksUser?.avatar || storeUser?.avatar || initialAvatar;
+  const userName = nksUser?.name || storeUser?.name || initialName || 'Khách hàng';
+  const userEmail = nksUser?.email || storeUser?.email || initialEmail || '';
 
   const handleLogout = () => {
     localStorage.removeItem('pchub-profile-extra');
