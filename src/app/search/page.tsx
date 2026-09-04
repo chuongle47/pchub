@@ -102,17 +102,17 @@ function SearchContent() {
       .catch((err) => console.error('Failed to load brands:', err));
   }, []);
 
-  // Helper to sort products in memory instantly
-  const sortProductsLocally = (items: any[], sortMode: string) => {
-    const sorted = [...items];
-    if (sortMode === 'price_asc') sorted.sort((a, b) => a.price - b.price);
-    else if (sortMode === 'price_desc') sorted.sort((a, b) => b.price - a.price);
-    else if (sortMode === 'name_asc') sorted.sort((a, b) => a.name.localeCompare(b.name));
-    else if (sortMode === 'name_desc') sorted.sort((a, b) => b.name.localeCompare(a.name));
-    return sorted;
-  };
+  // Pure client-side memoized product sorting (100% instant, 0 network requests)
+  const displayedProducts = React.useMemo(() => {
+    const copy = [...products];
+    if (sort === 'price_asc') copy.sort((a, b) => a.price - b.price);
+    else if (sort === 'price_desc') copy.sort((a, b) => b.price - a.price);
+    else if (sort === 'name_asc') copy.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === 'name_desc') copy.sort((a, b) => b.name.localeCompare(a.name));
+    return copy;
+  }, [products, sort]);
 
-  // Main Products Fetching effect (re-fetches when query, category, brand, price, or page change)
+  // Main Products Fetching effect (re-fetches when search, category, brand, price, or page change)
   useEffect(() => {
     async function loadFilteredProducts() {
       try {
@@ -124,7 +124,6 @@ function SearchContent() {
         if (selectedBrands.length > 0) paramsObj.set('brand_id', selectedBrands.join(','));
         if (appliedMinPrice) paramsObj.set('min_price', appliedMinPrice);
         if (appliedMaxPrice) paramsObj.set('max_price', appliedMaxPrice);
-        paramsObj.set('sort', sort);
         paramsObj.set('page', currentPage.toString());
         paramsObj.set('limit', '16');
 
@@ -151,7 +150,7 @@ function SearchContent() {
             };
           });
           
-          setProducts(sortProductsLocally(mapped, sort));
+          setProducts(mapped);
           if (data.pagination) {
             setPagination(data.pagination);
           } else {
@@ -172,15 +171,9 @@ function SearchContent() {
     loadFilteredProducts();
   }, [urlSearch, selectedCategory, selectedBrands, appliedMinPrice, appliedMaxPrice, currentPage]);
 
-  // Instant In-Memory Sort Handler (No loading skeleton)
+  // Instant In-Memory Sort Handler (Pure state update, zero router navigation or re-fetching)
   const handleSortChange = (newSort: string) => {
     setSort(newSort);
-    setProducts(prev => sortProductsLocally(prev, newSort));
-
-    // Update URL quietly without triggering page refresh
-    const current = new URLSearchParams(searchParams?.toString() || '');
-    current.set('sort', newSort);
-    router.replace(`/search?${current.toString()}`, { scroll: false });
   };
 
   // Update URL state helper
@@ -901,7 +894,7 @@ function SearchContent() {
                   </div>
                 ))}
               </div>
-            ) : products.length === 0 ? (
+            ) : displayedProducts.length === 0 ? (
               /* EMPTY RESULT STATE */
               <div style={{
                 background: '#ffffff',
@@ -955,7 +948,7 @@ function SearchContent() {
                 gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(220px, 1fr))' : '1fr',
                 gap: '20px',
               }}>
-                {products.map(p => {
+                {displayedProducts.map(p => {
                   const isWishlisted = wishlistIds.includes(p.id);
                   const isCompared = compareItems.includes(p.slug);
 
