@@ -19,43 +19,94 @@ export default function OrdersPage() {
   const userPhone = nksUser?.phone || user?.phone || '';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Đơn hàng của tôi</h1>
-          <p className="text-sm text-slate-500 mt-1">Quản lý và theo dõi danh sách các đơn hàng đã đặt</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Đơn hàng của tôi</h1>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Quản lý và theo dõi danh sách các đơn hàng đã đặt</p>
         </div>
-        <span className="text-xs font-semibold px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+        <span style={{
+          fontSize: '12px',
+          fontWeight: 800,
+          color: '#2563eb',
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          padding: '4px 14px',
+          borderRadius: '20px',
+        }}>
           {orders.length} đơn hàng
         </span>
       </div>
       
       {/* Recipient info card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xl flex-shrink-0 overflow-hidden shadow-inner border-2 border-white">
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #2563eb 0%, #4338ca 100%)',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: '20px',
+            flexShrink: 0,
+            overflow: 'hidden',
+            border: '2px solid #ffffff',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+          }}>
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               userName.charAt(0).toUpperCase() || <User size={24} />
             )}
           </div>
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Thông tin người nhận</span>
-            <h3 className="font-bold text-slate-900 text-base mt-0.5">{userName} <span className="text-slate-400 font-normal text-sm">· {userEmail}</span></h3>
-            <p className="text-xs text-slate-500 mt-1 font-mono">{userPhone || 'Chưa cập nhật số điện thoại'}</p>
+            <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>Thông tin người nhận</span>
+            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '2px 0 0 0' }}>
+              {userName} <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '13px' }}>· {userEmail}</span>
+            </h3>
+            <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0 0', fontFamily: 'monospace' }}>{userPhone || 'Chưa cập nhật số điện thoại'}</p>
           </div>
         </div>
         <Link 
           href="/tai-khoan/ho-so" 
-          className="inline-flex items-center justify-center px-4 py-2 bg-slate-100 hover:bg-blue-600 hover:text-white text-blue-600 rounded-xl text-xs font-bold transition-all duration-200 self-start sm:self-center"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px 16px',
+            background: '#f1f5f9',
+            color: '#2563eb',
+            border: '1px solid #cbd5e1',
+            borderRadius: '10px',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+          }}
         >
           Chỉnh sửa
         </Link>
       </div>
 
       {/* Orders List */}
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {orders.length ? (
           orders.map(order => {
             const isDelivered = order.status === 'delivered';
@@ -67,17 +118,36 @@ export default function OrdersPage() {
               <div 
                 key={order.id} 
                 onClick={() => setSelectedOrder(order)}
-                className="bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
               >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-slate-900 text-base group-hover:text-blue-600 transition-colors">{order.id}</span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                      isDelivered ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                      isShipping ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                      'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>{order.id}</span>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      background: isDelivered ? '#ecfdf5' : isCancelled ? '#fff1f2' : isShipping ? '#eef2ff' : '#fffbeb',
+                      color: isDelivered ? '#047857' : isCancelled ? '#be123c' : isShipping ? '#4338ca' : '#b45309',
+                      border: `1px solid ${isDelivered ? '#a7f3d0' : isCancelled ? '#fecdd3' : isShipping ? '#c7d2fe' : '#fde68a'}`,
+                    }}>
                       {isDelivered && <CheckCircle2 size={13} />}
                       {isCancelled && <XCircle size={13} />}
                       {isShipping && <Truck size={13} />}
@@ -89,18 +159,23 @@ export default function OrdersPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span>📅 Ngày đặt: <strong className="text-slate-700 font-semibold">{order.date}</strong></span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12.5px', color: '#64748b' }}>
+                    <span>📅 Ngày đặt: <strong style={{ color: '#334155', fontWeight: 700 }}>{order.date}</strong></span>
                     {order.products?.length > 0 && (
                       <span>📦 {order.products.length} sản phẩm</span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  <div className="text-left sm:text-right">
-                    <span className="text-[11px] text-slate-400 block font-medium">Tổng tiền thanh toán</span>
-                    <span className="font-extrabold text-blue-600 text-lg font-mono">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '20px',
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', fontWeight: 600 }}>Tổng tiền thanh toán</span>
+                    <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '17px', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                       {(Number(order.total) || 0).toLocaleString('vi-VN')} ₫
                     </span>
                   </div>
@@ -110,7 +185,20 @@ export default function OrdersPage() {
                       e.stopPropagation();
                       setSelectedOrder(order);
                     }}
-                    className="inline-flex items-center gap-1 px-4 py-2.5 bg-blue-50 group-hover:bg-blue-600 text-blue-600 group-hover:text-white rounded-xl text-xs font-extrabold transition-all duration-200"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '9px 16px',
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '10px',
+                      fontSize: '12.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
                   >
                     Xem chi tiết <ChevronRight size={14} />
                   </button>
@@ -119,11 +207,33 @@ export default function OrdersPage() {
             );
           })
         ) : (
-          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
-            <Package size={48} className="mx-auto text-slate-300 mb-3" />
-            <h3 className="text-base font-bold text-slate-800">Bạn chưa có đơn hàng nào</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Tất cả thông tin đơn hàng mua sắm của bạn sẽ được hiển thị tại đây.</p>
-            <Link href="/" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '48px 24px',
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          }}>
+            <Package size={48} style={{ margin: '0 auto 12px auto', color: '#cbd5e1' }} />
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', margin: 0 }}>Bạn chưa có đơn hàng nào</h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px auto 0 auto', maxWidth: '360px' }}>Tất cả thông tin đơn hàng mua sắm của bạn sẽ được hiển thị tại đây.</p>
+            <Link
+              href="/"
+              style={{
+                marginTop: '16px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 20px',
+                background: '#2563eb',
+                color: '#ffffff',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
               Khám phá sản phẩm ngay
             </Link>
           </div>
