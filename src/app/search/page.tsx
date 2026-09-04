@@ -102,7 +102,17 @@ function SearchContent() {
       .catch((err) => console.error('Failed to load brands:', err));
   }, []);
 
-  // Main Products Fetching effect
+  // Helper to sort products in memory instantly
+  const sortProductsLocally = (items: any[], sortMode: string) => {
+    const sorted = [...items];
+    if (sortMode === 'price_asc') sorted.sort((a, b) => a.price - b.price);
+    else if (sortMode === 'price_desc') sorted.sort((a, b) => b.price - a.price);
+    else if (sortMode === 'name_asc') sorted.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortMode === 'name_desc') sorted.sort((a, b) => b.name.localeCompare(a.name));
+    return sorted;
+  };
+
+  // Main Products Fetching effect (re-fetches when query, category, brand, price, or page change)
   useEffect(() => {
     async function loadFilteredProducts() {
       try {
@@ -114,7 +124,7 @@ function SearchContent() {
         if (selectedBrands.length > 0) paramsObj.set('brand_id', selectedBrands.join(','));
         if (appliedMinPrice) paramsObj.set('min_price', appliedMinPrice);
         if (appliedMaxPrice) paramsObj.set('max_price', appliedMaxPrice);
-        if (sort) paramsObj.set('sort', sort);
+        paramsObj.set('sort', sort);
         paramsObj.set('page', currentPage.toString());
         paramsObj.set('limit', '16');
 
@@ -140,7 +150,8 @@ function SearchContent() {
               specs: p.specs || {},
             };
           });
-          setProducts(mapped);
+          
+          setProducts(sortProductsLocally(mapped, sort));
           if (data.pagination) {
             setPagination(data.pagination);
           } else {
@@ -159,7 +170,18 @@ function SearchContent() {
     }
 
     loadFilteredProducts();
-  }, [urlSearch, selectedCategory, selectedBrands, appliedMinPrice, appliedMaxPrice, sort, currentPage]);
+  }, [urlSearch, selectedCategory, selectedBrands, appliedMinPrice, appliedMaxPrice, currentPage]);
+
+  // Instant In-Memory Sort Handler (No loading skeleton)
+  const handleSortChange = (newSort: string) => {
+    setSort(newSort);
+    setProducts(prev => sortProductsLocally(prev, newSort));
+
+    // Update URL quietly without triggering page refresh
+    const current = new URLSearchParams(searchParams?.toString() || '');
+    current.set('sort', newSort);
+    router.replace(`/search?${current.toString()}`, { scroll: false });
+  };
 
   // Update URL state helper
   const updateQueryParams = (newParams: Record<string, string | null>) => {
@@ -718,10 +740,7 @@ function SearchContent() {
                   <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>Sắp xếp:</span>
                   <select
                     value={sort}
-                    onChange={(e) => {
-                      setSort(e.target.value);
-                      updateQueryParams({ sort: e.target.value });
-                    }}
+                    onChange={(e) => handleSortChange(e.target.value)}
                     style={{
                       border: '1.5px solid #cbd5e1',
                       borderRadius: '10px',
