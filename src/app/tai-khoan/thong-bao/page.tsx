@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Package, Tag, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Bell, Package, Tag, ShieldCheck } from 'lucide-react';
 
 const NOTIFICATIONS = [
   {
@@ -10,7 +10,9 @@ const NOTIFICATIONS = [
     time: '10 phút trước',
     unread: true,
     icon: Package,
-    iconColor: 'text-blue-600 bg-blue-50 border-blue-100',
+    color: '#2563eb',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
   },
   {
     id: 2,
@@ -19,7 +21,9 @@ const NOTIFICATIONS = [
     time: '2 giờ trước',
     unread: false,
     icon: Tag,
-    iconColor: 'text-amber-600 bg-amber-50 border-amber-100',
+    color: '#d97706',
+    bg: '#fffbeb',
+    border: '#fef3c7',
   },
   {
     id: 3,
@@ -28,47 +32,80 @@ const NOTIFICATIONS = [
     time: 'Hôm qua',
     unread: false,
     icon: ShieldCheck,
-    iconColor: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+    color: '#059669',
+    bg: '#ecfdf5',
+    border: '#d1fae5',
   },
 ];
 
 export default function NotificationsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Thông báo của tôi</h1>
-          <p className="text-sm text-slate-500 mt-1">Cập nhật tin tức đơn hàng, bảo hành và khuyến mãi mới nhất</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Thông báo của tôi</h1>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Cập nhật tin tức đơn hàng, bảo hành và khuyến mãi mới nhất</p>
         </div>
-        <span className="text-xs font-semibold px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+        <span style={{
+          fontSize: '12px',
+          fontWeight: 800,
+          color: '#2563eb',
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          padding: '4px 14px',
+          borderRadius: '20px',
+        }}>
           3 thông báo
         </span>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm divide-y divide-slate-100">
-        {NOTIFICATIONS.map((item) => {
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+      }}>
+        {NOTIFICATIONS.map((item, idx) => {
           const Icon = item.icon;
           return (
             <div
               key={item.id}
-              className={`p-5 flex items-start gap-4 transition-colors ${
-                item.unread ? 'bg-blue-50/30' : 'hover:bg-slate-50/60'
-              }`}
+              style={{
+                padding: '18px 20px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '16px',
+                background: item.unread ? '#f8fafc' : '#ffffff',
+                borderBottom: idx < NOTIFICATIONS.length - 1 ? '1px solid #f1f5f9' : 'none',
+              }}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${item.iconColor}`}>
-                <Icon size={18} />
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: item.bg,
+                border: `1px solid ${item.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Icon size={20} color={item.color} />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {item.title}
                     {item.unread && (
-                      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" />
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', display: 'inline-block' }} />
                     )}
                   </h3>
-                  <span className="text-[11px] text-slate-400 font-medium shrink-0">{item.time}</span>
+                  <span style={{ fontSize: '11.5px', color: '#94a3b8', fontWeight: 600, flexShrink: 0 }}>{item.time}</span>
                 </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{item.message}</p>
+                <p style={{ fontSize: '13px', color: '#475569', margin: '4px 0 0 0', lineHeight: '1.5' }}>{item.message}</p>
               </div>
             </div>
           );

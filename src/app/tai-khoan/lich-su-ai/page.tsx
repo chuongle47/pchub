@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bot, Sparkles, ChevronRight, Calendar, ArrowRight } from 'lucide-react';
+import { Bot, Sparkles, Calendar, ArrowRight } from 'lucide-react';
 
 const AI_HISTORY = [
   {
@@ -29,48 +29,106 @@ const AI_HISTORY = [
 
 export default function AIHistoryPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Lịch sử AI Chat & Tư vấn</h1>
-          <p className="text-sm text-slate-500 mt-1">Xem lại các đoạn hội thoại tư vấn và phân tích từ AI Advisor</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Lịch sử AI Chat & Tư vấn</h1>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Xem lại các đoạn hội thoại tư vấn và phân tích từ AI Advisor</p>
         </div>
         <Link
           href="/kiem-tra-tuong-thich"
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-200"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: '#2563eb',
+            color: '#ffffff',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+            whiteSpace: 'nowrap',
+          }}
         >
           <Sparkles size={16} /> Hỏi AI Advisor mới
         </Link>
       </div>
 
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {AI_HISTORY.map((item) => (
           <div
             key={item.title}
-            className="bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-5 shadow-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+            }}
           >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shrink-0 shadow-md">
-                <Bot size={24} />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', flex: 1, minWidth: '280px' }}>
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 4px 10px rgba(37,99,235,0.2)',
+              }}>
+                <Bot size={22} />
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-extrabold text-slate-900 text-sm">{item.title}</h3>
-                  <span className="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{item.title}</h3>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: '#1d4ed8',
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    padding: '2px 10px',
+                    borderRadius: '20px',
+                  }}>
                     {item.type}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
-                <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
-                  <span className="flex items-center gap-1"><Calendar size={12} /> {item.date}</span>
-                  <span>✨ Điểm tương thích AI: <strong className="text-emerald-600">{item.score}</strong></span>
+                <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: '1.5' }}>{item.desc}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: '#94a3b8', paddingTop: '4px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={13} /> {item.date}</span>
+                  <span>✨ Điểm tương thích AI: <strong style={{ color: '#059669' }}>{item.score}</strong></span>
                 </div>
               </div>
             </div>
 
             <Link
               href="/kiem-tra-tuong-thich"
-              className="inline-flex items-center gap-1 px-4 py-2.5 bg-slate-50 hover:bg-blue-600 text-slate-700 hover:text-white rounded-xl text-xs font-bold transition-all shrink-0 self-start sm:self-center"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '9px 16px',
+                background: '#f8fafc',
+                color: '#2563eb',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
             >
               Xem chi tiết <ArrowRight size={14} />
             </Link>
