@@ -165,83 +165,92 @@ export default function CartPage() {
               </div>
 
               {/* Items */}
-              {items.map(({ product, quantity }) => (
-                <div key={product.id} style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1fr 1fr 40px',
-                  gap: '12px',
-                  padding: '16px 20px',
-                  alignItems: 'center',
-                  borderBottom: '1px solid #f8fafc',
-                }}>
-                  {/* Product */}
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{
-                      width: '72px', height: '72px', flexShrink: 0,
-                      background: '#f8fafc', borderRadius: '10px',
-                      border: '1px solid #f1f5f9',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{ maxWidth: '56px', maxHeight: '56px', objectFit: 'contain' }}
-                        onError={e => { (e.target as HTMLImageElement).src = '/images/cpu-box.jpg'; }}
-                      />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{
-                        fontSize: '13px', fontWeight: 700, color: '#0f172a',
-                        lineHeight: '1.4', marginBottom: '6px',
-                        overflow: 'hidden', display: '-webkit-box',
-                        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              {items.map((item, idx) => {
+                const prodId = item.product?.id || item.id || `cart-item-${idx}`;
+                const prodName = item.product?.name || item.name || 'Sản phẩm linh kiện';
+                const prodImage = item.product?.image || item.image || '/images/cpu-box.jpg';
+                const prodPrice = item.product?.price || item.price || 0;
+                const prodOriginalPrice = item.product?.originalPrice || item.originalPrice;
+                const quantity = item.quantity || 1;
+
+                return (
+                  <div key={prodId} style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1fr 1fr 40px',
+                    gap: '12px',
+                    padding: '16px 20px',
+                    alignItems: 'center',
+                    borderBottom: '1px solid #f8fafc',
+                  }}>
+                    {/* Product */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <div style={{
+                        width: '72px', height: '72px', flexShrink: 0,
+                        background: '#f8fafc', borderRadius: '10px',
+                        border: '1px solid #f1f5f9',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        {product.name}
-                      </p>
-                      <div style={{ fontSize: '13px', fontWeight: 900, color: '#ef4444' }}>
-                        {product.price.toLocaleString('vi-VN')}₫
+                        <img
+                          src={prodImage}
+                          alt={prodName}
+                          style={{ maxWidth: '56px', maxHeight: '56px', objectFit: 'contain' }}
+                          onError={e => { (e.target as HTMLImageElement).src = '/images/cpu-box.jpg'; }}
+                        />
                       </div>
-                      {product.originalPrice && (
-                        <del style={{ fontSize: '11px', color: '#94a3b8' }}>
-                          {product.originalPrice.toLocaleString('vi-VN')}₫
-                        </del>
-                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{
+                          fontSize: '13px', fontWeight: 700, color: '#0f172a',
+                          lineHeight: '1.4', marginBottom: '6px',
+                          overflow: 'hidden', display: '-webkit-box',
+                          WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        }}>
+                          {prodName}
+                        </p>
+                        <div style={{ fontSize: '13px', fontWeight: 900, color: '#ef4444' }}>
+                          {prodPrice.toLocaleString('vi-VN')}₫
+                        </div>
+                        {prodOriginalPrice && (
+                          <del style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {prodOriginalPrice.toLocaleString('vi-VN')}₫
+                          </del>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Quantity */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0' }}>
-                    <button
-                      onClick={() => updateQty(product.id, quantity - 1)}
-                      style={{ width: '30px', height: '30px', border: '1px solid #e2e8f0', borderRight: 'none', borderRadius: '6px 0 0 6px', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <div style={{ width: '38px', height: '30px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}>
-                      {quantity}
+                    {/* Quantity */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0' }}>
+                      <button
+                        onClick={() => updateQty(prodId, quantity - 1)}
+                        style={{ width: '30px', height: '30px', border: '1px solid #e2e8f0', borderRight: 'none', borderRadius: '6px 0 0 6px', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <div style={{ width: '38px', height: '30px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}>
+                        {quantity}
+                      </div>
+                      <button
+                        onClick={() => updateQty(prodId, quantity + 1)}
+                        style={{ width: '30px', height: '30px', border: '1px solid #e2e8f0', borderLeft: 'none', borderRadius: '0 6px 6px 0', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Plus size={12} />
+                      </button>
                     </div>
+
+                    {/* Subtotal */}
+                    <div style={{ textAlign: 'right', fontSize: '14px', fontWeight: 900, color: '#2563eb', fontFamily: 'monospace' }}>
+                      {(prodPrice * quantity).toLocaleString('vi-VN')}₫
+                    </div>
+
+                    {/* Delete */}
                     <button
-                      onClick={() => updateQty(product.id, quantity + 1)}
-                      style={{ width: '30px', height: '30px', border: '1px solid #e2e8f0', borderLeft: 'none', borderRadius: '0 6px 6px 0', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onClick={() => removeItem(prodId)}
+                      style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', justifySelf: 'center' }}
                     >
-                      <Plus size={12} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
-
-                  {/* Subtotal */}
-                  <div style={{ textAlign: 'right', fontSize: '14px', fontWeight: 900, color: '#2563eb', fontFamily: 'monospace' }}>
-                    {(product.price * quantity).toLocaleString('vi-VN')}₫
-                  </div>
-
-                  {/* Delete */}
-                  <button
-                    onClick={() => removeItem(product.id)}
-                    style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', justifySelf: 'center' }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* AI Smart Match banner */}
