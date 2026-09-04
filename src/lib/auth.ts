@@ -9,6 +9,11 @@ export interface User {
   lastname?: string;
   dob?: string;
   gender?: number;
+  cccd?: string;
+  cccd_issue_date?: string;
+  cccd_issue_place?: string;
+  cccd_front_image?: string;
+  cccd_back_image?: string;
 }
 
 export function normalizeUser(rawUser: any): User | null {
@@ -29,6 +34,11 @@ export function normalizeUser(rawUser: any): User | null {
     lastname: rawUser.lastname,
     dob: rawUser.dob,
     gender: rawUser.gender,
+    cccd: rawUser.cccd,
+    cccd_issue_date: rawUser.cccd_issue_date ?? rawUser.issue_date,
+    cccd_issue_place: rawUser.cccd_issue_place ?? rawUser.issue_place,
+    cccd_front_image: rawUser.cccd_front_image ?? rawUser.front_image,
+    cccd_back_image: rawUser.cccd_back_image ?? rawUser.back_image,
   };
 }
 

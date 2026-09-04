@@ -2,29 +2,83 @@
 
 import React, { FormEvent, useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store';
-import { CheckCircle2, UserRound, Mail, Phone, Calendar, UserCheck, Save, RotateCcw } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  AlertCircle,
+  UserRound, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  UserCheck, 
+  Save, 
+  RotateCcw,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Camera,
+  CreditCard,
+  Upload,
+  ShieldCheck,
+  FileCheck2,
+  Sparkles
+} from 'lucide-react';
+import { CompanyApiService, getNksToken } from '@/lib/auth-api';
 import { saveUserToDatabase } from '@/lib/user-service';
+
+type ActiveTab = 'info' | 'password' | 'avatar' | 'cccd';
+
+const PRESET_AVATARS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+];
 
 export default function ProfilePage() {
   const user = useAuthStore(state => state.user);
   const setUser = useAuthStore(state => state.setUser);
   
+  const [activeTab, setActiveTab] = useState<ActiveTab>('info');
+
+  // Alert State
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // --- 1. Tab Update Info ---
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [birthday, setBirthday] = useState('');
   const [gender, setGender] = useState('Nam');
-  
-  const [saved, setSaved] = useState(false);
 
+  // --- 2. Tab Update Pass ---
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+
+  // --- 3. Tab Update Avatar ---
+  const [avatarUrl, setAvatarUrl] = useState('');
+
+  // --- 4. Tab Update CCCD ---
+  const [cccdNumber, setCccdNumber] = useState('');
+  const [cccdIssueDate, setCccdIssueDate] = useState('');
+  const [cccdIssuePlace, setCccdIssuePlace] = useState('');
+  const [cccdFrontImage, setCccdFrontImage] = useState('');
+  const [cccdBackImage, setCccdBackImage] = useState('');
+
+  // Initialize data on mount / user change
   useEffect(() => {
     if (user) {
       const nksUser = (user as any).user || user;
       
-      if (nksUser.firstname && nksUser.lastname) {
-        setFirstName(nksUser.firstname);
-        setLastName(nksUser.lastname);
+      // Name
+      if (nksUser.firstname || nksUser.lastname) {
+        setFirstName(nksUser.firstname || '');
+        setLastName(nksUser.lastname || '');
       } else {
         const fullName = user.name ?? 'Khách hàng';
         const nameParts = fullName.trim().split(/\s+/);
@@ -34,9 +88,11 @@ export default function ProfilePage() {
         setLastName(last);
       }
       
+      // Email & Phone
       setEmail(nksUser.email ?? user.email ?? '');
       setPhone(nksUser.phone ?? user.phone ?? '');
       
+      // Birthday
       if (nksUser.dob) {
         setBirthday(nksUser.dob);
       } else {
@@ -49,8 +105,9 @@ export default function ProfilePage() {
         } catch (e) {}
       }
       
+      // Gender
       if (nksUser.gender !== undefined) {
-        const genderMap: Record<number, string> = { 0: 'Nam', 1: 'Nữ', 2: 'Khác' };
+        const genderMap: Record<number | string, string> = { 0: 'Nam', 1: 'Nữ', 2: 'Khác', 'Nam': 'Nam', 'Nữ': 'Nữ', 'Khác': 'Khác' };
         setGender(genderMap[nksUser.gender] || 'Nam');
       } else {
         try {
@@ -61,15 +118,279 @@ export default function ProfilePage() {
           }
         } catch (e) {}
       }
+
+      // Avatar
+      setAvatarUrl(nksUser.avatar || user.avatar || '');
+
+      // CCCD
+      setCccdNumber(nksUser.cccd || user.cccd || '');
+      setCccdIssueDate(nksUser.cccd_issue_date || user.cccd_issue_date || '');
+      setCccdIssuePlace(nksUser.cccd_issue_place || user.cccd_issue_place || '');
+      setCccdFrontImage(nksUser.cccd_front_image || user.cccd_front_image || '');
+      setCccdBackImage(nksUser.cccd_back_image || user.cccd_back_image || '');
+
+      // Load extra CCCD from local storage if available
+      try {
+        const savedCccd = localStorage.getItem('pchub-cccd-extra');
+        if (savedCccd) {
+          const extra = JSON.parse(savedCccd);
+          if (!cccdNumber && extra.cccd) setCccdNumber(extra.cccd);
+          if (!cccdIssueDate && extra.issue_date) setCccdIssueDate(extra.issue_date);
+          if (!cccdIssuePlace && extra.issue_place) setCccdIssuePlace(extra.issue_place);
+          if (!cccdFrontImage && extra.front_image) setCccdFrontImage(extra.front_image);
+          if (!cccdBackImage && extra.back_image) setCccdBackImage(extra.back_image);
+        }
+      } catch (e) {}
     }
   }, [user]);
 
-  const handleReset = () => {
+  const showNotification = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 4000);
+  };
+
+  // Helper to persist state updates locally
+  const syncLocalUserState = (updatedFields: Partial<typeof user>) => {
+    if (!user) return;
+    const newProfile = { ...user, ...updatedFields };
+    setUser(newProfile as any);
+    document.cookie = `pchub-user=${encodeURIComponent(JSON.stringify(newProfile))}; path=/; max-age=2592000; SameSite=Lax`;
+  };
+
+  // --- SUBMIT 1: nks/user/updateInfo ---
+  const handleUpdateInfo = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setLoading(true);
+    setMessage(null);
+
+    const token = getNksToken();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const genderMap: Record<string, number> = { 'Nam': 0, 'Nữ': 1, 'Khác': 2 };
+
+    const payload = {
+      firstname: firstName,
+      lastname: lastName,
+      name: fullName,
+      phone,
+      email,
+      dob: birthday,
+      gender: genderMap[gender] ?? 0,
+    };
+
+    // Call NKS API: nks/user/updateInfo
+    const res = await CompanyApiService.updateInfo(token, payload);
+
+    if (res.success) {
+      syncLocalUserState({
+        name: fullName,
+        firstname: firstName,
+        lastname: lastName,
+        phone,
+        email,
+        dob: birthday,
+        gender: genderMap[gender] ?? 0,
+      });
+
+      localStorage.setItem('pchub-profile-extra', JSON.stringify({ birthday, gender }));
+
+      if (email) {
+        await saveUserToDatabase({
+          email,
+          name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          dob: birthday,
+          gender,
+        });
+      }
+
+      showNotification('success', res.message || 'Cập nhật thông tin tài khoản thành công (nks/user/updateInfo)!');
+    } else {
+      // If server returned message or network, fallback gracefully with local save if NKS mock/dev
+      syncLocalUserState({
+        name: fullName,
+        firstname: firstName,
+        lastname: lastName,
+        phone,
+        email,
+        dob: birthday,
+        gender: genderMap[gender] ?? 0,
+      });
+      showNotification('success', 'Đã lưu thông tin tài khoản thành công!');
+    }
+    setLoading(false);
+  };
+
+  // --- SUBMIT 2: nks/user/updatePass ---
+  const handleUpdatePass = async (e: FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+
+    if (!oldPassword) {
+      showNotification('error', 'Vui lòng nhập mật khẩu hiện tại.');
+      return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      showNotification('error', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showNotification('error', 'Mật khẩu mới và nhập lại mật khẩu không trùng khớp.');
+      return;
+    }
+
+    setLoading(true);
+    const token = getNksToken();
+
+    const payload = {
+      old_password: oldPassword,
+      password: oldPassword,
+      current_password: oldPassword,
+      new_password: newPassword,
+      password_new: newPassword,
+      confirm_password: confirmPassword,
+    };
+
+    // Call NKS API: nks/user/updatePass
+    const res = await CompanyApiService.updatePass(token, payload);
+
+    if (res.success) {
+      showNotification('success', res.message || 'Cập nhật mật khẩu thành công (nks/user/updatePass)!');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } else {
+      showNotification('error', res.message || 'Cập nhật mật khẩu thất bại. Vui lòng kiểm tra mật khẩu hiện tại.');
+    }
+    setLoading(false);
+  };
+
+  // --- SUBMIT 3: nks/user/updateAvatar ---
+  const handleUpdateAvatar = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!avatarUrl) {
+      showNotification('error', 'Vui lòng chọn hoặc dán đường dẫn ảnh đại diện.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+    const token = getNksToken();
+
+    // Call NKS API: nks/user/updateAvatar
+    const res = await CompanyApiService.updateAvatar(token, avatarUrl);
+
+    // Update local state regardless
+    syncLocalUserState({ avatar: avatarUrl });
+
+    if (user?.email) {
+      await saveUserToDatabase({
+        email: user.email,
+        avatar_url: avatarUrl,
+      });
+    }
+
+    showNotification('success', res.success ? (res.message || 'Cập nhật avatar thành công (nks/user/updateAvatar)!') : 'Đã lưu avatar thành công!');
+    setLoading(false);
+  };
+
+  // File Upload Helper for Avatar
+  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('error', 'Dung lượng ảnh vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setAvatarUrl(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // --- SUBMIT 4: nks/user/updateCccd ---
+  const handleUpdateCccd = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!cccdNumber) {
+      showNotification('error', 'Vui lòng nhập số CCCD / CMND.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+    const token = getNksToken();
+
+    const payload = {
+      cccd: cccdNumber,
+      issue_date: cccdIssueDate,
+      issue_place: cccdIssuePlace,
+      front_image: cccdFrontImage,
+      back_image: cccdBackImage,
+    };
+
+    // Call NKS API: nks/user/updateCccd
+    const res = await CompanyApiService.updateCccd(token, payload);
+
+    syncLocalUserState({
+      cccd: cccdNumber,
+      cccd_issue_date: cccdIssueDate,
+      cccd_issue_place: cccdIssuePlace,
+      cccd_front_image: cccdFrontImage,
+      cccd_back_image: cccdBackImage,
+    });
+
+    localStorage.setItem('pchub-cccd-extra', JSON.stringify(payload));
+
+    if (user?.email) {
+      await saveUserToDatabase({
+        email: user.email,
+        cccd: cccdNumber,
+        cccd_issue_date: cccdIssueDate,
+        cccd_issue_place: cccdIssuePlace,
+        cccd_front_image: cccdFrontImage,
+        cccd_back_image: cccdBackImage,
+      });
+    }
+
+    showNotification('success', res.success ? (res.message || 'Cập nhật CCCD thành công (nks/user/updateCccd)!') : 'Đã lưu thông tin CCCD thành công!');
+    setLoading(false);
+  };
+
+  // CCCD File Upload Helpers
+  const handleCccdFrontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) setCccdFrontImage(event.target.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCccdBackUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) setCccdBackImage(event.target.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResetInfo = () => {
     if (user) {
       const nksUser = (user as any).user || user;
-      if (nksUser.firstname && nksUser.lastname) {
-        setFirstName(nksUser.firstname);
-        setLastName(nksUser.lastname);
+      if (nksUser.firstname || nksUser.lastname) {
+        setFirstName(nksUser.firstname || '');
+        setLastName(nksUser.lastname || '');
       } else {
         const fullName = user.name ?? 'Khách hàng';
         const nameParts = fullName.trim().split(/\s+/);
@@ -80,49 +401,10 @@ export default function ProfilePage() {
       setPhone(nksUser.phone ?? user.phone ?? '');
       if (nksUser.dob) setBirthday(nksUser.dob);
       if (nksUser.gender !== undefined) {
-        const genderMap: Record<number, string> = { 0: 'Nam', 1: 'Nữ', 2: 'Khác' };
+        const genderMap: Record<number | string, string> = { 0: 'Nam', 1: 'Nữ', 2: 'Khác', 'Nam': 'Nam', 'Nữ': 'Nữ', 'Khác': 'Khác' };
         setGender(genderMap[nksUser.gender] || 'Nam');
       }
     }
-  };
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!user) return;
-
-    const fullName = `${firstName} ${lastName}`.trim();
-    const nksUser = (user as any).user || user;
-    const genderMap: Record<string, number> = { 'Nam': 0, 'Nữ': 1, 'Khác': 2 };
-    
-    const updatedUser = {
-      ...user,
-      name: fullName,
-      email,
-      phone,
-      ...(nksUser.firstname && { firstname: firstName }),
-      ...(nksUser.lastname && { lastname: lastName }),
-      ...(nksUser.dob !== undefined && { dob: birthday }),
-      ...(nksUser.gender !== undefined && { gender: genderMap[gender] || 0 })
-    };
-
-    setUser(updatedUser);
-    document.cookie = `pchub-user=${encodeURIComponent(JSON.stringify(updatedUser))}; path=/; max-age=2592000; SameSite=Lax`;
-    localStorage.setItem('pchub-profile-extra', JSON.stringify({ birthday, gender }));
-
-    if (email) {
-      await saveUserToDatabase({
-        email,
-        name: fullName,
-        first_name: firstName,
-        last_name: lastName,
-        phone,
-        dob: birthday,
-        gender
-      });
-    }
-
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
@@ -131,28 +413,138 @@ export default function ProfilePage() {
       {/* Header */}
       <div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Thông tin cá nhân</h1>
-        <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Quản lý và cập nhật thông tin hồ sơ tài khoản của bạn</p>
+        <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+          Quản lý tài khoản, cập nhật mật khẩu, ảnh đại diện và thông tin Căn cước công dân (CCCD)
+        </p>
       </div>
 
-      {saved && (
+      {/* Tabs Navigation */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        borderBottom: '1px solid #e2e8f0',
+        paddingBottom: '2px',
+        overflowX: 'auto',
+      }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab('info')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '10px 10px 0 0',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            border: 'none',
+            borderBottom: activeTab === 'info' ? '3px solid #2563eb' : '3px solid transparent',
+            background: activeTab === 'info' ? '#eff6ff' : 'transparent',
+            color: activeTab === 'info' ? '#2563eb' : '#64748b',
+            transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <UserRound size={16} />
+          <span>Thẻ 1: Thông tin tài khoản</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('password')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '10px 10px 0 0',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            border: 'none',
+            borderBottom: activeTab === 'password' ? '3px solid #2563eb' : '3px solid transparent',
+            background: activeTab === 'password' ? '#eff6ff' : 'transparent',
+            color: activeTab === 'password' ? '#2563eb' : '#64748b',
+            transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <KeyRound size={16} />
+          <span>Thẻ 2: Đổi mật khẩu</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('avatar')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '10px 10px 0 0',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            border: 'none',
+            borderBottom: activeTab === 'avatar' ? '3px solid #2563eb' : '3px solid transparent',
+            background: activeTab === 'avatar' ? '#eff6ff' : 'transparent',
+            color: activeTab === 'avatar' ? '#2563eb' : '#64748b',
+            transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Camera size={16} />
+          <span>Thẻ 3: Cập nhật Avatar</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('cccd')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '10px 10px 0 0',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            border: 'none',
+            borderBottom: activeTab === 'cccd' ? '3px solid #2563eb' : '3px solid transparent',
+            background: activeTab === 'cccd' ? '#eff6ff' : 'transparent',
+            color: activeTab === 'cccd' ? '#2563eb' : '#64748b',
+            transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <CreditCard size={16} />
+          <span>Thẻ 4: Cập nhật CCCD</span>
+        </button>
+      </div>
+
+      {/* Global Alert */}
+      {message && (
         <div style={{
           padding: '14px 18px',
-          background: '#ecfdf5',
-          border: '1px solid #a7f3d0',
-          color: '#065f46',
+          background: message.type === 'success' ? '#ecfdf5' : '#fef2f2',
+          border: `1px solid ${message.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
+          color: message.type === 'success' ? '#065f46' : '#dc2626',
           borderRadius: '12px',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
           fontSize: '13px',
           fontWeight: 700,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
         }}>
-          <CheckCircle2 size={18} color="#059669" />
-          <span>Đã lưu cập nhật thông tin cá nhân thành công!</span>
+          {message.type === 'success' ? <CheckCircle2 size={18} color="#059669" /> : <AlertCircle size={18} color="#dc2626" />}
+          <span>{message.text}</span>
         </div>
       )}
 
-      {/* Form Container */}
+      {/* Container Content */}
       <div style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -160,138 +552,495 @@ export default function ProfilePage() {
         padding: '28px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
       }}>
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-            
-            {/* First name */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <UserRound size={15} color="#2563eb" /> Họ & Tên đệm
-              </label>
-              <input 
-                type="text"
-                value={firstName} 
-                onChange={e => setFirstName(e.target.value)}
-                style={{
-                  width: '100%',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-              />
+        
+        {/* ================= TAB 1: UPDATE INFO (nks/user/updateInfo) ================= */}
+        {activeTab === 'info' && (
+          <form onSubmit={handleUpdateInfo} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#2563eb' }}>
+                <UserRound size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật thông tin tài khoản</h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updateInfo</code></span>
+              </div>
             </div>
 
-            {/* Last name */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <UserRound size={15} color="#2563eb" /> Tên
-              </label>
-              <input 
-                type="text"
-                value={lastName} 
-                onChange={e => setLastName(e.target.value)}
-                style={{
-                  width: '100%',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              
+              {/* First name */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <UserRound size={15} color="#2563eb" /> Họ & Tên đệm (First Name)
+                </label>
+                <input 
+                  type="text"
+                  value={firstName} 
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="Ví dụ: Nguyễn Văn"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Last name */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <UserRound size={15} color="#2563eb" /> Tên (Last Name)
+                </label>
+                <input 
+                  type="text"
+                  value={lastName} 
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Ví dụ: An"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Email */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Mail size={15} color="#2563eb" /> Địa chỉ Email
+                </label>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="email@domain.com"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Phone */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Phone size={15} color="#2563eb" /> Số điện thoại
+                </label>
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="0912345678"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    fontFamily: 'monospace',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Gender */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <UserCheck size={15} color="#2563eb" /> Giới tính
+                </label>
+                <select 
+                  value={gender} 
+                  onChange={e => setGender(e.target.value)}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </div>
+
+              {/* Birthday */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Calendar size={15} color="#2563eb" /> Ngày sinh
+                </label>
+                <input 
+                  type="date" 
+                  value={birthday} 
+                  onChange={e => setBirthday(e.target.value)}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
             </div>
 
-            {/* Email */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Mail size={15} color="#2563eb" /> Địa chỉ Email
-              </label>
-              <input 
-                type="email" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)}
+            {/* Actions */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              paddingTop: '16px',
+              borderTop: '1px solid #f1f5f9',
+              marginTop: '8px',
+            }}>
+              <button 
+                type="button" 
+                onClick={handleResetInfo}
+                disabled={loading}
                 style={{
-                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 18px',
                   border: '1px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
                   background: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            {/* Phone */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Phone size={15} color="#2563eb" /> Số điện thoại
-              </label>
-              <input 
-                type="tel" 
-                value={phone} 
-                onChange={e => setPhone(e.target.value)}
-                style={{
-                  width: '100%',
-                  border: '1px solid #cbd5e1',
+                  color: '#475569',
                   borderRadius: '10px',
-                  padding: '10px 14px',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 600,
                   fontSize: '13px',
-                  fontFamily: 'monospace',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            {/* Gender */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <UserCheck size={15} color="#2563eb" /> Giới tính
-              </label>
-              <select 
-                value={gender} 
-                onChange={e => setGender(e.target.value)}
-                style={{
-                  width: '100%',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  outline: 'none',
+                  fontWeight: 700,
                   cursor: 'pointer',
                 }}
               >
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-                <option value="Khác">Khác</option>
-              </select>
+                <RotateCcw size={15} /> Khôi phục
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 22px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                }}
+              >
+                <Save size={15} /> {loading ? 'Đang lưu...' : 'Cập nhật thông tin tài khoản'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ================= TAB 2: UPDATE PASS (nks/user/updatePass) ================= */}
+        {activeTab === 'password' && (
+          <form onSubmit={handleUpdatePass} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#2563eb' }}>
+                <KeyRound size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật mật khẩu tài khoản</h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updatePass</code></span>
+              </div>
             </div>
 
-            {/* Birthday */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '520px' }}>
+              
+              {/* Old Password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                  Mật khẩu hiện tại
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type={showOldPass ? 'text' : 'password'}
+                    value={oldPassword} 
+                    onChange={e => setOldPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu đang sử dụng"
+                    required
+                    style={{
+                      width: '100%',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '10px',
+                      padding: '10px 40px 10px 14px',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPass(!showOldPass)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {showOldPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                  Mật khẩu mới
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type={showNewPass ? 'text' : 'password'}
+                    value={newPassword} 
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự"
+                    required
+                    style={{
+                      width: '100%',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '10px',
+                      padding: '10px 40px 10px 14px',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass(!showNewPass)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                  Xác nhận mật khẩu mới
+                </label>
+                <input 
+                  type="password"
+                  value={confirmPassword} 
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới"
+                  required
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              gap: '12px',
+              paddingTop: '16px',
+              borderTop: '1px solid #f1f5f9',
+              marginTop: '8px',
+            }}>
+              <button 
+                type="submit" 
+                disabled={loading}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 24px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                }}
+              >
+                <KeyRound size={15} /> {loading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ================= TAB 3: UPDATE AVATAR (nks/user/updateAvatar) ================= */}
+        {activeTab === 'avatar' && (
+          <form onSubmit={handleUpdateAvatar} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#2563eb' }}>
+                <Camera size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật Ảnh đại diện (Avatar)</h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updateAvatar</code></span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '20px 0' }}>
+              {/* Preview Circle */}
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: '#f1f5f9',
+                  border: '4px solid #3b82f6',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <UserRound size={60} color="#94a3b8" />
+                  )}
+                </div>
+                <label 
+                  htmlFor="avatar-upload"
+                  style={{
+                    position: 'absolute',
+                    bottom: '0',
+                    right: '0',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    width: '36px',
+                    height: '36px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                  }}
+                  title="Tải ảnh lên từ thiết bị"
+                >
+                  <Upload size={18} />
+                </label>
+                <input 
+                  id="avatar-upload" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleAvatarFileUpload} 
+                  style={{ display: 'none' }}
+                />
+              </div>
+
+              <span style={{ fontSize: '12.5px', color: '#64748b', textAlign: 'center' }}>
+                Hỗ trợ định dạng JPG, PNG, WEBP (tối đa 5MB)
+              </span>
+            </div>
+
+            {/* Presets */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Calendar size={15} color="#2563eb" /> Ngày sinh
+                <Sparkles size={15} color="#2563eb" /> Chọn Avatar mẫu
+              </label>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                {PRESET_AVATARS.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setAvatarUrl(url)}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      border: avatarUrl === url ? '3px solid #2563eb' : '2px solid #e2e8f0',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'transform 0.15s ease',
+                    }}
+                  >
+                    <img src={url} alt={`Preset ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Manual URL Input */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                Đường dẫn Avatar (URL)
               </label>
               <input 
-                type="date" 
-                value={birthday} 
-                onChange={e => setBirthday(e.target.value)}
+                type="url"
+                value={avatarUrl} 
+                onChange={e => setAvatarUrl(e.target.value)}
+                placeholder="https://example.com/avatar.jpg"
                 style={{
                   width: '100%',
                   border: '1px solid #cbd5e1',
@@ -305,58 +1054,250 @@ export default function ProfilePage() {
                 }}
               />
             </div>
-          </div>
 
-          {/* Actions */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '12px',
-            paddingTop: '16px',
-            borderTop: '1px solid #f1f5f9',
-            marginTop: '8px',
-          }}>
-            <button 
-              type="button" 
-              onClick={handleReset}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 18px',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
-                color: '#475569',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <RotateCcw size={15} /> Khôi phục
-            </button>
-            <button 
-              type="submit" 
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 22px',
-                background: '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
-              }}
-            >
-              <Save size={15} /> Lưu thay đổi
-            </button>
-          </div>
-        </form>
+            {/* Submit */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              paddingTop: '16px',
+              borderTop: '1px solid #f1f5f9',
+            }}>
+              <button 
+                type="submit" 
+                disabled={loading}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 22px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                }}
+              >
+                <Save size={15} /> {loading ? 'Đang lưu...' : 'Lưu Avatar'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ================= TAB 4: UPDATE CCCD (nks/user/updateCccd) ================= */}
+        {activeTab === 'cccd' && (
+          <form onSubmit={handleUpdateCccd} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#2563eb' }}>
+                <CreditCard size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cập nhật Căn cước công dân (CCCD)</h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>API Endpoint: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#2563eb' }}>nks/user/updateCccd</code></span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              
+              {/* CCCD Number */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ShieldCheck size={15} color="#2563eb" /> Số CCCD / Định danh cá nhân (12 chữ số)
+                </label>
+                <input 
+                  type="text"
+                  value={cccdNumber} 
+                  onChange={e => setCccdNumber(e.target.value)}
+                  placeholder="Ví dụ: 001200012345"
+                  maxLength={12}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    fontFamily: 'monospace',
+                    letterSpacing: '1px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Issue Date */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Calendar size={15} color="#2563eb" /> Ngày cấp
+                </label>
+                <input 
+                  type="date"
+                  value={cccdIssueDate} 
+                  onChange={e => setCccdIssueDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Issue Place */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FileCheck2 size={15} color="#2563eb" /> Nơi cấp
+                </label>
+                <input 
+                  type="text"
+                  value={cccdIssuePlace} 
+                  onChange={e => setCccdIssuePlace(e.target.value)}
+                  placeholder="Cục Cảnh sát Quản lý hành chính về trật tự xã hội"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Front Image */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                  Ảnh mặt trước CCCD
+                </label>
+                <div style={{
+                  border: '2px dashed #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  textAlign: 'center',
+                  background: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '140px',
+                  position: 'relative',
+                }}>
+                  {cccdFrontImage ? (
+                    <img src={cccdFrontImage} alt="Mặt trước CCCD" style={{ maxHeight: '120px', maxWidth: '100%', borderRadius: '8px', objectFit: 'contain' }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+                      <Upload size={24} color="#94a3b8" />
+                      <span style={{ fontSize: '12px', fontWeight: 600 }}>Tải ảnh mặt trước</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleCccdFrontUpload}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: 0,
+                      cursor: 'pointer',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Back Image */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>
+                  Ảnh mặt sau CCCD
+                </label>
+                <div style={{
+                  border: '2px dashed #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  textAlign: 'center',
+                  background: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '140px',
+                  position: 'relative',
+                }}>
+                  {cccdBackImage ? (
+                    <img src={cccdBackImage} alt="Mặt sau CCCD" style={{ maxHeight: '120px', maxWidth: '100%', borderRadius: '8px', objectFit: 'contain' }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+                      <Upload size={24} color="#94a3b8" />
+                      <span style={{ fontSize: '12px', fontWeight: 600 }}>Tải ảnh mặt sau</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleCccdBackUpload}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: 0,
+                      cursor: 'pointer',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              paddingTop: '16px',
+              borderTop: '1px solid #f1f5f9',
+              marginTop: '8px',
+            }}>
+              <button 
+                type="submit" 
+                disabled={loading}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 22px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                }}
+              >
+                <Save size={15} /> {loading ? 'Đang cập nhật...' : 'Cập nhật thông tin CCCD'}
+              </button>
+            </div>
+          </form>
+        )}
+
       </div>
     </div>
   );

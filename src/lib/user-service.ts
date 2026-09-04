@@ -13,6 +13,11 @@ export interface UserProfile {
   nks_user_id?: string;
   nks_token?: string;
   remember_me?: boolean;
+  cccd?: string;
+  cccd_issue_date?: string;
+  cccd_issue_place?: string;
+  cccd_front_image?: string;
+  cccd_back_image?: string;
 }
 
 export async function saveUserToDatabase(profile: UserProfile) {
@@ -31,6 +36,11 @@ export async function saveUserToDatabase(profile: UserProfile) {
         nks_user_id: profile.nks_user_id,
         nks_token: profile.nks_token,
         remember_me: profile.remember_me,
+        cccd: profile.cccd,
+        cccd_issue_date: profile.cccd_issue_date,
+        cccd_issue_place: profile.cccd_issue_place,
+        cccd_front_image: profile.cccd_front_image,
+        cccd_back_image: profile.cccd_back_image,
         last_login_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, {

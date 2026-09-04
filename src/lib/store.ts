@@ -107,6 +107,11 @@ export interface User {
   lastname?: string;
   dob?: string;
   gender?: number;
+  cccd?: string;
+  cccd_issue_date?: string;
+  cccd_issue_place?: string;
+  cccd_front_image?: string;
+  cccd_back_image?: string;
 }
 
 interface AuthStore {

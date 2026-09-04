@@ -1,5 +1,22 @@
 const BASE_URL = '/api/nks';
 
+export function getNksToken(): string {
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(/(?:^|; )nks_token=([^;]*)/);
+  if (match) return decodeURIComponent(match[1]);
+
+  try {
+    const authStorage = localStorage.getItem('pchub-auth');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      if (parsed.state?.user?.token) return parsed.state.user.token;
+      if (parsed.state?.user?.access_token) return parsed.state.user.access_token;
+    }
+  } catch (e) {}
+
+  return '';
+}
+
 async function postApi(endpoint: string, data: Record<string, any> = {}, token?: string) {
   const url = `${BASE_URL}/${endpoint.replace(/^\//, '')}`;
   
@@ -8,10 +25,11 @@ async function postApi(endpoint: string, data: Record<string, any> = {}, token?:
   };
 
   const payload = { ...data };
+  const activeToken = token || getNksToken();
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-    payload['access_token'] = token;
+  if (activeToken) {
+    headers['Authorization'] = `Bearer ${activeToken}`;
+    payload['access_token'] = activeToken;
   }
 
   try {
@@ -93,17 +111,94 @@ export const CompanyApiService = {
     };
   },
 
-  async updateProfile(token: string, data: { name: string; phone?: string; zalo?: string }) {
+  /**
+   * 1. nks/user/updateInfo - Cập nhật thông tin tài khoản
+   */
+  async updateInfo(token: string | undefined, data: Record<string, any>) {
     const res = await postApi('nks/user/updateInfo', data, token);
     if (res.success) {
       return {
         success: true as const,
-        message: 'Cập nhật thông tin thành công!',
+        message: res.data?.message || 'Cập nhật thông tin tài khoản thành công!',
+        data: res.data,
       };
     }
     return {
       success: false as const,
       message: res.message || 'Cập nhật thông tin thất bại.',
+    };
+  },
+
+  async updateProfile(token: string | undefined, data: any) {
+    return this.updateInfo(token, data);
+  },
+
+  /**
+   * 2. nks/user/updatePass - Cập nhật mật khẩu
+   */
+  async updatePass(token: string | undefined, data: {
+    old_password?: string;
+    password?: string;
+    current_password?: string;
+    new_password?: string;
+    password_new?: string;
+    confirm_password?: string;
+    [key: string]: any;
+  }) {
+    const res = await postApi('nks/user/updatePass', data, token);
+    if (res.success) {
+      return {
+        success: true as const,
+        message: res.data?.message || 'Cập nhật mật khẩu thành công!',
+        data: res.data,
+      };
+    }
+    return {
+      success: false as const,
+      message: res.message || 'Cập nhật mật khẩu thất bại.',
+    };
+  },
+
+  /**
+   * 3. nks/user/updateAvatar - Cập nhật Avatar
+   */
+  async updateAvatar(token: string | undefined, avatar: string) {
+    const res = await postApi('nks/user/updateAvatar', { avatar, avatar_url: avatar }, token);
+    if (res.success) {
+      return {
+        success: true as const,
+        message: res.data?.message || 'Cập nhật ảnh đại diện thành công!',
+        data: res.data,
+      };
+    }
+    return {
+      success: false as const,
+      message: res.message || 'Cập nhật ảnh đại diện thất bại.',
+    };
+  },
+
+  /**
+   * 4. nks/user/updateCccd - Cập nhật CCCD
+   */
+  async updateCccd(token: string | undefined, data: {
+    cccd: string;
+    issue_date?: string;
+    issue_place?: string;
+    front_image?: string;
+    back_image?: string;
+    [key: string]: any;
+  }) {
+    const res = await postApi('nks/user/updateCccd', data, token);
+    if (res.success) {
+      return {
+        success: true as const,
+        message: res.data?.message || 'Cập nhật CCCD thành công!',
+        data: res.data,
+      };
+    }
+    return {
+      success: false as const,
+      message: res.message || 'Cập nhật CCCD thất bại.',
     };
   },
 };
