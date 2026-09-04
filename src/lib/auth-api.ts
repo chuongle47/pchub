@@ -18,18 +18,24 @@ export function getNksToken(): string {
 }
 
 async function postApi(endpoint: string, data: Record<string, any> = {}, token?: string) {
-  const url = `${BASE_URL}/${endpoint.replace(/^\//, '')}`;
+  const activeToken = token || getNksToken();
+  let url = `${BASE_URL}/${endpoint.replace(/^\//, '')}`;
+  
+  if (activeToken) {
+    url += (url.includes('?') ? '&' : '?') + `access_token=${encodeURIComponent(activeToken)}`;
+  }
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   };
 
   const payload = { ...data };
-  const activeToken = token || getNksToken();
 
   if (activeToken) {
     headers['Authorization'] = `Bearer ${activeToken}`;
     payload['access_token'] = activeToken;
+    payload['token'] = activeToken;
   }
 
   try {
@@ -48,10 +54,22 @@ async function postApi(endpoint: string, data: Record<string, any> = {}, token?:
       result = { message: text };
     }
 
-    if (!response.ok) {
+    const isSuccess = 
+      response.ok && 
+      result.status !== 0 && 
+      result.status !== false && 
+      result.error !== true && 
+      result.error !== 1 && 
+      result.code !== 400 && 
+      result.code !== 401 && 
+      result.code !== 500 &&
+      result.success !== false;
+
+    if (!isSuccess) {
       return {
         success: false,
-        message: result.error || result.message || `API Error (HTTP ${response.status})`,
+        message: result.message || result.error || result.msg || result.data?.message || `Lỗi từ máy chủ NKS (Mã HTTP: ${response.status})`,
+        data: result,
         status: response.status,
       };
     }

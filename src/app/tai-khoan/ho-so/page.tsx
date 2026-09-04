@@ -206,19 +206,17 @@ export default function ProfilePage() {
         });
       }
 
-      showNotification('success', res.message || 'Cập nhật thông tin tài khoản thành công (nks/user/updateInfo)!');
+      // Try fetching updated profile directly from NKS
+      if (token) {
+        const freshProfile = await CompanyApiService.getProfile(token);
+        if (freshProfile.success && freshProfile.user) {
+          syncLocalUserState(freshProfile.user);
+        }
+      }
+
+      showNotification('success', res.message || 'Cập nhật thông tin tài khoản thành công!');
     } else {
-      // If server returned message or network, fallback gracefully with local save if NKS mock/dev
-      syncLocalUserState({
-        name: fullName,
-        firstname: firstName,
-        lastname: lastName,
-        phone,
-        email,
-        dob: birthday,
-        gender: genderMap[gender] ?? 0,
-      });
-      showNotification('success', 'Đã lưu thông tin tài khoản thành công!');
+      showNotification('error', res.message || 'Cập nhật thông tin thất bại từ máy chủ NKS.');
     }
     setLoading(false);
   };
@@ -253,12 +251,12 @@ export default function ProfilePage() {
     const res = await CompanyApiService.updatePass(token, payload);
 
     if (res.success) {
-      showNotification('success', res.message || 'Cập nhật mật khẩu thành công (nks/user/updatePass)!');
+      showNotification('success', res.message || 'Cập nhật mật khẩu thành công!');
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } else {
-      showNotification('error', res.message || 'Cập nhật mật khẩu thất bại. Vui lòng kiểm tra mật khẩu hiện tại.');
+      showNotification('error', res.message || 'Cập nhật mật khẩu thất bại.');
     }
     setLoading(false);
   };
@@ -278,17 +276,20 @@ export default function ProfilePage() {
     // Call NKS API: nks/user/updateAvatar (avatar parameter receives Base64 or image string)
     const res = await CompanyApiService.updateAvatar(token, avatarUrl);
 
-    // Update local state regardless
-    syncLocalUserState({ avatar: avatarUrl });
+    if (res.success) {
+      syncLocalUserState({ avatar: avatarUrl });
 
-    if (user?.email) {
-      await saveUserToDatabase({
-        email: user.email,
-        avatar_url: avatarUrl,
-      });
+      if (user?.email) {
+        await saveUserToDatabase({
+          email: user.email,
+          avatar_url: avatarUrl,
+        });
+      }
+
+      showNotification('success', res.message || 'Cập nhật avatar thành công!');
+    } else {
+      showNotification('error', res.message || 'Cập nhật avatar thất bại từ máy chủ NKS.');
     }
-
-    showNotification('success', res.success ? (res.message || 'Cập nhật avatar thành công (nks/user/updateAvatar)!') : 'Đã lưu avatar thành công!');
     setLoading(false);
   };
 
@@ -334,28 +335,32 @@ export default function ProfilePage() {
     // Call NKS API: nks/user/updateCccd
     const res = await CompanyApiService.updateCccd(token, payload);
 
-    syncLocalUserState({
-      cccd: cccdNumber,
-      cccd_issue_date: cccdIssueDate,
-      cccd_issue_place: cccdIssuePlace,
-      cccd_front_image: cccdFrontImage,
-      cccd_back_image: cccdBackImage,
-    });
-
-    localStorage.setItem('pchub-cccd-extra', JSON.stringify(payload));
-
-    if (user?.email) {
-      await saveUserToDatabase({
-        email: user.email,
+    if (res.success) {
+      syncLocalUserState({
         cccd: cccdNumber,
         cccd_issue_date: cccdIssueDate,
         cccd_issue_place: cccdIssuePlace,
         cccd_front_image: cccdFrontImage,
         cccd_back_image: cccdBackImage,
       });
-    }
 
-    showNotification('success', res.success ? (res.message || 'Cập nhật CCCD thành công (nks/user/updateCccd)!') : 'Đã lưu thông tin CCCD thành công!');
+      localStorage.setItem('pchub-cccd-extra', JSON.stringify(payload));
+
+      if (user?.email) {
+        await saveUserToDatabase({
+          email: user.email,
+          cccd: cccdNumber,
+          cccd_issue_date: cccdIssueDate,
+          cccd_issue_place: cccdIssuePlace,
+          cccd_front_image: cccdFrontImage,
+          cccd_back_image: cccdBackImage,
+        });
+      }
+
+      showNotification('success', res.message || 'Cập nhật CCCD thành công!');
+    } else {
+      showNotification('error', res.message || 'Cập nhật CCCD thất bại từ máy chủ NKS.');
+    }
     setLoading(false);
   };
 

@@ -14,7 +14,8 @@ export async function POST(
   context: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await context.params;
-  const targetUrl = `${NKS_BASE_URL}/${(path || []).join('/')}`;
+  const searchParams = request.nextUrl.search || '';
+  const targetUrl = `${NKS_BASE_URL}/${(path || []).join('/')}${searchParams}`;
 
   let body: any = {};
   try {
@@ -71,7 +72,8 @@ export async function GET(
   context: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await context.params;
-  const targetUrl = `${NKS_BASE_URL}/${(path || []).join('/')}`;
+  const searchParams = request.nextUrl.search || '';
+  const targetUrl = `${NKS_BASE_URL}/${(path || []).join('/')}${searchParams}`;
 
   try {
     const response = await fetch(targetUrl, {
