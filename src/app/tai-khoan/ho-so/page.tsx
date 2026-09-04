@@ -261,6 +261,43 @@ export default function ProfilePage() {
     setLoading(false);
   };
 
+  // Helper to compress file into compact JPEG Base64 (~100KB) to prevent HTTP 500 Server Error
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          } else {
+            resolve(e.target?.result as string);
+          }
+        };
+        img.onerror = () => resolve(e.target?.result as string);
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const helperUrlToBase64 = async (url: string): Promise<string> => {
     if (!url || url.startsWith('data:image/')) return url;
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -299,12 +336,14 @@ export default function ProfilePage() {
     const res = await CompanyApiService.updateAvatar(token, avatarBase64);
 
     if (res.success) {
-      syncLocalUserState({ avatar: avatarUrl });
+      const serverAvatar = res.data?.avatar || res.data?.data?.avatar || res.data?.url || avatarUrl;
+      setAvatarUrl(serverAvatar);
+      syncLocalUserState({ avatar: serverAvatar });
 
       if (user?.email) {
         await saveUserToDatabase({
           email: user.email,
-          avatar_url: avatarUrl,
+          avatar_url: serverAvatar,
         });
       }
 
@@ -316,20 +355,15 @@ export default function ProfilePage() {
   };
 
   // File Upload Helper for Avatar
-  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification('error', 'Dung lượng ảnh vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn.');
+      if (file.size > 10 * 1024 * 1024) {
+        showNotification('error', 'Dung lượng ảnh vượt quá 10MB. Vui lòng chọn ảnh nhỏ hơn.');
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setAvatarUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      const compressedBase64 = await compressImage(file);
+      setAvatarUrl(compressedBase64);
     }
   };
 
@@ -390,25 +424,19 @@ export default function ProfilePage() {
   };
 
   // CCCD File Upload Helpers
-  const handleCccdFrontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCccdFrontUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) setCccdFrontImage(event.target.result as string);
-      };
-      reader.readAsDataURL(file);
+      const compressedBase64 = await compressImage(file);
+      setCccdFrontImage(compressedBase64);
     }
   };
 
-  const handleCccdBackUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCccdBackUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) setCccdBackImage(event.target.result as string);
-      };
-      reader.readAsDataURL(file);
+      const compressedBase64 = await compressImage(file);
+      setCccdBackImage(compressedBase64);
     }
   };
 
