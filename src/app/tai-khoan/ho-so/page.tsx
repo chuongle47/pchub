@@ -448,7 +448,7 @@ export default function ProfilePage() {
           }}
         >
           <UserRound size={16} />
-          <span>Thẻ 1: Thông tin tài khoản</span>
+          <span>Thông tin tài khoản</span>
         </button>
 
         <button
@@ -472,7 +472,7 @@ export default function ProfilePage() {
           }}
         >
           <KeyRound size={16} />
-          <span>Thẻ 2: Đổi mật khẩu</span>
+          <span>Đổi mật khẩu</span>
         </button>
 
         <button
@@ -496,7 +496,7 @@ export default function ProfilePage() {
           }}
         >
           <Camera size={16} />
-          <span>Thẻ 3: Cập nhật Avatar</span>
+          <span>Cập nhật Avatar</span>
         </button>
 
         <button
@@ -520,7 +520,7 @@ export default function ProfilePage() {
           }}
         >
           <CreditCard size={16} />
-          <span>Thẻ 4: Cập nhật CCCD</span>
+          <span>Cập nhật CCCD</span>
         </button>
       </div>
 
@@ -1003,33 +1003,7 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Presets */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sparkles size={15} color="#2563eb" /> Chọn Avatar mẫu
-              </label>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                {PRESET_AVATARS.map((url, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setAvatarUrl(url)}
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      border: avatarUrl === url ? '3px solid #2563eb' : '2px solid #e2e8f0',
-                      cursor: 'pointer',
-                      padding: 0,
-                      transition: 'transform 0.15s ease',
-                    }}
-                  >
-                    <img src={url} alt={`Preset ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </button>
-                ))}
-              </div>
-            </div>
+
 
             {/* Manual URL Input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
