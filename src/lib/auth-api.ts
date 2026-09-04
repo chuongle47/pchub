@@ -208,28 +208,28 @@ export const CompanyApiService = {
   },
 
   /**
-   * Helper to clean base64 data URL prefix (e.g. data:image/jpeg;base64,) for PHP backend base64_decode
+   * Ensure image string is a full Data URL (data:image/jpeg;base64,...)
+   * required by NKS PHP backend explode() function to prevent 'Undefined offset: 1'
    */
-  cleanBase64(str?: string): string {
+  ensureDataUrl(str?: string): string {
     if (!str) return '';
-    if (str.includes('base64,')) {
-      return str.split('base64,')[1];
-    }
-    return str;
+    if (str.startsWith('data:image/')) return str;
+    if (str.startsWith('http://') || str.startsWith('https://')) return str;
+    return `data:image/jpeg;base64,${str}`;
   },
 
   /**
    * 3. nks/user/updateAvatar - Cập nhật Avatar
-   * Body Params: avatar (Base64), access_token
+   * Body Params: avatar (Full Base64 Data URL), access_token
    */
   async updateAvatar(token: string | undefined, avatarInput: string) {
-    const rawBase64 = this.cleanBase64(avatarInput);
-    
-    // Send raw Base64 (without data:image/...;base64, prefix) as required by PHP base64_decode
+    const fullDataUrl = this.ensureDataUrl(avatarInput);
+    const rawBase64 = avatarInput.includes('base64,') ? avatarInput.split('base64,')[1] : avatarInput;
+
     const payload = {
-      avatar: rawBase64,
-      avatar_url: avatarInput,
+      avatar: fullDataUrl,
       avatar_base64: rawBase64,
+      avatar_url: avatarInput,
     };
 
     const res = await postApi('nks/user/updateAvatar', payload, token);
@@ -251,7 +251,7 @@ export const CompanyApiService = {
 
   /**
    * 4. nks/user/updateCccd - Cập nhật CCCD
-   * Body Params: front (Base64), back (Base64), number, date, place, access_token
+   * Body Params: front (Full Base64 Data URL), back (Full Base64 Data URL), number, date, place, access_token
    */
   async updateCccd(token: string | undefined, data: {
     front?: string;
@@ -261,12 +261,14 @@ export const CompanyApiService = {
     place?: string;
     [key: string]: any;
   }) {
-    const rawFront = this.cleanBase64(data.front);
-    const rawBack = this.cleanBase64(data.back);
+    const fullFront = this.ensureDataUrl(data.front);
+    const fullBack = this.ensureDataUrl(data.back);
+    const rawFront = data.front?.includes('base64,') ? data.front.split('base64,')[1] : data.front;
+    const rawBack = data.back?.includes('base64,') ? data.back.split('base64,')[1] : data.back;
 
     const payload = {
-      front: rawFront,
-      back: rawBack,
+      front: fullFront,
+      back: fullBack,
       number: data.number ?? '',
       date: data.date ?? '',
       place: data.place ?? '',
@@ -274,8 +276,8 @@ export const CompanyApiService = {
       cccd: data.number ?? '',
       issue_date: data.date ?? '',
       issue_place: data.place ?? '',
-      front_image: rawFront,
-      back_image: rawBack,
+      front_image: fullFront,
+      back_image: fullBack,
     };
 
     const res = await postApi('nks/user/updateCccd', payload, token);
