@@ -6,12 +6,27 @@ import {
   Cpu, Layers, Sliders, HardDrive, Zap, Box, 
   Fan, Sparkles, Check, Trash2, Plus, ShoppingCart, 
   Download, RotateCcw, ChevronRight, Bot, RefreshCw, AlertCircle,
-  Printer, FileSpreadsheet, FileText, ChevronDown
+  Printer, FileSpreadsheet, FileText, ChevronDown, Tv, Headphones
 } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import ComponentSelectorModal from '@/components/builder/ComponentSelectorModal';
 import CompatibilityReportModal from '@/components/builder/CompatibilityReportModal';
 import { CompatibilityReport } from '@/lib/gemini';
+
+const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
+  cpu: '/images/cpu-box.jpg',
+  mainboard: '/images/cat-mainboard.jpg',
+  ram: '/images/ram-rgb.jpg',
+  gpu: '/images/gpu-strix.jpg',
+  storage: '/images/ssd-nvme.jpg',
+  storage_2: '/images/ssd-nvme.jpg',
+  psu: '/images/cat-psu.jpg',
+  case: '/images/hero-pc.jpg',
+  cooling: '/images/hero-pc.jpg',
+  monitor: '/images/cat-monitor.jpg',
+  gear: '/images/cat-gear.jpg',
+  headset: '/images/cat-headset.jpg',
+};
 
 interface SelectedComponent {
   id: string;
@@ -21,6 +36,9 @@ interface SelectedComponent {
   specs: string;
   image: string;
   slug?: string;
+  sku?: string;
+  stock?: number;
+  brand?: string;
 }
 
 interface ComponentSlot {
@@ -143,6 +161,24 @@ export default function BuildPcPage() {
         image: '/images/hero-pc.jpg',
         slug: 'nzxt-kraken-elite-360'
       }
+    },
+    {
+      key: 'monitor',
+      category: 'Màn Hình Gaming',
+      icon: Tv,
+      selected: null
+    },
+    {
+      key: 'gear',
+      category: 'Bàn Phím & Chuột',
+      icon: Sliders,
+      selected: null
+    },
+    {
+      key: 'headset',
+      category: 'Tai Nghe & Audio',
+      icon: Headphones,
+      selected: null
     }
   ]);
 
@@ -216,21 +252,50 @@ export default function BuildPcPage() {
 
     let specsStr = 'Chính hãng | Bảo hành 36 tháng';
     if (product.specs && typeof product.specs === 'object') {
-      const parts = Object.entries(product.specs)
-        .filter(([k]) => k !== 'tdp' && k !== 'tdp_watt')
-        .slice(0, 3)
-        .map(([k, v]) => `${k.toUpperCase()}: ${Array.isArray(v) ? v.join(', ') : v}`);
+      const parts: string[] = [];
+      if (product.specs.socket) parts.push(`Socket ${product.specs.socket}`);
+      if (product.specs.chipset) parts.push(`Chipset ${product.specs.chipset}`);
+      if (product.specs.cores || product.specs.core_count) {
+        const c = product.specs.cores || product.specs.core_count;
+        const t = product.specs.threads || product.specs.thread_count || c;
+        parts.push(`${c} Nhân ${t} Luồng`);
+      }
+      if (product.specs.clock_ghz || product.specs.boost_clock_ghz) {
+        parts.push(`Xung ${product.specs.boost_clock_ghz || product.specs.clock_ghz}GHz`);
+      }
+      if (product.specs.capacity || product.specs.capacity_gb) {
+        parts.push(`Dung lượng: ${product.specs.capacity || `${product.specs.capacity_gb}GB`}`);
+      }
+      if (product.specs.bus_mhz || product.specs.speed) {
+        parts.push(`Bus: ${product.specs.bus_mhz || product.specs.speed}MHz`);
+      }
+      if (product.specs.vram_gb) {
+        parts.push(`VRAM: ${product.specs.vram_gb}GB ${product.specs.memory_type || ''}`.trim());
+      }
+      if (product.specs.wattage) parts.push(`Công suất: ${product.specs.wattage}W`);
+      if (product.specs.efficiency) parts.push(`Chuẩn: ${product.specs.efficiency}`);
+
+      if (parts.length === 0) {
+        Object.entries(product.specs)
+          .filter(([k]) => k !== 'tdp' && k !== 'tdp_watt' && k !== 'integrated_gpu')
+          .slice(0, 3)
+          .forEach(([k, v]) => parts.push(`${k.toUpperCase()}: ${Array.isArray(v) ? v.join('/') : v}`));
+      }
       if (parts.length > 0) specsStr = parts.join(' | ');
     }
 
+    const fallbackImg = CATEGORY_DEFAULT_IMAGE[activeModalSlotKey] || '/images/cpu-box.jpg';
     const newComponent: SelectedComponent = {
       id: product.id,
       name: product.name,
       price: Number(product.price),
       tdp,
       specs: specsStr,
-      image: product.image_url || product.image || '/images/cpu-box.jpg',
+      image: product.image_url || product.image || fallbackImg,
       slug: product.slug,
+      sku: product.sku,
+      stock: product.stock,
+      brand: product.brand_name || product.brand,
     };
 
     setComponents(prev => prev.map(s => s.key === activeModalSlotKey ? { ...s, selected: newComponent } : s));
@@ -540,6 +605,24 @@ export default function BuildPcPage() {
           image: '/images/hero-pc.jpg',
           slug: 'nzxt-kraken-elite-360'
         }
+      },
+      {
+        key: 'monitor',
+        category: 'Màn Hình Gaming',
+        icon: Tv,
+        selected: null
+      },
+      {
+        key: 'gear',
+        category: 'Bàn Phím & Chuột',
+        icon: Sliders,
+        selected: null
+      },
+      {
+        key: 'headset',
+        category: 'Tai Nghe & Audio',
+        icon: Headphones,
+        selected: null
       }
     ]);
     setNotice('Đã nạp cấu hình mẫu Gaming Ultra High-End!');

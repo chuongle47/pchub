@@ -28,8 +28,37 @@ export default function ComponentSelectorModal({
 
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [displayCount, setDisplayCount] = useState(48);
+  const [displayCount, setDisplayCount] = useState(64);
   const [showAllBrands, setShowAllBrands] = useState(false);
+
+  // Category fallback images
+  const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
+    cpu: '/images/cpu-box.jpg',
+    mainboard: '/images/cat-mainboard.jpg',
+    motherboard: '/images/cat-mainboard.jpg',
+    mb: '/images/cat-mainboard.jpg',
+    ram: '/images/ram-rgb.jpg',
+    memory: '/images/ram-rgb.jpg',
+    gpu: '/images/gpu-strix.jpg',
+    vga: '/images/gpu-strix.jpg',
+    card: '/images/gpu-strix.jpg',
+    storage: '/images/ssd-nvme.jpg',
+    storage_2: '/images/ssd-nvme.jpg',
+    ssd: '/images/ssd-nvme.jpg',
+    hdd: '/images/ssd-nvme.jpg',
+    psu: '/images/cat-psu.jpg',
+    power: '/images/cat-psu.jpg',
+    nguon: '/images/cat-psu.jpg',
+    case: '/images/hero-pc.jpg',
+    vo: '/images/hero-pc.jpg',
+    cooling: '/images/hero-pc.jpg',
+    cooler: '/images/hero-pc.jpg',
+    tan: '/images/hero-pc.jpg',
+    tannhiet: '/images/hero-pc.jpg',
+    monitor: '/images/cat-monitor.jpg',
+    gear: '/images/cat-gear.jpg',
+    headset: '/images/cat-headset.jpg',
+  };
 
   // Category slug normalization for all build slots
   const CATEGORY_SLUG_MAP: Record<string, string> = {
@@ -43,6 +72,7 @@ export default function ComponentSelectorModal({
     vga: 'gpu',
     card: 'gpu',
     storage: 'storage',
+    storage_2: 'storage',
     ssd: 'storage',
     hdd: 'storage',
     psu: 'psu',
@@ -59,13 +89,15 @@ export default function ComponentSelectorModal({
     headset: 'headset',
   };
 
+  const defaultCategoryImg = CATEGORY_DEFAULT_IMAGE[slotKey.toLowerCase()] || '/images/cpu-box.jpg';
+
   useEffect(() => {
     if (!isOpen) return;
     setSearchTerm('');
     setSelectedBrand('ALL');
     setPriceRange('ALL');
     setSortBy('DEFAULT');
-    setDisplayCount(48);
+    setDisplayCount(64);
     setShowAllBrands(false);
 
     async function fetchCategoryProducts() {
@@ -73,7 +105,9 @@ export default function ComponentSelectorModal({
       try {
         const catSlug = CATEGORY_SLUG_MAP[slotKey.toLowerCase()] || slotKey.toLowerCase();
         // Fetch up to 1000 items to retrieve all products in this category from Supabase
-        const res = await fetch(`/api/products?limit=1000&category=${encodeURIComponent(catSlug)}`);
+        const res = await fetch(`/api/products?limit=1000&category=${encodeURIComponent(catSlug)}`, {
+          cache: 'no-store'
+        });
         const data = await res.json();
         let allProducts = data.products || [];
 
@@ -83,7 +117,7 @@ export default function ComponentSelectorModal({
           const pagePromises = [];
           for (let p = 2; p <= Math.min(totalPages, 5); p++) {
             pagePromises.push(
-              fetch(`/api/products?limit=1000&page=${p}&category=${encodeURIComponent(catSlug)}`)
+              fetch(`/api/products?limit=1000&page=${p}&category=${encodeURIComponent(catSlug)}`, { cache: 'no-store' })
                 .then(r => r.json())
                 .then(d => d.products || [])
                 .catch(() => [])
@@ -515,6 +549,33 @@ export default function ComponentSelectorModal({
                 const price = Number(p.price);
                 const brand = p.brand_name || p.brand || (p.name.split(' ')[0]);
 
+                // Extract key specs for pills
+                const specsList: string[] = [];
+                if (p.specs?.socket) specsList.push(p.specs.socket);
+                if (p.specs?.chipset) specsList.push(p.specs.chipset);
+                if (p.specs?.cores || p.specs?.core_count) {
+                  const c = p.specs.cores || p.specs.core_count;
+                  const t = p.specs.threads || p.specs.thread_count || c;
+                  specsList.push(`${c}C/${t}T`);
+                }
+                if (p.specs?.clock_ghz || p.specs?.boost_clock_ghz) {
+                  specsList.push(`${p.specs.boost_clock_ghz || p.specs.clock_ghz}GHz`);
+                }
+                if (p.specs?.capacity || p.specs?.capacity_gb) {
+                  specsList.push(`${p.specs.capacity || `${p.specs.capacity_gb}GB`}`);
+                }
+                if (p.specs?.bus_mhz || p.specs?.speed) {
+                  specsList.push(`${p.specs.bus_mhz || p.specs.speed}MHz`);
+                }
+                if (p.specs?.vram_gb) {
+                  specsList.push(`${p.specs.vram_gb}GB ${p.specs.memory_type || ''}`.trim());
+                }
+                if (p.specs?.tdp_watt) {
+                  specsList.push(`${p.specs.tdp_watt}W`);
+                } else if (p.specs?.wattage) {
+                  specsList.push(`${p.specs.wattage}W`);
+                }
+
                 return (
                   <div
                     key={p.id}
@@ -544,10 +605,10 @@ export default function ComponentSelectorModal({
                         position: 'relative',
                       }}>
                         <img
-                          src={p.image_url || p.image || '/images/cpu-box.jpg'}
+                          src={p.image_url || p.image || defaultCategoryImg}
                           alt={p.name}
                           style={{ maxHeight: '115px', maxWidth: '100%', objectFit: 'contain' }}
-                          onError={e => { e.currentTarget.src = '/images/cpu-box.jpg'; }}
+                          onError={e => { e.currentTarget.src = defaultCategoryImg; }}
                         />
 
                         {brand && (
@@ -574,7 +635,7 @@ export default function ComponentSelectorModal({
                         fontWeight: 700,
                         color: '#0f172a',
                         lineHeight: '1.45',
-                        marginBottom: '8px',
+                        marginBottom: '6px',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
@@ -583,18 +644,50 @@ export default function ComponentSelectorModal({
                       }}>
                         {p.name}
                       </h4>
+
+                      {/* Key Specs Pills */}
+                      {specsList.length > 0 && (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                          {specsList.slice(0, 3).map((item, idx) => (
+                            <span key={idx} style={{
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              background: '#f1f5f9',
+                              color: '#475569',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              border: '1px solid #e2e8f0',
+                            }}>
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Stock & SKU status */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#16a34a', fontWeight: 700, marginBottom: '6px' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
+                        <span>Sẵn hàng ({p.stock || 50}+)</span>
+                        {p.sku && <span style={{ color: '#94a3b8', marginLeft: 'auto', fontWeight: 500, fontSize: '10px' }}>{p.sku}</span>}
+                      </div>
                     </div>
 
                     <div>
                       {/* Price Tag */}
-                      <div style={{
-                        fontSize: '17px',
-                        fontWeight: 900,
-                        color: '#ef4444',
-                        margin: '8px 0 12px',
-                        letterSpacing: '-0.3px',
-                      }}>
-                        {price.toLocaleString('vi-VN')} ₫
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', margin: '4px 0 10px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: '17px',
+                          fontWeight: 900,
+                          color: '#ef4444',
+                          letterSpacing: '-0.3px',
+                        }}>
+                          {price.toLocaleString('vi-VN')} ₫
+                        </span>
+                        {p.original_price && Number(p.original_price) > price && (
+                          <span style={{ fontSize: '11.5px', color: '#94a3b8', textDecoration: 'line-through' }}>
+                            {Number(p.original_price).toLocaleString('vi-VN')} ₫
+                          </span>
+                        )}
                       </div>
 
                       {/* CTA Select Button */}

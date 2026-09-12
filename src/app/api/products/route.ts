@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProducts } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -35,7 +38,10 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(result, {
-      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      headers: { 
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      }
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
