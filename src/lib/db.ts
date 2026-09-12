@@ -787,24 +787,31 @@ export async function getProductsBySlugs(slugs: string[]) {
         WHERE p.slug = ANY($1) OR p.id::text = ANY($1)
       `;
       const result = await pool.query(query, [normalized]);
-      products = result.rows;
+      products = result.rows || [];
     } catch (err) {
       console.error('Slug query error, fallback:', err);
     }
   }
 
-  if (products.length === 0) {
+  // If any requested slug is missing from database results, check memoryStore fallback for missing ones
+  const fetchedSlugs = new Set(products.flatMap((p) => [p.slug, p.id]));
+  const missingSlugs = normalized.filter((s) => !fetchedSlugs.has(s));
+
+  if (missingSlugs.length > 0) {
     loadMemoryFallback();
-    const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
-    const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
-    const slugSet = new Set(normalized);
-    products = memoryStore.products
-      .filter(p => slugSet.has(p.slug) || slugSet.has(p.id))
-      .map(p => ({
+    const catMap = new Map(memoryStore.categories.map((c) => [c.id, c.name]));
+    const brandNameMap = new Map(memoryStore.brands.map((b) => [b.id, b.name]));
+    const missingSet = new Set(missingSlugs);
+
+    const fallbackProducts = memoryStore.products
+      .filter((p) => missingSet.has(p.slug) || missingSet.has(p.id))
+      .map((p) => ({
         ...p,
         category_name: catMap.get(p.category_id) || 'Danh mục',
-        brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu'
+        brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu',
       }));
+
+    products = [...products, ...fallbackProducts];
   }
 
   const specKeySet = new Set<string>();

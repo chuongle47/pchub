@@ -33,7 +33,7 @@ export default function CompareFloatingBar() {
       setLoading(true);
       try {
         const idsParam = items.join(',');
-        const res = await fetch(`/api/products?ids=${encodeURIComponent(idsParam)}&limit=10`);
+        const res = await fetch(`/api/products/compare?ids=${encodeURIComponent(idsParam)}`);
         const data = await res.json();
         if (data.products && Array.isArray(data.products)) {
           const mapped: ProductMin[] = data.products.map((p: any) => ({

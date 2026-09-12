@@ -318,43 +318,23 @@ export const useCompareStore = create<CompareStore>()(
 
       addCompare: (slug, categoryName) => {
         const currentItems = get().items;
-        const currentCat = get().activeCategory;
         const cat = categoryName ? categoryName.trim() : null;
-
-        // If compare list is empty
-        if (currentItems.length === 0) {
-          set({ items: [slug], activeCategory: cat });
-          return {
-            success: true,
-            notice: cat ? `Đã thêm vào so sánh (${cat})` : 'Đã thêm vào danh sách so sánh',
-          };
-        }
 
         // If already in list
         if (currentItems.includes(slug)) {
           return { success: true, notice: 'Sản phẩm đã có trong danh sách so sánh' };
         }
 
-        // Check category matching
-        if (cat && currentCat && cat.toLowerCase() !== currentCat.toLowerCase()) {
-          // Auto-switch to new category for clean same-category comparison
-          set({ items: [slug], activeCategory: cat });
-          return {
-            success: true,
-            switchedCategory: true,
-            notice: `Đã chuyển sang so sánh danh mục "${cat}"`,
-          };
-        }
-
-        // Same category (or category unspecified), append up to 4 items
+        // Append to compare list up to 4 items
         if (currentItems.length < 4) {
+          const newItems = [...currentItems, slug];
           set({
-            items: [...currentItems, slug],
-            activeCategory: currentCat || cat,
+            items: newItems,
+            activeCategory: get().activeCategory || cat,
           });
           return {
             success: true,
-            notice: `Đã thêm vào danh sách so sánh (${currentItems.length + 1}/4)`,
+            notice: `Đã thêm sản phẩm vào danh sách so sánh (${newItems.length}/4)`,
           };
         }
 
