@@ -7,6 +7,157 @@ import { ArrowLeftRight, Check, ChevronRight, X, Trash2, Plus, ShoppingCart, Sea
 import { useCompareStore, useCartStore } from '@/lib/store';
 import { formatVnd, getProductImage } from '@/lib/product-ui';
 
+// Bảng dịch tên thông số kỹ thuật sang tiếng Việt
+const SPEC_KEY_VI: Record<string, string> = {
+  // CPU
+  socket: 'Socket / Cổng cắm',
+  cores: 'Số nhân',
+  threads: 'Số luồng',
+  clock_ghz: 'Tốc độ xung nhịp',
+  boost_ghz: 'Xung nhịp Boost tối đa',
+  base_ghz: 'Xung nhịp cơ bản',
+  tdp_watt: 'Mức tiêu thụ điện (TDP)',
+  integrated_gpu: 'Card đồ họa tích hợp',
+  cache_mb: 'Bộ nhớ đệm (Cache)',
+  ram_support: 'RAM hỗ trợ',
+  generation: 'Thế hệ',
+  architecture: 'Kiến trúc vi xử lý',
+  // GPU
+  vram_gb: 'VRAM (Bộ nhớ đồ họa)',
+  memory_type: 'Loại bộ nhớ',
+  memory_bus: 'Bus bộ nhớ',
+  cuda_cores: 'Số nhân CUDA',
+  boost_mhz: 'Xung nhịp Boost (MHz)',
+  base_mhz: 'Xung nhịp cơ bản (MHz)',
+  power_connector: 'Đầu cắm nguồn',
+  dp_outputs: 'Số cổng DisplayPort',
+  hdmi_outputs: 'Số cổng HDMI',
+  length_mm: 'Chiều dài card (mm)',
+  // RAM
+  capacity_gb: 'Dung lượng (GB)',
+  speed_mhz: 'Tốc độ (MHz)',
+  type: 'Loại RAM',
+  latency: 'Độ trễ (CL)',
+  voltage: 'Điện áp',
+  rgb: 'Đèn RGB',
+  ecc: 'Hỗ trợ ECC',
+  form_factor: 'Chuẩn kích thước',
+  // Mainboard
+  chipset: 'Chipset',
+  memory_slots: 'Số khe RAM',
+  max_memory_gb: 'RAM tối đa hỗ trợ (GB)',
+  pcie_slots: 'Số khe PCIe',
+  m2_slots: 'Số khe M.2',
+  sata_ports: 'Số cổng SATA',
+  usb_ports: 'Cổng USB',
+  wifi: 'Wi-Fi tích hợp',
+  bluetooth: 'Bluetooth',
+  atx_form: 'Chuẩn bo mạch (ATX)',
+  // Storage
+  capacity: 'Dung lượng',
+  interface: 'Chuẩn giao tiếp',
+  read_speed: 'Tốc độ đọc',
+  write_speed: 'Tốc độ ghi',
+  nand_type: 'Loại NAND',
+  tbw: 'Tuổi thọ ghi (TBW)',
+  // PSU
+  wattage: 'Công suất (Watt)',
+  efficiency: 'Hiệu suất',
+  certification: 'Chứng nhận hiệu suất',
+  modular: 'Kiểu module hóa',
+  fan_size_mm: 'Kích thước quạt (mm)',
+  pfc: 'Hệ số công suất (PFC)',
+  protection: 'Bảo vệ mạch',
+  rails: 'Đường 12V',
+  // Case
+  case_type: 'Loại thùng máy',
+  max_gpu_length_mm: 'Độ dài GPU tối đa (mm)',
+  max_cooler_height_mm: 'Chiều cao tản nhiệt tối đa (mm)',
+  fan_slots_total: 'Tổng số khe quạt',
+  usb_c_front: 'USB-C mặt trước',
+  included_fans: 'Số quạt đi kèm',
+  tempered_glass: 'Tấm kính cường lực',
+  radiator_support_mm: 'Hỗ trợ radiator (mm)',
+  supported_mainboard: 'Chuẩn mainboard hỗ trợ',
+  drive_bays: 'Số khe ổ đĩa',
+  // Cooling
+  tdp_support: 'TDP tản nhiệt hỗ trợ (W)',
+  fan_count: 'Số quạt',
+  fan_size: 'Kích thước quạt',
+  noise_db: 'Độ ồn (dB)',
+  heat_pipes: 'Số ống dẫn nhiệt',
+  tower_type: 'Kiểu tản nhiệt',
+  // Monitor
+  resolution: 'Độ phân giải',
+  panel_type: 'Loại tấm nền',
+  refresh_rate: 'Tần số quét (Hz)',
+  response_time: 'Thời gian phản hồi (ms)',
+  hdr: 'Hỗ trợ HDR',
+  gsync: 'G-Sync / FreeSync',
+  freesync: 'AMD FreeSync',
+  size_inch: 'Kích thước màn hình (inch)',
+  brightness_nits: 'Độ sáng (nit)',
+  // Gear
+  switch_type: 'Loại switch (bàn phím)',
+  dpi: 'DPI chuột',
+  wireless: 'Không dây',
+  backlighting: 'Đèn nền',
+  polling_rate: 'Tốc độ polling (Hz)',
+  weight_g: 'Trọng lượng (g)',
+};
+
+/** Dịch key thông số sang tiếng Việt */
+function translateSpecKey(key: string): string {
+  const lower = key.toLowerCase();
+  if (SPEC_KEY_VI[lower]) return SPEC_KEY_VI[lower];
+  // Thử khớp từng phần
+  for (const [k, v] of Object.entries(SPEC_KEY_VI)) {
+    if (lower.includes(k) || k.includes(lower)) return v;
+  }
+  // Fallback: thay _ bằng khoảng trắng, viết hoa chữ đầu
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Format giá trị thông số sang tiếng Việt */
+function formatSpecValue(key: string, val: any): string {
+  if (val === null || val === undefined || val === '') return '—';
+  if (Array.isArray(val)) return val.join(', ');
+  
+  const s = String(val);
+  const lower = key.toLowerCase();
+  
+  // Boolean → Có/Không
+  if (s === 'true') return '✓ Có';
+  if (s === 'false') return '✗ Không';
+  
+  // Số kèm đơn vị
+  if (!isNaN(Number(val))) {
+    const n = Number(val);
+    if (lower.includes('watt') || lower.includes('wattage') || lower === 'tdp_watt') return `${n.toLocaleString('vi-VN')} W`;
+    if (lower.includes('_gb') || lower.includes('memory_gb') || lower.includes('vram')) return `${n} GB`;
+    if (lower.includes('_mhz') || lower.includes('speed_mhz')) return `${n.toLocaleString('vi-VN')} MHz`;
+    if (lower.includes('_ghz') || lower === 'clock_ghz' || lower === 'boost_ghz') return `${n} GHz`;
+    if (lower.includes('_mm') || lower.includes('_length_mm') || lower.includes('_height_mm') || lower.includes('_support_mm')) return `${n} mm`;
+    if (lower.includes('_inch') || lower.includes('size_inch')) return `${n} inch`;
+    if (lower.includes('cores')) return `${n} nhân`;
+    if (lower.includes('threads')) return `${n} luồng`;
+    if (lower.includes('slots') || lower.includes('slot')) return `${n} khe`;
+    if (lower.includes('fan') && lower.includes('count')) return `${n} quạt`;
+    if (lower.includes('fan_slots')) return `${n} khe quạt`;
+    if (lower.includes('included_fans')) return `${n} quạt`;
+    if (lower.includes('_db')) return `${n} dB`;
+    if (lower.includes('_ports') || lower.includes('_outputs')) return `${n} cổng`;
+    if (lower.includes('refresh_rate')) return `${n} Hz`;
+    if (lower.includes('response_time')) return `${n} ms`;
+    if (lower.includes('weight')) return `${n} g`;
+    if (lower.includes('polling')) return `${n} Hz`;
+  }
+  
+  return s;
+}
+
 interface CompareProduct {
   id: string;
   slug: string;
@@ -703,16 +854,6 @@ export default function CompareClient() {
                   ))}
                   {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
-                  {/* Stock Row */}
-                  <div style={{ background: '#f8fafc', padding: '12px 16px', color: '#475569', fontSize: '12px', fontWeight: 800, borderBottom: '1px solid #e2e8f0' }}>
-                    TÌNH TRẠNG KHO
-                  </div>
-                  {products.map((p) => (
-                    <div key={p.id} style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '12px 16px', fontSize: '13px', color: p.stock > 0 ? '#16a34a' : '#ef4444', fontWeight: 700 }}>
-                      {p.stock > 0 ? `Sẵn hàng (${p.stock} sp)` : 'Hết hàng'}
-                    </div>
-                  ))}
-                  {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
                   {/* Warranty Row */}
                   <div style={{ background: '#f8fafc', padding: '12px 16px', color: '#475569', fontSize: '12px', fontWeight: 800, borderBottom: '1px solid #e2e8f0' }}>
@@ -726,7 +867,7 @@ export default function CompareClient() {
                   ))}
                   {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
-                  {/* Dynamic Technical Specs Rows */}
+                  {/* Hàng thông số kỹ thuật chi tiết */}
                   {activeSpecKeys.length === 0 ? (
                     <div style={{ gridColumn: `1 / -1`, padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff' }}>
                       Các sản phẩm đã chọn có thông số kỹ thuật tương đồng hoàn toàn!
@@ -744,11 +885,12 @@ export default function CompareClient() {
                           borderBottom: '1px solid #e2e8f0',
                         }}
                       >
-                        {key.toUpperCase()}
+                        {translateSpecKey(key)}
                       </div>
                       {products.map((p) => {
                         const val = p.specs[key];
-                        const displayVal = Array.isArray(val) ? val.join(', ') : val !== undefined && val !== null ? String(val) : '—';
+                        const displayVal = formatSpecValue(key, val);
+                        const isBool = String(val) === 'true' || String(val) === 'false';
                         return (
                           <div
                             key={p.id}
@@ -758,8 +900,10 @@ export default function CompareClient() {
                               borderBottom: '1px solid #e2e8f0',
                               padding: '12px 16px',
                               fontSize: '12.5px',
-                              color: '#0f172a',
-                              fontWeight: 500,
+                              color: isBool
+                                ? (String(val) === 'true' ? '#16a34a' : '#94a3b8')
+                                : '#0f172a',
+                              fontWeight: isBool ? 700 : 500,
                             }}
                           >
                             {displayVal}
