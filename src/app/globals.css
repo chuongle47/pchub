@@ -106,6 +106,8 @@
 
 html {
   scroll-behavior: smooth;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Enforce ONE unified primary font everywhere without component override */
@@ -121,6 +123,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-bg-page);
   color: var(--color-text-primary);
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Normalized Heading Scale */
@@ -1891,14 +1895,39 @@ a:hover {
     margin-top: 4px !important;
   }
 
+  .product-detail-container {
+    padding: 12px 10px !important;
+  }
+
   .product-detail-card {
-    padding: 16px 14px 20px !important;
+    padding: 14px 12px 18px !important;
     border-radius: 14px !important;
   }
 
   .product-detail-media-box {
-    padding: 12px !important;
-    height: clamp(240px, 40vh, 320px) !important;
+    padding: 8px !important;
+    height: clamp(220px, 38vh, 280px) !important;
+  }
+
+  .product-commit-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  .product-commit-item {
+    padding: 8px 6px !important;
+    gap: 6px !important;
+  }
+
+  .product-commit-item svg {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .product-commit-item div div {
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
   }
 
   .quick-actions-toolbar {
@@ -1911,6 +1940,13 @@ a:hover {
 
   .badge-hover-hint {
     display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .product-commit-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
   }
 }
 

@@ -287,7 +287,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '60px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px 24px' }}>
+      <div className="product-detail-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px 24px' }}>
         
         {/* Breadcrumb Navigation */}
         <nav style={{
@@ -674,7 +674,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
 
             {/* Quality Commitment Badges */}
             <div className="product-commit-grid">
-              <div style={{
+              <div className="product-commit-item" style={{
                 background: '#f8fafc',
                 border: '1px solid #f1f5f9',
                 padding: '12px',
@@ -690,7 +690,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 </div>
               </div>
 
-              <div style={{
+              <div className="product-commit-item" style={{
                 background: '#f8fafc',
                 border: '1px solid #f1f5f9',
                 padding: '12px',
@@ -706,7 +706,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 </div>
               </div>
 
-              <div style={{
+              <div className="product-commit-item" style={{
                 background: '#f8fafc',
                 border: '1px solid #f1f5f9',
                 padding: '12px',
@@ -722,7 +722,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 </div>
               </div>
 
-              <div style={{
+              <div className="product-commit-item" style={{
                 background: '#f8fafc',
                 border: '1px solid #f1f5f9',
                 padding: '12px',
