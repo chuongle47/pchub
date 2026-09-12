@@ -1,0 +1,1105 @@
+{
+  "brands": [
+    {
+      "id": "b1000000-0000-0000-0000-000000000001",
+      "name": "Intel",
+      "slug": "intel",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000002",
+      "name": "AMD",
+      "slug": "amd",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000003",
+      "name": "ASUS",
+      "slug": "asus",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000004",
+      "name": "MSI",
+      "slug": "msi",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000005",
+      "name": "Gigabyte",
+      "slug": "gigabyte",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000006",
+      "name": "ASRock",
+      "slug": "asrock",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000007",
+      "name": "Corsair",
+      "slug": "corsair",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000008",
+      "name": "G.Skill",
+      "slug": "gskill",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000009",
+      "name": "Kingston",
+      "slug": "kingston",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000010",
+      "name": "Samsung",
+      "slug": "samsung",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000011",
+      "name": "Western Digital",
+      "slug": "western-digital",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000012",
+      "name": "NZXT",
+      "slug": "nzxt",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000013",
+      "name": "Lian Li",
+      "slug": "lian-li",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000014",
+      "name": "Deepcool",
+      "slug": "deepcool",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000015",
+      "name": "Noctua",
+      "slug": "noctua",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000016",
+      "name": "Zotac",
+      "slug": "zotac",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000017",
+      "name": "Sapphire",
+      "slug": "sapphire",
+      "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000018",
+      "name": "Seasonic",
+      "slug": "seasonic",
+      "is_active": true
+    }
+  ],
+  "categories": [
+    {
+      "id": "c1000000-0000-0000-0000-000000000001",
+      "name": "CPU - Bộ Vi Xử Lý",
+      "slug": "cpu",
+      "icon": "cpu"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000002",
+      "name": "Mainboard - Bo Mạch Chủ",
+      "slug": "mainboard",
+      "icon": "circuit-board"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000003",
+      "name": "RAM - Bộ Nhớ Trong",
+      "slug": "ram",
+      "icon": "memory"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000004",
+      "name": "GPU - Card Màn Hình",
+      "slug": "gpu",
+      "icon": "gpu"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000005",
+      "name": "SSD / HDD - Ổ Đĩa Cứng",
+      "slug": "storage",
+      "icon": "hard-drive"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000006",
+      "name": "PSU - Nguồn Máy Tính",
+      "slug": "psu",
+      "icon": "zap"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000007",
+      "name": "Case - Vỏ Máy Tính",
+      "slug": "case",
+      "icon": "box"
+    },
+    {
+      "id": "c1000000-0000-0000-0000-000000000008",
+      "name": "Tản Nhiệt (Cooling)",
+      "slug": "cooling",
+      "icon": "fan"
+    }
+  ],
+  "products": [
+    {
+      "id": "p-1",
+      "name": "Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng, 36MB Cache, LGA 1700)",
+      "slug": "intel-core-i9-14900k",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000001",
+      "sku": "BX8071514900K",
+      "price": 13990000,
+      "stock": 45,
+      "specs": {
+        "socket": "LGA1700",
+        "cores": 24,
+        "threads": 32,
+        "clock_ghz": "6.0GHz",
+        "tdp_watt": 253,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR4",
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-2",
+      "name": "Intel Core i9-14900KF (Up to 6.0GHz, 24 Nhân 32 Luồng, 36MB Cache, LGA 1700)",
+      "slug": "intel-core-i9-14900kf",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000001",
+      "sku": "BX8071514900KF",
+      "price": 13490000,
+      "stock": 30,
+      "specs": {
+        "socket": "LGA1700",
+        "cores": 24,
+        "threads": 32,
+        "clock_ghz": "6.0GHz",
+        "tdp_watt": 253,
+        "integrated_gpu": false,
+        "ram_support": [
+          "DDR4",
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-3",
+      "name": "Intel Core i7-14700K (Up to 5.6GHz, 20 Nhân 28 Luồng, 33MB Cache, LGA 1700)",
+      "slug": "intel-core-i7-14700k",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000001",
+      "sku": "BX8071514700K",
+      "price": 9290000,
+      "stock": 60,
+      "specs": {
+        "socket": "LGA1700",
+        "cores": 20,
+        "threads": 28,
+        "clock_ghz": "5.6GHz",
+        "tdp_watt": 253,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR4",
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-4",
+      "name": "Intel Core i7-14700KF (Up to 5.6GHz, 20 Nhân 28 Luồng, 33MB Cache, LGA 1700)",
+      "slug": "intel-core-i7-14700kf",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000001",
+      "sku": "BX8071514700KF",
+      "price": 8890000,
+      "stock": 50,
+      "specs": {
+        "socket": "LGA1700",
+        "cores": 20,
+        "threads": 28,
+        "clock_ghz": "5.6GHz",
+        "tdp_watt": 253,
+        "integrated_gpu": false,
+        "ram_support": [
+          "DDR4",
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-5",
+      "name": "Intel Core i5-14600K (Up to 5.3GHz, 14 Nhân 20 Luồng, 24MB Cache, LGA 1700)",
+      "slug": "intel-core-i5-14600k",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000001",
+      "sku": "BX8071514600K",
+      "price": 6490000,
+      "stock": 80,
+      "specs": {
+        "socket": "LGA1700",
+        "cores": 14,
+        "threads": 20,
+        "clock_ghz": "5.3GHz",
+        "tdp_watt": 181,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR4",
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-6",
+      "name": "Intel Core i5-13400F (Up to 4.6GHz, 10 Nhân 16 Luồng, 20MB Cache, LGA 1700)",
+      "slug": "intel-core-i5-13400f",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000001",
+      "sku": "BX8071513400F",
+      "price": 3990000,
+      "stock": 95,
+      "specs": {
+        "socket": "LGA1700",
+        "cores": 10,
+        "threads": 16,
+        "clock_ghz": "4.6GHz",
+        "tdp_watt": 65,
+        "integrated_gpu": false,
+        "ram_support": [
+          "DDR4",
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-7",
+      "name": "AMD Ryzen 9 7950X3D Processor 16 Cores 32 Threads 144MB 3D V-Cache AM5",
+      "slug": "amd-ryzen-9-7950x3d",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000002",
+      "sku": "100-100000908WOF",
+      "price": 15990000,
+      "stock": 35,
+      "specs": {
+        "socket": "AM5",
+        "cores": 16,
+        "threads": 32,
+        "clock_ghz": "5.7GHz",
+        "tdp_watt": 120,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-8",
+      "name": "AMD Ryzen 9 7900X3D Processor 12 Cores 24 Threads 140MB 3D V-Cache AM5",
+      "slug": "amd-ryzen-9-7900x3d",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000002",
+      "sku": "100-100000909WOF",
+      "price": 12500000,
+      "stock": 40,
+      "specs": {
+        "socket": "AM5",
+        "cores": 12,
+        "threads": 24,
+        "clock_ghz": "5.6GHz",
+        "tdp_watt": 120,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-9",
+      "name": "AMD Ryzen 7 7800X3D Processor 8 Cores 16 Threads 104MB 3D V-Cache AM5",
+      "slug": "amd-ryzen-7-7800x3d",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000002",
+      "sku": "100-100000910WOF",
+      "price": 9890000,
+      "stock": 75,
+      "specs": {
+        "socket": "AM5",
+        "cores": 8,
+        "threads": 16,
+        "clock_ghz": "5.0GHz",
+        "tdp_watt": 120,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-10",
+      "name": "AMD Ryzen 5 7600X Processor 6 Cores 12 Threads 38MB Cache AM5",
+      "slug": "amd-ryzen-5-7600x",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000002",
+      "sku": "100-100000593WOF",
+      "price": 4990000,
+      "stock": 90,
+      "specs": {
+        "socket": "AM5",
+        "cores": 6,
+        "threads": 12,
+        "clock_ghz": "5.3GHz",
+        "tdp_watt": 105,
+        "integrated_gpu": true,
+        "ram_support": [
+          "DDR5"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-11",
+      "name": "AMD Ryzen 5 5600X Processor 6 Cores 12 Threads 35MB Cache AM4",
+      "slug": "amd-ryzen-5-5600x",
+      "category_id": "c1000000-0000-0000-0000-000000000001",
+      "brand_id": "b1000000-0000-0000-0000-000000000002",
+      "sku": "100-100000065BOX",
+      "price": 3290000,
+      "stock": 110,
+      "specs": {
+        "socket": "AM4",
+        "cores": 6,
+        "threads": 12,
+        "clock_ghz": "4.6GHz",
+        "tdp_watt": 65,
+        "integrated_gpu": false,
+        "ram_support": [
+          "DDR4"
+        ]
+      },
+      "image_url": "/images/cpu-box.jpg"
+    },
+    {
+      "id": "p-12",
+      "name": "ASUS ROG STRIX Z790-E GAMING WIFI II LGA1700 ATX",
+      "slug": "asus-rog-strix-z790-e-gaming-wifi-ii",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000003",
+      "sku": "ROG-Z790E-GAMING-WIFI-II",
+      "price": 11490000,
+      "stock": 25,
+      "specs": {
+        "socket": "LGA1700",
+        "form_factor": "ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 5.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-13",
+      "name": "MSI MPG Z790 CARBON WIFI LGA1700 ATX",
+      "slug": "msi-mpg-z790-carbon-wifi",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000004",
+      "sku": "MPG-Z790-CARBON-WIFI",
+      "price": 9890000,
+      "stock": 30,
+      "specs": {
+        "socket": "LGA1700",
+        "form_factor": "ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 5.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-14",
+      "name": "MSI MAG B760M MORTAR WIFI DDR5 Micro-ATX",
+      "slug": "msi-mag-b760m-mortar-wifi-ddr5",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000004",
+      "sku": "MAG-B760M-MORTAR-WIFI-D5",
+      "price": 4290000,
+      "stock": 50,
+      "specs": {
+        "socket": "LGA1700",
+        "form_factor": "Micro-ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 5.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-15",
+      "name": "Gigabyte Z790 AORUS ELITE AX LGA1700 ATX",
+      "slug": "gigabyte-z790-aorus-elite-ax",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000005",
+      "sku": "Z790-AORUS-ELITE-AX",
+      "price": 6890000,
+      "stock": 45,
+      "specs": {
+        "socket": "LGA1700",
+        "form_factor": "ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 5.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-16",
+      "name": "Gigabyte X670E AORUS MASTER AM5 ATX",
+      "slug": "gigabyte-x670e-aorus-master",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000005",
+      "sku": "X670E-AORUS-MASTER",
+      "price": 12890000,
+      "stock": 20,
+      "specs": {
+        "socket": "AM5",
+        "form_factor": "ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 5.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-17",
+      "name": "ASUS TUF GAMING B650-PLUS WIFI AM5 ATX",
+      "slug": "asus-tuf-gaming-b650-plus-wifi",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000003",
+      "sku": "TUF-GAMING-B650-PLUS-WIFI",
+      "price": 5490000,
+      "stock": 40,
+      "specs": {
+        "socket": "AM5",
+        "form_factor": "ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-18",
+      "name": "ASRock B650M Pro RS WiFi AM5 Micro-ATX",
+      "slug": "asrock-b650m-pro-rs-wifi",
+      "category_id": "c1000000-0000-0000-0000-000000000002",
+      "brand_id": "b1000000-0000-0000-0000-000000000006",
+      "sku": "B650M-PRO-RS-WIFI",
+      "price": 3690000,
+      "stock": 55,
+      "specs": {
+        "socket": "AM5",
+        "form_factor": "Micro-ATX",
+        "ram_type": "DDR5",
+        "ram_slots": 4,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-19",
+      "name": "G.Skill Trident Z5 RGB 32GB (2x16GB) DDR5 6000MHz CL30",
+      "slug": "gskill-trident-z5-rgb-32gb",
+      "category_id": "c1000000-0000-0000-0000-000000000003",
+      "brand_id": "b1000000-0000-0000-0000-000000000008",
+      "sku": "F5-6000J3038F16GX2-TZ5RK",
+      "price": 3490000,
+      "stock": 88,
+      "specs": {
+        "ram_type": "DDR5",
+        "capacity_gb": 32,
+        "kit": "2x16GB",
+        "bus_speed_mhz": 6000,
+        "cas_latency": "CL30"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-20",
+      "name": "G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz CL30 Black",
+      "slug": "gskill-trident-z5-rgb-64gb",
+      "category_id": "c1000000-0000-0000-0000-000000000003",
+      "brand_id": "b1000000-0000-0000-0000-000000000008",
+      "sku": "F5-6000J3040G32GX2-TZ5RK",
+      "price": 6290000,
+      "stock": 30,
+      "specs": {
+        "ram_type": "DDR5",
+        "capacity_gb": 64,
+        "kit": "2x32GB",
+        "bus_speed_mhz": 6000,
+        "cas_latency": "CL30"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-21",
+      "name": "Corsair Vengeance RGB 32GB (2x16GB) DDR5 5600MHz Black",
+      "slug": "corsair-vengeance-rgb-32gb-ddr5-5600",
+      "category_id": "c1000000-0000-0000-0000-000000000003",
+      "brand_id": "b1000000-0000-0000-0000-000000000007",
+      "sku": "CMH32GX5M2B5600C36",
+      "price": 2890000,
+      "stock": 65,
+      "specs": {
+        "ram_type": "DDR5",
+        "capacity_gb": 32,
+        "kit": "2x16GB",
+        "bus_speed_mhz": 5600,
+        "cas_latency": "CL36"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-22",
+      "name": "Corsair Dominator Titanium RGB 32GB (2x16GB) DDR5 7200MHz",
+      "slug": "corsair-dominator-titanium-32gb-ddr5-7200",
+      "category_id": "c1000000-0000-0000-0000-000000000003",
+      "brand_id": "b1000000-0000-0000-0000-000000000007",
+      "sku": "CMP32GX5M2X7200C34",
+      "price": 4990000,
+      "stock": 25,
+      "specs": {
+        "ram_type": "DDR5",
+        "capacity_gb": 32,
+        "kit": "2x16GB",
+        "bus_speed_mhz": 7200,
+        "cas_latency": "CL34"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-23",
+      "name": "Kingston FURY Beast RGB 16GB (2x8GB) DDR4 3200MHz",
+      "slug": "kingston-fury-beast-rgb-16gb-ddr4-3200",
+      "category_id": "c1000000-0000-0000-0000-000000000003",
+      "brand_id": "b1000000-0000-0000-0000-000000000009",
+      "sku": "KF432C16BB1AK2/16",
+      "price": 1190000,
+      "stock": 120,
+      "specs": {
+        "ram_type": "DDR4",
+        "capacity_gb": 16,
+        "kit": "2x8GB",
+        "bus_speed_mhz": 3200,
+        "cas_latency": "CL16"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-24",
+      "name": "ASUS ROG Strix GeForce RTX 4090 OC Edition 24GB GDDR6X",
+      "slug": "asus-rog-strix-geforce-rtx-4090-oc-edition",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000003",
+      "sku": "ROG-STRIX-RTX4090-O24G-GAMING",
+      "price": 54990000,
+      "stock": 12,
+      "specs": {
+        "vram_gb": 24,
+        "vram_type": "GDDR6X",
+        "tdp_watt": 450,
+        "length_mm": 357,
+        "recommended_psu_watt": 1000,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-strix.jpg"
+    },
+    {
+      "id": "p-25",
+      "name": "MSI GeForce RTX 4090 SUPRIM X 24G GDDR6X",
+      "slug": "msi-geforce-rtx-4090-suprim-x-24g",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000004",
+      "sku": "RTX-4090-SUPRIM-X-24G",
+      "price": 52990000,
+      "stock": 10,
+      "specs": {
+        "vram_gb": 24,
+        "vram_type": "GDDR6X",
+        "tdp_watt": 450,
+        "length_mm": 336,
+        "recommended_psu_watt": 1000,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-strix.jpg"
+    },
+    {
+      "id": "p-26",
+      "name": "ASUS ROG Strix GeForce RTX 4080 SUPER OC Edition 16GB GDDR6X",
+      "slug": "asus-rog-strix-geforce-rtx-4080-super",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000003",
+      "sku": "ROG-STRIX-RTX4080S-O16G-GAMING",
+      "price": 32490000,
+      "stock": 18,
+      "specs": {
+        "vram_gb": 16,
+        "vram_type": "GDDR6X",
+        "tdp_watt": 320,
+        "length_mm": 357,
+        "recommended_psu_watt": 850,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-27",
+      "name": "ASUS ROG Strix GeForce RTX 4070 Ti SUPER OC Edition 16GB GDDR6X",
+      "slug": "asus-rog-strix-geforce-rtx-4070-ti-super",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000003",
+      "sku": "ROG-STRIX-RTX4070TIS-O16G",
+      "price": 24590000,
+      "stock": 22,
+      "specs": {
+        "vram_gb": 16,
+        "vram_type": "GDDR6X",
+        "tdp_watt": 285,
+        "length_mm": 336,
+        "recommended_psu_watt": 750,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-strix.jpg"
+    },
+    {
+      "id": "p-28",
+      "name": "Gigabyte AERO GeForce RTX 4060 Ti OC 8G GDDR6 White Edition",
+      "slug": "gigabyte-aero-geforce-rtx-4060-ti",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000005",
+      "sku": "GV-N406TAERO OC-8GD",
+      "price": 12490000,
+      "stock": 35,
+      "specs": {
+        "vram_gb": 8,
+        "vram_type": "GDDR6",
+        "tdp_watt": 160,
+        "length_mm": 281,
+        "recommended_psu_watt": 500,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-29",
+      "name": "MSI Gaming X GeForce RTX 4060 8GB GDDR6 Twin Frozr 9",
+      "slug": "msi-gaming-x-geforce-rtx-4060-8gb",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000004",
+      "sku": "RTX-4060-GAMING-X-8G",
+      "price": 8490000,
+      "stock": 50,
+      "specs": {
+        "vram_gb": 8,
+        "vram_type": "GDDR6",
+        "tdp_watt": 115,
+        "length_mm": 247,
+        "recommended_psu_watt": 550,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-strix.jpg"
+    },
+    {
+      "id": "p-30",
+      "name": "Zotac Gaming GeForce RTX 4070 SUPER Twin Edge 12GB GDDR6X",
+      "slug": "zotac-gaming-geforce-rtx-4070-super",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000016",
+      "sku": "ZT-D40720E-10M",
+      "price": 16290000,
+      "stock": 30,
+      "specs": {
+        "vram_gb": 12,
+        "vram_type": "GDDR6X",
+        "tdp_watt": 220,
+        "length_mm": 225,
+        "recommended_psu_watt": 650,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-31",
+      "name": "Sapphire NITRO+ AMD Radeon RX 7900 XTX Vapor-X 24GB GDDR6",
+      "slug": "sapphire-nitro-amd-radeon-rx-7900-xtx",
+      "category_id": "c1000000-0000-0000-0000-000000000004",
+      "brand_id": "b1000000-0000-0000-0000-000000000017",
+      "sku": "11322-01-20G",
+      "price": 28990000,
+      "stock": 15,
+      "specs": {
+        "vram_gb": 24,
+        "vram_type": "GDDR6",
+        "tdp_watt": 420,
+        "length_mm": 320,
+        "recommended_psu_watt": 850,
+        "pcie_version": "PCIe 4.0"
+      },
+      "image_url": "/images/gpu-strix.jpg"
+    },
+    {
+      "id": "p-32",
+      "name": "Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2 SSD",
+      "slug": "samsung-990-pro-2tb",
+      "category_id": "c1000000-0000-0000-0000-000000000005",
+      "brand_id": "b1000000-0000-0000-0000-000000000010",
+      "sku": "MZ-V9P2T0BW",
+      "price": 4890000,
+      "stock": 60,
+      "specs": {
+        "type": "SSD_NVMe",
+        "capacity_gb": 2000,
+        "form_factor": "M.2 2280",
+        "read_speed": "7450MB/s",
+        "write_speed": "6900MB/s"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-33",
+      "name": "Samsung 980 Pro 1TB PCIe Gen 4.0 x4 NVMe M.2 SSD",
+      "slug": "samsung-980-pro-1tb",
+      "category_id": "c1000000-0000-0000-0000-000000000005",
+      "brand_id": "b1000000-0000-0000-0000-000000000010",
+      "sku": "MZ-V8P1T0BW",
+      "price": 2590000,
+      "stock": 75,
+      "specs": {
+        "type": "SSD_NVMe",
+        "capacity_gb": 1000,
+        "form_factor": "M.2 2280",
+        "read_speed": "7000MB/s",
+        "write_speed": "5000MB/s"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-34",
+      "name": "Western Digital Black SN850X 1TB NVMe M.2 SSD",
+      "slug": "wd-black-sn850x-1tb",
+      "category_id": "c1000000-0000-0000-0000-000000000005",
+      "brand_id": "b1000000-0000-0000-0000-000000000011",
+      "sku": "WDS100T2X0E",
+      "price": 2590000,
+      "stock": 80,
+      "specs": {
+        "type": "SSD_NVMe",
+        "capacity_gb": 1000,
+        "form_factor": "M.2 2280",
+        "read_speed": "7300MB/s",
+        "write_speed": "6300MB/s"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-35",
+      "name": "Kingston NV2 1TB PCIe 4.0 NVMe M.2 SSD",
+      "slug": "kingston-nv2-1tb",
+      "category_id": "c1000000-0000-0000-0000-000000000005",
+      "brand_id": "b1000000-0000-0000-0000-000000000009",
+      "sku": "SNV2S/1000G",
+      "price": 1490000,
+      "stock": 150,
+      "specs": {
+        "type": "SSD_NVMe",
+        "capacity_gb": 1000,
+        "form_factor": "M.2 2280",
+        "read_speed": "3500MB/s",
+        "write_speed": "2100MB/s"
+      },
+      "image_url": "/images/ram-rgb.jpg"
+    },
+    {
+      "id": "p-36",
+      "name": "Corsair RM1000x 1000W 80 Plus Gold Full Modular Power Supply",
+      "slug": "corsair-rm1000x-1000w-80-plus-gold",
+      "category_id": "c1000000-0000-0000-0000-000000000006",
+      "brand_id": "b1000000-0000-0000-0000-000000000007",
+      "sku": "CP-9020201-NA",
+      "price": 4390000,
+      "stock": 35,
+      "specs": {
+        "wattage": 1000,
+        "modularity": "Full-Modular",
+        "efficiency_rating": "80_Plus_Gold",
+        "fan_size_mm": 135
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-37",
+      "name": "Corsair RM850e 850W 80 Plus Gold Fully Modular ATX 3.0",
+      "slug": "corsair-rm850e-850w-atx-30",
+      "category_id": "c1000000-0000-0000-0000-000000000006",
+      "brand_id": "b1000000-0000-0000-0000-000000000007",
+      "sku": "CP-9020263-NA",
+      "price": 3190000,
+      "stock": 50,
+      "specs": {
+        "wattage": 850,
+        "modularity": "Full-Modular",
+        "efficiency_rating": "80_Plus_Gold",
+        "fan_size_mm": 120
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-38",
+      "name": "Seasonic PRIME GX-850 850W 80 Plus Gold Full Modular",
+      "slug": "seasonic-prime-gx-850-850w",
+      "category_id": "c1000000-0000-0000-0000-000000000006",
+      "brand_id": "b1000000-0000-0000-0000-000000000018",
+      "sku": "PRIME-GX-850",
+      "price": 3690000,
+      "stock": 40,
+      "specs": {
+        "wattage": 850,
+        "modularity": "Full-Modular",
+        "efficiency_rating": "80_Plus_Gold",
+        "fan_size_mm": 135
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-39",
+      "name": "MSI MAG A750GL PCIE5 750W 80 Plus Gold Full Modular",
+      "slug": "msi-mag-a750gl-pcie5-750w",
+      "category_id": "c1000000-0000-0000-0000-000000000006",
+      "brand_id": "b1000000-0000-0000-0000-000000000004",
+      "sku": "MAG-A750GL-PCIE5",
+      "price": 2490000,
+      "stock": 65,
+      "specs": {
+        "wattage": 750,
+        "modularity": "Full-Modular",
+        "efficiency_rating": "80_Plus_Gold",
+        "fan_size_mm": 120
+      },
+      "image_url": "/images/gpu-white.jpg"
+    },
+    {
+      "id": "p-40",
+      "name": "NZXT H9 Flow RGB Dual-Chamber Mid-Tower Case Black",
+      "slug": "nzxt-h9-flow-rgb-black",
+      "category_id": "c1000000-0000-0000-0000-000000000007",
+      "brand_id": "b1000000-0000-0000-0000-000000000012",
+      "sku": "CM-H91FB-R1",
+      "price": 4290000,
+      "stock": 25,
+      "specs": {
+        "max_gpu_length_mm": 435,
+        "max_cooler_height_mm": 165,
+        "supported_mainboards": [
+          "ATX",
+          "Micro-ATX",
+          "Mini-ITX"
+        ]
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-41",
+      "name": "NZXT H5 Flow RGB Compact Mid-Tower Case White",
+      "slug": "nzxt-h5-flow-rgb-white",
+      "category_id": "c1000000-0000-0000-0000-000000000007",
+      "brand_id": "b1000000-0000-0000-0000-000000000012",
+      "sku": "CC-H51FW-R1",
+      "price": 2490000,
+      "stock": 40,
+      "specs": {
+        "max_gpu_length_mm": 365,
+        "max_cooler_height_mm": 165,
+        "supported_mainboards": [
+          "ATX",
+          "Micro-ATX",
+          "Mini-ITX"
+        ]
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-42",
+      "name": "Lian Li O11 Dynamic EVO XL Black E-ATX Case",
+      "slug": "lian-li-o11-dynamic-evo-xl-black",
+      "category_id": "c1000000-0000-0000-0000-000000000007",
+      "brand_id": "b1000000-0000-0000-0000-000000000013",
+      "sku": "O11DEXL-X",
+      "price": 5890000,
+      "stock": 18,
+      "specs": {
+        "max_gpu_length_mm": 460,
+        "max_cooler_height_mm": 167,
+        "supported_mainboards": [
+          "E-ATX",
+          "ATX",
+          "Micro-ATX"
+        ]
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-43",
+      "name": "Corsair 4000D AIRFLOW Tempered Glass Mid-Tower Black",
+      "slug": "corsair-4000d-airflow-black",
+      "category_id": "c1000000-0000-0000-0000-000000000007",
+      "brand_id": "b1000000-0000-0000-0000-000000000007",
+      "sku": "CC-9011200-WW",
+      "price": 2190000,
+      "stock": 70,
+      "specs": {
+        "max_gpu_length_mm": 360,
+        "max_cooler_height_mm": 170,
+        "supported_mainboards": [
+          "ATX",
+          "Micro-ATX",
+          "Mini-ITX"
+        ]
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-44",
+      "name": "NZXT Kraken Elite 360 RGB Black Liquid AIO Cooler",
+      "slug": "nzxt-kraken-elite-360-rgb-black",
+      "category_id": "c1000000-0000-0000-0000-000000000008",
+      "brand_id": "b1000000-0000-0000-0000-000000000012",
+      "sku": "RL-KR36E-B1",
+      "price": 6890000,
+      "stock": 20,
+      "specs": {
+        "cooling_type": "Liquid_AIO",
+        "radiator_size_mm": 360,
+        "supported_sockets": [
+          "LGA1700",
+          "AM5",
+          "AM4"
+        ],
+        "tdp_capacity_watt": 300
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-45",
+      "name": "Corsair iCUE H150i ELITE LCD XT Liquid CPU Cooler",
+      "slug": "corsair-icue-h150i-elite-lcd-xt",
+      "category_id": "c1000000-0000-0000-0000-000000000008",
+      "brand_id": "b1000000-0000-0000-0000-000000000007",
+      "sku": "CW-9060075-WW",
+      "price": 7890000,
+      "stock": 15,
+      "specs": {
+        "cooling_type": "Liquid_AIO",
+        "radiator_size_mm": 360,
+        "supported_sockets": [
+          "LGA1700",
+          "AM5",
+          "AM4"
+        ],
+        "tdp_capacity_watt": 320
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-46",
+      "name": "Deepcool LT720 360mm High-Performance Liquid CPU Cooler",
+      "slug": "deepcool-lt720-360mm",
+      "category_id": "c1000000-0000-0000-0000-000000000008",
+      "brand_id": "b1000000-0000-0000-0000-000000000014",
+      "sku": "R-LT720-BKAMNF-G-1",
+      "price": 3290000,
+      "stock": 45,
+      "specs": {
+        "cooling_type": "Liquid_AIO",
+        "radiator_size_mm": 360,
+        "supported_sockets": [
+          "LGA1700",
+          "AM5",
+          "AM4"
+        ],
+        "tdp_capacity_watt": 300
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-47",
+      "name": "Noctua NH-D15 chromax.black Dual-Tower Air Cooler",
+      "slug": "noctua-nh-d15-chromax-black",
+      "category_id": "c1000000-0000-0000-0000-000000000008",
+      "brand_id": "b1000000-0000-0000-0000-000000000015",
+      "sku": "NH-D15-CH-BK",
+      "price": 2990000,
+      "stock": 35,
+      "specs": {
+        "cooling_type": "Air",
+        "radiator_size_mm": 140,
+        "supported_sockets": [
+          "LGA1700",
+          "AM5",
+          "AM4"
+        ],
+        "tdp_capacity_watt": 220
+      },
+      "image_url": "/images/hero-pc.jpg"
+    },
+    {
+      "id": "p-48",
+      "name": "Thermalright Peerless Assassin 120 SE ARGB Air Cooler",
+      "slug": "thermalright-peerless-assassin-120-se",
+      "category_id": "c1000000-0000-0000-0000-000000000008",
+      "brand_id": "b1000000-0000-0000-0000-000000000014",
+      "sku": "PA120-SE-ARGB",
+      "price": 890000,
+      "stock": 100,
+      "specs": {
+        "cooling_type": "Air",
+        "radiator_size_mm": 120,
+        "supported_sockets": [
+          "LGA1700",
+          "AM5",
+          "AM4"
+        ],
+        "tdp_capacity_watt": 240
+      },
+      "image_url": "/images/hero-pc.jpg"
+    }
+  ]
+}

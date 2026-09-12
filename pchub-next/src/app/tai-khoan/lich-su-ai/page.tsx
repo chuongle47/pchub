@@ -1,0 +1,3 @@
+export default function AIHistoryPage() {
+  return <div><h1 className="text-2xl font-bold mb-5">Lịch sử AI Chat</h1><div className="space-y-3">{[['Build PC gaming 30 triệu', 'AI đã đề xuất 8 linh kiện tương thích', '20/08/2026'], ['PSU cho RTX 4070 Ti Super', 'Khuyến nghị nguồn 750W chuẩn Gold', '18/08/2026'], ['Tư vấn nâng cấp RAM', 'Máy hiện hỗ trợ tối đa 64GB DDR5', '12/08/2026']].map(([title, desc, date]) => <div key={title} className="bg-white border rounded-xl p-5 flex items-center justify-between"><div><p className="font-semibold">🤖 {title}</p><p className="text-sm text-gray-500 mt-1">{desc}</p></div><span className="text-xs text-gray-400">{date}</span></div>)}</div></div>;
+}

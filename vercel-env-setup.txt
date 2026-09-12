@@ -1,0 +1,6 @@
+# Environment Variables for Vercel Deployment
+# Copy these variables to your Vercel project settings
+
+NEXT_PUBLIC_SUPABASE_URL=https://nlalyoyazlgsimzudtxw.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sYWx5b3lhemxnc2ltenVkdHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMjI3MTEsImV4cCI6MjEwMzg5ODcxMX0.u1XILt3xFd3FM9ZZhRRz6b2G0ckGOYabwumjDEC9F08
+DATABASE_URL=postgresql://postgres:LeChuong1810@db.nlalyoyazlgsimzudtxw.supabase.co:5432/postgres

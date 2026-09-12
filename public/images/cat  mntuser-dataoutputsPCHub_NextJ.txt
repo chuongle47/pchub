@@ -1,0 +1,2503 @@
+cat > /mnt/user-data/outputs/PCHub_NextJS_FullLogic.md << 'ENDOFFILE'
+# PCHUB NEXT.JS 14 — FULL PAGE LOGIC & ROUTING
+# Bổ sung cho Antigravity_NextJS_PCHub.md
+# Tác giả: Lê Văn Chương
+# ================================================================
+# File gốc đã có: Prompt 0 (Setup) + A→K (Homepage components)
+# File này bổ sung: Toàn bộ trang chức năng + routing logic
+# ================================================================
+
+---
+
+## SƠ ĐỒ LOGIC TỔNG THỂ (đọc trước khi code)
+
+```
+LUỒNG NGƯỜI DÙNG — STATE TRANSITIONS:
+
+[Homepage] 
+  → click category card       → [/danh-muc/[slug]]       (CategoryPage)
+  → click product card        → [/san-pham/[slug]]        (ProductPage)
+  → click "Tư vấn AI"         → open AIChatWidget drawer  (overlay)
+  → click "Kiểm tra tương thích" → [/kiem-tra-tuong-thich] (CompatPage)
+  → click "PC Builder"        → [/xay-dung-pc]            (BuilderPage)
+  → click "Build Gallery"     → [/build-gallery]          (GalleryPage)
+  → click "Blog"              → [/blog]                   (BlogListPage)
+  → click cart icon           → open CartDrawer           (Zustand isOpen)
+  → click "Tìm kiếm" submit   → [/tim-kiem?q=...]         (SearchPage)
+
+[CategoryPage /danh-muc/[slug]]
+  → click product card        → [/san-pham/[slug]]
+  → change filter             → URL params update + re-render (no nav)
+  → click "Trang sau"         → URL ?page=2 update
+
+[ProductPage /san-pham/[slug]]
+  → click "Thêm vào giỏ"     → CartStore.addItem() + CartDrawer opens
+  → click "Mua ngay"         → CartStore.addItem() + navigate /thanh-toan
+  → click "Thêm vào yêu thích" → WishlistStore.toggle()
+  → click "Kiểm tra tương thích" → navigate /kiem-tra-tuong-thich?cpu=slug
+  → click "Viết đánh giá"    → scroll to #reviews section + open form
+  → click related product     → navigate /san-pham/[other-slug]
+
+[CartDrawer (overlay)]
+  → click "Xem giỏ hàng"     → navigate /gio-hang (CartPage)
+  → click "Thanh toán"       → navigate /thanh-toan (CheckoutPage)
+  → click × on item          → CartStore.removeItem()
+  → change qty               → CartStore.updateQty()
+
+[CartPage /gio-hang]
+  → click "Tiến hành thanh toán" → navigate /thanh-toan
+  → click "Tiếp tục mua sắm" → navigate back or /
+  → apply voucher             → POST /api/vouchers/validate
+
+[CheckoutPage /thanh-toan]
+  → submit form               → POST /api/orders/create
+  → payment success           → navigate /dat-hang-thanh-cong?orderId=XXX
+  → payment fail              → show error inline, stay on page
+
+[OrderSuccessPage /dat-hang-thanh-cong]
+  → click "Theo dõi đơn"     → navigate /tai-khoan/don-hang/[orderId]
+  → click "Tiếp tục mua"     → navigate /
+
+[Auth flow]
+  → /dang-nhap submit         → POST /api/auth/login → redirect /tai-khoan
+  → /dang-ky submit           → POST /api/auth/register → redirect /tai-khoan
+  → any protected page        → redirect /dang-nhap?next=[current-url]
+
+[Account /tai-khoan/*]
+  → sidebar nav links         → navigate to sub-pages
+  → /tai-khoan/don-hang       → OrderListPage
+  → /tai-khoan/don-hang/[id]  → OrderDetailPage
+  → /tai-khoan/yeu-thich      → WishlistPage
+  → /tai-khoan/bao-hanh       → WarrantyPage
+  → /tai-khoan/ho-so          → ProfilePage
+  → /tai-khoan/dia-chi        → AddressPage
+  → /tai-khoan/build-cua-toi  → MyBuildsPage
+
+ZUSTAND STORES & THEIR CONSUMERS:
+  useCartStore    → CartDrawer, Header (badge), CartPage, CheckoutPage
+  useWishlistStore → ProductCard (heart icon), WishlistPage, Header (badge)
+  useUIStore      → AIChatWidget (isOpen), QuickView (product), Filters
+  useAuthStore    → Header (user), all protected pages (middleware)
+  useBuilderStore → PCBuilderPage, CompatibilityChecker, BuildGallery
+
+URL PARAMS STRATEGY:
+  /danh-muc/[slug]?hang=asus&gia=5000000-20000000&vram=12&trang=2&sort=ban-chay
+  /tim-kiem?q=rtx+4070&danh-muc=gpu&trang=1
+  /kiem-tra-tuong-thich?cpu=intel-i9-14900k&gpu=asus-rtx-4080-super
+  /xay-dung-pc?buoc=1&muc-dich=gaming&ngan-sach=30000000
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT L — ROUTING & MIDDLEWARE
+## app/middleware.ts + routing logic
+## ══════════════════════════════════════════════════════════════
+
+```
+Create Next.js 14 routing infrastructure for PCHub.
+Files: middleware.ts, app/not-found.tsx, app/loading.tsx, lib/auth.ts
+
+━━━ FILE 1: middleware.ts (root) ━━━
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// Routes that require authentication
+const PROTECTED_ROUTES = [
+  '/tai-khoan',
+  '/thanh-toan',
+  '/gio-hang/thanh-toan',
+  '/dat-hang-thanh-cong',
+]
+
+// Routes that redirect logged-in users
+const AUTH_ROUTES = ['/dang-nhap', '/dang-ky']
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // Get auth token from cookie
+  const token = request.cookies.get('pchub-token')?.value
+  const isAuthenticated = !!token
+  
+  // Redirect authenticated users away from auth pages
+  if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL('/tai-khoan', request.url))
+    }
+  }
+  
+  // Protect account/checkout routes
+  if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL('/dang-nhap', request.url)
+      loginUrl.searchParams.set('next', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+  
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: [
+    '/tai-khoan/:path*',
+    '/thanh-toan',
+    '/dat-hang-thanh-cong',
+    '/dang-nhap',
+    '/dang-ky',
+  ]
+}
+
+━━━ FILE 2: app/not-found.tsx ━━━
+import Link from 'next/link'
+import { Home, Search, ArrowLeft } from 'lucide-react'
+
+export default function NotFound() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center max-w-md px-4">
+        <div className="text-8xl font-bold text-blue-600 mb-4">404</div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Trang không tồn tại
+        </h1>
+        <p className="text-gray-500 mb-8">
+          Trang bạn tìm không tồn tại hoặc đã bị xóa.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/" 
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 
+              rounded-lg hover:bg-blue-700 transition-colors">
+            <Home size={18} /> Trang chủ
+          </Link>
+          <Link href="/danh-muc/tat-ca"
+            className="flex items-center gap-2 border border-gray-300 px-6 py-3 
+              rounded-lg hover:bg-gray-100 transition-colors">
+            <Search size={18} /> Xem sản phẩm
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+━━━ FILE 3: app/loading.tsx (global skeleton) ━━━
+export default function Loading() {
+  return (
+    <div className="min-h-screen">
+      {/* Skeleton header */}
+      <div className="h-9 bg-gray-800 animate-pulse" />
+      <div className="h-20 bg-white border-b animate-pulse" />
+      <div className="h-12 bg-gray-900 animate-pulse" />
+      {/* Skeleton content */}
+      <div className="max-w-[1280px] mx-auto px-4 py-8">
+        <div className="grid grid-cols-4 gap-4">
+          {Array.from({length: 8}).map((_, i) => (
+            <div key={i} className="bg-gray-200 rounded-lg h-72 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+━━━ FILE 4: lib/auth.ts ━━━
+import { cookies } from 'next/headers'
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  role: 'member' | 'admin' | 'staff'
+  avatar?: string
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  try {
+    const cookieStore = cookies()
+    const token = cookieStore.get('pchub-token')?.value
+    if (!token) return null
+    
+    // In production: verify JWT, fetch from DB
+    // For now: decode mock token
+    const user = JSON.parse(Buffer.from(token, 'base64').toString())
+    return user as User
+  } catch {
+    return null
+  }
+}
+
+export function isAdmin(user: User | null): boolean {
+  return user?.role === 'admin'
+}
+
+export function isStaff(user: User | null): boolean {
+  return user?.role === 'staff' || user?.role === 'admin'
+}
+
+━━━ FILE 5: lib/store.ts — ADD useUIStore & useAuthStore ━━━
+// Add these to existing store.ts from Prompt K:
+
+interface UIStore {
+  // Chat
+  isChatOpen: boolean
+  setChatOpen: (open: boolean) => void
+  // QuickView
+  quickViewProduct: Product | null
+  setQuickViewProduct: (p: Product | null) => void
+  // Mobile menu
+  isMobileMenuOpen: boolean
+  setMobileMenuOpen: (open: boolean) => void
+  // Search
+  searchQuery: string
+  setSearchQuery: (q: string) => void
+}
+
+export const useUIStore = create<UIStore>((set) => ({
+  isChatOpen: false,
+  setChatOpen: (open) => set({ isChatOpen: open }),
+  quickViewProduct: null,
+  setQuickViewProduct: (p) => set({ quickViewProduct: p }),
+  isMobileMenuOpen: false,
+  setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
+  searchQuery: '',
+  setSearchQuery: (q) => set({ searchQuery: q }),
+}))
+
+interface AuthStore {
+  user: User | null
+  setUser: (user: User | null) => void
+  logout: () => void
+}
+
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      user: null,
+      setUser: (user) => set({ user }),
+      logout: () => {
+        set({ user: null })
+        document.cookie = 'pchub-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        window.location.href = '/dang-nhap'
+      },
+    }),
+    { name: 'pchub-auth' }
+  )
+)
+
+// PC Builder store
+interface BuilderStore {
+  slots: Record<ComponentSlot, Product | null>
+  setSlot: (slot: ComponentSlot, product: Product | null) => void
+  clearBuild: () => void
+  totalPrice: () => number
+  purpose: 'gaming' | 'office' | 'render' | 'streaming' | null
+  setPurpose: (p: BuilderStore['purpose']) => void
+  budget: number
+  setBudget: (b: number) => void
+  step: number
+  setStep: (s: number) => void
+}
+
+type ComponentSlot = 'cpu' | 'gpu' | 'ram' | 'mainboard' | 'ssd' | 'psu' | 'case' | 'cooler' | 'monitor'
+
+export const useBuilderStore = create<BuilderStore>((set, get) => ({
+  slots: { cpu:null, gpu:null, ram:null, mainboard:null, ssd:null, psu:null, case:null, cooler:null, monitor:null },
+  setSlot: (slot, product) => set(s => ({ slots: { ...s.slots, [slot]: product } })),
+  clearBuild: () => set({ slots: { cpu:null, gpu:null, ram:null, mainboard:null, ssd:null, psu:null, case:null, cooler:null, monitor:null } }),
+  totalPrice: () => Object.values(get().slots).reduce((sum, p) => sum + (p?.price ?? 0), 0),
+  purpose: null,
+  setPurpose: (p) => set({ purpose: p }),
+  budget: 25000000,
+  setBudget: (b) => set({ budget: b }),
+  step: 1,
+  setStep: (s) => set({ step: s }),
+}))
+
+TypeScript strict. Generate complete code.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT M — CATEGORY PAGE (Trang danh mục)
+## app/(shop)/danh-muc/[slug]/page.tsx + layout.tsx
+## ══════════════════════════════════════════════════════════════
+
+```
+Create the Category/Shop page for PCHub Next.js 14.
+Files:
+  app/(shop)/danh-muc/[slug]/page.tsx
+  app/(shop)/danh-muc/[slug]/loading.tsx
+  components/shop/FilterSidebar.tsx
+  components/shop/ProductGrid.tsx
+  components/shop/ShopToolbar.tsx
+  components/shop/ActiveFilters.tsx
+  components/shop/MobileFilterDrawer.tsx
+
+━━━ PAGE: app/(shop)/danh-muc/[slug]/page.tsx ━━━
+
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import FilterSidebar from '@/components/shop/FilterSidebar'
+import ProductGrid from '@/components/shop/ProductGrid'
+import ShopToolbar from '@/components/shop/ShopToolbar'
+import ActiveFilters from '@/components/shop/ActiveFilters'
+import MobileFilterDrawer from '@/components/shop/MobileFilterDrawer'
+import { CATEGORIES, getProductsByCategory } from '@/lib/constants'
+
+interface PageProps {
+  params: { slug: string }
+  searchParams: {
+    hang?: string         // brand filter: "asus,msi"
+    gia?: string          // price: "5000000-25000000"
+    vram?: string         // "8,12,16"
+    sort?: string         // "ban-chay" | "moi-nhat" | "gia-tang" | "gia-giam" | "danh-gia"
+    trang?: string        // page number
+    xem?: string          // "4" | "8" | "12" products per row
+  }
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const category = CATEGORIES.find(c => c.slug === params.slug)
+  if (!category) return {}
+  return {
+    title: `${category.name} | PCHub — Linh kiện chính hãng`,
+    description: `Mua ${category.name} chính hãng tại PCHub. ${category.count} sản phẩm. Bảo hành 36 tháng. Giao nhanh 2H nội thành.`,
+  }
+}
+
+export default function CategoryPage({ params, searchParams }: PageProps) {
+  const category = CATEGORIES.find(c => c.slug === params.slug)
+  if (!category) notFound()
+  
+  // Parse filter params
+  const filters = {
+    brands: searchParams.hang?.split(',') ?? [],
+    priceRange: searchParams.gia?.split('-').map(Number) ?? [0, 100_000_000],
+    vram: searchParams.vram?.split(',') ?? [],
+    sort: searchParams.sort ?? 'ban-chay',
+    page: Number(searchParams.trang ?? '1'),
+    perPage: 12,
+  }
+  
+  const { products, total } = getProductsByCategory(params.slug, filters)
+  const totalPages = Math.ceil(total / filters.perPage)
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="max-w-[1280px] mx-auto px-4 py-3 flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" className="hover:text-blue-600">Trang chủ</a>
+          <span>»</span>
+          <a href="/danh-muc/tat-ca" className="hover:text-blue-600">Linh kiện</a>
+          <span>»</span>
+          <span className="text-gray-900 font-medium">{category.name}</span>
+        </div>
+      </div>
+
+      {/* Page header */}
+      <div className="bg-white border-b py-6">
+        <div className="max-w-[1280px] mx-auto px-4">
+          <h1 className="text-2xl font-bold text-gray-900">{category.name}</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Tìm thấy <strong>{total}</strong> sản phẩm
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-[1280px] mx-auto px-4 py-6">
+        <div className="flex gap-6">
+          
+          {/* Sidebar — hidden on mobile */}
+          <aside className="hidden lg:block w-64 shrink-0">
+            <FilterSidebar
+              categorySlug={params.slug}
+              currentFilters={filters}
+              facets={{
+                brands: ['ASUS','MSI','Gigabyte','ZOTAC','Sapphire','PowerColor'],
+                priceRanges: [[0,5000000],[5000000,15000000],[15000000,30000000],[30000000,100000000]],
+                vramOptions: ['8GB','12GB','16GB','24GB'],
+              }}
+            />
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 min-w-0">
+            {/* Toolbar: sort + view toggle + mobile filter btn */}
+            <ShopToolbar
+              total={total}
+              currentSort={filters.sort}
+              currentPage={filters.page}
+              totalPages={totalPages}
+              categorySlug={params.slug}
+            />
+
+            {/* Active filter pills */}
+            <ActiveFilters filters={filters} categorySlug={params.slug} />
+
+            {/* Product Grid */}
+            <ProductGrid products={products} />
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-8">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <a
+                    key={page}
+                    href={`/danh-muc/${params.slug}?${
+                      new URLSearchParams({ ...searchParams, trang: String(page) })
+                    }`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-lg border 
+                      font-medium text-sm transition-colors
+                      ${page === filters.page 
+                        ? 'bg-blue-600 text-white border-blue-600' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-600 hover:text-blue-600'
+                      }`}
+                  >
+                    {page}
+                  </a>
+                ))}
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+
+      {/* Mobile filter drawer */}
+      <MobileFilterDrawer
+        categorySlug={params.slug}
+        currentFilters={filters}
+      />
+    </div>
+  )
+}
+
+━━━ FilterSidebar.tsx — FULL COMPONENT ━━━
+'use client'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useState, useCallback } from 'react'
+import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react'
+
+interface FilterSidebarProps {
+  categorySlug: string
+  currentFilters: { brands: string[]; priceRange: number[]; vram: string[]; sort: string; page: number; perPage: number }
+  facets: {
+    brands: string[]
+    priceRanges: number[][]
+    vramOptions: string[]
+  }
+}
+
+export default function FilterSidebar({ categorySlug, currentFilters, facets }: FilterSidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [openSections, setOpenSections] = useState({ brand: true, price: true, vram: true })
+
+  const updateFilter = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set(key, value)
+    params.delete('trang') // reset to page 1 on filter change
+    router.push(`${pathname}?${params.toString()}`)
+  }, [searchParams, pathname, router])
+
+  const toggleBrand = useCallback((brand: string) => {
+    const current = currentFilters.brands
+    const next = current.includes(brand.toLowerCase())
+      ? current.filter(b => b !== brand.toLowerCase())
+      : [...current, brand.toLowerCase()]
+    updateFilter('hang', next.join(','))
+  }, [currentFilters.brands, updateFilter])
+
+  return (
+    <div className="space-y-4">
+
+      {/* Danh mục con */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 border-b bg-gray-50">
+          <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">
+            Danh mục con
+          </h3>
+        </div>
+        <ul className="py-2">
+          {['Intel Core i9','Intel Core i7','Intel Core i5','AMD Ryzen 9','AMD Ryzen 7'].map(sub => (
+            <li key={sub}>
+              <a href={`/danh-muc/${categorySlug}?sub=${sub.toLowerCase().replace(/\s+/g,'-')}`}
+                className="flex items-center justify-between px-4 py-2 text-sm 
+                  text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <span>{sub}</span>
+                <span className="text-gray-400 text-xs">(24)</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Khoảng giá */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => setOpenSections(s => ({ ...s, price: !s.price }))}
+          className="w-full flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+          <h3 className="font-semibold text-sm uppercase tracking-wide">Lọc theo giá</h3>
+          {openSections.price ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+        </button>
+        {openSections.price && (
+          <div className="p-4 space-y-3">
+            {/* Price range options */}
+            {facets.priceRanges.map(([min, max]) => (
+              <label key={`${min}-${max}`} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="price"
+                  checked={currentFilters.priceRange[0] === min && currentFilters.priceRange[1] === max}
+                  onChange={() => updateFilter('gia', `${min}-${max}`)}
+                  className="accent-blue-600"
+                />
+                <span className="text-sm text-gray-600">
+                  {min === 0 ? 'Dưới ' : `${(min/1e6).toFixed(0)}tr — `}
+                  {(max/1e6).toFixed(0)}tr ₫
+                </span>
+              </label>
+            ))}
+            {/* Manual range inputs */}
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="number"
+                placeholder="Từ"
+                className="w-full border rounded px-2 py-1 text-sm"
+                defaultValue={currentFilters.priceRange[0] || ''}
+              />
+              <span className="text-gray-400">—</span>
+              <input
+                type="number"
+                placeholder="Đến"
+                className="w-full border rounded px-2 py-1 text-sm"
+                defaultValue={currentFilters.priceRange[1] || ''}
+              />
+            </div>
+            <button
+              onClick={() => {/* apply manual range */}}
+              className="w-full bg-blue-600 text-white py-1.5 rounded text-sm hover:bg-blue-700">
+              Lọc
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Thương hiệu */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => setOpenSections(s => ({ ...s, brand: !s.brand }))}
+          className="w-full flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+          <h3 className="font-semibold text-sm uppercase tracking-wide">Thương hiệu</h3>
+          {openSections.brand ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+        </button>
+        {openSections.brand && (
+          <div className="p-4 space-y-2">
+            {facets.brands.map(brand => (
+              <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={currentFilters.brands.includes(brand.toLowerCase())}
+                  onChange={() => toggleBrand(brand)}
+                  className="accent-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-600">{brand}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* AI Suggest */}
+      <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg border 
+        border-violet-200 p-4">
+        <div className="flex items-start gap-2 mb-2">
+          <span className="text-xl">🤖</span>
+          <div>
+            <p className="font-semibold text-violet-900 text-sm">Không biết chọn?</p>
+            <p className="text-violet-700 text-xs mt-0.5">
+              Hỏi AI tư vấn theo game và ngân sách của bạn
+            </p>
+          </div>
+        </div>
+        <button className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm 
+          py-2 rounded-lg transition-colors">
+          Tư vấn miễn phí →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+━━━ ShopToolbar.tsx ━━━
+'use client'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { LayoutGrid, List, SlidersHorizontal } from 'lucide-react'
+import { useUIStore } from '@/lib/store'
+
+export default function ShopToolbar({ total, currentSort, currentPage, totalPages, categorySlug }: {
+  total: number; currentSort: string; currentPage: number; totalPages: number; categorySlug: string
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const setMobileMenuOpen = useUIStore(s => s.setMobileMenuOpen)
+
+  const updateSort = (sort: string) => {
+    const p = new URLSearchParams(searchParams.toString())
+    p.set('sort', sort)
+    p.delete('trang')
+    router.push(`${pathname}?${p.toString()}`)
+  }
+
+  return (
+    <div className="flex items-center justify-between bg-white rounded-lg border 
+      border-gray-200 px-4 py-3 mb-4">
+      <div className="flex items-center gap-4">
+        {/* Mobile filter button */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="lg:hidden flex items-center gap-2 text-sm text-gray-600 
+            border rounded-lg px-3 py-1.5 hover:bg-gray-50">
+          <SlidersHorizontal size={16} /> Lọc
+        </button>
+        <p className="text-sm text-gray-500">
+          Hiển thị <strong>{((currentPage-1)*12)+1}–{Math.min(currentPage*12, total)}</strong> trong <strong>{total}</strong> sản phẩm
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <select
+          value={currentSort}
+          onChange={(e) => updateSort(e.target.value)}
+          className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white">
+          <option value="ban-chay">Bán chạy nhất</option>
+          <option value="moi-nhat">Mới nhất</option>
+          <option value="gia-tang">Giá thấp → cao</option>
+          <option value="gia-giam">Giá cao → thấp</option>
+          <option value="danh-gia">Đánh giá cao</option>
+        </select>
+        {/* Grid/List toggle */}
+        <div className="hidden sm:flex border rounded-lg overflow-hidden">
+          <button className="p-2 bg-blue-600 text-white"><LayoutGrid size={16}/></button>
+          <button className="p-2 text-gray-400 hover:bg-gray-100"><List size={16}/></button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+━━━ ActiveFilters.tsx ━━━
+'use client'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { X } from 'lucide-react'
+
+export default function ActiveFilters({ filters, categorySlug }: { filters: any; categorySlug: string }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  
+  const hasFilters = filters.brands.length > 0 || filters.vram.length > 0
+
+  const removeFilter = (key: string, value?: string) => {
+    const p = new URLSearchParams(searchParams.toString())
+    if (value) {
+      const current = p.get(key)?.split(',').filter(v => v !== value) ?? []
+      current.length ? p.set(key, current.join(',')) : p.delete(key)
+    } else {
+      p.delete(key)
+    }
+    p.delete('trang')
+    router.push(`${pathname}?${p.toString()}`)
+  }
+
+  if (!hasFilters) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      <span className="text-sm text-gray-500">Đang lọc:</span>
+      {filters.brands.map((brand: string) => (
+        <button key={brand}
+          onClick={() => removeFilter('hang', brand)}
+          className="flex items-center gap-1 bg-blue-100 text-blue-700 text-sm 
+            px-3 py-1 rounded-full hover:bg-blue-200 transition-colors">
+          {brand.toUpperCase()} <X size={12} />
+        </button>
+      ))}
+      {filters.vram.map((v: string) => (
+        <button key={v}
+          onClick={() => removeFilter('vram', v)}
+          className="flex items-center gap-1 bg-blue-100 text-blue-700 text-sm 
+            px-3 py-1 rounded-full hover:bg-blue-200">
+          {v} <X size={12} />
+        </button>
+      ))}
+      <button
+        onClick={() => router.push(`/danh-muc/${categorySlug}`)}
+        className="text-sm text-red-500 hover:text-red-700 underline">
+        Xóa tất cả
+      </button>
+    </div>
+  )
+}
+
+TypeScript strict. Generate all files complete and runnable.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT N — PRODUCT DETAIL PAGE
+## app/(shop)/san-pham/[slug]/page.tsx
+## ══════════════════════════════════════════════════════════════
+
+```
+Create the Product Detail Page for PCHub Next.js 14.
+Files:
+  app/(shop)/san-pham/[slug]/page.tsx
+  components/product/ProductGallery.tsx
+  components/product/ProductInfo.tsx
+  components/product/ProductTabs.tsx
+  components/product/ReviewSection.tsx
+  components/product/CompatibilityWidget.tsx
+  components/product/RelatedProducts.tsx
+  components/product/AddToCartForm.tsx
+
+━━━ PAGE: app/(shop)/san-pham/[slug]/page.tsx ━━━
+
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
+import ProductGallery from '@/components/product/ProductGallery'
+import ProductInfo from '@/components/product/ProductInfo'
+import ProductTabs from '@/components/product/ProductTabs'
+import RelatedProducts from '@/components/product/RelatedProducts'
+import { MOCK_PRODUCTS } from '@/lib/constants'
+
+interface Props { params: { slug: string } }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = MOCK_PRODUCTS.find(p => p.slug === params.slug)
+  if (!product) return {}
+  return {
+    title: `${product.name} | PCHub`,
+    description: `Mua ${product.name} chính hãng. ${product.reviewCount} đánh giá. Bảo hành ${product.warrantyMonths} tháng.`,
+    openGraph: {
+      images: [{ url: product.images[0], width: 800, height: 800 }]
+    }
+  }
+}
+
+export default function ProductPage({ params }: Props) {
+  const product = MOCK_PRODUCTS.find(p => p.slug === params.slug)
+  if (!product) notFound()
+  
+  const related = MOCK_PRODUCTS
+    .filter(p => p.category === product.category && p.id !== product.id)
+    .slice(0, 4)
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="max-w-[1280px] mx-auto px-4 py-3 text-sm text-gray-500 flex gap-2">
+          <a href="/" className="hover:text-blue-600">Trang chủ</a> »
+          <a href={`/danh-muc/${product.category}`} className="hover:text-blue-600 capitalize">
+            {product.category}
+          </a> »
+          <span className="text-gray-900 font-medium line-clamp-1">{product.name}</span>
+        </div>
+      </div>
+
+      {/* Main product section */}
+      <div className="max-w-[1280px] mx-auto px-4 py-6">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="grid lg:grid-cols-2 gap-0">
+            {/* LEFT: Gallery */}
+            <div className="border-r border-gray-100">
+              <ProductGallery images={product.images} name={product.name} />
+            </div>
+            {/* RIGHT: Info + Add to cart */}
+            <div className="p-6 lg:p-8">
+              <ProductInfo product={product} />
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs: Specs / Description / Reviews / Q&A */}
+        <div className="mt-6 bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <Suspense fallback={<div className="h-48 animate-pulse bg-gray-100"/>}>
+            <ProductTabs product={product} />
+          </Suspense>
+        </div>
+
+        {/* Related products */}
+        <div className="mt-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Sản phẩm liên quan</h2>
+          <RelatedProducts products={related} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+━━━ ProductGallery.tsx ━━━
+'use client'
+import { useState } from 'react'
+import Image from 'next/image'
+import { ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react'
+
+export default function ProductGallery({ images, name }: { images: string[]; name: string }) {
+  const [active, setActive] = useState(0)
+  const [zoomed, setZoomed] = useState(false)
+
+  return (
+    <div className="p-6">
+      {/* Main image */}
+      <div className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden mb-4 group">
+        <Image
+          src={images[active] || '/placeholder-product.jpg'}
+          alt={`${name} - ảnh ${active + 1}`}
+          fill
+          className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+        {/* Zoom button */}
+        <button
+          onClick={() => setZoomed(true)}
+          className="absolute top-3 right-3 bg-white/80 hover:bg-white rounded-full p-2 
+            shadow opacity-0 group-hover:opacity-100 transition-opacity">
+          <ZoomIn size={18} className="text-gray-600" />
+        </button>
+        {/* Prev/Next arrows */}
+        {images.length > 1 && (
+          <>
+            <button onClick={() => setActive(a => (a - 1 + images.length) % images.length)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1.5 
+                shadow opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronLeft size={18}/>
+            </button>
+            <button onClick={() => setActive(a => (a + 1) % images.length)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1.5 
+                shadow opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronRight size={18}/>
+            </button>
+          </>
+        )}
+      </div>
+      
+      {/* Thumbnails */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {images.map((img, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors
+              ${i === active ? 'border-blue-600' : 'border-gray-200 hover:border-gray-400'}`}>
+            <Image src={img || '/placeholder-product.jpg'} alt={`thumb ${i+1}`}
+              width={64} height={64} className="object-contain p-1" />
+          </button>
+        ))}
+      </div>
+
+      {/* Share row */}
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t text-sm text-gray-500">
+        <span>Chia sẻ:</span>
+        {['Facebook','Twitter','Zalo','Copy link'].map(s => (
+          <button key={s} className="hover:text-blue-600 transition-colors">{s}</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+━━━ ProductInfo.tsx ━━━
+'use client'
+import { useState } from 'react'
+import { Heart, Share2, ShieldCheck, Truck, RefreshCw, Phone } from 'lucide-react'
+import { useCartStore, useWishlistStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+import type { Product } from '@/lib/types'
+import StarRating from '@/components/ui/StarRating'
+import PriceDisplay from '@/components/ui/PriceDisplay'
+import AddToCartForm from './AddToCartForm'
+import CompatibilityWidget from './CompatibilityWidget'
+
+export default function ProductInfo({ product }: { product: Product }) {
+  const router = useRouter()
+  const addItem = useCartStore(s => s.addItem)
+  const setOpen = useCartStore(s => s.setOpen)
+  const { toggle, has } = useWishlistStore()
+  const isWishlisted = has(product.id)
+  const [qty, setQty] = useState(1)
+
+  const handleAddToCart = () => {
+    addItem(product, qty)
+    setOpen(true)  // open cart drawer
+  }
+
+  const handleBuyNow = () => {
+    addItem(product, qty)
+    router.push('/thanh-toan')
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Category + brand */}
+      <div className="flex items-center gap-2 text-sm">
+        <a href={`/danh-muc/${product.category}`}
+          className="text-blue-600 hover:underline capitalize">{product.category}</a>
+        <span className="text-gray-300">•</span>
+        <span className="text-gray-500">{product.brand}</span>
+      </div>
+
+      {/* Name */}
+      <h1 className="text-2xl font-bold text-gray-900 leading-tight">{product.name}</h1>
+
+      {/* Rating row */}
+      <div className="flex items-center gap-3 text-sm">
+        <StarRating rating={product.rating} />
+        <span className="text-gray-500">({product.reviewCount} đánh giá)</span>
+        <span className="text-gray-300">|</span>
+        <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+          {product.stock > 0 ? `🟢 Còn ${product.stock} sản phẩm` : '🔴 Hết hàng'}
+        </span>
+      </div>
+
+      {/* Price */}
+      <div className="bg-blue-50 rounded-xl p-4">
+        <PriceDisplay
+          price={product.price}
+          originalPrice={product.originalPrice}
+          size="lg"
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Hoặc trả góp 0% từ{' '}
+          <span className="font-medium text-blue-600">
+            {Math.round(product.price / 12).toLocaleString('vi-VN')} ₫/tháng
+          </span>
+        </p>
+      </div>
+
+      {/* Promotions */}
+      <ul className="space-y-1.5">
+        {[
+          '🎁 Tặng keo tản nhiệt Thermal Grizzly Kryonaut 1g',
+          `🛡️ Bảo hành chính hãng ${product.warrantyMonths} tháng 1 đổi 1`,
+          '🚚 Miễn phí vận chuyển đơn từ 500.000₫',
+          '💳 Giảm thêm 2% khi thanh toán VNPay/Momo',
+        ].map(promo => (
+          <li key={promo} className="text-sm text-gray-600 flex items-start gap-1.5">
+            <span>{promo}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Qty + Add to cart */}
+      <AddToCartForm
+        product={product}
+        qty={qty}
+        setQty={setQty}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        onWishlist={() => toggle(product.id)}
+        isWishlisted={isWishlisted}
+      />
+
+      {/* Compatibility widget */}
+      <CompatibilityWidget initialProduct={product} />
+
+      {/* Delivery badges */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { icon: Truck, title: 'Giao hàng nhanh', sub: 'GHN — 2-3 ngày' },
+          { icon: RefreshCw, title: 'Đổi trả 7 ngày', sub: 'Miễn phí hoàn' },
+          { icon: ShieldCheck, title: `Bảo hành ${product.warrantyMonths} tháng`, sub: '1 đổi 1 tại nhà' },
+          { icon: Phone, title: 'Hotline 24/7', sub: '1800 9999 miễn phí' },
+        ].map(({ icon: Icon, title, sub }) => (
+          <div key={title} className="flex items-start gap-2.5 p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <Icon size={18} className="text-blue-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-800">{title}</p>
+              <p className="text-xs text-gray-500">{sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+━━━ AddToCartForm.tsx ━━━
+'use client'
+import { Minus, Plus, ShoppingCart, Zap, Heart } from 'lucide-react'
+import type { Product } from '@/lib/types'
+
+interface Props {
+  product: Product
+  qty: number
+  setQty: (q: number) => void
+  onAddToCart: () => void
+  onBuyNow: () => void
+  onWishlist: () => void
+  isWishlisted: boolean
+}
+
+export default function AddToCartForm({ product, qty, setQty, onAddToCart, onBuyNow, onWishlist, isWishlisted }: Props) {
+  if (product.stock === 0) return (
+    <div className="space-y-3">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+        Sản phẩm hiện đang hết hàng. Đăng ký nhận thông báo khi có hàng:
+      </div>
+      <button className="w-full border border-gray-300 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+        🔔 Thông báo khi có hàng
+      </button>
+      <button onClick={onWishlist}
+        className={`w-full flex items-center justify-center gap-2 border py-3 rounded-lg transition-colors
+          ${isWishlisted ? 'border-red-300 text-red-500 bg-red-50' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
+        <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
+        {isWishlisted ? 'Đã yêu thích' : 'Thêm vào yêu thích'}
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="space-y-3">
+      {/* Quantity */}
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium text-gray-700">Số lượng:</label>
+        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setQty(Math.max(1, qty - 1))}
+            className="px-3 py-2 hover:bg-gray-100 transition-colors">
+            <Minus size={16} />
+          </button>
+          <span className="px-4 py-2 min-w-[48px] text-center font-medium border-x border-gray-300">
+            {qty}
+          </span>
+          <button
+            onClick={() => setQty(Math.min(product.stock, qty + 1))}
+            className="px-3 py-2 hover:bg-gray-100 transition-colors">
+            <Plus size={16} />
+          </button>
+        </div>
+        <span className="text-sm text-gray-500">Tối đa {Math.min(product.stock, 5)}</span>
+      </div>
+
+      {/* CTA buttons */}
+      <button
+        onClick={onAddToCart}
+        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 
+          text-white font-semibold py-3.5 rounded-xl transition-colors text-base">
+        <ShoppingCart size={20} /> Thêm vào giỏ hàng
+      </button>
+      <button
+        onClick={onBuyNow}
+        className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 
+          text-white font-semibold py-3.5 rounded-xl transition-colors text-base">
+        <Zap size={20} /> Mua ngay
+      </button>
+      <button
+        onClick={onWishlist}
+        className={`w-full flex items-center justify-center gap-2 border py-3 rounded-xl 
+          transition-colors text-sm
+          ${isWishlisted ? 'border-red-300 text-red-500 bg-red-50' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
+        <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
+        {isWishlisted ? 'Đã thêm vào yêu thích' : 'Thêm vào yêu thích'}
+      </button>
+    </div>
+  )
+}
+
+━━━ CompatibilityWidget.tsx ━━━
+'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useBuilderStore } from '@/lib/store'
+import type { Product } from '@/lib/types'
+import { X, Plus, CheckCircle2 } from 'lucide-react'
+
+export default function CompatibilityWidget({ initialProduct }: { initialProduct: Product }) {
+  const router = useRouter()
+  const { slots, setSlot } = useBuilderStore()
+  
+  // Auto-set this product's slot based on category
+  const slot = initialProduct.category as any
+  
+  const handleCheck = () => {
+    setSlot(slot, initialProduct)
+    // Build URL params from current slots
+    const params = new URLSearchParams()
+    Object.entries(slots).forEach(([k, v]) => { if (v) params.set(k, v.slug) })
+    params.set(slot, initialProduct.slug)
+    router.push(`/kiem-tra-tuong-thich?${params.toString()}`)
+  }
+
+  return (
+    <div className="border border-violet-200 bg-violet-50 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">🤖</span>
+        <h3 className="font-semibold text-violet-900 text-sm">Kiểm tra tương thích ngay</h3>
+      </div>
+      
+      {/* Current selection */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex items-center gap-1.5 bg-violet-600 text-white text-xs px-3 py-1 rounded-full">
+          <CheckCircle2 size={12} />
+          <span className="capitalize">{slot}</span>: {initialProduct.name.slice(0, 20)}...
+        </div>
+        
+        {/* Quick add more */}
+        {(['mainboard', 'ram', 'psu', 'cooler'] as const)
+          .filter(s => s !== slot)
+          .slice(0, 3)
+          .map(s => (
+            <button key={s}
+              onClick={() => router.push(`/kiem-tra-tuong-thich?${slot}=${initialProduct.slug}`)}
+              className="flex items-center gap-1 border border-violet-300 text-violet-700 
+                text-xs px-3 py-1 rounded-full hover:bg-violet-100 capitalize">
+              <Plus size={10} /> {s}
+            </button>
+          ))
+        }
+      </div>
+      
+      <button
+        onClick={handleCheck}
+        className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm 
+          py-2 rounded-lg transition-colors font-medium">
+        Kiểm tra tương thích →
+      </button>
+    </div>
+  )
+}
+
+━━━ ProductTabs.tsx ━━━
+'use client'
+import { useState } from 'react'
+import type { Product } from '@/lib/types'
+import ReviewSection from './ReviewSection'
+
+export default function ProductTabs({ product }: { product: Product }) {
+  const [tab, setTab] = useState<'specs' | 'desc' | 'reviews' | 'qa'>('specs')
+
+  return (
+    <div>
+      {/* Tab nav */}
+      <div className="border-b border-gray-200 px-6">
+        <nav className="flex gap-0">
+          {[
+            { key: 'specs', label: 'Thông số kỹ thuật' },
+            { key: 'desc', label: 'Mô tả sản phẩm' },
+            { key: 'reviews', label: `Đánh giá (${product.reviewCount})` },
+            { key: 'qa', label: 'Hỏi & Đáp (12)' },
+          ].map(({ key, label }) => (
+            <button key={key}
+              onClick={() => setTab(key as any)}
+              className={`px-5 py-4 text-sm font-medium border-b-2 transition-colors -mb-px
+                ${tab === key 
+                  ? 'border-blue-600 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab content */}
+      <div className="p-6">
+        {tab === 'specs' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody>
+                {Object.entries(product.specs).map(([key, value], i) => (
+                  <tr key={key} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="py-2.5 px-4 font-medium text-gray-700 w-1/3">{key}</td>
+                    <td className="py-2.5 px-4 text-gray-600">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {tab === 'desc' && (
+          <div className="prose max-w-none text-gray-600 text-sm leading-relaxed">
+            <p>Mô tả chi tiết sản phẩm {product.name}...</p>
+          </div>
+        )}
+
+        {tab === 'reviews' && <ReviewSection product={product} />}
+
+        {tab === 'qa' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-900">Câu hỏi thường gặp</h3>
+            {[
+              { q: 'CPU này dùng được với mainboard B760 không?', a: 'i9-14900K tương thích LGA1700, dùng được B760 nhưng không ép xung được.' },
+              { q: 'Cần PSU bao nhiêu W?', a: 'Khuyến nghị 850W trở lên khi kết hợp GPU RTX 4080+.' },
+            ].map(({ q, a }) => (
+              <div key={q} className="border border-gray-200 rounded-lg p-4">
+                <p className="font-medium text-gray-900 mb-2">❓ {q}</p>
+                <p className="text-gray-600 text-sm">💡 {a}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+━━━ ReviewSection.tsx ━━━
+'use client'
+import { useState } from 'react'
+import { Star, ThumbsUp, Camera } from 'lucide-react'
+import type { Product } from '@/lib/types'
+
+const MOCK_REVIEWS = [
+  { id:'1', author:'Nguyễn Văn An', avatar:'NV', rating:5, date:'15/08/2026',
+    title:'CPU đỉnh — xứng đáng từng đồng!', verified:true,
+    content:'Đã build xong cùng Z790 + 32GB DDR5 + RTX 4080. Cyberpunk 1440p Ultra 130-145fps ổn định. Nhiệt độ gaming 65°C với AIO 280mm.',
+    helpful:47, photos:3 },
+  { id:'2', author:'Trần T.Mai', avatar:'TM', rating:4, date:'10/08/2026',
+    title:'Tiêu thụ điện là điểm trừ duy nhất', verified:true,
+    content:'Hiệu năng rất tốt nhưng cần PSU 850W+. CPU nóng nếu dùng tản khí.', helpful:23, photos:0 },
+]
+
+export default function ReviewSection({ product }: { product: Product }) {
+  const [filterStar, setFilterStar] = useState<number | null>(null)
+  const [showForm, setShowForm] = useState(false)
+
+  return (
+    <div className="space-y-6">
+      {/* Summary */}
+      <div className="flex gap-8 items-start">
+        <div className="text-center">
+          <div className="text-5xl font-bold text-gray-900">{product.rating}</div>
+          <div className="flex justify-center gap-0.5 my-1">
+            {Array.from({length:5}).map((_,i) => (
+              <Star key={i} size={16}
+                className={i < Math.round(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+            ))}
+          </div>
+          <p className="text-sm text-gray-500">{product.reviewCount} đánh giá</p>
+        </div>
+
+        <div className="flex-1 space-y-1">
+          {[5,4,3,2,1].map(star => (
+            <button key={star}
+              onClick={() => setFilterStar(filterStar === star ? null : star)}
+              className={`w-full flex items-center gap-2 group ${filterStar === star ? 'opacity-100' : 'opacity-80'}`}>
+              <span className="text-sm w-4">{star}</span>
+              <Star size={12} className="text-yellow-400 fill-yellow-400 shrink-0" />
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-yellow-400 rounded-full"
+                  style={{ width: `${star === 5 ? 68 : star === 4 ? 23 : star === 3 ? 6 : star === 2 ? 2 : 1}%` }} />
+              </div>
+              <span className="text-xs text-gray-500 w-8">
+                {star === 5 ? 198 : star === 4 ? 67 : star === 3 ? 18 : star === 2 ? 4 : 2}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* AI summary */}
+      <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+        <p className="text-sm font-semibold text-violet-900 mb-2">
+          🤖 AI tổng hợp từ {product.reviewCount} đánh giá
+        </p>
+        <div className="grid sm:grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="text-green-700 font-medium mb-1">✅ Ưu điểm nổi bật:</p>
+            <ul className="text-gray-600 space-y-0.5 text-xs">
+              <li>• Hiệu năng đơn nhân dẫn đầu phân khúc</li>
+              <li>• Đa nhân xuất sắc cho render và streaming</li>
+              <li>• Tương thích rộng với bo mạch 700 series</li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-orange-700 font-medium mb-1">⚠️ Cần lưu ý:</p>
+            <ul className="text-gray-600 space-y-0.5 text-xs">
+              <li>• Tiêu thụ điện cao — cần PSU 850W+</li>
+              <li>• Cần tản nhiệt 240mm AIO trở lên</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Review list */}
+      <div className="space-y-4">
+        {MOCK_REVIEWS.filter(r => !filterStar || r.rating === filterStar).map(review => (
+          <div key={review.id} className="border border-gray-200 rounded-xl p-4">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                  {review.avatar}
+                </div>
+                <div>
+                  <p className="font-medium text-sm text-gray-900">{review.author}</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {Array.from({length:5}).map((_,i) => (
+                        <Star key={i} size={12}
+                          className={i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                      ))}
+                    </div>
+                    {review.verified && (
+                      <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                        ✓ Đã mua hàng
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400">{review.date}</span>
+            </div>
+            <p className="font-semibold text-sm text-gray-900 mb-1">{review.title}</p>
+            <p className="text-sm text-gray-600">{review.content}</p>
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+              <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600">
+                <ThumbsUp size={14} /> Hữu ích ({review.helpful})
+              </button>
+              {review.photos > 0 && (
+                <button className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Camera size={14} /> {review.photos} ảnh
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Write review CTA */}
+      <div className="text-center">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium">
+          ✍️ Viết đánh giá của bạn
+        </button>
+      </div>
+
+      {/* Review form */}
+      {showForm && (
+        <form className="border border-gray-200 rounded-xl p-4 space-y-3">
+          <h4 className="font-semibold text-gray-900">Đánh giá của bạn</h4>
+          <div className="flex gap-1">
+            {[1,2,3,4,5].map(s => (
+              <button key={s} type="button" className="text-2xl text-yellow-400">★</button>
+            ))}
+          </div>
+          <input placeholder="Tiêu đề đánh giá..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+          <textarea rows={4} placeholder="Nội dung đánh giá (tối thiểu 50 từ)..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none" />
+          <button type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700">
+            Gửi đánh giá
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+Generate all files complete. TypeScript strict.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT O — CART PAGE + CHECKOUT PAGE + ORDER SUCCESS
+## app/(shop)/gio-hang + thanh-toan + dat-hang-thanh-cong
+## ══════════════════════════════════════════════════════════════
+
+```
+Create Cart, Checkout, and Order Success pages for PCHub Next.js 14.
+Files:
+  app/(shop)/gio-hang/page.tsx
+  app/(shop)/thanh-toan/page.tsx
+  app/(shop)/dat-hang-thanh-cong/page.tsx
+  components/checkout/CheckoutForm.tsx
+  components/checkout/OrderSummary.tsx
+  components/checkout/PaymentMethods.tsx
+  components/checkout/StepIndicator.tsx
+
+━━━ StepIndicator.tsx (shared) ━━━
+const STEPS = ['Giỏ hàng', 'Giao hàng', 'Thanh toán', 'Hoàn thành']
+
+export default function StepIndicator({ currentStep }: { currentStep: 1|2|3|4 }) {
+  return (
+    <div className="flex items-center justify-center py-6">
+      {STEPS.map((label, i) => {
+        const step = i + 1
+        const done = step < currentStep
+        const active = step === currentStep
+        return (
+          <div key={label} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {done ? '✓' : step}
+              </div>
+              <span className={`text-xs mt-1 ${active ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                {label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`h-0.5 w-16 mx-2 mb-4 ${done ? 'bg-green-400' : 'bg-gray-200'}`} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+━━━ app/(shop)/gio-hang/page.tsx ━━━
+'use client'
+import { useCartStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
+import StepIndicator from '@/components/checkout/StepIndicator'
+import PriceDisplay from '@/components/ui/PriceDisplay'
+
+export default function CartPage() {
+  const { items, removeItem, updateQty, total } = useCartStore()
+  const router = useRouter()
+  const [voucher, setVoucher] = useState('')
+  const [voucherDiscount, setVoucherDiscount] = useState(0)
+  const [voucherError, setVoucherError] = useState('')
+
+  const applyVoucher = async () => {
+    // Mock voucher validation
+    if (voucher === 'PCNEW10') {
+      setVoucherDiscount(Math.round(total() * 0.1))
+      setVoucherError('')
+    } else {
+      setVoucherError('Mã không hợp lệ hoặc đã hết hạn')
+      setVoucherDiscount(0)
+    }
+  }
+
+  const finalTotal = total() - voucherDiscount
+
+  if (items.length === 0) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center py-16">
+        <ShoppingBag size={64} className="text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Giỏ hàng trống</h2>
+        <p className="text-gray-500 mb-6">Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+        <Link href="/" className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700">
+          Tiếp tục mua sắm →
+        </Link>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-[1280px] mx-auto px-4 py-6">
+        <StepIndicator currentStep={1} />
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Cart items — 2/3 width */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              {/* Table header */}
+              <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 border-b 
+                text-xs uppercase text-gray-500 font-medium">
+                <div className="col-span-5">Sản phẩm</div>
+                <div className="col-span-2 text-center">Giá</div>
+                <div className="col-span-3 text-center">Số lượng</div>
+                <div className="col-span-2 text-right">Tổng</div>
+              </div>
+
+              {/* Cart rows */}
+              {items.map(({ product, quantity }) => (
+                <div key={product.id}
+                  className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 
+                    last:border-0 items-center">
+                  {/* Product */}
+                  <div className="col-span-12 sm:col-span-5 flex gap-3 items-start">
+                    <button onClick={() => removeItem(product.id)}
+                      className="text-gray-300 hover:text-red-400 mt-1 shrink-0">
+                      <Trash2 size={16} />
+                    </button>
+                    <div className="w-16 h-16 border border-gray-200 rounded-lg overflow-hidden shrink-0">
+                      <Image src={product.images[0] || '/placeholder.jpg'}
+                        alt={product.name} width={64} height={64}
+                        className="object-contain p-1" />
+                    </div>
+                    <div>
+                      <Link href={`/san-pham/${product.slug}`}
+                        className="text-sm font-medium text-gray-900 hover:text-blue-600 line-clamp-2">
+                        {product.name}
+                      </Link>
+                      <p className="text-xs text-gray-500 capitalize mt-0.5">{product.category}</p>
+                      {product.stock < 5 && (
+                        <p className="text-xs text-orange-500 mt-0.5">
+                          ⚠️ Chỉ còn {product.stock} sản phẩm
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="col-span-4 sm:col-span-2 text-center">
+                    <span className="font-mono text-sm font-semibold text-blue-600">
+                      {product.price.toLocaleString('vi-VN')}₫
+                    </span>
+                  </div>
+
+                  {/* Qty stepper */}
+                  <div className="col-span-5 sm:col-span-3 flex justify-center">
+                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                      <button onClick={() => updateQty(product.id, quantity - 1)}
+                        className="px-2.5 py-1.5 hover:bg-gray-100">
+                        <Minus size={14} />
+                      </button>
+                      <span className="px-3 py-1.5 text-sm font-medium border-x border-gray-300 min-w-[36px] text-center">
+                        {quantity}
+                      </span>
+                      <button onClick={() => updateQty(product.id, quantity + 1)}
+                        disabled={quantity >= product.stock}
+                        className="px-2.5 py-1.5 hover:bg-gray-100 disabled:opacity-40">
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Line total */}
+                  <div className="col-span-3 sm:col-span-2 text-right">
+                    <span className="font-mono text-sm font-bold text-gray-900">
+                      {(product.price * quantity).toLocaleString('vi-VN')}₫
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Coupon row */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <p className="text-sm font-medium text-gray-700 mb-2">Mã giảm giá</p>
+              <div className="flex gap-2">
+                <input
+                  value={voucher}
+                  onChange={e => { setVoucher(e.target.value.toUpperCase()); setVoucherError('') }}
+                  placeholder="Nhập mã (VD: PCNEW10)"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm 
+                    outline-none focus:border-blue-500"
+                />
+                <button onClick={applyVoucher}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                  Áp dụng
+                </button>
+              </div>
+              {voucherError && <p className="text-red-500 text-xs mt-1">❌ {voucherError}</p>}
+              {voucherDiscount > 0 && (
+                <p className="text-green-600 text-xs mt-1">
+                  ✅ Giảm {voucherDiscount.toLocaleString('vi-VN')}₫
+                </p>
+              )}
+            </div>
+
+            <Link href="/" className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600">
+              <ArrowLeft size={16} /> Tiếp tục mua sắm
+            </Link>
+          </div>
+
+          {/* Order summary — 1/3 */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="font-bold text-gray-900 text-lg mb-4">Tóm tắt đơn hàng</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Tạm tính ({items.length} sản phẩm)</span>
+                  <span className="font-mono">{total().toLocaleString('vi-VN')}₫</span>
+                </div>
+                {voucherDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Giảm voucher {voucher}</span>
+                    <span className="font-mono">−{voucherDiscount.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-500">
+                  <span>Phí vận chuyển</span>
+                  <span>Tính ở bước tiếp theo</span>
+                </div>
+                <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-base">
+                  <span>Tổng cộng</span>
+                  <span className="font-mono text-blue-600 text-lg">
+                    {finalTotal.toLocaleString('vi-VN')}₫
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => router.push('/thanh-toan')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold 
+                  py-3.5 rounded-xl mt-5 transition-colors">
+                Tiến hành thanh toán →
+              </button>
+
+              <div className="flex flex-wrap justify-center gap-2 mt-3">
+                {['vnpay','momo','zalopay','visa','mastercard'].map(p => (
+                  <span key={p} className="text-xs text-gray-400 border border-gray-200 
+                    rounded px-2 py-0.5 uppercase">{p}</span>
+                ))}
+              </div>
+              <p className="text-center text-xs text-gray-400 mt-2">🔒 Thanh toán bảo mật SSL</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+━━━ app/(shop)/dat-hang-thanh-cong/page.tsx ━━━
+'use client'
+import { useEffect } from 'react'
+import { useCartStore } from '@/lib/store'
+import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { CheckCircle, Package, ShoppingBag } from 'lucide-react'
+import StepIndicator from '@/components/checkout/StepIndicator'
+
+export default function OrderSuccessPage() {
+  const { clearCart } = useCartStore()
+  const searchParams = useSearchParams()
+  const orderId = searchParams.get('orderId') ?? 'ORD-20260820-0089'
+
+  useEffect(() => {
+    clearCart()  // clear cart after success
+  }, [clearCart])
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-[640px] mx-auto px-4 py-8">
+        <StepIndicator currentStep={4} />
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
+          {/* Success animation */}
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={40} className="text-green-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">🎉 Đặt hàng thành công!</h1>
+          <p className="text-gray-500 mb-6">Cảm ơn bạn đã tin tưởng PCHub!</p>
+
+          <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 mb-6">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Mã đơn hàng:</span>
+              <span className="font-mono font-bold text-blue-600">{orderId}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Phương thức:</span>
+              <span className="font-medium">VNPay ✅ Đã thanh toán</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Vận chuyển:</span>
+              <span className="font-medium">GHN — Dự kiến 21/08/2026</span>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-500 mb-6">
+            📧 Email xác nhận đã được gửi đến địa chỉ của bạn
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Link href={`/tai-khoan/don-hang/${orderId}`}
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white 
+                py-3 rounded-xl hover:bg-blue-700 text-sm font-medium">
+              <Package size={18} /> Theo dõi đơn hàng
+            </Link>
+            <Link href="/"
+              className="flex items-center justify-center gap-2 border border-gray-300 
+                py-3 rounded-xl hover:bg-gray-50 text-sm font-medium text-gray-700">
+              <ShoppingBag size={18} /> Tiếp tục mua sắm
+            </Link>
+          </div>
+        </div>
+
+        {/* AI upsell */}
+        <div className="mt-4 bg-violet-50 border border-violet-200 rounded-xl p-4">
+          <p className="text-sm font-semibold text-violet-900 mb-2">
+            🤖 AI: Cấu hình của bạn cần thêm:
+          </p>
+          <div className="space-y-2">
+            {['Tản nhiệt CPU (i9-14900K cần 280mm+ AIO)', 'Case PC (build chưa có vỏ máy)'].map(item => (
+              <div key={item} className="flex items-center justify-between bg-white rounded-lg p-2.5 border border-violet-100">
+                <span className="text-xs text-gray-700">{item}</span>
+                <Link href="/danh-muc/tan-nhiet"
+                  className="text-xs text-violet-600 font-medium hover:underline">
+                  Xem →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+Generate complete, runnable TypeScript. Include CheckoutForm with address + shipping + payment steps.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT P — SEARCH PAGE + AI CHATBOT + COMPATIBILITY CHECKER
+## Full feature pages with logic
+## ══════════════════════════════════════════════════════════════
+
+```
+Create Search, AI Chat, and Compatibility Checker pages for PCHub.
+Files:
+  app/tim-kiem/page.tsx
+  app/kiem-tra-tuong-thich/page.tsx
+  components/builder/AIChatWidget.tsx (full logic)
+  components/builder/CompatibilityChecker.tsx (full logic)
+  lib/compatibility-rules.ts
+
+━━━ app/tim-kiem/page.tsx ━━━
+import { MOCK_PRODUCTS } from '@/lib/constants'
+import ProductGrid from '@/components/shop/ProductGrid'
+
+interface Props { searchParams: { q?: string; danh-muc?: string; trang?: string } }
+
+export default function SearchPage({ searchParams }: Props) {
+  const query = searchParams.q ?? ''
+  const page = Number(searchParams['trang'] ?? 1)
+  
+  const results = query
+    ? MOCK_PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(query.toLowerCase()) ||
+        p.brand.toLowerCase().includes(query.toLowerCase()) ||
+        p.category.toLowerCase().includes(query.toLowerCase())
+      )
+    : []
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-[1280px] mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-gray-900">
+            {query ? `Kết quả cho "${query}"` : 'Tìm kiếm'}
+          </h1>
+          {query && (
+            <p className="text-gray-500 text-sm mt-1">
+              Tìm thấy <strong>{results.length}</strong> sản phẩm
+            </p>
+          )}
+        </div>
+
+        {/* Suggestion pills */}
+        {query && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <span className="text-sm text-gray-500">Tìm kiếm liên quan:</span>
+            {[`${query} asus`, `${query} msi`, `${query} oc`, `${query} gaming`].map(s => (
+              <a key={s} href={`/tim-kiem?q=${encodeURIComponent(s)}`}
+                className="text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 
+                  px-3 py-1 rounded-full transition-colors">
+                {s}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {results.length > 0 ? (
+          <ProductGrid products={results} />
+        ) : query ? (
+          <div className="text-center py-16">
+            <div className="text-5xl mb-4">🔍</div>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">
+              Không tìm thấy "{query}"
+            </h2>
+            <p className="text-gray-500 mb-6">Hãy thử từ khóa khác hoặc duyệt theo danh mục</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {['CPU','GPU','RAM','SSD','Mainboard'].map(cat => (
+                <a key={cat} href={`/danh-muc/${cat.toLowerCase()}`}
+                  className="border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-100">
+                  {cat}
+                </a>
+              ))}
+            </div>
+            <div className="mt-6 bg-violet-50 border border-violet-200 rounded-xl p-4 max-w-sm mx-auto">
+              <p className="text-sm text-violet-900">
+                🤖 Không tìm được? Hỏi AI tư vấn trực tiếp
+              </p>
+              <button className="mt-2 bg-violet-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-violet-700">
+                Hỏi AI →
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16 text-gray-400">
+            Nhập từ khóa để tìm kiếm sản phẩm
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+━━━ lib/compatibility-rules.ts ━━━
+import type { Product } from './types'
+
+export type CompatResult = {
+  isCompatible: boolean
+  errors: CompatError[]
+  warnings: CompatWarning[]
+  suggestions: string[]
+}
+
+export type CompatError = {
+  pair: string
+  message: string
+  severity: 'error' | 'warning'
+}
+
+export type CompatWarning = {
+  pair: string
+  message: string
+}
+
+export function checkCompatibility(slots: Record<string, Product | null>): CompatResult {
+  const errors: CompatError[] = []
+  const warnings: CompatWarning[] = []
+  const suggestions: string[] = []
+  
+  const { cpu, mainboard, ram, psu, gpu, case: pcCase, cooler } = slots as any
+
+  // Rule 1: CPU + Mainboard socket
+  if (cpu && mainboard) {
+    const cpuSocket = cpu.specs['Socket']
+    const mbSocket = mainboard.specs['Socket']
+    if (cpuSocket && mbSocket && cpuSocket !== mbSocket) {
+      errors.push({
+        pair: 'CPU + Mainboard',
+        message: `CPU socket ${cpuSocket} không khớp Mainboard socket ${mbSocket}`,
+        severity: 'error'
+      })
+    }
+  }
+
+  // Rule 2: RAM generation
+  if (ram && mainboard) {
+    const ramType = ram.specs['Loại RAM']
+    const mbSupport = mainboard.specs['Hỗ trợ RAM']
+    if (ramType && mbSupport && !mbSupport.includes(ramType.split('-')[0])) {
+      errors.push({
+        pair: 'RAM + Mainboard',
+        message: `RAM ${ramType} không tương thích với mainboard hỗ trợ ${mbSupport}`,
+        severity: 'error'
+      })
+    }
+  }
+
+  // Rule 3: PSU wattage
+  if (psu && cpu && gpu) {
+    const cpuTdp = Number(cpu.specs['TDP (PL2)']?.replace('W','') ?? cpu.specs['TDP']?.replace('W','') ?? 125)
+    const gpuTdp = Number(gpu.specs['TDP']?.replace('W','') ?? 200)
+    const sysTdp = cpuTdp + gpuTdp + 100
+    const psuWatt = Number(psu.specs['Công suất']?.replace('W','') ?? 0)
+    
+    if (psuWatt > 0 && psuWatt < sysTdp) {
+      errors.push({
+        pair: 'PSU + Tổng TDP',
+        message: `PSU ${psuWatt}W không đủ cho tổng TDP ~${sysTdp}W`,
+        severity: 'error'
+      })
+      suggestions.push(`Cần PSU tối thiểu ${Math.ceil(sysTdp * 1.2 / 50) * 50}W (đệm 20%)`)
+    } else if (psuWatt > 0 && psuWatt < sysTdp * 1.1) {
+      warnings.push({
+        pair: 'PSU + Tổng TDP',
+        message: `PSU ${psuWatt}W chỉ đệm ${Math.round((psuWatt/sysTdp - 1) * 100)}% — khuyến nghị 20%+`
+      })
+    }
+  }
+
+  // Rule 4: GPU + Case length
+  if (gpu && pcCase) {
+    const gpuLen = Number(gpu.specs['Chiều dài']?.replace('mm','') ?? 0)
+    const caseMax = Number(pcCase.specs['GPU tối đa']?.replace('mm','') ?? 999)
+    if (gpuLen > 0 && caseMax > 0 && gpuLen > caseMax) {
+      errors.push({
+        pair: 'GPU + Case',
+        message: `GPU dài ${gpuLen}mm không vừa Case (tối đa ${caseMax}mm)`,
+        severity: 'error'
+      })
+    }
+  }
+
+  // Rule 5: Cooler TDP vs CPU
+  if (cooler && cpu) {
+    const coolerTdp = Number(cooler.specs['TDP hỗ trợ']?.replace('W','') ?? 999)
+    const cpuPl2 = Number(cpu.specs['TDP (PL2)']?.replace('W','') ?? 125)
+    if (coolerTdp < cpuPl2) {
+      warnings.push({
+        pair: 'CPU + Tản nhiệt',
+        message: `Tản nhiệt TDP ${coolerTdp}W có thể không đủ cho CPU PL2 ${cpuPl2}W`
+      })
+      suggestions.push('Khuyến nghị dùng AIO 240mm trở lên cho CPU này')
+    }
+  }
+
+  return {
+    isCompatible: errors.length === 0,
+    errors,
+    warnings,
+    suggestions,
+  }
+}
+
+━━━ app/kiem-tra-tuong-thich/page.tsx ━━━
+'use client'
+import { useBuilderStore } from '@/lib/store'
+import CompatibilityChecker from '@/components/builder/CompatibilityChecker'
+
+export default function CompatibilityPage() {
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="max-w-[1280px] mx-auto px-4 py-3 text-sm text-gray-500 flex gap-2">
+          <a href="/" className="hover:text-blue-600">Trang chủ</a> »
+          <span className="text-gray-900">Kiểm tra tương thích</span>
+        </div>
+      </div>
+
+      <div className="max-w-[1280px] mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            🔧 Kiểm tra tương thích linh kiện
+          </h1>
+          <p className="text-gray-500">
+            Chọn linh kiện — AI kiểm tra tương thích trong 1 giây. Miễn phí, không cần đăng nhập.
+          </p>
+          <div className="flex justify-center gap-6 mt-3 text-sm text-gray-400">
+            <span>✅ 12,847 cấu hình đã kiểm tra</span>
+            <span>•</span>
+            <span>98.2% độ chính xác</span>
+          </div>
+        </div>
+        <CompatibilityChecker />
+      </div>
+    </div>
+  )
+}
+
+TypeScript strict. Generate all complete files.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT Q — ACCOUNT PAGES (Protected)
+## app/tai-khoan/... full suite
+## ══════════════════════════════════════════════════════════════
+
+```
+Create the full Member Account section for PCHub Next.js 14.
+Files:
+  app/tai-khoan/layout.tsx          ← sidebar nav + auth guard
+  app/tai-khoan/page.tsx            ← dashboard overview
+  app/tai-khoan/don-hang/page.tsx   ← order list
+  app/tai-khoan/don-hang/[id]/page.tsx  ← order detail + tracking
+  app/tai-khoan/yeu-thich/page.tsx  ← wishlist
+  app/tai-khoan/ho-so/page.tsx      ← profile edit
+  app/tai-khoan/dia-chi/page.tsx    ← address management
+  components/account/AccountSidebar.tsx
+  components/account/OrderCard.tsx
+  components/account/TrackingTimeline.tsx
+
+━━━ app/tai-khoan/layout.tsx ━━━
+import { getCurrentUser } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import AccountSidebar from '@/components/account/AccountSidebar'
+
+export default async function AccountLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser()
+  if (!user) redirect('/dang-nhap?next=/tai-khoan')
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-[1280px] mx-auto px-4 py-6">
+        <div className="flex gap-6">
+          <aside className="w-60 shrink-0">
+            <AccountSidebar user={user} />
+          </aside>
+          <main className="flex-1 min-w-0">{children}</main>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+━━━ components/account/AccountSidebar.tsx ━━━
+'use client'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  LayoutDashboard, Package, Heart, MapPin, Bell,
+  Shield, Bot, Monitor, Key, LogOut, User
+} from 'lucide-react'
+import { useAuthStore } from '@/lib/store'
+import type { User } from '@/lib/auth'
+
+const NAV = [
+  { href: '/tai-khoan', label: 'Tổng quan', icon: LayoutDashboard, exact: true },
+  { href: '/tai-khoan/don-hang', label: 'Đơn hàng của tôi', icon: Package, badge: 2 },
+  { href: '/tai-khoan/yeu-thich', label: 'Yêu thích', icon: Heart },
+  { href: '/tai-khoan/thong-bao', label: 'Thông báo', icon: Bell, badge: 3 },
+  { href: '/tai-khoan/dia-chi', label: 'Địa chỉ', icon: MapPin },
+  { href: '/tai-khoan/bao-hanh', label: 'Yêu cầu bảo hành', icon: Shield },
+  { href: '/tai-khoan/lich-su-ai', label: 'Lịch sử AI Chat', icon: Bot },
+  { href: '/tai-khoan/build-cua-toi', label: 'Build PC của tôi', icon: Monitor },
+  { href: '/tai-khoan/ho-so', label: 'Thông tin cá nhân', icon: User },
+  { href: '/tai-khoan/doi-mat-khau', label: 'Đổi mật khẩu', icon: Key },
+]
+
+export default function AccountSidebar({ user }: { user: User }) {
+  const pathname = usePathname()
+  const logout = useAuthStore(s => s.logout)
+
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href)
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* User card */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-white">
+        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center 
+          text-lg font-bold mb-2">
+          {user.name.charAt(0)}
+        </div>
+        <p className="font-semibold">{user.name}</p>
+        <p className="text-blue-100 text-xs mt-0.5">⭐ Gold Member</p>
+      </div>
+
+      {/* Nav links */}
+      <nav className="py-2">
+        {NAV.map(({ href, label, icon: Icon, badge, exact }) => (
+          <Link key={href} href={href}
+            className={`flex items-center justify-between px-4 py-2.5 text-sm transition-colors
+              ${isActive(href, exact)
+                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600 font-medium'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+            <div className="flex items-center gap-2.5">
+              <Icon size={16} />
+              {label}
+            </div>
+            {badge && (
+              <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 
+                flex items-center justify-center font-bold">
+                {badge}
+              </span>
+            )}
+          </Link>
+        ))}
+
+        <div className="border-t border-gray-100 mt-1 pt-1">
+          <button onClick={logout}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 
+              hover:bg-red-50 w-full transition-colors">
+            <LogOut size={16} /> Đăng xuất
+          </button>
+        </div>
+      </nav>
+    </div>
+  )
+}
+
+━━━ app/tai-khoan/don-hang/page.tsx ━━━
+import { getCurrentUser } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import OrderCard from '@/components/account/OrderCard'
+
+const MOCK_ORDERS = [
+  { id: 'ORD-20260820-0089', date: '20/08/2026 15:47', status: 'shipping' as const,
+    total: 25379000, payMethod: 'VNPay', items: 4, tracking: 'GHN20260820001234' },
+  { id: 'ORD-20260715-0054', date: '15/07/2026 10:20', status: 'delivered' as const,
+    total: 22490000, payMethod: 'Momo', items: 2, tracking: null },
+  { id: 'ORD-20260820-0091', date: '20/08/2026 16:00', status: 'pending' as const,
+    total: 1390000, payMethod: 'COD', items: 1, tracking: null },
+]
+
+export default async function OrdersPage() {
+  const user = await getCurrentUser()
+  if (!user) redirect('/dang-nhap?next=/tai-khoan/don-hang')
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xl font-bold text-gray-900">Đơn hàng của tôi</h2>
+      </div>
+
+      {/* Status tabs */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+        <div className="flex border-b border-gray-200 px-4">
+          {['Tất cả (3)', 'Chờ XN (0)', 'Đang giao (1)', 'Đã giao (1)', 'Đã hủy (0)'].map((tab, i) => (
+            <button key={tab}
+              className={`px-4 py-3.5 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors
+                ${i === 0 ? 'border-blue-600 text-blue-600 font-medium' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Order list */}
+      <div className="space-y-4">
+        {MOCK_ORDERS.map(order => (
+          <OrderCard key={order.id} order={order} />
+        ))}
+      </div>
+
+      {MOCK_ORDERS.length === 0 && (
+        <div className="bg-white rounded-xl border p-12 text-center">
+          <Package size={48} className="text-gray-200 mx-auto mb-3" />
+          <p className="text-gray-500">Bạn chưa có đơn hàng nào</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+━━━ components/account/OrderCard.tsx ━━━
+import Link from 'next/link'
+import { Package, Truck, CheckCircle, Clock, XCircle, ExternalLink } from 'lucide-react'
+
+const STATUS_CONFIG = {
+  pending: { label: 'Chờ xác nhận', color: 'yellow', icon: Clock },
+  processing: { label: 'Đang xử lý', color: 'blue', icon: Package },
+  shipping: { label: 'Đang giao', color: 'blue', icon: Truck },
+  delivered: { label: 'Đã giao', color: 'green', icon: CheckCircle },
+  cancelled: { label: 'Đã hủy', color: 'red', icon: XCircle },
+} as const
+
+interface OrderCardProps {
+  order: {
+    id: string; date: string
+    status: keyof typeof STATUS_CONFIG
+    total: number; payMethod: string; items: number; tracking: string | null
+  }
+}
+
+export default function OrderCard({ order }: OrderCardProps) {
+  const { label, color, icon: Icon } = STATUS_CONFIG[order.status]
+  const colorClasses = {
+    yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    green: 'bg-green-50 text-green-700 border-green-200',
+    red: 'bg-red-50 text-red-700 border-red-200',
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-blue-200 transition-colors">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3.5 bg-gray-50 border-b border-gray-100">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="font-mono font-semibold text-gray-900">{order.id}</span>
+          <span className="text-gray-400">•</span>
+          <span className="text-gray-500">{order.date}</span>
+        </div>
+        <span className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 
+          rounded-full border ${colorClasses[color]}`}>
+          <Icon size={12} /> {label}
+        </span>
+      </div>
+
+      {/* GHN Tracking bar (if shipping) */}
+      {order.status === 'shipping' && order.tracking && (
+        <div className="px-5 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+          <span className="text-xs text-blue-700">
+            🚚 GHN: <span className="font-mono font-medium">{order.tracking}</span>
+          </span>
+          <a href={`https://ghn.vn/tracking/${order.tracking}`} target="_blank"
+            className="text-xs text-blue-600 flex items-center gap-1 hover:underline">
+            Theo dõi <ExternalLink size={10} />
+          </a>
+        </div>
+      )}
+
+      {/* Body */}
+      <div className="px-5 py-4 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          <span>{order.items} sản phẩm</span>
+          <span className="mx-2 text-gray-300">|</span>
+          <span>{order.payMethod}</span>
+          <span className="mx-2 text-gray-300">|</span>
+          <span className="font-mono font-bold text-blue-600 text-base">
+            {order.total.toLocaleString('vi-VN')}₫
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/tai-khoan/don-hang/${order.id}`}
+            className="text-sm border border-gray-300 px-3 py-1.5 rounded-lg 
+              hover:bg-gray-50 transition-colors text-gray-700">
+            Xem chi tiết
+          </Link>
+          {order.status === 'delivered' && (
+            <button className="text-sm bg-orange-500 text-white px-3 py-1.5 rounded-lg 
+              hover:bg-orange-600 transition-colors">
+              ⭐ Đánh giá
+            </button>
+          )}
+          {order.status === 'pending' && (
+            <button className="text-sm border border-red-300 text-red-500 px-3 py-1.5 
+              rounded-lg hover:bg-red-50 transition-colors">
+              Hủy đơn
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+Generate all files complete. TypeScript strict.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## PROMPT R — LOGIN / REGISTER / FORGOT PASSWORD
+## app/dang-nhap, dang-ky, quen-mat-khau
+## ══════════════════════════════════════════════════════════════
+
+```
+Create Auth pages for PCHub Next.js 14.
+Files:
+  app/dang-nhap/page.tsx
+  app/dang-ky/page.tsx
+  app/quen-mat-khau/page.tsx
+
+━━━ app/dang-nhap/page.tsx ━━━
+'use client'
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
+import { useAuthStore } from '@/lib/store'
+
+export default function LoginPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextUrl = searchParams.get('next') ?? '/tai-khoan'
+  const setUser = useAuthStore(s => s.setUser)
+  
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [showPw, setShowPw] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      // Mock auth — replace with real API
+      if (form.email && form.password.length >= 6) {
+        const user = { id:'1', name:'Nguyễn Văn An', email:form.email, role:'member' as const }
+        setUser(user)
+        // Set cookie mock
+        document.cookie = `pchub-token=${btoa(JSON.stringify(user))}; path=/; max-age=2592000`
+        router.push(nextUrl)
+      } else {
+        setError('Email hoặc mật khẩu không đúng')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/" className="text-3xl font-bold text-blue-600">PCHub</Link>
+          <p className="text-gray-500 text-sm mt-1">Chào mừng trở lại 👋</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* Benefits bar */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3">
+            <div className="flex justify-around text-white text-xs">
+              <span>🛒 Mua hàng nhanh</span>
+              <span>🤖 AI không giới hạn</span>
+              <span>🎁 Tích điểm thưởng</span>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Social login */}
+            <div className="space-y-2 mb-5">
+              <button className="w-full flex items-center justify-center gap-3 border border-gray-300 
+                py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+                <span className="text-lg">🔵</span> Tiếp tục với Google
+              </button>
+              <button className="w-full flex items-center justify-center gap-3 bg-blue-700 
+                text-white py-2.5 rounded-xl hover:bg-blue-800 transition-colors text-sm font-medium">
+                <span className="text-lg">📘</span> Tiếp tục với Facebook
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-sm text-gray-400">hoặc đăng nhập bằng email</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+                  ❌ {error}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email" required
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="nguyenvan@gmail.com"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm 
+                    outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu *</label>
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'} required
+                    value={form.password}
+                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder="Nhập mật khẩu"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-11 text-sm 
+                      outline-none focus:border-blue-500"
+                  />
+                  <button type="button" onClick={() => setShowPw(!showPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showPw ? <EyeOff size={18}/> : <Eye size={18}/>}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="accent-blue-600 rounded" />
+                  <span className="text-gray-600">Ghi nhớ đăng nhập</span>
+                </label>
+                <Link href="/quen-mat-khau" className="text-blue-600 hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 
+                  hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors
+                  disabled:opacity-60 disabled:cursor-not-allowed">
+                {loading ? (
+                  <span className="animate-spin">⏳</span>
+                ) : (
+                  <><LogIn size={18}/> Đăng nhập</>
+                )}
+              </button>
+            </form>
+
+            <p className="text-center text-sm text-gray-500 mt-4">
+              Chưa có tài khoản?{' '}
+              <Link href={`/dang-ky${nextUrl !== '/tai-khoan' ? `?next=${nextUrl}` : ''}`}
+                className="text-blue-600 font-medium hover:underline">
+                Đăng ký miễn phí →
+              </Link>
+            </p>
+
+            <p className="text-center text-xs text-gray-400 mt-3">
+              🔒 Bảo mật SSL 256-bit — Thông tin được mã hóa
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+Generate register page (dang-ky) with similar structure + full name, phone, password strength bar.
+Generate forgot password page (quen-mat-khau) with email input → success state.
+TypeScript strict. All files complete.
+```
+
+---
+
+## ══════════════════════════════════════════════════════════════
+## BẢNG ĐỐI CHIẾU HOÀN CHỈNH (Prompt 0 → R)
+## ══════════════════════════════════════════════════════════════
+
+```
+FILE GỐC (Antigravity_NextJS_PCHub.md):
+  Prompt 0  → Project setup, tailwind.config, types, constants, globals.css
+  Prompt A  → Header (TopBar + MainHeader + MegaNav + CartDrawer)
+  Prompt B  → HeroSlider
+  Prompt C  → TrustBadges
+  Prompt D  → FlashSaleSection + ProductCard + PriceDisplay
+  Prompt E  → CategoryGrid
+  Prompt F  → TabbedProducts
+  Prompt G  → PromoBanner
+  Prompt H  → MostViewed + AIBuilderPreview + CommunityBuilds
+  Prompt I  → Testimonials + BlogSection + BrandStrip
+  Prompt J  → Footer
+  Prompt K  → app/page.tsx + layout.tsx + providers.tsx + store.ts (base)
+
+FILE NÀY BỔ SUNG:
+  Prompt L  → middleware.ts + not-found + loading + auth.ts + store additions
+  Prompt M  → CategoryPage + FilterSidebar + ShopToolbar + ActiveFilters
+  Prompt N  → ProductDetailPage + Gallery + ProductInfo + Tabs + Reviews + AddToCart + CompatWidget
+  Prompt O  → CartPage + CheckoutPage + OrderSuccessPage
+  Prompt P  → SearchPage + CompatibilityPage + compat-rules.ts
+  Prompt Q  → Account layout + Sidebar + OrdersPage + OrderCard + Dashboard
+  Prompt R  → LoginPage + RegisterPage + ForgotPasswordPage
+
+CÁC TRANG CÒN LẠI (tự generate tương tự):
+  /tai-khoan/don-hang/[id]     → OrderDetailPage với TrackingTimeline
+  /tai-khoan/yeu-thich         → WishlistPage (dùng useWishlistStore)
+  /tai-khoan/ho-so             → ProfileForm (React Hook Form + Zod)
+  /tai-khoan/dia-chi           → AddressManager (CRUD addresses)
+  /tai-khoan/bao-hanh          → WarrantyPage (form + status)
+  /xay-dung-pc                 → PCBuilderPage (useBuilderStore 5 steps)
+  /build-gallery               → GalleryPage (grid of PCBuild cards)
+  /blog                        → BlogListPage
+  /blog/[slug]                 → BlogPostPage
+  /dang-nhap                   → LoginPage ✅ (Prompt R)
+  /dang-ky                     → RegisterPage ✅ (Prompt R)
+  /quen-mat-khau               → ForgotPasswordPage ✅ (Prompt R)
+
+LOGIC CONNECTIONS ĐÃ ĐƯỢC CÀI ĐẶT:
+  ✅ useCartStore  → ProductCard, AddToCartForm, CartPage, CartDrawer, CheckoutPage, OrderSuccess
+  ✅ useWishlistStore → ProductCard (heart), WishlistPage, Header badge
+  ✅ useUIStore    → AIChatWidget (open/close), QuickView, MobileFilter, SearchBar
+  ✅ useAuthStore  → Header (user info), AccountSidebar, all /tai-khoan/* pages
+  ✅ useBuilderStore → CompatibilityWidget (product page), CompatibilityPage, PCBuilderPage
+  ✅ next/navigation → URL params for filters, pagination, search, redirect after login
+  ✅ middleware.ts  → Guards /tai-khoan/*, /thanh-toan từ guests
+  ✅ compatibility-rules.ts → checkCompatibility() called in CompatibilityChecker component
+  ✅ Cart flow     → ProductPage → CartDrawer → CartPage → CheckoutPage → OrderSuccessPage
+  ✅ Auth flow     → /dang-nhap → setUser() + cookie → redirect to ?next param
+  ✅ Search flow   → Header SearchBar submit → /tim-kiem?q=... → SearchPage filter MOCK_PRODUCTS
+```
+
+ENDOFFILE
+echo "Done — $(wc -l < /mnt/user-data/outputs/PCHub_NextJS_FullLogic.md) dòng"
