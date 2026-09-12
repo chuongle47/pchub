@@ -24,7 +24,8 @@ import {
   MessageSquare,
   PlusCircle,
   Play,
-  Film
+  Film,
+  ArrowLeftRight
 } from 'lucide-react';
 import { useCartStore, useWishlistStore, useBuilderStore, useCompareStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
@@ -73,11 +74,11 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   const setCartOpen = useCartStore(s => s.setOpen);
   const toggleWishlist = useWishlistStore(s => s.toggleWishlist);
   const isWishlisted = useWishlistStore(s => s.ids.includes(product.id));
-  const setSlot = useBuilderStore(s => s.setSlot);
 
   const compareItems = useCompareStore(s => s.items);
   const toggleCompare = useCompareStore(s => s.toggleCompare);
-  const isCompared = compareItems.includes(product.slug);
+  const isCompared = compareItems.includes(product.slug) || compareItems.includes(product.id);
+  const setSlot = useBuilderStore(s => s.setSlot);
 
   const handleToggleWishlist = () => {
     toggleWishlist(product.id);
@@ -1012,7 +1013,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 50px', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 48px 48px', gap: '10px' }}>
                   <button
                     onClick={handleAddToBuilder}
                     style={{
@@ -1031,7 +1032,26 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                     }}
                   >
                     <Wrench size={16} />
-                    Đổi linh kiện trong PC Builder
+                    Đổi linh kiện PC
+                  </button>
+
+                  <button
+                    onClick={() => toggleCompare(product.slug || product.id, categoryName, product.id)}
+                    aria-label="So sánh sản phẩm"
+                    title={isCompared ? "Bỏ khỏi so sánh" : "Thêm vào so sánh"}
+                    style={{
+                      background: isCompared ? '#eff6ff' : '#f8fafc',
+                      color: isCompared ? '#2563eb' : '#64748b',
+                      border: `1.5px solid ${isCompared ? '#3b82f6' : '#cbd5e1'}`,
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <ArrowLeftRight size={19} />
                   </button>
 
                   <button

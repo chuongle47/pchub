@@ -73,7 +73,7 @@ export default function ProductCard({
   const isCompared =
     externalIsCompared !== undefined
       ? externalIsCompared
-      : compareItems.includes(slug);
+      : (compareItems.includes(slug) || (id ? compareItems.includes(id) : false));
 
   const displayBrand = brand || brandName || category || 'PCHub';
   const displayImage = imgError
@@ -157,9 +157,9 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     if (onCompare) {
-      onCompare(slug);
+      onCompare(slug || id);
     } else {
-      toggleGlobalCompare(slug, category || brandName || brand);
+      toggleGlobalCompare(slug || id, category || brandName || brand, id);
     }
   };
 

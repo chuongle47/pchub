@@ -304,9 +304,9 @@ export interface ToggleCompareResult {
 interface CompareStore {
   items: string[];
   activeCategory: string | null;
-  addCompare: (slug: string, categoryName?: string) => ToggleCompareResult;
-  removeCompare: (slug: string) => void;
-  toggleCompare: (slug: string, categoryName?: string) => ToggleCompareResult;
+  addCompare: (slug: string, categoryName?: string, alternateId?: string) => ToggleCompareResult;
+  removeCompare: (slug: string, alternateId?: string) => void;
+  toggleCompare: (slug: string, categoryName?: string, alternateId?: string) => ToggleCompareResult;
   clearCompare: () => void;
 }
 
@@ -316,12 +316,13 @@ export const useCompareStore = create<CompareStore>()(
       items: [],
       activeCategory: null,
 
-      addCompare: (slug, categoryName) => {
+      addCompare: (slug, categoryName, alternateId) => {
         const currentItems = get().items;
         const cat = categoryName ? categoryName.trim() : null;
 
-        // If already in list
-        if (currentItems.includes(slug)) {
+        // If already in list by slug or alternateId
+        const alreadyExists = currentItems.includes(slug) || (alternateId ? currentItems.includes(alternateId) : false);
+        if (alreadyExists) {
           return { success: true, notice: 'Sản phẩm đã có trong danh sách so sánh' };
         }
 
@@ -344,21 +345,23 @@ export const useCompareStore = create<CompareStore>()(
         };
       },
 
-      removeCompare: (slug) => {
-        const remaining = get().items.filter((item) => item !== slug);
+      removeCompare: (slug, alternateId) => {
+        const remaining = get().items.filter(
+          (item) => item !== slug && (alternateId ? item !== alternateId : true)
+        );
         set({
           items: remaining,
           activeCategory: remaining.length === 0 ? null : get().activeCategory,
         });
       },
 
-      toggleCompare: (slug, categoryName) => {
-        const exists = get().items.includes(slug);
+      toggleCompare: (slug, categoryName, alternateId) => {
+        const exists = get().items.includes(slug) || (alternateId ? get().items.includes(alternateId) : false);
         if (exists) {
-          get().removeCompare(slug);
+          get().removeCompare(slug, alternateId);
           return { success: true, notice: 'Đã bỏ sản phẩm khỏi so sánh' };
         } else {
-          return get().addCompare(slug, categoryName);
+          return get().addCompare(slug, categoryName, alternateId);
         }
       },
 

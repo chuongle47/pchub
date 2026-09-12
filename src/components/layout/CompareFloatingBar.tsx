@@ -176,7 +176,7 @@ export default function CompareFloatingBar() {
 
               <button
                 type="button"
-                onClick={() => removeCompare(slug)}
+                onClick={() => removeCompare(slug, prod?.id)}
                 title="Xóa sản phẩm này"
                 style={{
                   background: 'none',

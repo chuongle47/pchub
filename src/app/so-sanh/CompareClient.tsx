@@ -138,9 +138,9 @@ export default function CompareClient() {
     return () => clearTimeout(timer);
   }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam]);
 
-  const handleAddProductToCompare = (slug: string, categoryName?: string) => {
-    addCompare(slug, categoryName);
-    const existingSlugs = products.map((p) => p.slug);
+  const handleAddProductToCompare = (slug: string, categoryName?: string, alternateId?: string) => {
+    addCompare(slug, categoryName, alternateId);
+    const existingSlugs = products.map((p) => p.slug || p.id);
     if (!existingSlugs.includes(slug)) {
       const newSlugs = [...existingSlugs, slug];
       router.replace(`/so-sanh?ids=${encodeURIComponent(newSlugs.join(','))}`);
@@ -148,14 +148,15 @@ export default function CompareClient() {
     setIsSelectorOpen(false);
   };
 
-  const handleRemoveProduct = (slug: string) => {
-    removeCompare(slug);
-    const newProducts = products.filter((p) => p.slug !== slug && p.id !== slug);
+  const handleRemoveProduct = (product: CompareProduct) => {
+    removeCompare(product.slug, product.id);
+    const newProducts = products.filter((p) => p.slug !== product.slug && p.id !== product.id);
     setProducts(newProducts);
-    const remainingSlugs = newProducts.map((p) => p.slug);
+    const remainingSlugs = newProducts.map((p) => p.slug || p.id);
     if (remainingSlugs.length > 0) {
       router.replace(`/so-sanh?ids=${encodeURIComponent(remainingSlugs.join(','))}`);
     } else {
+      clearCompare();
       router.replace('/so-sanh');
     }
   };
@@ -521,7 +522,7 @@ export default function CompareClient() {
                       {/* Delete item button */}
                       <button
                         type="button"
-                        onClick={() => handleRemoveProduct(product.slug)}
+                        onClick={() => handleRemoveProduct(product)}
                         title="Bỏ khỏi so sánh"
                         style={{
                           position: 'absolute',
@@ -821,7 +822,7 @@ export default function CompareClient() {
 
                   <button
                     type="button"
-                    onClick={() => handleAddProductToCompare(item.slug, item.category)}
+                    onClick={() => handleAddProductToCompare(item.slug || item.id, item.category, item.id)}
                     style={{
                       width: '100%',
                       padding: '7px 10px',
@@ -1009,7 +1010,7 @@ export default function CompareClient() {
 
                     <button
                       type="button"
-                      onClick={() => handleAddProductToCompare(p.slug, p.category)}
+                      onClick={() => handleAddProductToCompare(p.slug || p.id, p.category, p.id)}
                       style={{
                         background: '#2563eb',
                         color: '#ffffff',

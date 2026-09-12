@@ -774,56 +774,121 @@ export async function getProductsBySlugs(slugs: string[]) {
     return { products: [], specKeys: [] };
   }
 
-  const connected = await testPgConnection();
-  let products: Product[] = [];
+  let products: any[] = [];
+  const fetchedIds = new Set<string>();
 
-  if (connected) {
-    try {
-      const query = `
-        SELECT p.*, c.name as category_name, b.name as brand_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN brands b ON p.brand_id = b.id
-        WHERE p.slug = ANY($1) OR p.id::text = ANY($1)
-      `;
-      const result = await pool.query(query, [normalized]);
-      products = result.rows || [];
-    } catch (err) {
-      console.error('Slug query error, fallback:', err);
+  // 1. Try Supabase first
+  try {
+    const uuids = normalized.filter((s) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+    );
+    const nonUuids = normalized.filter(
+      (s) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+    );
+
+    let query = supabase
+      .from('products')
+      .select(`
+        *,
+        categories(name, slug),
+        brands(name, slug)
+      `);
+
+    if (uuids.length > 0 && nonUuids.length > 0) {
+      query = query.or(`id.in.(${uuids.join(',')}),slug.in.(${nonUuids.join(',')})`);
+    } else if (uuids.length > 0) {
+      query = query.in('id', uuids);
+    } else if (nonUuids.length > 0) {
+      query = query.in('slug', nonUuids);
+    }
+
+    const { data: supaData, error } = await query;
+
+    if (!error && supaData && supaData.length > 0) {
+      const supaProducts = supaData.map((p: any) => {
+        const origPrice =
+          p.original_price || p.originalPrice || getProductOriginalPrice(Number(p.price), p.slug);
+        return {
+          ...p,
+          original_price: origPrice,
+          originalPrice: origPrice,
+          category_name: p.categories?.name || 'Danh mục',
+          category_slug: p.categories?.slug,
+          brand_name: p.brands?.name || 'Thương hiệu',
+        };
+      });
+
+      supaProducts.forEach((p) => {
+        products.push(p);
+        if (p.id) fetchedIds.add(p.id);
+        if (p.slug) fetchedIds.add(p.slug);
+      });
+    }
+  } catch (err) {
+    console.log('Supabase getProductsBySlugs failed:', err);
+  }
+
+  // 2. If any requested slug is missing, check PostgreSQL database
+  const missingForPg = normalized.filter((s) => !fetchedIds.has(s));
+  if (missingForPg.length > 0) {
+    const connected = await testPgConnection();
+    if (connected) {
+      try {
+        const query = `
+          SELECT p.*, c.name as category_name, c.slug as category_slug, b.name as brand_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          LEFT JOIN brands b ON p.brand_id = b.id
+          WHERE p.slug = ANY($1) OR p.id::text = ANY($1)
+        `;
+        const result = await pool.query(query, [missingForPg]);
+        const pgRows = result.rows || [];
+        pgRows.forEach((p: any) => {
+          products.push(p);
+          if (p.id) fetchedIds.add(p.id);
+          if (p.slug) fetchedIds.add(p.slug);
+        });
+      } catch (err) {
+        console.error('Slug query error, fallback:', err);
+      }
     }
   }
 
-  // If any requested slug is missing from database results, check memoryStore fallback for missing ones
-  const fetchedSlugs = new Set(products.flatMap((p) => [p.slug, p.id]));
-  const missingSlugs = normalized.filter((s) => !fetchedSlugs.has(s));
-
-  if (missingSlugs.length > 0) {
+  // 3. If any requested slug is still missing, check memoryStore fallback
+  const missingForMemory = normalized.filter((s) => !fetchedIds.has(s));
+  if (missingForMemory.length > 0) {
     loadMemoryFallback();
     const catMap = new Map(memoryStore.categories.map((c) => [c.id, c.name]));
+    const catSlugMap = new Map(memoryStore.categories.map((c) => [c.id, c.slug]));
     const brandNameMap = new Map(memoryStore.brands.map((b) => [b.id, b.name]));
-    const missingSet = new Set(missingSlugs);
+    const missingSet = new Set(missingForMemory);
 
     const fallbackProducts = memoryStore.products
       .filter((p) => missingSet.has(p.slug) || missingSet.has(p.id))
       .map((p) => ({
         ...p,
         category_name: catMap.get(p.category_id) || 'Danh mục',
+        category_slug: catSlugMap.get(p.category_id),
         brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu',
       }));
 
-    products = [...products, ...fallbackProducts];
+    fallbackProducts.forEach((p) => {
+      products.push(p);
+      if (p.id) fetchedIds.add(p.id);
+      if (p.slug) fetchedIds.add(p.slug);
+    });
   }
 
   const specKeySet = new Set<string>();
-  products.forEach(p => {
+  products.forEach((p) => {
     if (p.specs && typeof p.specs === 'object') {
-      Object.keys(p.specs).forEach(k => specKeySet.add(k));
+      Object.keys(p.specs).forEach((k) => specKeySet.add(k));
     }
   });
 
   return {
     products,
-    specKeys: Array.from(specKeySet)
+    specKeys: Array.from(specKeySet),
   };
 }
 
