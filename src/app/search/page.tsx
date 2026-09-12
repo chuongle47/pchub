@@ -9,7 +9,7 @@ import {
   Check, X, ShoppingCart, Filter, CheckCircle2, ChevronDown
 } from 'lucide-react';
 import { fetchCategories, fetchBrands } from '@/lib/api';
-import { useCartStore, useWishlistStore } from '@/lib/store';
+import { useCartStore, useWishlistStore, useCompareStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
 import { getProductOriginalPrice, getProductImage } from '@/lib/product-ui';
 
@@ -73,9 +73,9 @@ function SearchContent() {
   const addItemToCart = useCartStore((s) => s.addItem);
   const wishlistIds = useWishlistStore((s) => s.ids);
   const toggleWishlistStore = useWishlistStore((s) => s.toggleWishlist);
-
-  // Compare items
-  const [compareItems, setCompareItems] = useState<string[]>([]);
+  const compareItems = useCompareStore((s) => s.items);
+  const toggleCompareGlobal = useCompareStore((s) => s.toggleCompare);
+  const clearCompareStore = useCompareStore((s) => s.clearCompare);
 
   // Sync state with URL params on URL change
   useEffect(() => {
@@ -270,12 +270,12 @@ function SearchContent() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const toggleCompare = (slug: string) => {
-    setCompareItems(current => 
-      current.includes(slug)
-        ? current.filter(item => item !== slug)
-        : current.length < 4 ? [...current, slug] : current
-    );
+  const toggleCompare = (slug: string, categoryName?: string) => {
+    const res = toggleCompareGlobal(slug, categoryName);
+    if (res.notice) {
+      setToastMessage(res.notice);
+      setTimeout(() => setToastMessage(null), 2500);
+    }
   };
 
   const formatPrice = (num: number) => {
@@ -1076,7 +1076,7 @@ function SearchContent() {
                       stock={p.stock}
                       isCompared={isCompared}
                       onAddToCart={(e) => handleAddToCart(e, p)}
-                      onCompare={() => toggleCompare(p.slug)}
+                      onCompare={() => toggleCompare(p.slug, p.categoryName)}
                     />
                   );
                 })}
@@ -1108,7 +1108,7 @@ function SearchContent() {
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setCompareItems([])}
+                    onClick={() => clearCompareStore()}
                     style={{ color: '#cbd5e1', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12.5px', fontWeight: 600 }}
                   >
                     Bỏ chọn
