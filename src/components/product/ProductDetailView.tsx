@@ -339,12 +339,18 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
           boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
           padding: '24px 28px 28px',
           marginBottom: '32px',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}>
           {/* Header: Product Title & Quick Action Bar (Exact match to screenshot) */}
           <div style={{
             borderBottom: '1px solid #f1f5f9',
             paddingBottom: '16px',
             marginBottom: '24px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}>
             <h1 style={{
               fontSize: 'clamp(18px, 4vw, 24px)',
@@ -352,6 +358,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               color: '#0f172a',
               lineHeight: '1.3',
               marginBottom: '10px',
+              wordBreak: 'break-word',
             }}>
               {product.name}
             </h1>
@@ -364,6 +371,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               fontSize: '13.5px',
               color: '#64748b',
               flexWrap: 'wrap',
+              maxWidth: '100%',
             }}>
               {/* 1. Yêu thích */}
               <button
@@ -464,7 +472,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
 
           <div className="product-detail-grid">
             {/* LEFT: Image & Video Media Box with Thumbnails */}
-            <div>
+            <div style={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
               {/* Main Media Viewer */}
               <div className="product-detail-media-box" style={{
                 background: '#ffffff',
@@ -741,10 +749,10 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
           </div>
 
           {/* RIGHT: Info, Pricing, Add to Cart & Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0, width: '100%', maxWidth: '100%' }}>
             <div>
               {/* Category & Brand Tags */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px 10px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <span style={{
                   background: '#eff6ff',
                   color: 'var(--color-primary)',
@@ -766,7 +774,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               </div>
 
               {/* Ratings & Sold Stats */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px 10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#eab308' }}>
                   <Star size={16} fill="#eab308" />
                   <Star size={16} fill="#eab308" />
@@ -775,9 +783,9 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                   <Star size={16} fill="#eab308" />
                 </div>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>5.0</span>
-                <span style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
+                <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
                 <span style={{ fontSize: '13px', color: '#64748b' }}>Đã bán: 128+</span>
-                <span style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
+                <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
                 <span style={{
                   fontSize: '12px',
                   color: isOutOfStock ? '#ef4444' : '#16a34a',
@@ -804,10 +812,12 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 borderRadius: '12px',
                 padding: '20px',
                 marginBottom: '20px',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
               }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
                   <span style={{
-                    fontSize: '32px',
+                    fontSize: 'clamp(22px, 6vw, 32px)',
                     fontWeight: 900,
                     color: '#ef4444',
                     letterSpacing: '-0.5px',
@@ -834,6 +844,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
+                  flexWrap: 'wrap',
                 }}>
                   <span>⚡ Giá đã bao gồm VAT & Bảo hành chính hãng</span>
                 </div>
@@ -841,11 +852,11 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
 
 
               {/* Variant Selector */}
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '20px', maxWidth: '100%' }}>
                 <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
                   Tùy chọn phiên bản / biến thể:
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '100%' }}>
                   {variants.map(v => {
                     const isSelected = v.id === selectedVariantId;
                     return (
@@ -866,12 +877,14 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
+                          maxWidth: '100%',
+                          textAlign: 'left',
                         }}
                       >
-                        {isSelected && <Check size={14} color="var(--color-primary)" />}
+                        {isSelected && <Check size={14} color="var(--color-primary)" style={{ flexShrink: 0 }} />}
                         <span>{v.name}</span>
                         {v.priceDelta > 0 && (
-                          <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700 }}>
+                          <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700, flexShrink: 0 }}>
                             (+{v.priceDelta.toLocaleString('vi-VN')}₫)
                           </span>
                         )}
@@ -882,7 +895,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               </div>
 
               {/* Quantity Selector with Number Input & Bounds Validation */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px 16px', marginBottom: '24px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>Số lượng:</span>
                 <div style={{
                   display: 'flex',

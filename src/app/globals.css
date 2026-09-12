@@ -2043,12 +2043,17 @@ a:hover {
   display: grid;
   grid-template-columns: 460px 1fr;
   gap: 32px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {
   .product-detail-grid {
     grid-template-columns: 1fr !important;
     gap: 24px;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 
