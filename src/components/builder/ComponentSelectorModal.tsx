@@ -28,6 +28,36 @@ export default function ComponentSelectorModal({
 
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [displayCount, setDisplayCount] = useState(48);
+  const [showAllBrands, setShowAllBrands] = useState(false);
+
+  // Category slug normalization for all build slots
+  const CATEGORY_SLUG_MAP: Record<string, string> = {
+    cpu: 'cpu',
+    mainboard: 'mainboard',
+    motherboard: 'mainboard',
+    mb: 'mainboard',
+    ram: 'ram',
+    memory: 'ram',
+    gpu: 'gpu',
+    vga: 'gpu',
+    card: 'gpu',
+    storage: 'storage',
+    ssd: 'storage',
+    hdd: 'storage',
+    psu: 'psu',
+    power: 'psu',
+    nguon: 'psu',
+    case: 'case',
+    vo: 'case',
+    cooling: 'cooling',
+    cooler: 'cooling',
+    tan: 'cooling',
+    tannhiet: 'cooling',
+    monitor: 'monitor',
+    gear: 'gear',
+    headset: 'headset',
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -35,28 +65,53 @@ export default function ComponentSelectorModal({
     setSelectedBrand('ALL');
     setPriceRange('ALL');
     setSortBy('DEFAULT');
+    setDisplayCount(48);
+    setShowAllBrands(false);
 
     async function fetchCategoryProducts() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products?limit=36&category=${slotKey}`);
+        const catSlug = CATEGORY_SLUG_MAP[slotKey.toLowerCase()] || slotKey.toLowerCase();
+        // Fetch up to 1000 items to retrieve all products in this category from Supabase
+        const res = await fetch(`/api/products?limit=1000&category=${encodeURIComponent(catSlug)}`);
         const data = await res.json();
-        if (data.products && data.products.length > 0) {
-          setProducts(data.products);
+        let allProducts = data.products || [];
+
+        // In case category has more than 1000 products, fetch remaining pages
+        if (data.pagination && data.pagination.totalPages > 1) {
+          const totalPages = data.pagination.totalPages;
+          const pagePromises = [];
+          for (let p = 2; p <= Math.min(totalPages, 5); p++) {
+            pagePromises.push(
+              fetch(`/api/products?limit=1000&page=${p}&category=${encodeURIComponent(catSlug)}`)
+                .then(r => r.json())
+                .then(d => d.products || [])
+                .catch(() => [])
+            );
+          }
+          const extraPages = await Promise.all(pagePromises);
+          for (const pageItems of extraPages) {
+            allProducts = allProducts.concat(pageItems);
+          }
+        }
+
+        if (allProducts.length > 0) {
+          setProducts(allProducts);
         } else {
           // Fallback to seed.json matching slot
           const filteredSeed = seed.products.filter(p => {
             const cat = (p.category_id || '').toLowerCase();
             const slug = (p.slug || '').toLowerCase();
             const name = (p.name || '').toLowerCase();
-            return slug.includes(slotKey) || cat.includes(slotKey) || name.includes(slotKey);
+            return slug.includes(catSlug) || cat.includes(catSlug) || name.includes(catSlug);
           });
-          setProducts(filteredSeed.length > 0 ? filteredSeed : seed.products.slice(0, 16));
+          setProducts(filteredSeed.length > 0 ? filteredSeed : seed.products);
         }
       } catch (err) {
         console.error('Failed to fetch modal products:', err);
-        const filteredSeed = seed.products.filter(p => p.slug.includes(slotKey));
-        setProducts(filteredSeed.length > 0 ? filteredSeed : seed.products.slice(0, 16));
+        const catSlug = CATEGORY_SLUG_MAP[slotKey.toLowerCase()] || slotKey.toLowerCase();
+        const filteredSeed = seed.products.filter(p => (p.slug || '').includes(catSlug));
+        setProducts(filteredSeed.length > 0 ? filteredSeed : seed.products);
       } finally {
         setLoading(false);
       }
@@ -65,17 +120,26 @@ export default function ComponentSelectorModal({
     fetchCategoryProducts();
   }, [isOpen, slotKey]);
 
-  // Extract unique brands dynamically
-  const availableBrands = useMemo(() => {
-    const brandsSet = new Set<string>();
+  // Extract unique brands with count dynamically
+  const brandStats = useMemo(() => {
+    const counts: Record<string, number> = {};
     products.forEach(p => {
-      const bName = p.brand_name || p.brand || (p.name.split(' ')[0]);
+      const bName = (p.brand_name || p.brand || (p.name?.split(' ')[0]) || '').trim().toUpperCase();
       if (bName && bName.length > 1) {
-        brandsSet.add(bName.toUpperCase());
+        counts[bName] = (counts[bName] || 0) + 1;
       }
     });
-    return Array.from(brandsSet);
+    return counts;
   }, [products]);
+
+  const availableBrands = useMemo(() => {
+    return Object.keys(brandStats).sort((a, b) => (brandStats[b] || 0) - (brandStats[a] || 0));
+  }, [brandStats]);
+
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(48);
+  }, [searchTerm, selectedBrand, priceRange, sortBy]);
 
   // Filter and Sort products
   const filteredProducts = useMemo(() => {
@@ -83,14 +147,15 @@ export default function ComponentSelectorModal({
       // 1. Search term
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
-        const matchesName = p.name.toLowerCase().includes(q);
+        const matchesName = (p.name || '').toLowerCase().includes(q);
         const matchesSku = p.sku && p.sku.toLowerCase().includes(q);
-        if (!matchesName && !matchesSku) return false;
+        const matchesSlug = p.slug && p.slug.toLowerCase().includes(q);
+        if (!matchesName && !matchesSku && !matchesSlug) return false;
       }
 
       // 2. Brand filter
       if (selectedBrand !== 'ALL') {
-        const bName = (p.brand_name || p.brand || p.name.split(' ')[0] || '').toUpperCase();
+        const bName = (p.brand_name || p.brand || p.name?.split(' ')[0] || '').toUpperCase();
         if (!bName.includes(selectedBrand)) return false;
       }
 
@@ -163,11 +228,31 @@ export default function ComponentSelectorModal({
           }}>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--color-accent-cyan)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-              BỘ LỌC TÌM KIẾM LINH KIỆN
+              BỘ LỌC TÌM KIẾM LINH KIỆN TỪ SUPABASE
             </div>
-            <h3 style={{ fontSize: '20px', fontWeight: 900, margin: '2px 0 0', color: '#ffffff' }}>
-              Chọn {categoryTitle}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, margin: 0, color: '#ffffff' }}>
+                Chọn {categoryTitle}
+              </h3>
+              {!loading && products.length > 0 && (
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  background: 'rgba(37, 99, 235, 0.3)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  color: '#93c5fd',
+                  padding: '2px 10px',
+                  borderRadius: '20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  {filteredProducts.length === products.length 
+                    ? `${products.length} sản phẩm có sẵn`
+                    : `Hiển thị ${filteredProducts.length} / ${products.length} sản phẩm`}
+                </span>
+              )}
+            </div>
           </div>
 
           <button
@@ -208,7 +293,7 @@ export default function ComponentSelectorModal({
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
-                placeholder={`Tìm tên linh kiện, dòng sản phẩm, socket trong mục ${categoryTitle}...`}
+                placeholder={`Tìm kiếm theo tên, mã SKU, hãng sản xuất (${filteredProducts.length} sản phẩm)...`}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 style={{
@@ -280,11 +365,12 @@ export default function ComponentSelectorModal({
                   transition: 'all 0.2s',
                 }}
               >
-                Tất cả
+                Tất cả ({products.length})
               </button>
 
-              {availableBrands.slice(0, 7).map(brand => {
+              {(showAllBrands ? availableBrands : availableBrands.slice(0, 8)).map(brand => {
                 const isActive = selectedBrand === brand;
+                const count = brandStats[brand] || 0;
                 return (
                   <button
                     key={brand}
@@ -294,17 +380,45 @@ export default function ComponentSelectorModal({
                       color: isActive ? '#ffffff' : '#475569',
                       border: `1px solid ${isActive ? '#2563eb' : '#cbd5e1'}`,
                       borderRadius: '20px',
-                      padding: '5px 14px',
+                      padding: '5px 12px',
                       fontSize: '12px',
                       fontWeight: 700,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    {brand}
+                    <span>{brand}</span>
+                    <span style={{
+                      fontSize: '10px',
+                      opacity: isActive ? 0.9 : 0.6,
+                      fontWeight: 600,
+                    }}>
+                      ({count})
+                    </span>
                   </button>
                 );
               })}
+
+              {availableBrands.length > 8 && (
+                <button
+                  onClick={() => setShowAllBrands(!showAllBrands)}
+                  style={{
+                    background: 'transparent',
+                    color: '#2563eb',
+                    border: '1px dashed #93c5fd',
+                    borderRadius: '20px',
+                    padding: '5px 12px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {showAllBrands ? 'Thu gọn' : `+${availableBrands.length - 8} hãng khác`}
+                </button>
+              )}
             </div>
 
             {/* Price Filter Pills */}
@@ -341,10 +455,29 @@ export default function ComponentSelectorModal({
         </div>
 
         {/* Products Grid — 4 Columns Layout */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', background: '#f8fafc' }}>
+        <div 
+          style={{ flex: 1, overflowY: 'auto', padding: '24px', background: '#f8fafc' }}
+          onScroll={e => {
+            const target = e.currentTarget;
+            if (target.scrollHeight - target.scrollTop - target.clientHeight < 300) {
+              if (displayCount < filteredProducts.length) {
+                setDisplayCount(prev => Math.min(prev + 48, filteredProducts.length));
+              }
+            }
+          }}
+        >
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-              <p style={{ fontWeight: 700, fontSize: '15px' }}>Đang tải danh sách linh kiện từ Supabase...</p>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                border: '3px solid #e2e8f0',
+                borderTopColor: '#2563eb',
+                borderRadius: '50%',
+                margin: '0 auto 16px',
+                animation: 'spin 0.8s linear infinite',
+              }} />
+              <p style={{ fontWeight: 700, fontSize: '15px' }}>Đang tải danh sách đầy đủ {categoryTitle} từ Supabase...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
@@ -377,7 +510,7 @@ export default function ComponentSelectorModal({
               gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))',
               gap: '18px',
             }}>
-              {filteredProducts.map(p => {
+              {filteredProducts.slice(0, displayCount).map(p => {
                 const isSelected = p.id === currentSelectedId;
                 const price = Number(p.price);
                 const brand = p.brand_name || p.brand || (p.name.split(' ')[0]);
@@ -500,6 +633,41 @@ export default function ComponentSelectorModal({
                   </div>
                 );
               })}
+
+              {/* Load More Button if there are more products to display */}
+              {displayCount < filteredProducts.length && (
+                <div style={{
+                  gridColumn: '1 / -1',
+                  textAlign: 'center',
+                  padding: '20px 0 10px',
+                }}>
+                  <button
+                    onClick={() => setDisplayCount(prev => Math.min(prev + 48, filteredProducts.length))}
+                    style={{
+                      background: '#ffffff',
+                      color: '#2563eb',
+                      border: '1.5px solid #2563eb',
+                      borderRadius: '12px',
+                      padding: '12px 28px',
+                      fontSize: '13.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(37,99,235,0.08)',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#2563eb';
+                      e.currentTarget.style.color = '#ffffff';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = '#ffffff';
+                      e.currentTarget.style.color = '#2563eb';
+                    }}
+                  >
+                    Xem thêm {Math.min(48, filteredProducts.length - displayCount)} linh kiện khác (Đang hiển thị {displayCount} / {filteredProducts.length})
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

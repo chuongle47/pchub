@@ -209,13 +209,17 @@ export default function BuildPcPage() {
 
     // Estimate specs & tdp string
     let tdp = 20;
-    if (product.specs?.tdp) tdp = Number(product.specs.tdp);
+    if (product.specs?.tdp_watt) tdp = Number(product.specs.tdp_watt);
+    else if (product.specs?.tdp) tdp = Number(product.specs.tdp);
     else if (activeModalSlotKey === 'gpu') tdp = 250;
     else if (activeModalSlotKey === 'cpu') tdp = 125;
 
     let specsStr = 'Chính hãng | Bảo hành 36 tháng';
     if (product.specs && typeof product.specs === 'object') {
-      const parts = Object.entries(product.specs).slice(0, 3).map(([k, v]) => `${k.toUpperCase()}: ${v}`);
+      const parts = Object.entries(product.specs)
+        .filter(([k]) => k !== 'tdp' && k !== 'tdp_watt')
+        .slice(0, 3)
+        .map(([k, v]) => `${k.toUpperCase()}: ${Array.isArray(v) ? v.join(', ') : v}`);
       if (parts.length > 0) specsStr = parts.join(' | ');
     }
 
