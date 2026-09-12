@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeftRight, Check, ChevronRight, X, Trash2, Plus, ShoppingCart } from 'lucide-react';
+import { ArrowLeftRight, Check, ChevronRight, X, Trash2, Plus, ShoppingCart, Search, Sparkles } from 'lucide-react';
 import { useCompareStore, useCartStore } from '@/lib/store';
 import { formatVnd, getProductImage } from '@/lib/product-ui';
 
@@ -26,13 +26,18 @@ export default function CompareClient() {
   const searchParams = useSearchParams();
   const urlIdsParam = searchParams.get('ids');
 
-  const { items, activeCategory, removeCompare, clearCompare } = useCompareStore();
+  const { items, activeCategory, addCompare, removeCompare, clearCompare } = useCompareStore();
   const addItem = useCartStore((s) => s.addItem);
   const setCartOpen = useCartStore((s) => s.setOpen);
 
   const [products, setProducts] = useState<CompareProduct[]>([]);
   const [specKeys, setSpecKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Suggestions & Quick Selector Modal
+  const [suggestions, setSuggestions] = useState<CompareProduct[]>([]);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const [modalSearch, setModalSearch] = useState('');
 
   // Sync compare items from URL or Store
   useEffect(() => {
@@ -42,7 +47,6 @@ export default function CompareClient() {
       slugsToFetch = urlIdsParam.split(',').filter(Boolean);
     } else if (items && items.length > 0) {
       slugsToFetch = items;
-      // Auto-update URL query params if missing
       router.replace(`/so-sanh?ids=${encodeURIComponent(items.join(','))}`);
     }
 
@@ -86,6 +90,50 @@ export default function CompareClient() {
     fetchCompareData();
   }, [urlIdsParam, items]);
 
+  // Fetch suggestions in same category
+  useEffect(() => {
+    const cat = products[0]?.categorySlug || products[0]?.category || activeCategory || '';
+    async function fetchSuggestions() {
+      try {
+        const res = await fetch(`/api/products?limit=16${cat ? `&category=${encodeURIComponent(cat)}` : ''}`);
+        const data = await res.json();
+        if (data.products && Array.isArray(data.products)) {
+          const currentSlugs = new Set(products.map((p) => p.slug));
+          const mapped: CompareProduct[] = data.products
+            .filter((p: any) => !currentSlugs.has(p.slug))
+            .map((p: any) => ({
+              id: p.id,
+              slug: p.slug,
+              name: p.name,
+              price: Number(p.price),
+              stock: Number(p.stock ?? 15),
+              brand: p.brand_name || 'Thương hiệu',
+              category: p.category_name || 'Danh mục',
+              categorySlug: p.category_slug || p.category_id,
+              image: getProductImage({ name: p.name, categoryName: p.category_name, image_url: p.image_url }),
+              specs: p.specs || {},
+              warrantyMonths: 36,
+            }));
+          setSuggestions(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load compare suggestions:', err);
+      }
+    }
+
+    fetchSuggestions();
+  }, [products, activeCategory]);
+
+  const handleAddProductToCompare = (slug: string, categoryName?: string) => {
+    addCompare(slug, categoryName);
+    const existingSlugs = products.map((p) => p.slug);
+    if (!existingSlugs.includes(slug)) {
+      const newSlugs = [...existingSlugs, slug];
+      router.replace(`/so-sanh?ids=${encodeURIComponent(newSlugs.join(','))}`);
+    }
+    setIsSelectorOpen(false);
+  };
+
   const handleRemoveProduct = (slug: string) => {
     removeCompare(slug);
     const newProducts = products.filter((p) => p.slug !== slug && p.id !== slug);
@@ -120,10 +168,20 @@ export default function CompareClient() {
   const currentCategoryName = activeCategory || products[0]?.category || null;
   const currentCategoryParam = products[0]?.categorySlug || currentCategoryName || '';
 
-  const tableMinWidth = `${160 + Math.max(products.length, 1) * 220}px`;
+  // Filter selector modal items by search
+  const filteredModalProducts = suggestions.filter((p) =>
+    p.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
+    p.brand.toLowerCase().includes(modalSearch.toLowerCase())
+  );
+
+  const displayProductCount = Math.max(products.length, 1);
+  const showAddSlot = products.length < 4;
+  const totalColumnsCount = products.length + (showAddSlot ? 1 : 0);
+
+  const tableMinWidth = `${160 + totalColumnsCount * 220}px`;
   const columnsStyle = {
     display: 'grid',
-    gridTemplateColumns: `160px repeat(${Math.max(products.length, 1)}, minmax(200px, 1fr))`,
+    gridTemplateColumns: `160px repeat(${totalColumnsCount}, minmax(200px, 1fr))`,
   } as const;
 
   return (
@@ -198,34 +256,79 @@ export default function CompareClient() {
               </button>
             )}
 
-            <Link
-              href={currentCategoryParam ? `/search?category=${encodeURIComponent(currentCategoryParam)}` : '/search'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: '#2563eb',
-                color: '#ffffff',
-                borderRadius: '8px',
-                padding: '9px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-            >
-              <Plus size={15} />
-              <span>{currentCategoryName ? `Thêm sản phẩm ${currentCategoryName}` : 'Thêm sản phẩm'}</span>
-            </Link>
+            {products.length < 4 && (
+              <button
+                type="button"
+                onClick={() => setIsSelectorOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '9px 16px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(37, 99, 235, 0.3)',
+                }}
+              >
+                <Plus size={15} />
+                <span>{currentCategoryName ? `Thêm sản phẩm ${currentCategoryName}` : 'Thêm sản phẩm so sánh'}</span>
+              </button>
+            )}
           </div>
         </header>
+
+        {/* Notice Banner when only 1 product is selected */}
+        {products.length === 1 && (
+          <div style={{
+            background: '#fffbebf',
+            border: '1px solid #fde68a',
+            color: '#92400e',
+            borderRadius: '12px',
+            padding: '12px 18px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+            fontSize: '13.5px',
+            fontWeight: 600,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={18} color="#d97706" />
+              <span>Bạn đã chọn <strong>{products[0].name}</strong>. Chọn thêm sản phẩm thứ 2 bên dưới hoặc nhấp <strong>"+ Chọn sản phẩm"</strong> để bắt đầu đối chiếu!</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSelectorOpen(true)}
+              style={{
+                background: '#d97706',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              + Chọn sản phẩm thứ 2
+            </button>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading ? (
           <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '60px', textAlign: 'center' }}>
             <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Đang tải dữ liệu so sánh...</div>
           </div>
-        ) : products.length < 2 ? (
-          /* Empty / Insufficient Products State */
+        ) : products.length === 0 ? (
+          /* Empty State */
           <div
             style={{
               background: '#ffffff',
@@ -251,30 +354,32 @@ export default function CompareClient() {
               <ArrowLeftRight size={32} color="#2563eb" />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
-              Vui lòng chọn ít nhất 2 sản phẩm để đối chiếu
+              Chưa có sản phẩm nào trong danh sách so sánh
             </h3>
             <p style={{ fontSize: '14px', color: '#64748b', maxWidth: '480px', margin: '0 auto 24px', lineHeight: 1.5 }}>
-              Bạn có thể nhấn vào biểu tượng <strong>So sánh (⇄)</strong> trên bất kỳ thẻ sản phẩm nào ở Trang chủ hoặc Trang Tìm kiếm để bắt đầu đối chiếu.
+              Bạn có thể nhấn vào nút <strong>"Thêm sản phẩm so sánh"</strong> hoặc nhấp vào biểu tượng <strong>So sánh (⇄)</strong> ở Trang chủ / Trang Tìm kiếm để bắt đầu đối chiếu.
             </p>
-            <Link
-              href="/search"
+            <button
+              type="button"
+              onClick={() => setIsSelectorOpen(true)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
                 background: '#2563eb',
                 color: '#ffffff',
+                border: 'none',
                 borderRadius: '10px',
                 padding: '12px 24px',
                 fontSize: '14px',
                 fontWeight: 800,
-                textDecoration: 'none',
+                cursor: 'pointer',
                 boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
               }}
             >
               <Plus size={16} />
-              <span>Khám phá sản phẩm ngay</span>
-            </Link>
+              <span>Chọn sản phẩm để so sánh ngay</span>
+            </button>
           </div>
         ) : (
           /* Comparison Table */
@@ -285,6 +390,7 @@ export default function CompareClient() {
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+              marginBottom: '40px',
             }}
           >
             <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -427,6 +533,66 @@ export default function CompareClient() {
                       </button>
                     </div>
                   ))}
+
+                  {/* Empty Slot for Adding New Compare Product */}
+                  {showAddSlot && (
+                    <div
+                      style={{
+                        padding: '24px 16px',
+                        borderLeft: '1px solid #e2e8f0',
+                        borderBottom: '2px solid #e2e8f0',
+                        background: '#f8fafc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setIsSelectorOpen(true)}
+                        style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '50%',
+                          background: '#eff6ff',
+                          border: '2px dashed #3b82f6',
+                          color: '#2563eb',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          marginBottom: '12px',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Plus size={24} />
+                      </button>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
+                        Thêm sản phẩm thứ {products.length + 1}
+                      </div>
+                      <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 12px 0' }}>
+                        {currentCategoryName ? `Chọn sản phẩm trong ${currentCategoryName}` : 'Chọn linh kiện để đối chiếu'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsSelectorOpen(true)}
+                        style={{
+                          background: '#2563eb',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 14px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        + Chọn sản phẩm
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Info & Specs Table Rows */}
@@ -440,6 +606,7 @@ export default function CompareClient() {
                       {p.brand}
                     </div>
                   ))}
+                  {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
                   {/* Stock Row */}
                   <div style={{ background: '#f8fafc', padding: '12px 16px', color: '#475569', fontSize: '12px', fontWeight: 800, borderBottom: '1px solid #e2e8f0' }}>
@@ -450,6 +617,7 @@ export default function CompareClient() {
                       {p.stock > 0 ? `Sẵn hàng (${p.stock} sp)` : 'Hết hàng'}
                     </div>
                   ))}
+                  {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
                   {/* Warranty Row */}
                   <div style={{ background: '#f8fafc', padding: '12px 16px', color: '#475569', fontSize: '12px', fontWeight: 800, borderBottom: '1px solid #e2e8f0' }}>
@@ -461,6 +629,7 @@ export default function CompareClient() {
                       <span>{p.warrantyMonths} tháng</span>
                     </div>
                   ))}
+                  {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
                   {/* Dynamic Technical Specs Rows */}
                   {specKeys.map((key, idx) => (
@@ -497,6 +666,7 @@ export default function CompareClient() {
                           </div>
                         );
                       })}
+                      {showAddSlot && <div style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc', borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }} />}
                     </React.Fragment>
                   ))}
                 </div>
@@ -506,7 +676,220 @@ export default function CompareClient() {
           </div>
         )}
 
+        {/* Category Suggestions Section */}
+        {suggestions.length > 0 && (
+          <div style={{ marginTop: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={20} color="#2563eb" /> Gợi ý sản phẩm cùng danh mục để so sánh
+                </h3>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>
+                  Các linh kiện thuộc danh mục <strong>{currentCategoryName || 'nổi bật'}</strong> sẵn sàng đối chiếu
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+              {suggestions.slice(0, 6).map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <div>
+                    <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                      <img src={item.image} alt={item.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                    </div>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase' }}>
+                      {item.brand}
+                    </span>
+                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', margin: '4px 0 8px', height: '34px', overflow: 'hidden', lineHeight: '1.3' }}>
+                      {item.name}
+                    </h4>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#ef4444', marginBottom: '12px' }}>
+                      {formatVnd(item.price)}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddProductToCompare(item.slug, item.category)}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#2563eb';
+                      e.currentTarget.style.color = '#ffffff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#eff6ff';
+                      e.currentTarget.style.color = '#2563eb';
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span>+ Thêm so sánh</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
+
+      {/* QUICK PRODUCT SELECTOR MODAL */}
+      {isSelectorOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+          onClick={() => setIsSelectorOpen(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '640px',
+              width: '100%',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Chọn sản phẩm so sánh
+                </h3>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+                  {currentCategoryName ? `Danh mục: ${currentCategoryName}` : 'Tất cả linh kiện'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSelectorOpen(false)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Search */}
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên sản phẩm, thương hiệu..."
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px 9px 36px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    background: '#ffffff',
+                  }}
+                />
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              </div>
+            </div>
+
+            {/* Modal Products List */}
+            <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {filteredModalProducts.length === 0 ? (
+                <div style={{ padding: '32px 0', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                  Không tìm thấy sản phẩm phù hợp.
+                </div>
+              ) : (
+                filteredModalProducts.map((p) => (
+                  <div
+                    key={p.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: '1px solid #e2e8f0',
+                      background: '#ffffff',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <img src={p.image} alt={p.name} style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
+                      <div>
+                        <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase' }}>
+                          {p.brand} · {p.category}
+                        </span>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: '1.3' }}>
+                          {p.name}
+                        </div>
+                        <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#ef4444' }}>
+                          {formatVnd(p.price)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddProductToCompare(p.slug, p.category)}
+                      style={{
+                        background: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '7px 14px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      + Chọn so sánh
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
