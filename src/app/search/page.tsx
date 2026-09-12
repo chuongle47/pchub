@@ -1131,9 +1131,9 @@ function SearchContent() {
               </div>
             )}
 
-            {/* REAL PAGINATION */}
+            {/* REAL PAGINATION (Smart Truncated Pagination) */}
             {pagination.totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '40px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '40px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   disabled={currentPage <= 1}
@@ -1152,30 +1152,52 @@ function SearchContent() {
                   Trước
                 </button>
 
-                {[...Array(pagination.totalPages)].map((_, idx) => {
-                  const pNum = idx + 1;
-                  const isActive = pNum === currentPage;
-                  return (
-                    <button
-                      key={pNum}
-                      type="button"
-                      onClick={() => updateQueryParams({ page: pNum.toString() })}
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '8px',
-                        border: isActive ? 'none' : '1px solid #cbd5e1',
-                        background: isActive ? '#2563eb' : '#ffffff',
-                        color: isActive ? '#ffffff' : '#0f172a',
-                        fontSize: '13px',
-                        fontWeight: isActive ? 800 : 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {pNum}
-                    </button>
-                  );
-                })}
+                {(() => {
+                  const total = pagination.totalPages;
+                  const current = currentPage;
+                  let pages: (number | string)[] = [];
+
+                  if (total <= 7) {
+                    pages = Array.from({ length: total }, (_, i) => i + 1);
+                  } else if (current <= 4) {
+                    pages = [1, 2, 3, 4, 5, '...', total];
+                  } else if (current >= total - 3) {
+                    pages = [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+                  } else {
+                    pages = [1, '...', current - 1, current, current + 1, '...', total];
+                  }
+
+                  return pages.map((pNum, idx) => {
+                    if (typeof pNum === 'string') {
+                      return (
+                        <span key={`dots-${idx}`} style={{ padding: '0 4px', color: '#94a3b8', fontSize: '13px', fontWeight: 700 }}>
+                          ...
+                        </span>
+                      );
+                    }
+                    const isActive = pNum === current;
+                    return (
+                      <button
+                        key={pNum}
+                        type="button"
+                        onClick={() => updateQueryParams({ page: pNum.toString() })}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '8px',
+                          border: isActive ? 'none' : '1px solid #cbd5e1',
+                          background: isActive ? '#2563eb' : '#ffffff',
+                          color: isActive ? '#ffffff' : '#0f172a',
+                          fontSize: '13px',
+                          fontWeight: isActive ? 800 : 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {pNum}
+                      </button>
+                    );
+                  });
+                })()}
 
                 <button
                   type="button"

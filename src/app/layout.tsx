@@ -5,6 +5,12 @@ import Footer from '@/components/layout/Footer';
 import { Providers } from './providers';
 import { Suspense } from 'react';
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://pchub-iota.vercel.app'),
   title: 'PCHub — Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
@@ -67,6 +73,7 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
