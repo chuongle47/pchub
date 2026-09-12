@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -18,7 +18,7 @@ export default function CompareFloatingBar() {
     router.push(`/so-sanh?ids=${encodeURIComponent(idsParam)}`);
   };
 
-  const displayCategory = activeCategory || 'Sáº£n pháº©m';
+  const displayCategory = activeCategory || 'Sản phẩm';
 
   return (
     <div
@@ -42,7 +42,7 @@ export default function CompareFloatingBar() {
         whiteSpace: 'nowrap',
       }}
     >
-      {/* Icon + Danh má»¥c + Sá»‘ lÆ°á»£ng */}
+      {/* Icon + Danh mục + Số lượng */}
       <div
         style={{
           background: 'rgba(37,99,235,0.2)',
@@ -57,7 +57,7 @@ export default function CompareFloatingBar() {
         }}
       >
         <ArrowLeftRight size={14} />
-        <span>So sÃ¡nh {displayCategory}</span>
+        <span>So sánh {displayCategory}</span>
         <span
           style={{
             background: '#2563eb',
@@ -72,7 +72,7 @@ export default function CompareFloatingBar() {
         </span>
       </div>
 
-      {/* NÃºt XÃ³a táº¥t cáº£ */}
+      {/* Nút Xóa tất cả */}
       <button
         type="button"
         onClick={clearCompare}
@@ -94,10 +94,10 @@ export default function CompareFloatingBar() {
         onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
       >
         <Trash2 size={13} />
-        <span>XÃ³a</span>
+        <span>Xóa</span>
       </button>
 
-      {/* NÃºt So sÃ¡nh ngay */}
+      {/* Nút So sánh ngay */}
       <button
         type="button"
         onClick={handleCompareClick}
@@ -119,7 +119,7 @@ export default function CompareFloatingBar() {
         onMouseEnter={(e) => (e.currentTarget.style.background = '#1d4ed8')}
         onMouseLeave={(e) => (e.currentTarget.style.background = '#2563eb')}
       >
-        <span>So sÃ¡nh ngay ({items.length})</span>
+        <span>So sánh ngay ({items.length})</span>
         <ChevronRight size={14} />
       </button>
     </div>
