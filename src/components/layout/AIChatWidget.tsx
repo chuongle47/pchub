@@ -355,6 +355,7 @@ export default function AIChatWidget() {
         type="button"
         onClick={() => setOpen(!open)}
         aria-label={open ? 'Đóng AI Advisor' : 'Mở AI Advisor'}
+        className="ai-chat-floating-btn"
         style={{
           position: 'fixed',
           right: '22px',

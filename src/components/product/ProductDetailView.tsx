@@ -357,7 +357,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
             </h1>
 
             {/* Quick Action Toolbar: Yêu thích | Hỏi đáp | Thông số | So sánh */}
-            <div style={{
+            <div className="quick-actions-toolbar" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '16px',
@@ -566,13 +566,14 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               </div>
 
               {/* Thumbnails Row: Video + Product Angles (Exact match to screenshot) */}
-              <div style={{
+              <div className="no-scrollbar touch-scroll-row" style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
                 overflowX: 'auto',
                 paddingBottom: '8px',
                 marginBottom: '20px',
+                maxWidth: '100%',
               }}>
                 {/* 1. Video Thumbnail */}
                 <button
