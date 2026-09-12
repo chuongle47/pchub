@@ -10,42 +10,45 @@ const COMMUNITY_BUILDS = [
     name: 'Project Neon — Gaming 4K Ultra',
     image: '/images/build-neon.jpg',
     tags: ['Gaming', '4K', 'RGB'],
-    priceRange: '40-45 triệu',
+    priceRange: '80-86 triệu',
     authorName: 'Nguyễn Văn Bình',
     authorAvatar: '',
     components: 'i9-14900K · RTX 4090 · 64GB DDR5 · 4TB NVMe',
-    totalPrice: 42500000,
+    totalPrice: 86250000,
     likes: 234,
     views: 12400,
     isVerified: true,
+    performance: '🔥 Cân mượt mọi game AAA 4K Max Settings (120+ FPS) & Ray Tracing đỉnh cao.',
   },
   {
     id: 'build2',
     name: 'Silent Render Node — Workstation',
-    image: '/images/build-neon.jpg',
+    image: '/images/hero-pc.jpg',
     tags: ['Workstation', 'Silent', '3D Render'],
-    priceRange: '55-60 triệu',
+    priceRange: '70-75 triệu',
     authorName: 'Trần Thị Mai',
     authorAvatar: '',
-    components: 'Threadripper 7960X · RTX 4080 · 128GB DDR5 · 8TB SSD',
-    totalPrice: 57800000,
+    components: 'Ryzen 9 7950X · RTX 4080 Super · 128GB DDR5 · 8TB SSD',
+    totalPrice: 72250000,
     likes: 189,
     views: 8900,
     isVerified: true,
+    performance: '⚡ Render 3D & dựng phim 8K siêu tốc, vận hành êm ái 24/7 trong Blender & Premiere.',
   },
   {
     id: 'build3',
     name: '1080p Sweet Spot — Budget Gaming',
-    image: '/images/build-neon.jpg',
+    image: '/images/gpu-white.jpg',
     tags: ['Gaming', 'Budget', '1080p'],
-    priceRange: '15-18 triệu',
+    priceRange: '20-22 triệu',
     authorName: 'Lê Minh Tuấn',
     authorAvatar: '',
-    components: 'Ryzen 5 7600X · RTX 4060 Ti · 32GB DDR5 · 1TB NVMe',
-    totalPrice: 16800000,
+    components: 'i5-13400F · RTX 4060 8GB · 32GB DDR5 · 1TB NVMe',
+    totalPrice: 21250000,
     likes: 445,
     views: 21300,
     isVerified: false,
+    performance: '🎮 Cấu hình quốc dân, chiến tốt mọi game eSports & AAA Full HD High/Ultra (60-144 FPS).',
   },
 ];
 
@@ -139,13 +142,28 @@ export default function CommunityBuilds() {
                 <p style={{
                   fontSize: '11px',
                   color: '#64748b',
-                  marginBottom: '12px',
+                  marginBottom: '8px',
                   lineHeight: '1.5',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                 }}>{build.components}</p>
+
+                {build.performance && (
+                  <div style={{
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    fontSize: '11px',
+                    color: '#1e3a8a',
+                    lineHeight: '1.4',
+                    marginBottom: '12px',
+                  }}>
+                    {build.performance}
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>

@@ -24,9 +24,11 @@ export default function CommunityPage() {
       badgeColor: '#2563eb',
       image: '/images/build-neon.jpg',
       cpu: 'i9-14900K',
-      gpu: 'RTX 4090',
-      price: '$3,450',
-      isAiPick: false
+      gpu: 'RTX 4090 24GB',
+      ram: '64GB DDR5',
+      price: '86.250.000 ₫',
+      isAiPick: false,
+      performance: '🔥 Cân mượt 100% game AAA ở độ phân giải 4K Max Settings (120+ FPS). Tối ưu cực đỉnh cho Ray Tracing, VR & Livestream 4K không trễ nải.',
     },
     {
       id: 'b2',
@@ -38,9 +40,11 @@ export default function CommunityPage() {
       badgeColor: '#475569',
       image: '/images/hero-pc.jpg',
       cpu: 'Ryzen 9 7950X',
+      gpu: 'RTX 4080 Super',
       ram: '128GB DDR5',
-      price: '$2,890',
-      isAiPick: true
+      price: '72.250.000 ₫',
+      isAiPick: true,
+      performance: '⚡ Trạm làm việc Render 3D & dựng phim 8K siêu tốc, vận hành siêu êm 24/7. Tối ưu hoàn hảo cho Blender, Unreal Engine, Premiere & Maya.',
     },
     {
       id: 'b3',
@@ -52,9 +56,11 @@ export default function CommunityPage() {
       badgeColor: '#16a34a',
       image: '/images/gpu-white.jpg',
       cpu: 'i5-13400F',
-      gpu: 'RTX 4060',
-      price: '$850',
-      isAiPick: false
+      gpu: 'RTX 4060 8GB',
+      ram: '32GB DDR5',
+      price: '21.250.000 ₫',
+      isAiPick: false,
+      performance: '🎮 Cấu hình quốc dân tối ưu ngân sách, chiến tốt toàn bộ game eSports & AAA ở độ phân giải Full HD High/Ultra Settings (60 - 144+ FPS).',
     }
   ];
 
@@ -291,7 +297,7 @@ export default function CommunityPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px',
-                  marginBottom: '16px'
+                  marginBottom: '12px'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#94a3b8' }}>CPU</span>
@@ -309,6 +315,23 @@ export default function CommunityPage() {
                       <span style={{ fontWeight: 700, color: '#0f172a' }}>{b.ram}</span>
                     </div>
                   )}
+                </div>
+
+                {/* Performance Summary Line */}
+                <div style={{
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '8px',
+                  padding: '9px 12px',
+                  fontSize: '12px',
+                  color: '#1e3a8a',
+                  lineHeight: '1.45',
+                  marginBottom: '14px',
+                }}>
+                  <div style={{ fontWeight: 800, color: '#1d4ed8', marginBottom: '2px', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                    💡 Đánh giá hiệu năng:
+                  </div>
+                  {b.performance}
                 </div>
 
                 {/* Price & Details */}
