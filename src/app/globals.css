@@ -1674,9 +1674,6 @@ a:hover {
 }
 
 @media (max-width: 640px) {
-  .nav-search-form {
-    max-width: 150px !important;
-  }
   .nav-ai-text {
     display: none;
   }
@@ -1865,18 +1862,55 @@ a:hover {
 }
 
 @media (max-width: 640px) {
-  .nav-search-form {
-    order: 3;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-top: 6px;
-  }
-
   header > .container {
     height: auto !important;
     padding-top: 10px !important;
     padding-bottom: 10px !important;
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .nav-logo-link {
+    order: 1 !important;
+  }
+
+  .nav-actions-container {
+    order: 2 !important;
+    margin-left: auto !important;
+  }
+
+  .mobile-nav-toggle {
+    order: 3 !important;
+  }
+
+  .nav-search-form {
+    order: 4 !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 4px !important;
+  }
+
+  .product-detail-card {
+    padding: 16px 14px 20px !important;
+    border-radius: 14px !important;
+  }
+
+  .product-detail-media-box {
+    padding: 12px !important;
+    height: clamp(240px, 40vh, 320px) !important;
+  }
+
+  .quick-actions-toolbar {
+    gap: 8px 12px !important;
+  }
+
+  .toolbar-divider {
+    display: none !important;
+  }
+
+  .badge-hover-hint {
+    display: none !important;
   }
 }
 
@@ -2262,6 +2296,34 @@ a:hover {
     padding-right: 12px !important;
   }
 
+  header > .container {
+    height: auto !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    flex-wrap: wrap !important;
+    gap: 8px 10px !important;
+  }
+
+  .nav-logo-link {
+    order: 1 !important;
+  }
+
+  .nav-actions-container {
+    order: 2 !important;
+    margin-left: auto !important;
+  }
+
+  .mobile-nav-toggle {
+    order: 3 !important;
+  }
+
+  .nav-search-form {
+    order: 4 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 4px !important;
+  }
+
   .category-card {
     flex: 0 0 160px;
     height: 190px;
@@ -2287,6 +2349,30 @@ a:hover {
   .home-grid-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
+  }
+
+  .product-detail-card {
+    padding: 14px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .product-detail-card h1 {
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+  }
+
+  .product-detail-media-box {
+    height: 250px !important;
+    padding: 10px !important;
+  }
+
+  .product-detail-badge {
+    font-size: 9px !important;
+    padding: 3px 6px !important;
+    max-width: calc(100% - 16px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 }
 

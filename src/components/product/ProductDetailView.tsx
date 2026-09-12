@@ -332,7 +332,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
         )}
 
         {/* Main Product Card with Top Title & Quick Actions */}
-        <div style={{
+        <div className="product-detail-card" style={{
           background: '#ffffff',
           borderRadius: '18px',
           border: '1px solid #e2e8f0',
@@ -347,7 +347,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
             marginBottom: '24px',
           }}>
             <h1 style={{
-              fontSize: '24px',
+              fontSize: 'clamp(18px, 4vw, 24px)',
               fontWeight: 800,
               color: '#0f172a',
               lineHeight: '1.3',
@@ -388,7 +388,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 <span>{isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}</span>
               </button>
 
-              <span style={{ color: '#cbd5e1' }}>|</span>
+              <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
 
               {/* 2. Hỏi đáp */}
               <button
@@ -412,7 +412,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 <span>Hỏi đáp</span>
               </button>
 
-              <span style={{ color: '#cbd5e1' }}>|</span>
+              <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
 
               {/* 3. Thông số */}
               <button
@@ -436,7 +436,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 <span>Thông số</span>
               </button>
 
-              <span style={{ color: '#cbd5e1' }}>|</span>
+              <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
 
               {/* 4. So sánh */}
               <button
@@ -466,7 +466,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
             {/* LEFT: Image & Video Media Box with Thumbnails */}
             <div>
               {/* Main Media Viewer */}
-              <div style={{
+              <div className="product-detail-media-box" style={{
                 background: '#ffffff',
                 borderRadius: '16px',
                 border: '1px solid #e2e8f0',
@@ -546,10 +546,10 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                       onError={e => { e.currentTarget.src = '/images/cpu-box.jpg'; }}
                     />
 
-                    <div style={{
+                    <div className="product-detail-badge" style={{
                       position: 'absolute',
-                      top: '0',
-                      left: '0',
+                      top: '10px',
+                      left: '10px',
                       background: '#ef4444',
                       color: '#fff',
                       padding: '4px 10px',
@@ -558,8 +558,10 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                       fontWeight: 800,
                       letterSpacing: '0.3px',
                       pointerEvents: 'none',
+                      zIndex: 10,
                     }}>
-                      CHÍNH HÃNG 100% (HOVER PHÓNG TO)
+                      <span>CHÍNH HÃNG 100%</span>
+                      <span className="badge-hover-hint"> (HOVER PHÓNG TO)</span>
                     </div>
                   </div>
                 )}

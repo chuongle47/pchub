@@ -88,7 +88,7 @@ export default function Navbar() {
           gap: '20px',
         }}>
           {/* Brand Logo */}
-          <Link href="/" style={{
+          <Link href="/" className="nav-logo-link" style={{
             fontSize: '22px',
             fontWeight: 900,
             letterSpacing: '-0.5px',
@@ -203,7 +203,7 @@ export default function Navbar() {
           </nav>
 
           {/* Action icons */}
-          <div style={{
+          <div className="nav-actions-container" style={{
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
