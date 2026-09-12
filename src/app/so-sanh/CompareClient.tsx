@@ -34,10 +34,12 @@ export default function CompareClient() {
   const [specKeys, setSpecKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Suggestions & Quick Selector Modal
+  const [onlyDiffs, setOnlyDiffs] = useState(false);
+  const [modalSearch, setModalSearch] = useState('');
+  const [modalCategory, setModalCategory] = useState<string>('');
   const [suggestions, setSuggestions] = useState<CompareProduct[]>([]);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [modalSearch, setModalSearch] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Sync compare items from URL or Store
   useEffect(() => {
@@ -90,12 +92,22 @@ export default function CompareClient() {
     fetchCompareData();
   }, [urlIdsParam, items]);
 
-  // Fetch suggestions in same category
+  const currentCategoryName = activeCategory || products[0]?.category || null;
+  const currentCategoryParam = products[0]?.categorySlug || currentCategoryName || '';
+
+  // Fetch suggestions in selector modal (supports live search & category filter)
   useEffect(() => {
-    const cat = products[0]?.categorySlug || products[0]?.category || activeCategory || '';
-    async function fetchSuggestions() {
+    const catToUse = modalCategory || currentCategoryParam || activeCategory || '';
+    const timer = setTimeout(async () => {
+      setModalLoading(true);
       try {
-        const res = await fetch(`/api/products?limit=16${cat ? `&category=${encodeURIComponent(cat)}` : ''}`);
+        let endpoint = `/api/products?limit=24`;
+        if (modalSearch.trim()) {
+          endpoint += `&search=${encodeURIComponent(modalSearch.trim())}`;
+        } else if (catToUse) {
+          endpoint += `&category=${encodeURIComponent(catToUse)}`;
+        }
+        const res = await fetch(endpoint);
         const data = await res.json();
         if (data.products && Array.isArray(data.products)) {
           const currentSlugs = new Set(products.map((p) => p.slug));
@@ -118,11 +130,13 @@ export default function CompareClient() {
         }
       } catch (err) {
         console.error('Failed to load compare suggestions:', err);
+      } finally {
+        setModalLoading(false);
       }
-    }
+    }, 200);
 
-    fetchSuggestions();
-  }, [products, activeCategory]);
+    return () => clearTimeout(timer);
+  }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam]);
 
   const handleAddProductToCompare = (slug: string, categoryName?: string) => {
     addCompare(slug, categoryName);
@@ -165,14 +179,39 @@ export default function CompareClient() {
     setCartOpen(true);
   };
 
-  const currentCategoryName = activeCategory || products[0]?.category || null;
-  const currentCategoryParam = products[0]?.categorySlug || currentCategoryName || '';
 
-  // Filter selector modal items by search
-  const filteredModalProducts = suggestions.filter((p) =>
-    p.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
-    p.brand.toLowerCase().includes(modalSearch.toLowerCase())
-  );
+
+  const cheapestProduct = React.useMemo(() => {
+    if (products.length < 2) return null;
+    return [...products].sort((a, b) => a.price - b.price)[0];
+  }, [products]);
+
+  const mostExpensiveProduct = React.useMemo(() => {
+    if (products.length < 2) return null;
+    return [...products].sort((a, b) => b.price - a.price)[0];
+  }, [products]);
+
+  const priceSavings = React.useMemo(() => {
+    if (!cheapestProduct || !mostExpensiveProduct) return 0;
+    return mostExpensiveProduct.price - cheapestProduct.price;
+  }, [cheapestProduct, mostExpensiveProduct]);
+
+  // Filter spec keys when "onlyDiffs" toggle is active
+  const activeSpecKeys = React.useMemo(() => {
+    if (!onlyDiffs || products.length < 2) return specKeys;
+    return specKeys.filter((key) => {
+      const values = products.map((p) => {
+        const val = p.specs[key];
+        return Array.isArray(val)
+          ? val.join(', ').toLowerCase().trim()
+          : val !== undefined && val !== null
+          ? String(val).toLowerCase().trim()
+          : '';
+      });
+      const first = values[0];
+      return values.some((v) => v !== first);
+    });
+  }, [specKeys, products, onlyDiffs]);
 
   const displayProductCount = Math.max(products.length, 1);
   const showAddSlot = products.length < 4;
@@ -382,36 +421,91 @@ export default function CompareClient() {
             </button>
           </div>
         ) : (
-          /* Comparison Table */
-          <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-              marginBottom: '40px',
-            }}
-          >
-            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <div style={{ minWidth: tableMinWidth }}>
-                
-                {/* Header Row: Products */}
-                <div style={columnsStyle}>
-                  <div
-                    style={{
-                      background: '#f8fafc',
-                      padding: '20px 16px',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      color: '#475569',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      borderBottom: '2px solid #e2e8f0',
-                    }}
-                  >
-                    SẢN PHẨM ({products.length})
+          <React.Fragment>
+            {/* Smart AI Recommendation Summary (When 2+ products compared) */}
+            {products.length >= 2 && cheapestProduct && (
+              <div style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '16px',
+                padding: '18px 22px',
+                marginBottom: '24px',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px',
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1d4ed8', fontWeight: 800, fontSize: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                    <Sparkles size={16} /> ĐÁNH GIÁ & KHUYÊN DÙNG NHANH
                   </div>
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
+                    🏆 Lựa chọn giá tốt nhất: <span style={{ color: '#16a34a' }}>{cheapestProduct.name}</span> ({formatVnd(cheapestProduct.price)})
+                  </div>
+                  {priceSavings > 0 && (
+                    <div style={{ fontSize: '13px', color: '#475569', marginTop: '2px' }}>
+                      ⚡ Tiết kiệm tới <strong style={{ color: '#ef4444' }}>{formatVnd(priceSavings)}</strong> so với {mostExpensiveProduct?.name}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setOnlyDiffs(!onlyDiffs)}
+                  style={{
+                    background: onlyDiffs ? '#2563eb' : '#ffffff',
+                    color: onlyDiffs ? '#ffffff' : '#1e40af',
+                    border: '1.5px solid #2563eb',
+                    borderRadius: '8px',
+                    padding: '9px 16px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: onlyDiffs ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <ArrowLeftRight size={15} />
+                  <span>{onlyDiffs ? '✓ Đang bật: Chỉ xem điểm khác biệt' : '🔍 Chỉ xem điểm khác biệt thông số'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Comparison Table */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                marginBottom: '40px',
+              }}
+            >
+              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ minWidth: tableMinWidth }}>
+                  
+                  {/* Header Row: Products */}
+                  <div style={columnsStyle}>
+                    <div
+                      style={{
+                        background: '#f8fafc',
+                        padding: '20px 16px',
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        color: '#475569',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        borderBottom: '2px solid #e2e8f0',
+                      }}
+                    >
+                      SẢN PHẨM ({products.length})
+                    </div>
 
                   {products.map((product) => (
                     <div
@@ -632,7 +726,12 @@ export default function CompareClient() {
                   {showAddSlot && <div style={{ borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }} />}
 
                   {/* Dynamic Technical Specs Rows */}
-                  {specKeys.map((key, idx) => (
+                  {activeSpecKeys.length === 0 ? (
+                    <div style={{ gridColumn: `1 / -1`, padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff' }}>
+                      Các sản phẩm đã chọn có thông số kỹ thuật tương đồng hoàn toàn!
+                    </div>
+                  ) : (
+                    activeSpecKeys.map((key, idx) => (
                     <React.Fragment key={key}>
                       <div
                         style={{
@@ -668,13 +767,13 @@ export default function CompareClient() {
                       })}
                       {showAddSlot && <div style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc', borderLeft: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }} />}
                     </React.Fragment>
-                  ))}
+                  )))}
                 </div>
-
               </div>
             </div>
           </div>
-        )}
+        </React.Fragment>
+      )}
 
         {/* Category Suggestions Section */}
         {suggestions.length > 0 && (
@@ -808,12 +907,12 @@ export default function CompareClient() {
               </button>
             </div>
 
-            {/* Modal Search */}
+            {/* Modal Search & Category Filter */}
             <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', marginBottom: '10px' }}>
                 <input
                   type="text"
-                  placeholder="Tìm theo tên sản phẩm, thương hiệu..."
+                  placeholder="Tìm bất kỳ sản phẩm nào theo tên, thương hiệu..."
                   value={modalSearch}
                   onChange={(e) => setModalSearch(e.target.value)}
                   style={{
@@ -828,16 +927,58 @@ export default function CompareClient() {
                 />
                 <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
               </div>
+
+              {/* Category Quick Filter Pills */}
+              <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+                {[
+                  { label: 'Tất cả', slug: '' },
+                  { label: 'CPU', slug: 'cpu' },
+                  { label: 'VGA / GPU', slug: 'vga' },
+                  { label: 'RAM', slug: 'ram' },
+                  { label: 'Mainboard', slug: 'mainboard' },
+                  { label: 'SSD / Storage', slug: 'storage' },
+                  { label: 'PSU / Nguồn', slug: 'psu' },
+                  { label: 'Vỏ Case', slug: 'case' },
+                  { label: 'Tản nhiệt', slug: 'cooling' },
+                ].map((cat) => {
+                  const isActive = modalCategory === cat.slug;
+                  return (
+                    <button
+                      key={cat.slug}
+                      type="button"
+                      onClick={() => setModalCategory(cat.slug)}
+                      style={{
+                        background: isActive ? '#2563eb' : '#ffffff',
+                        color: isActive ? '#ffffff' : '#475569',
+                        border: isActive ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                        borderRadius: '9999px',
+                        padding: '4px 10px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Modal Products List */}
             <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {filteredModalProducts.length === 0 ? (
+              {modalLoading ? (
+                <div style={{ padding: '32px 0', textAlign: 'center', color: '#64748b', fontSize: '13px', fontWeight: 600 }}>
+                  Đang tìm kiếm sản phẩm...
+                </div>
+              ) : suggestions.length === 0 ? (
                 <div style={{ padding: '32px 0', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
-                  Không tìm thấy sản phẩm phù hợp.
+                  Không tìm thấy sản phẩm phù hợp. Thử từ khóa khác!
                 </div>
               ) : (
-                filteredModalProducts.map((p) => (
+                suggestions.map((p) => (
                   <div
                     key={p.id}
                     style={{
