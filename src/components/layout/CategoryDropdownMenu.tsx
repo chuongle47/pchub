@@ -91,7 +91,7 @@ export default function CategoryDropdownMenu() {
             top: 'calc(100% + 8px)',
             left: 0,
             zIndex: 999,
-            width: '360px',
+            width: '300px',
             maxWidth: '92vw',
             background: '#ffffff',
             borderRadius: '16px',
@@ -161,7 +161,7 @@ export default function CategoryDropdownMenu() {
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: '4px',
+              gap: '2px',
               paddingRight: '2px',
             }}
           >
@@ -176,60 +176,26 @@ export default function CategoryDropdownMenu() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '9px 12px',
-                    borderRadius: '10px',
+                    borderRadius: '8px',
                     textDecoration: 'none',
                     color: '#0f172a',
+                    fontSize: '13.5px',
+                    fontWeight: 600,
                     transition: 'all 0.15s ease',
                     background: 'transparent',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.transform = 'translateX(2px)';
+                    e.currentTarget.style.color = '#2563eb';
+                    e.currentTarget.style.transform = 'translateX(3px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#0f172a';
                     e.currentTarget.style.transform = 'none';
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span
-                      style={{
-                        fontSize: '18px',
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        background: '#f1f5f9',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {cat.icon}
-                    </span>
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>{cat.name}</span>
-                        {cat.badge && (
-                          <span
-                            style={{
-                              fontSize: '9px',
-                              fontWeight: 800,
-                              background: cat.badge === 'HOT' ? '#ef4444' : '#2563eb',
-                              color: '#fff',
-                              padding: '1px 5px',
-                              borderRadius: '4px',
-                            }}
-                          >
-                            {cat.badge}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>
-                        {cat.desc}
-                      </div>
-                    </div>
-                  </div>
+                  <span>{cat.name}</span>
                   <ChevronRight size={15} color="#94a3b8" />
                 </Link>
               ))
