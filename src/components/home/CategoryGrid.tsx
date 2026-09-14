@@ -174,7 +174,7 @@ export default function CategoryGrid() {
   return (
     <section className="home-category-grid" style={{ background: '#ffffff', padding: '20px 0 24px' }}>
       <style>{`
-        .category-row-container {
+        .cat-grid-row-container {
           display: flex;
           align-items: stretch;
           gap: 10px;
@@ -185,17 +185,19 @@ export default function CategoryGrid() {
           padding: 4px 2px 8px;
         }
 
-        .category-row-container::-webkit-scrollbar {
+        .cat-grid-row-container::-webkit-scrollbar {
           display: none;
         }
 
-        .category-card {
-          flex: 0 0 115px;
-          min-width: 115px;
+        .cat-grid-card {
+          flex: 0 0 115px !important;
+          min-width: 115px !important;
+          height: auto !important;
+          max-height: 125px !important;
           scroll-snap-align: start;
           position: relative;
           border-radius: 12px;
-          background: #ffffff;
+          background: #ffffff !important;
           border: 1px solid #e2e8f0;
           box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -203,18 +205,20 @@ export default function CategoryGrid() {
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: flex-start !important;
           text-align: center;
           padding: 12px 6px 10px;
+          box-sizing: border-box;
         }
 
         @media (min-width: 1220px) {
-          .category-card {
-            flex: 1 1 0;
-            min-width: 90px;
+          .cat-grid-card {
+            flex: 1 1 0 !important;
+            min-width: 90px !important;
           }
         }
 
-        .category-icon-wrapper {
+        .cat-grid-icon-wrapper {
           width: 40px;
           height: 40px;
           border-radius: 10px;
@@ -225,11 +229,11 @@ export default function CategoryGrid() {
           transition: all 0.25s ease;
         }
 
-        .category-card:hover .category-icon-wrapper {
+        .cat-grid-card:hover .cat-grid-icon-wrapper {
           transform: scale(1.08) translateY(-1px);
         }
 
-        .category-card-badge {
+        .cat-grid-card-badge {
           display: inline-block;
           padding: 1.5px 6px;
           border-radius: 12px;
@@ -241,7 +245,7 @@ export default function CategoryGrid() {
           white-space: nowrap;
         }
 
-        .category-card-title {
+        .cat-grid-card-title {
           font-size: 11px;
           font-weight: 700;
           color: #0f172a;
@@ -255,13 +259,13 @@ export default function CategoryGrid() {
           transition: color 0.2s ease;
         }
 
-        .category-card:hover {
+        .cat-grid-card:hover {
           transform: translateY(-3px);
           border-color: var(--accent-color);
           box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.06), 0 2px 8px var(--accent-border-rgba);
         }
 
-        .category-card:hover .category-card-title {
+        .cat-grid-card:hover .cat-grid-card-title {
           color: var(--accent-color);
         }
 
@@ -347,7 +351,7 @@ export default function CategoryGrid() {
           </div>
         </div>
 
-        <div ref={scrollRef} className="category-row-container">
+        <div ref={scrollRef} className="cat-grid-row-container">
           {categories.map(cat => {
             const config = CATEGORY_CONFIG[cat.slug] || DEFAULT_CONFIG;
             const IconComponent = config.icon;
@@ -356,7 +360,7 @@ export default function CategoryGrid() {
               <Link
                 key={cat.id}
                 href={`/danh-muc/${cat.slug}`}
-                className="category-card"
+                className="cat-grid-card"
                 title={`Xem sản phẩm danh mục ${cat.name}`}
                 style={{
                   '--accent-color': config.color,
@@ -364,7 +368,7 @@ export default function CategoryGrid() {
                 } as React.CSSProperties}
               >
                 <div 
-                  className="category-icon-wrapper"
+                  className="cat-grid-icon-wrapper"
                   style={{
                     background: config.bgGradient,
                     color: config.color,
@@ -375,7 +379,7 @@ export default function CategoryGrid() {
                 </div>
 
                 <span
-                  className="category-card-badge"
+                  className="cat-grid-card-badge"
                   style={{
                     background: config.bgLight,
                     color: config.color,
@@ -385,7 +389,7 @@ export default function CategoryGrid() {
                   {config.badge}
                 </span>
 
-                <h3 className="category-card-title">
+                <h3 className="cat-grid-card-title">
                   {cat.name}
                 </h3>
               </Link>
