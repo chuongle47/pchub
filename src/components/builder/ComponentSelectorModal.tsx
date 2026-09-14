@@ -1,7 +1,5 @@
-'use client';
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, Check, Filter, ArrowUpDown, Tag } from 'lucide-react';
+import { X, Search, Check, Filter, ArrowUpDown, Tag, Sparkles } from 'lucide-react';
 import seed from '@/lib/seed.json';
 
 export interface ComponentSelectorModalProps {
@@ -11,6 +9,112 @@ export interface ComponentSelectorModalProps {
   categoryTitle: string;
   onSelectProduct: (product: any) => void;
   currentSelectedId?: string;
+  currentBuildState?: Array<{
+    key: string;
+    category: string;
+    selected: {
+      id: string;
+      name: string;
+      price: number;
+      tdp: number;
+      specs: string;
+      image: string;
+      slug?: string;
+    } | null;
+  }>;
+}
+
+export function getProductAiCompatibilityInfo(
+  product: any,
+  slotKey: string,
+  currentBuildState?: Array<{ key: string; selected: { name: string; specs: string; tdp: number } | null }>
+) {
+  if (!currentBuildState || currentBuildState.length === 0) return { isCompatible: true, label: null };
+
+  const cpuSelected = currentBuildState.find(s => s.key === 'cpu')?.selected;
+  const mbSelected = currentBuildState.find(s => s.key === 'mainboard')?.selected;
+  const ramSelected = currentBuildState.find(s => s.key === 'ram')?.selected;
+
+  const combinedCpuText = cpuSelected ? `${cpuSelected.name} ${cpuSelected.specs}`.toUpperCase() : '';
+  const combinedMbText = mbSelected ? `${mbSelected.name} ${mbSelected.specs}`.toUpperCase() : '';
+  const prodText = `${product.name || ''} ${JSON.stringify(product.specs || '')}`.toUpperCase();
+
+  // Socket detection
+  let targetSocket = '';
+  if (combinedCpuText.includes('LGA1700') || combinedCpuText.includes('14700') || combinedCpuText.includes('14900') || combinedCpuText.includes('13700') || combinedCpuText.includes('13600') || combinedCpuText.includes('12700') || combinedCpuText.includes('12400')) targetSocket = 'LGA1700';
+  else if (combinedCpuText.includes('AM5') || combinedCpuText.includes('7800X3D') || combinedCpuText.includes('7900') || combinedCpuText.includes('7600') || combinedCpuText.includes('9700') || combinedCpuText.includes('9800X3D') || combinedCpuText.includes('9950') || combinedCpuText.includes('B650') || combinedCpuText.includes('X670')) targetSocket = 'AM5';
+  else if (combinedCpuText.includes('AM4') || combinedCpuText.includes('5600') || combinedCpuText.includes('5700') || combinedCpuText.includes('5800X3D') || combinedCpuText.includes('B550') || combinedCpuText.includes('A520')) targetSocket = 'AM4';
+  else if (combinedCpuText.includes('LGA1851') || combinedCpuText.includes('245K') || combinedCpuText.includes('265K') || combinedCpuText.includes('285K')) targetSocket = 'LGA1851';
+
+  if (!targetSocket && combinedMbText) {
+    if (combinedMbText.includes('LGA1700') || combinedMbText.includes('Z790') || combinedMbText.includes('B760') || combinedMbText.includes('H610')) targetSocket = 'LGA1700';
+    else if (combinedMbText.includes('AM5') || combinedMbText.includes('B650') || combinedMbText.includes('X670') || combinedMbText.includes('B850')) targetSocket = 'AM5';
+    else if (combinedMbText.includes('AM4') || combinedMbText.includes('B550') || combinedMbText.includes('A520') || combinedMbText.includes('X570')) targetSocket = 'AM4';
+  }
+
+  // RAM Gen detection
+  let targetRam = '';
+  if (combinedMbText.includes('DDR5') || combinedCpuText.includes('AM5') || combinedMbText.includes('Z790') || combinedMbText.includes('B650') || combinedMbText.includes('X670')) targetRam = 'DDR5';
+  else if (combinedMbText.includes('DDR4') || combinedMbText.includes('B550') || combinedMbText.includes('A520')) targetRam = 'DDR4';
+
+  const normalizedSlot = slotKey.toLowerCase();
+
+  // 1. Mainboard slot
+  if (normalizedSlot === 'mainboard' || normalizedSlot === 'mb') {
+    if (targetSocket) {
+      if (prodText.includes(targetSocket) || (targetSocket === 'LGA1700' && (prodText.includes('Z790') || prodText.includes('B760') || prodText.includes('H610'))) || (targetSocket === 'AM5' && (prodText.includes('B650') || prodText.includes('X670') || prodText.includes('B850')))) {
+        return { isCompatible: true, label: `✓ AI Tương Thích (${targetSocket})` };
+      } else {
+        return { isCompatible: false, label: `⚠️ Khác Socket (${targetSocket})` };
+      }
+    }
+  }
+
+  // 2. CPU slot
+  if (normalizedSlot === 'cpu') {
+    if (targetSocket) {
+      if (prodText.includes(targetSocket) || (targetSocket === 'LGA1700' && (prodText.includes('14700') || prodText.includes('14900') || prodText.includes('13700') || prodText.includes('13600') || prodText.includes('12400'))) || (targetSocket === 'AM5' && (prodText.includes('7800X3D') || prodText.includes('7600') || prodText.includes('9700X')))) {
+        return { isCompatible: true, label: `✓ AI Tương Thích (${targetSocket})` };
+      } else {
+        return { isCompatible: false, label: `⚠️ Khác Socket (${targetSocket})` };
+      }
+    }
+  }
+
+  // 3. RAM slot
+  if (normalizedSlot === 'ram' || normalizedSlot === 'memory') {
+    if (targetRam) {
+      if (prodText.includes(targetRam)) {
+        return { isCompatible: true, label: `✓ AI Tương Thích (${targetRam})` };
+      } else {
+        return { isCompatible: false, label: `⚠️ Khác chuẩn RAM (${targetRam})` };
+      }
+    }
+  }
+
+  // 4. PSU slot
+  if (normalizedSlot === 'psu' || normalizedSlot === 'power') {
+    const totalTdp = currentBuildState.reduce((sum, s) => sum + (s.selected?.tdp || 0), 0);
+    const minWatt = Math.max(650, Math.ceil((totalTdp + 150) / 50) * 50);
+    const psuWattMatch = prodText.match(/(\d{3,4})\s*W/i);
+    const psuWatt = psuWattMatch ? parseInt(psuWattMatch[1], 10) : 0;
+    if (psuWatt >= minWatt) {
+      return { isCompatible: true, label: `✓ AI Tương Thích (>= ${minWatt}W)` };
+    } else if (psuWatt > 0 && psuWatt < minWatt) {
+      return { isCompatible: false, label: `⚠️ Dưới ${minWatt}W đề xuất` };
+    }
+  }
+
+  // 5. Cooling slot
+  if (normalizedSlot === 'cooling' || normalizedSlot === 'cooler') {
+    if (combinedCpuText.includes('14700') || combinedCpuText.includes('14900') || combinedCpuText.includes('13900') || combinedCpuText.includes('7950X')) {
+      if (prodText.includes('360') || prodText.includes('AIO') || prodText.includes('NƯỚC')) {
+        return { isCompatible: true, label: '✓ AI Khuyên Dùng (AIO 360mm)' };
+      }
+    }
+  }
+
+  return { isCompatible: true, label: null };
 }
 
 export default function ComponentSelectorModal({
@@ -20,6 +124,7 @@ export default function ComponentSelectorModal({
   categoryTitle,
   onSelectProduct,
   currentSelectedId,
+  currentBuildState,
 }: ComponentSelectorModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('ALL');
@@ -576,12 +681,14 @@ export default function ComponentSelectorModal({
                   specsList.push(`${p.specs.wattage}W`);
                 }
 
+                const aiInfo = getProductAiCompatibilityInfo(p, slotKey, currentBuildState);
+
                 return (
                   <div
                     key={p.id}
                     style={{
                       background: isSelected ? '#eff6ff' : '#ffffff',
-                      border: `1.5px solid ${isSelected ? '#2563eb' : '#e2e8f0'}`,
+                      border: `1.5px solid ${isSelected ? '#2563eb' : (aiInfo.label && aiInfo.isCompatible ? '#86efac' : '#e2e8f0')}`,
                       borderRadius: '16px',
                       padding: '16px',
                       display: 'flex',
@@ -625,6 +732,27 @@ export default function ComponentSelectorModal({
                             letterSpacing: '0.4px',
                           }}>
                             {brand.toUpperCase()}
+                          </span>
+                        )}
+
+                        {aiInfo.label && (
+                          <span style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: aiInfo.isCompatible ? '#16a34a' : '#ea580c',
+                            color: '#ffffff',
+                            fontSize: '9.5px',
+                            fontWeight: 800,
+                            padding: '2px 7px',
+                            borderRadius: '12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                          }}>
+                            <Sparkles size={10} />
+                            {aiInfo.label}
                           </span>
                         )}
                       </div>

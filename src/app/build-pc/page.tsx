@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { 
   Cpu, Layers, Sliders, HardDrive, Zap, Box, 
@@ -590,6 +590,7 @@ export default function BuildPcPage() {
   const cpuSelected = components.find(s => s.key === 'cpu')?.selected;
   const mainboardSelected = components.find(s => s.key === 'mainboard')?.selected;
   const ramSelected = components.find(s => s.key === 'ram')?.selected;
+  const gpuSelected = components.find(s => s.key === 'gpu')?.selected;
   const psuSelected = components.find(s => s.key === 'psu')?.selected;
 
   const isIntel = cpuSelected?.name.toLowerCase().includes('intel') || cpuSelected?.name.toLowerCase().includes('core');
@@ -642,9 +643,99 @@ export default function BuildPcPage() {
   }
   const isPsuAdequate = !psuSelected || (psuWatts >= recommendedPsuWatts - 50);
 
+  // Compute AI Next Device Suggestions
+  const aiNextSuggestions = useMemo(() => {
+    const list: Array<{ targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string }> = [];
+
+    const cpu = cpuSelected;
+    const mb = mainboardSelected;
+    const ram = ramSelected;
+    const gpu = gpuSelected;
+    const psu = psuSelected;
+    const caseItem = components.find(s => s.key === 'case')?.selected;
+    const cooling = components.find(s => s.key === 'cooling')?.selected;
+
+    const cpuText = cpu ? `${cpu.name} ${cpu.specs}`.toUpperCase() : '';
+    const mbText = mb ? `${mb.name} ${mb.specs}`.toUpperCase() : '';
+
+    let socket = '';
+    if (cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13700') || cpuText.includes('13600') || cpuText.includes('12700') || cpuText.includes('LGA1700')) socket = 'LGA1700';
+    else if (cpuText.includes('AM5') || cpuText.includes('7800X3D') || cpuText.includes('7600') || cpuText.includes('9700') || cpuText.includes('9800X3D')) socket = 'AM5';
+    else if (cpuText.includes('AM4') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D')) socket = 'AM4';
+
+    if (!socket && mbText) {
+      if (mbText.includes('Z790') || mbText.includes('B760') || mbText.includes('LGA1700')) socket = 'LGA1700';
+      else if (mbText.includes('B650') || mbText.includes('X670') || mbText.includes('AM5')) socket = 'AM5';
+      else if (mbText.includes('B550') || mbText.includes('A520') || mbText.includes('AM4')) socket = 'AM4';
+    }
+
+    if (cpu && !mb) {
+      list.push({
+        targetSlotKey: 'mainboard',
+        targetCategoryTitle: 'Bo Mạch Chủ (Mainboard)',
+        reason: `AI gợi ý: Chọn Mainboard Socket ${socket || 'phù hợp'} để phát huy tối đa sức mạnh của CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''}`,
+        badge: `Socket ${socket || 'Chuẩn'}`,
+      });
+    }
+
+    if (mb && !cpu) {
+      list.push({
+        targetSlotKey: 'cpu',
+        targetCategoryTitle: 'Vi Xử Lý (CPU)',
+        reason: `AI gợi ý: Mainboard ${mb.name.split(' ')[0]} ${mb.name.split(' ')[1] || ''} yêu cầu chọn CPU đúng Socket ${socket || 'tương thích'}`,
+        badge: `Socket ${socket || 'Tương thích'}`,
+      });
+    }
+
+    if ((cpu || mb) && !ram) {
+      const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650');
+      const ramGen = isDdr5 ? 'DDR5' : 'DDR4';
+      list.push({
+        targetSlotKey: 'ram',
+        targetCategoryTitle: 'Bộ Nhớ Trong (RAM)',
+        reason: `AI gợi ý: Bo mạch chủ chạy mượt nhất với RAM ${ramGen}. Khuyên chọn kit Dual-Channel 32GB (2x16GB).`,
+        badge: `RAM ${ramGen} · 32GB`,
+      });
+    }
+
+    if (cpu && !cooling) {
+      const isHighTdp = cpu.tdp >= 180 || cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13900') || cpuText.includes('7950X');
+      list.push({
+        targetSlotKey: 'cooling',
+        targetCategoryTitle: 'Tản Nhiệt (Cooling)',
+        reason: isHighTdp
+          ? `CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''} tỏa nhiệt lượng lớn (~${cpu.tdp}W). AI khuyên dùng Tản nước AIO 360mm.`
+          : `AI gợi ý: Chọn Tản nhiệt khí tháp đôi hoặc AIO 240mm để CPU luôn mát mẻ.`,
+        badge: isHighTdp ? 'AIO 360mm' : 'Tản Tháp / AIO 240mm',
+      });
+    }
+
+    if ((cpu || gpu) && !psu) {
+      const recWatts = Math.max(650, Math.ceil((totalTdp + 150) / 50) * 50);
+      list.push({
+        targetSlotKey: 'psu',
+        targetCategoryTitle: 'Nguồn Máy Tính (PSU)',
+        reason: `Tổng công suất dàn PC ~${totalTdp}W. AI khuyên chọn Nguồn công suất tối thiểu ${recWatts}W (80 Plus Gold).`,
+        badge: `≥ ${recWatts}W 80 Plus Gold`,
+      });
+    }
+
+    if (gpu && !caseItem) {
+      list.push({
+        targetSlotKey: 'case',
+        targetCategoryTitle: 'Vỏ Máy Tính (Case)',
+        reason: `Card đồ họa ${gpu.name.split(' ')[0]} ${gpu.name.split(' ')[1] || ''} có kích thước lớn. AI khuyên chọn Case Mid-Tower rộng rãi.`,
+        badge: 'Mid-Tower / Dual Chamber',
+      });
+    }
+
+    return list;
+  }, [cpuSelected, mainboardSelected, ramSelected, gpuSelected, psuSelected, components, totalTdp]);
+
   const renderSlotRow = (slot: ComponentSlot) => {
     const Icon = slot.icon;
     const isSelected = slot.selected !== null;
+    const slotAiSuggestion = aiNextSuggestions.find(s => s.targetSlotKey === slot.key);
 
     return (
       <div key={slot.key} className="builder-slot-card" style={{
@@ -700,8 +791,28 @@ export default function BuildPcPage() {
                 </div>
               </div>
             ) : (
-              <div style={{ fontSize: '13.5px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
-                Vui lòng chọn linh kiện
+              <div>
+                <div style={{ fontSize: '13.5px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
+                  Vui lòng chọn linh kiện
+                </div>
+                {slotAiSuggestion && (
+                  <div style={{
+                    marginTop: '5px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    color: '#2563eb',
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                  }}>
+                    <Sparkles size={12} color="#2563eb" />
+                    AI gợi ý: {slotAiSuggestion.badge}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -947,6 +1058,77 @@ export default function BuildPcPage() {
           
           {/* Left Column: Component Slots List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* AI Smart Suggestion Banner */}
+            {aiNextSuggestions.length > 0 && (
+              <div style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '16px',
+                padding: '20px 24px',
+                marginBottom: '8px',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ background: '#2563eb', color: '#fff', borderRadius: '10px', padding: '7px', display: 'flex', alignItems: 'center' }}>
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                        🤖 AI Smart Advisor — Gợi Ý Thiết Bị Tương Thích Tiếp Theo
+                      </h3>
+                      <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
+                        Dựa trên cấu hình hiện tại, AI tự động gợi ý thiết bị chuẩn Socket & công suất tối ưu:
+                      </p>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', border: '1px solid #86efac', padding: '3px 10px', borderRadius: '20px' }}>
+                    AI AUTO-MATCH
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                  {aiNextSuggestions.slice(0, 3).map((item: { targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string }) => (
+                    <div
+                      key={item.targetSlotKey}
+                      onClick={() => setActiveModalSlotKey(item.targetSlotKey)}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '12px',
+                        padding: '14px 16px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563eb'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(37,99,235,0.12)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.boxShadow = 'none'; }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                            {item.targetCategoryTitle}
+                          </span>
+                          <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '10px' }}>
+                            {item.badge}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '12.5px', color: '#1e293b', margin: 0, lineHeight: '1.45', fontWeight: 600 }}>
+                          {item.reason}
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '10px', fontSize: '12px', fontWeight: 800, color: '#2563eb' }}>
+                        Chọn ngay linh kiện này →
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Core Components Section */}
             <div>
@@ -1389,6 +1571,7 @@ export default function BuildPcPage() {
           categoryTitle={activeSlotCategory}
           onSelectProduct={handleSelectProductForSlot}
           currentSelectedId={activeSlotSelectedId}
+          currentBuildState={components}
         />
       )}
 
