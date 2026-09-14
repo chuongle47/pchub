@@ -9,9 +9,11 @@ import {
   Printer, FileSpreadsheet, FileText, ChevronDown, Tv, Headphones,
   Save, FolderOpen, Minus, X
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store';
 import ComponentSelectorModal, { getProductAiCompatibilityInfo } from '@/components/builder/ComponentSelectorModal';
 import CompatibilityReportModal from '@/components/builder/CompatibilityReportModal';
+import CartChoiceModal from '@/components/builder/CartChoiceModal';
 import { CompatibilityReport } from '@/lib/gemini';
 import seed from '@/lib/seed.json';
 
@@ -229,8 +231,13 @@ export default function BuildPcPage() {
   const [buildTitleInput, setBuildTitleInput] = useState('');
   const [savedBuildsList, setSavedBuildsList] = useState<SavedBuild[]>([]);
 
+  const router = useRouter();
   const addMultipleItems = useCartStore(s => s.addMultipleItems);
+  const clearCart = useCartStore(s => s.clearCart);
   const setCartOpen = useCartStore(s => s.setOpen);
+  const cartItems = useCartStore(s => s.items);
+
+  const [showCartChoiceModal, setShowCartChoiceModal] = useState(false);
 
   // Read saved builds & pending AI presets from localStorage on mount
   useEffect(() => {
@@ -510,28 +517,90 @@ export default function BuildPcPage() {
     }
   };
 
+  const getSelectedBuildItems = () => {
+    return components
+      .filter(s => s.selected !== null)
+      .map(s => ({
+        id: s.selected!.id,
+        name: s.selected!.name,
+        price: s.selected!.price,
+        image: s.selected!.image,
+        category: s.category,
+        slug: s.selected!.slug || s.selected!.id,
+        quantity: s.quantity,
+      }));
+  };
+
   const handleAddAllToCart = () => {
-    const selectedItems = components.filter(s => s.selected !== null);
-    if (selectedItems.length === 0) {
+    const itemsToAdd = getSelectedBuildItems();
+    if (itemsToAdd.length === 0) {
       setNotice('Vui lòng chọn ít nhất 1 linh kiện!');
       setTimeout(() => setNotice(null), 2500);
       return;
     }
 
-    const itemsToAdd = selectedItems.map(s => ({
-      id: s.selected!.id,
-      name: s.selected!.name,
-      price: s.selected!.price,
-      image: s.selected!.image,
-      category: s.category,
-      slug: s.selected!.slug || s.selected!.id,
-      quantity: s.quantity,
-    }));
+    const currentCart = useCartStore.getState().items;
+    if (currentCart.length > 0) {
+      setShowCartChoiceModal(true);
+    } else {
+      clearCart();
+      addMultipleItems(itemsToAdd);
+      setCartOpen(true);
+      setNotice(`Đã thêm ${itemsToAdd.length} linh kiện vào giỏ hàng thành công!`);
+      setTimeout(() => setNotice(null), 3000);
+    }
+  };
 
+  const handleDirectCheckout = () => {
+    const itemsToAdd = getSelectedBuildItems();
+    if (itemsToAdd.length === 0) {
+      setNotice('Vui lòng chọn ít nhất 1 linh kiện!');
+      setTimeout(() => setNotice(null), 2500);
+      return;
+    }
+
+    const currentCart = useCartStore.getState().items;
+    if (currentCart.length > 0) {
+      setShowCartChoiceModal(true);
+    } else {
+      clearCart();
+      addMultipleItems(itemsToAdd);
+      router.push('/thanh-toan');
+    }
+  };
+
+  const handleCheckoutBuildOnly = () => {
+    const itemsToAdd = getSelectedBuildItems();
+    clearCart();
     addMultipleItems(itemsToAdd);
+    setShowCartChoiceModal(false);
+    router.push('/thanh-toan');
+  };
+
+  const handleAddToCartBuildOnly = () => {
+    const itemsToAdd = getSelectedBuildItems();
+    clearCart();
+    addMultipleItems(itemsToAdd);
+    setShowCartChoiceModal(false);
     setCartOpen(true);
-    setNotice(`Đã thêm ${itemsToAdd.length} linh kiện vào giỏ hàng thành công!`);
-    setTimeout(() => setNotice(null), 3000);
+    setNotice(`Đã cập nhật giỏ hàng: Chỉ giữ ${itemsToAdd.length} linh kiện PC vừa build!`);
+    setTimeout(() => setNotice(null), 3500);
+  };
+
+  const handleCheckoutAll = () => {
+    const itemsToAdd = getSelectedBuildItems();
+    addMultipleItems(itemsToAdd);
+    setShowCartChoiceModal(false);
+    router.push('/thanh-toan');
+  };
+
+  const handleAddToCartAll = () => {
+    const itemsToAdd = getSelectedBuildItems();
+    addMultipleItems(itemsToAdd);
+    setShowCartChoiceModal(false);
+    setCartOpen(true);
+    setNotice(`Đã gộp ${itemsToAdd.length} linh kiện PC vào giỏ hàng thành công!`);
+    setTimeout(() => setNotice(null), 3500);
   };
 
   // Save Build logic
@@ -1697,9 +1766,10 @@ export default function BuildPcPage() {
             {/* Action Buttons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
               <button
-                onClick={handleAddAllToCart}
+                type="button"
+                onClick={handleDirectCheckout}
                 style={{
-                  background: '#2563eb',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '10px',
@@ -1711,7 +1781,31 @@ export default function BuildPcPage() {
                   justifyContent: 'center',
                   gap: '8px',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Zap size={16} />
+                Thanh Toán Ngay Dàn PC ➔
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAddAllToCart}
+                style={{
+                  background: '#f8fafc',
+                  color: '#2563eb',
+                  border: '1.5px solid #bfdbfe',
+                  borderRadius: '10px',
+                  padding: '11px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 <ShoppingCart size={16} />
@@ -1906,6 +2000,20 @@ export default function BuildPcPage() {
           isAnalyzing={isAiAnalyzing}
         />
       )}
+
+      {/* Modal Hỏi Lựa Chọn Thanh Toán */}
+      <CartChoiceModal
+        isOpen={showCartChoiceModal}
+        onClose={() => setShowCartChoiceModal(false)}
+        buildItemsCount={getSelectedBuildItems().length}
+        buildTotal={totalPrice}
+        cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+        cartTotal={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+        onCheckoutBuildOnly={handleCheckoutBuildOnly}
+        onAddToCartBuildOnly={handleAddToCartBuildOnly}
+        onCheckoutAll={handleCheckoutAll}
+        onAddToCartAll={handleAddToCartAll}
+      />
 
     </div>
   );
