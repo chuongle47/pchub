@@ -418,22 +418,18 @@ export default function ProductCard({
               onClick={handleToggleCompare}
               title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào danh sách so sánh'}
               style={{
-                padding: '4px 10px',
-                borderRadius: '20px',
-                border: `1.5px solid ${
-                  isCompared ? '#2563eb' : '#3b82f6'
-                }`,
-                background: isCompared ? '#eff6ff' : '#ffffff',
-                color: '#2563eb',
+                background: 'none',
+                border: 'none',
+                padding: '2px 4px',
+                color: isCompared ? '#2563eb' : '#3b82f6',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '4px',
                 flexShrink: 0,
                 transition: 'all 0.15s ease',
-                boxSizing: 'border-box',
                 whiteSpace: 'nowrap',
               }}
             >
