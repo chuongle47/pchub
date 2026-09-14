@@ -673,15 +673,10 @@ const CURATED_FEATURED_MAP: Record<string, FeaturedProductItem[]> = {
 export default function CategoryFeatured({ categorySlug, categoryName, products = [] }: CategoryFeaturedProps) {
   const [activeTab, setActiveTab] = useState<'all' | 'bestseller' | 'hotdeal' | 'toprated'>('all');
 
-  // Prepare featured list
-  const curatedList = CURATED_FEATURED_MAP[categorySlug];
-
+  // Prepare featured list strictly from real Supabase products
   let rawList: FeaturedProductItem[] = [];
 
-  if (curatedList && curatedList.length > 0) {
-    rawList = curatedList;
-  } else if (products && products.length > 0) {
-    // Dynamically derive top 4 products from db products
+  if (products && products.length > 0) {
     rawList = products.slice(0, 4).map((p, idx) => {
       const badges = ['🔥 BÁN CHẠY', '⚡ GIÁ TỐT', '⭐ BÌNH CHỌN', '🏆 NỔI BẬT'];
       const badgeColors: ('red' | 'blue' | 'green' | 'amber')[] = ['red', 'green', 'blue', 'amber'];

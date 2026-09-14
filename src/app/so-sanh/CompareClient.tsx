@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeftRight, Check, ChevronRight, X, Trash2, Plus, ShoppingCart, Search, Sparkles } from 'lucide-react';
 import { useCompareStore, useCartStore, getCompareCategoryKey } from '@/lib/store';
 import { formatVnd, getProductImage } from '@/lib/product-ui';
-import seed from '@/lib/seed.json';
 
 // Bảng dịch tên thông số kỹ thuật sang tiếng Việt
 const SPEC_KEY_VI: Record<string, string> = {
@@ -319,30 +318,6 @@ export default function CompareClient() {
               return pKey === targetKey;
             });
           }
-
-          // Fallback: if API returned no items for targetKey, fill from seed catalog
-          if (mapped.length === 0 && targetKey && seed && seed.products) {
-            const seedMatched: CompareProduct[] = seed.products
-              .filter((p: any) => {
-                const pKey = getCompareCategoryKey(p.category_name) || getCompareCategoryKey(p.category_id) || getCompareCategoryKey(p.name);
-                return pKey === targetKey && !currentSlugs.has(p.slug) && !currentSlugs.has(p.id);
-              })
-              .map((p: any) => ({
-                id: p.id,
-                slug: p.slug,
-                name: p.name,
-                price: Number(p.price),
-                stock: Number(p.stock ?? 15),
-                brand: p.brand_name || 'Thương hiệu',
-                category: p.category_name || 'Danh mục',
-                categorySlug: p.category_slug || p.category_id,
-                image: getProductImage({ name: p.name, categoryName: p.category_name, image_url: p.image_url }),
-                specs: p.specs || {},
-                warrantyMonths: 36,
-              }));
-            mapped = seedMatched;
-          }
-
           setSuggestions(mapped);
         }
       } catch (err) {

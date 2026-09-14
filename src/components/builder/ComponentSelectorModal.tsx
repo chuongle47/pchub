@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Search, Check, Filter, ArrowUpDown, Tag, Sparkles } from 'lucide-react';
-import seed from '@/lib/seed.json';
 
 export interface ComponentSelectorModalProps {
   isOpen: boolean;
@@ -234,50 +233,10 @@ export default function ComponentSelectorModal({
           }
         }
 
-        if (allProducts.length > 0) {
-          setProducts(allProducts);
-        } else {
-          // Fallback to seed.json matching slot
-          const CATEGORY_ID_MAP: Record<string, string> = {
-            cpu: 'c1000000-0000-0000-0000-000000000001',
-            mainboard: 'c1000000-0000-0000-0000-000000000002',
-            ram: 'c1000000-0000-0000-0000-000000000003',
-            gpu: 'c1000000-0000-0000-0000-000000000004',
-            storage: 'c1000000-0000-0000-0000-000000000005',
-            psu: 'c1000000-0000-0000-0000-000000000006',
-            case: 'c1000000-0000-0000-0000-000000000007',
-            cooling: 'c1000000-0000-0000-0000-000000000008',
-            monitor: 'c1000000-0000-0000-0000-000000000009',
-            gear: 'c1000000-0000-0000-0000-000000000010',
-          };
-          const targetCatId = CATEGORY_ID_MAP[catSlug];
-
-          const filteredSeed = seed.products.filter(p => {
-            const catId = (p.category_id || '').toLowerCase();
-            const slug = (p.slug || '').toLowerCase();
-            const name = (p.name || '').toLowerCase();
-            return (targetCatId && catId === targetCatId) || slug.includes(catSlug) || name.includes(catSlug);
-          });
-          setProducts(filteredSeed.length > 0 ? filteredSeed : seed.products.filter(p => p.category_id === targetCatId));
-        }
+        setProducts(allProducts);
       } catch (err) {
         console.error('Failed to fetch modal products:', err);
-        const catSlug = CATEGORY_SLUG_MAP[slotKey.toLowerCase()] || slotKey.toLowerCase();
-        const CATEGORY_ID_MAP: Record<string, string> = {
-          cpu: 'c1000000-0000-0000-0000-000000000001',
-          mainboard: 'c1000000-0000-0000-0000-000000000002',
-          ram: 'c1000000-0000-0000-0000-000000000003',
-          gpu: 'c1000000-0000-0000-0000-000000000004',
-          storage: 'c1000000-0000-0000-0000-000000000005',
-          psu: 'c1000000-0000-0000-0000-000000000006',
-          case: 'c1000000-0000-0000-0000-000000000007',
-          cooling: 'c1000000-0000-0000-0000-000000000008',
-          monitor: 'c1000000-0000-0000-0000-000000000009',
-          gear: 'c1000000-0000-0000-0000-000000000010',
-        };
-        const targetCatId = CATEGORY_ID_MAP[catSlug];
-        const filteredSeed = seed.products.filter(p => (targetCatId && p.category_id === targetCatId) || (p.slug || '').includes(catSlug));
-        setProducts(filteredSeed);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
