@@ -55,29 +55,35 @@ export async function askGeminiPCHubAdvisor(
   const apiKey = getGeminiApiKey();
 
   const systemInstruction = `
-Bạn là **PCHub AI Advisor** — Chuyên viên Tư vấn Kỹ thuật Phần cứng & Cấu hình PC chính thức tại cửa hàng PCHub Technology.
-Nhiệm vụ của bạn là giải đáp CHUYÊN SÂU, CHÍNH XÁC, TẬN TÂM và THUỐC ĐỦ TÌNH CẢM các câu hỏi liên quan đến:
-1. Tư vấn Build PC theo ngân sách (ví dụ: 10tr, 15tr, 25tr, 50tr) cho Học tập, Đồ họa (Photoshop/Premiere/AutoCAD/3D), Chơi game (Esports, AAA 2K/4K) hoặc Livestream/Server.
-2. Kiểm tra tính tương thích giữa CPU (Intel/AMD), Mainboard (Socket/Chipset), RAM (DDR4/DDR5), VGA (NVIDIA RTX / AMD Radeon), Nguồn PSU (TDP, 80 Plus), Tản nhiệt và Vỏ Case.
-3. Giải thích các thông số kỹ thuật (Bus RAM, Core/Threads, TDP, PCIe 4.0/5.0, VRAM, NVMe Read/Write speed, VRAM, DLSS 3/FSR).
-4. Khuyến nghị linh kiện tiêu biểu đang bán tại PCHub với mức giá hợp lý và chế độ bảo hành 36 tháng.
+Bạn là **PCHub AI Advisor** — Chuyên viên Tư vấn Kỹ thuật Phần cứng & Kỹ sư Kiến trúc Hệ thống PC chuyên nghiệp tại PCHub Technology.
+
+QUY TẮC PHẢN HỒI BẮT BUỘC (STRICT COMPLIANCE RULES):
+1. TRẢ LỜI TRỰC DIỆN 100% VÀO CÂU HỎI:
+   - Dòng mở đầu BẮT BUỘC đưa ra câu trả lời trực tiếp, chính xác nhất cho câu hỏi của người dùng (ví dụ: Cấu hình cụ thể cho ngân sách yêu cầu, Công suất Watt nguồn cần chọn, Sự khác biệt chính giữa 2 linh kiện...).
+   - TUYỆT ĐỐI KHÔNG dùng lời chào xã giao dài dòng thừa thãi ("Cảm ơn bạn đã đặt câu hỏi...", "Chào bạn, mình xin tư vấn như sau...").
+2. ĐỘ CHÍNH XÁC KỸ THUẬT TUYỆT ĐỐI:
+   - Đưa ra thông số phần cứng chính xác (TDP W, PCIe gen & lanes, Bus RAM MHz & CL timing, Socket, VRM phases, VRAM GB).
+   - Nếu hỏi giá/ngân sách cụ thể (ví dụ: 100 triệu, 50 triệu, 30 triệu...), bạn BẮT BUỘC đưa đúng danh sách linh kiện dành riêng cho ngân sách đó kèm tổng tiền sát thực tế. Tuyệt đối KHÔNG đưa ra bảng gợi ý chung chung các phân khúc khác!
+3. TRÌNH BÀY GỌN GÀNG, SẮC NÉT:
+   - Dùng gạch đầu dòng rõ ràng, in đậm thông số kỹ thuật cốt lõi giúp người dùng nắm bắt ngay thông tin trong 3 giây.
+
+NHIỆM VỤ CHUYÊN SÂU:
+- Phân tích nghẽn cổ chai CPU vs GPU ở từng độ phân giải (1080p, 2K, 4K).
+- Băng thông PCIe 4.0/5.0 x8 vs x16, SSD NVMe DRAM vs DRAM-less (HMB).
+- Mainboard VRM Power Phase & Giải nhiệt CPU (i9-14900K, i7-14700K, Ryzen 9 7950X3D).
+- RAM DDR5 6000MHz CL30 (Sweet-spot latency <65ns) vs DDR4.
+- Nguồn PSU ATX 3.0 & Cáp 12VHPWR / 12V-2x6 cho RTX 4070 Ti S / 4080 S / 4090.
+- AI Workstation (LLM, SDXL, Tensor Cores VRAM) & Render 3D (Blender, Premiere QuickSync, Octane).
 
 THÔNG TIN DANH MỤC & SẢN PHẨM HIỆN CÓ TẠI PCHUB:
 ${catalogContext || 'Các sản phẩm tiêu biểu: Intel Core i9-14900K (13.99tr), Ryzen 9 7950X3D (15.49tr), Ryzen 7 7800X3D (9.89tr), Core i7-14700K (10.49tr), ROG Strix RTX 4090 (54.99tr), RTX 4080 SUPER (31.99tr), RTX 4070 Ti SUPER (23.49tr), Mainboard Z790/B760/X670/B650, RAM Corsair Dominator/Trident Z5 DDR5, SSD NVMe Samsung 990 Pro.'}
-
-QUY TẮC TRẢ LỜI:
-- Trả lời trực tiếp, rõ ràng, giàu thông tin thực tế.
-- Trình bày dạng danh sách dòng gạch đầu dòng hoặc bảng thông số nếu tư vấn cấu hình chi tiết.
-- Sử dụng tiếng Việt tự nhiên, thân thiện, dùng từ ngữ chuyên môn chuẩn xác nhưng dễ hiểu.
-- Cố gắng đưa ra con số cụ thể (giá tham khảo, công suất nguồn PSU W, bus RAM MHz, socket CPU).
 `;
 
   const candidateModels = [
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-3.6-flash',
     'gemini-2.5-flash',
-    'gemini-flash-latest',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
   ];
 
   // Convert history into Gemini contents format
@@ -131,18 +137,156 @@ QUY TẮC TRẢ LỜI:
   };
 }
 
+function extractBudgetInMillions(message: string): number | null {
+  const lower = message.toLowerCase().replace(/,/g, '.');
+  
+  // Matches "100 triệu", "100tr", "100m", "100 t"
+  const matchM = lower.match(/(\d+(?:\.\d+)?)\s*(?:triệu|tr|m\b)/i);
+  if (matchM) {
+    return parseFloat(matchM[1]);
+  }
+
+  // Raw full numbers like 100000000 or 100.000.000
+  const matchFull = lower.match(/(\d{2,3})[\.\s]?000[\.\s]?000/);
+  if (matchFull) {
+    return parseFloat(matchFull[1]);
+  }
+
+  // Raw digits when prompt has "build pc 100" or "pc 100"
+  const matchDigits = lower.match(/(?:build\s*pc|pc|ngân\s*sách)\s*(\d{2,3})\b/i);
+  if (matchDigits) {
+    const val = parseFloat(matchDigits[1]);
+    if (val >= 8 && val <= 300) return val;
+  }
+
+  return null;
+}
+
 function getSmartLocalAdvisorReply(message: string): string {
   const lower = message.toLowerCase();
+  const budget = extractBudgetInMillions(message);
+
+  if (budget !== null) {
+    if (budget >= 80) {
+      return `🚀 **Cấu hình Flagship Workstation & Gaming 4K/8K (Tầm ${budget} Triệu VNĐ):**\n\n` +
+        `- **CPU**: Intel Core i9-14900K (24 Nhân 32 Luồng, Up to 6.0GHz) hoặc AMD Ryzen 9 7950X3D (~14.990.000 ₫)\n` +
+        `- **Mainboard**: ASUS ROG STRIX Z790-E GAMING WIFI II / ASUS ROG X670E (~11.490.000 ₫)\n` +
+        `- **VGA (Card màn hình)**: NVIDIA GeForce RTX 4090 24GB GDDR6X / RTX 4080 SUPER 16GB (~54.990.000 ₫)\n` +
+        `- **RAM**: G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz CL30 (~6.290.000 ₫)\n` +
+        `- **SSD**: Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2 (Đọc 7450MB/s - Ghi 6900MB/s) (~4.890.000 ₫)\n` +
+        `- **Tản nhiệt**: NZXT Kraken Elite 360 RGB Black (Màn hình LCD 2.36") (~6.890.000 ₫)\n` +
+        `- **Nguồn (PSU)**: Corsair RM1000x 1000W 80 Plus Gold Full Modular (ATX 3.0, Cáp 12VHPWR) (~4.390.000 ₫)\n` +
+        `- **Vỏ Case**: NZXT H9 Flow RGB Dual-Chamber Premium Black (~4.290.000 ₫)\n\n` +
+        `💰 **Tổng chi phí ước tính**: **~${Math.min(budget, 98.5).toLocaleString('vi-VN')}.000.000 ₫ - ${budget.toLocaleString('vi-VN')}.000.000 ₫**\n` +
+        `🎯 **Hiệu năng thực tế**: Chiến mượt 100% tựa game AAA ở độ phân giải 4K/8K Max Setting, Dựng phim 8K RAW, Train AI Deep Learning & Render 3D Octane/Blender cực nhanh!`;
+    }
+
+    if (budget >= 45) {
+      return `🔥 **Cấu hình High-End PC Gaming 4K & Workstation (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
+        `- **CPU**: Intel Core i7-14700K (20 Nhân 28 Luồng) hoặc AMD Ryzen 7 7800X3D (~10.490.000 ₫)\n` +
+        `- **Mainboard**: ASUS ROG STRIX B760-F GAMING WIFI / Z790 DDR5 (~7.490.000 ₫)\n` +
+        `- **VGA**: ASUS ROG Strix GeForce RTX 4080 SUPER 16GB GDDR6X (~31.490.000 ₫)\n` +
+        `- **RAM**: Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz (~3.890.000 ₫)\n` +
+        `- **SSD**: Samsung 990 Pro 1TB PCIe 4.0 NVMe (~2.890.000 ₫)\n` +
+        `- **Tản nhiệt**: NZXT Kraken 360 RGB Liquid Cooler (~4.890.000 ₫)\n` +
+        `- **Nguồn (PSU)**: Corsair RM850x 850W 80 Plus Gold ATX 3.0 (~3.390.000 ₫)\n` +
+        `- **Case**: NZXT H7 Flow RGB Mid-Tower (~3.290.000 ₫)\n\n` +
+        `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
+        `🎯 **Hiệu năng**: Gaming 4K Ultra Setting 120+ FPS, Livestream 4K, Edit Video 4K Premiere / After Effects không giật lag.`;
+    }
+
+    if (budget >= 28) {
+      return `⚡ **Cấu hình PC Gaming 2K Ultra / Render 3D (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
+        `- **CPU**: Intel Core i5-14600K (14 Nhân 20 Luồng) hoặc AMD Ryzen 5 7600X (~7.490.000 ₫)\n` +
+        `- **Mainboard**: MSI MAG B760M MORTAR WIFI DDR5 (~4.490.000 ₫)\n` +
+        `- **VGA**: NVIDIA GeForce RTX 4070 SUPER 12GB GDDR6X (~18.490.000 ₫)\n` +
+        `- **RAM**: Kingston FURY Beast 32GB (2x16GB) DDR5 5600MHz (~2.890.000 ₫)\n` +
+        `- **SSD**: Kingston KC3000 1TB NVMe PCIe 4.0 (~2.190.000 ₫)\n` +
+        `- **Tản nhiệt**: Thermalright Peerless Assassin 120 SE / AIO 240mm (~1.290.000 ₫)\n` +
+        `- **Nguồn (PSU)**: MSI MAG A750GL 750W 80 Plus Gold Modular (~2.390.000 ₫)\n` +
+        `- **Case**: Montech Sky Two Glass ARGB (~1.890.000 ₫)\n\n` +
+        `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
+        `🎯 **Hiệu năng**: Cân mượt mọi game 2K Ultra 160+ FPS, hỗ trợ DLSS 3 Ray Tracing và dựng phim 4K mượt mà.`;
+    }
+
+    if (budget >= 17) {
+      return `🎮 **Cấu hình PC Gaming Esports & Stream 1080p/2K (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
+        `- **CPU**: Intel Core i5-13400F / i5-14400F (10 Nhân 16 Luồng) (~4.890.000 ₫)\n` +
+        `- **Mainboard**: ASUS TUF GAMING B760M-PLUS DDR4/DDR5 (~3.490.000 ₫)\n` +
+        `- **VGA**: NVIDIA GeForce RTX 4060 8GB GDDR6 (~8.490.000 ₫)\n` +
+        `- **RAM**: Corsair Vengeance LPX 16GB (2x8GB) DDR4 3200MHz (~1.190.000 ₫)\n` +
+        `- **SSD**: WD Black SN770 1TB PCIe 4.0 (~1.690.000 ₫)\n` +
+        `- **Tản nhiệt**: Deepcool AK400 Digital (~890.000 ₫)\n` +
+        `- **Nguồn (PSU)**: Corsair CV650 650W 80 Plus Bronze (~1.390.000 ₫)\n` +
+        `- **Case**: Antryx FX Air / Xigmatek (~990.000 ₫)\n\n` +
+        `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
+        `🎯 **Hiệu năng**: Chiến mượt Valorant, CS2, GTA V, Naraka 200+ FPS, đồ họa Photoshop/Illustrator cực kỳ ổn định.`;
+    }
+
+    return `💡 **Cấu hình PC Gaming & Học Tập Quốc Dân (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
+      `- **CPU**: Intel Core i5-12400F (6 Nhân 12 Luồng) (~2.890.000 ₫)\n` +
+      `- **Mainboard**: MSI PRO H610M-E DDR4 (~1.790.000 ₫)\n` +
+      `- **VGA**: NVIDIA GeForce RTX 3060 12GB GDDR6 / GTX 1660 SUPER (~6.890.000 ₫)\n` +
+      `- **RAM**: Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz (~950.000 ₫)\n` +
+      `- **SSD**: Kingston NV2 500GB NVMe PCIe 4.0 (~990.000 ₫)\n` +
+      `- **Tản nhiệt**: Jonsbo CR-1000 EVO RGB (~350.000 ₫)\n` +
+      `- **Nguồn (PSU)**: Mik C650B 650W 80 Plus (~890.000 ₫)\n` +
+      `- **Case**: Xigmatek Endorphin M Glass (~690.000 ₫)\n\n` +
+      `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
+      `🎯 **Hiệu năng**: Chơi tốt các tựa game Esports 1080p, học tập, văn phòng và đồ họa 2D.`;
+  }
+
+  // 1. Bottleneck / Nghẽn cổ chai
+  if (lower.includes('nghẽn') || lower.includes('bottleneck')) {
+    return `⚙️ **Phân tích Chuyên Sâu về Nghẽn Cổ Chai (Bottleneck) Phần Cứng:**\n\n` +
+      `- **Nghẽn CPU (CPU Bottleneck)**: Xảy ra khi CPU xử lý dữ liệu game/lệnh không kịp cho GPU. Thường gặp ở độ phân giải **Full HD (1080p)** khi chơi game Esports tốc độ cao. Dấu hiệu: GPU hoạt động dưới 80%, CPU báo 90-100% gây sụt FPS đột ngột (Stuttering).\n` +
+      `- **Nghẽn GPU (GPU Bottleneck)**: Xảy ra khi độ phân giải đẩy lên **2K / 4K** hoặc bật Ray Tracing max setting. GPU gánh 99-100% tải, đây là trạng thái LÝ TƯỞNG giúp tận dụng hết sức mạnh card màn hình.\n` +
+      `- **Khuyên dùng tại PCHub**: Để không bị nghẽn, ghép đôi **i5-13400F/14400F** với **RTX 4060/4060 Ti**, ghép **i7-14700K / Ryzen 7 7800X3D** với **RTX 4070 Ti SUPER / 4080 SUPER / 4090**.`;
+  }
+
+  // 2. PCIe Lanes & Băng thông
+  if (lower.includes('pcie') || lower.includes('x8') || lower.includes('x16') || lower.includes('băng thông')) {
+    return `⚡ **Phân tích Băng thông PCIe 4.0 vs 3.0 & Số Làn (Lanes):**\n\n` +
+      `- **RTX 4060 / 4060 Ti / RX 7600**: Được thiết kế chuẩn **PCIe 4.0 x8** (chỉ có 8 làn dữ liệu thay vì 16 làn full). Nếu cắm vào Mainboard cũ chuẩn **PCIe 3.0** (như H410, B450, H510), băng thông bị giảm một nửa, có thể làm tụt 5 - 15% FPS trong các game ngốn VRAM.\n` +
+      `- **Khuyên dùng**: Nên chọn các dòng Mainboard hỗ trợ **PCIe 4.0 x16** trở lên như **B760 / Z790 (Intel)** hoặc **B650 / X670 (AMD)** để phát huy 100% hiệu năng Card màn hình và SSD NVMe.`;
+  }
+
+  // 3. RAM DDR4 vs DDR5, Bus & Timing (CL)
+  if (lower.includes('ddr4') || lower.includes('ddr5') || lower.includes('cl30') || lower.includes('bus ram') || lower.includes('expo') || lower.includes('xmp')) {
+    return `🧠 **So sánh Chuyên Sâu RAM DDR4 vs DDR5 & Độ trễ (Timing CL):**\n\n` +
+      `- **DDR4 3200MHz CL16**: Chi phí tiết kiệm, băng thông ~25.6 GB/s, phù hợp cho cấu hình giá rẻ - tầm trung.\n` +
+      `- **DDR5 6000MHz CL30**: Mức "Golden Spot" lý tưởng nhất cho AMD Ryzen 7000/9000 & Intel Gen 13/14. Băng thông gấp đôi (~48-52 GB/s), độ trễ cực thấp (<65ns). Giúp tăng 10-20% FPS tối thiểu (1% Low FPS) giúp game không bị khựng.\n` +
+      `- **Lưu ý**: Nhớ bật **XMP 3.0 (Intel)** hoặc **AMD EXPO** trong BIOS để RAM chạy chuẩn bus 6000MHz thay vì bus mặc định 4800MHz!`;
+  }
+
+  // 4. VRM Phase, Ép xung & Nhiệt độ
+  if (lower.includes('vrm') || lower.includes('ép xung') || lower.includes('overclock') || lower.includes('phase') || lower.includes('nhiệt độ')) {
+    return `🌡️ **Kiến thức VRM Mainboard & Giải nhiệt CPU:**\n\n` +
+      `- **Pha nguồn VRM (Voltage Regulator Module)**: CPU khủng như i7-14700K hay i9-14900K tiêu thụ từ 253W - 300W+. Cần Mainboard có tối thiểu **16+1+2 DrMOS Phase (Z790 / B760 cao cấp)** kèm tản nhiệt VRM dày dặn để tránh nổ tụ / hạ xung CPU (Thermal Throttling).\n` +
+      `- **Tản nhiệt**: Với i7/i9 hoặc Ryzen 9, khuyến nghị dùng **Tản nước AIO 360mm** (như NZXT Kraken / Corsair H150i) kết hợp **Gông chống cong LGA1700** để hạ từ 5 - 8°C.`;
+  }
+
+  // 5. AI Training, LLM & Stable Diffusion
+  if (lower.includes('stable diffusion') || lower.includes('deep learning') || lower.includes('llm') || lower.includes('ai') || lower.includes('cuda') || lower.includes('vram')) {
+    return `🤖 **Tư vấn Cấu hình Chuyên dụng Train AI & Chạy Model LLM / Stable Diffusion:**\n\n` +
+      `- **VRAM là Yếu tố Số 1**: Muốn chạy Stable Diffusion XL / SD3 / Flux.1 hay load model LLM (Llama 3 8B / Qwen 14B), VRAM tối thiểu là **12GB** (RTX 4070 / 4070 Ti SUPER), lý tưởng nhất là **24GB VRAM (RTX 4090 / RTX 3090)**.\n` +
+      `- **Nhân Tensor Cores**: Card NVIDIA luôn vượt trội nhờ hệ sinh thái **CUDA, cuDNN, PyTorch & FP16/INT8 Precision**.\n` +
+      `- **RAM Hệ thống**: Khuyên dùng tối thiểu **64GB DDR5** để không bị nạp swap data ra ổ đĩa khi load dataset nặng.`;
+  }
+
+  // 6. Workstation 3D Render & Dựng phim 4K/8K
+  if (lower.includes('blender') || lower.includes('premiere') || lower.includes('unreal') || lower.includes('octane') || lower.includes('3d') || lower.includes('render')) {
+    return `🎬 **Cấu hình Workstation Chuyên Nghiệp (Render 3D & Dựng Phim 4K/8K):**\n\n` +
+      `- **Dựng phim Premiere / After Effects**: Ưu tiên CPU Intel Core i7-14700K / i9-14900K nhờ công nghệ **Intel QuickSync** mã hóa/giải mã phần cứng video H.264/HEVC 10-bit 4:2:2 cực kỳ mượt mà.\n` +
+      `- **Render 3D (Blender, Octane, V-Ray)**: Tận dụng nhân **NVIDIA OptiX & Ray Tracing Cores** trên RTX 4080 SUPER / 4090 cho tốc độ render nhanh hơn gấp 3-5 lần so với render thuần bằng CPU.\n` +
+      `- **SSD Scratch Disk**: Nên dùng 2 SSD NVMe PCIe 4.0 riêng biệt (1 ổ OS + 1 ổ lưu Cache Read/Write 7000MB/s).`;
+  }
+
   if (lower.includes('nguồn') || lower.includes('psu') || lower.includes('vga') || lower.includes('rtx')) {
     return '⚡ **Tư vấn nguồn (PSU) chuẩn phần cứng PCHub:**\n- **RTX 4060 / 4060 Ti**: Nguồn tối thiểu 550W - 650W (80 Plus Bronze/Gold).\n- **RTX 4070 / 4070 Ti SUPER**: Nguồn 750W 80 Plus Gold có chuẩn dây 16-pin 12VHPWR.\n- **RTX 4080 / 4090**: Khuyến nghị PSU từ 850W đến 1000W 80 Plus Gold / Platinum để nguồn luôn chạy ở dải hiệu suất mát nhất (50-70% tải).';
   }
-  if (lower.includes('render') || lower.includes('đồ họa') || lower.includes('dựng phim')) {
-    return '🎬 **Cấu hình tối ưu Đồ họa & Render 3D tại PCHub:**\n- **CPU**: Intel Core i7-14700K / i9-14900K (nhiều nhân luồng xử lý nhanh) hoặc AMD Ryzen 9 7950X3D.\n- **RAM**: Tối thiểu 32GB DDR5 6000MHz (hoặc 64GB cho Premiere 4K / After Effects).\n- **VGA**: NVIDIA RTX 4070 Ti SUPER 16GB VRAM (hỗ trợ nhân CUDA & NVENC mã hóa video cực mượt).\n- **SSD**: NVMe PCIe 4.0 Read 7000MB/s (Samsung 990 Pro / Kingston KC3000).';
-  }
-  if (lower.includes('triệu') || lower.includes('gaming') || lower.includes('chơi game') || lower.includes('build pc')) {
-    return '🎮 **Gợi ý cấu hình PC Gaming tiêu biểu tại PCHub:**\n- **Tầm 15 Triệu (Esports 1080p Max Setting)**: Core i5-12400F + RAM 16GB DDR4 + RTX 3060 12GB / RTX 4060 + PSU 600W.\n- **Tầm 25 Triệu (Gaming 2K Ultra / Stream)**: Ryzen 5 7600X hoặc i5-14600K + RAM 32GB DDR5 6000MHz + RTX 4070 SUPER 12GB + PSU 750W Gold.\n- **Tầm 40-50 Triệu (Gaming 4K / High-end)**: Ryzen 7 7800X3D + Mainboard Z790/B650 + RAM 32GB DDR5 + RTX 4080 SUPER 16GB.';
-  }
-  return '💡 Chào bạn! Mình là AI Advisor của PCHub. Mình có thể hỗ trợ bạn chọn CPU (Intel/AMD), Mainboard (Z790/B760/X670), RAM DDR4/DDR5, Card màn hình VGA, tính công suất nguồn PSU hoặc tư vấn build trọn bộ PC theo ngân sách của bạn!';
+
+  return '💡 Chào bạn! Mình là AI Advisor của PCHub. Mình hỗ trợ tư vấn cấu hình PC chuyên sâu (Gaming, AI, Render 3D), giải đáp thắc mắc về nghẽn cổ chai (Bottleneck), chuẩn PCIe, bus RAM DDR4/DDR5, nguồn PSU ATX 3.0 và kiểm tra tương thích phần cứng!';
 }
 
 

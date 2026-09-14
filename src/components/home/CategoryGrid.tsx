@@ -3,52 +3,139 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  Cpu, CircuitBoard, MemoryStick, Monitor, HardDrive, 
+  Cpu, CircuitBoard, MemoryStick, HardDrive, 
   Zap, Box, Fan, Tv, Keyboard, Headphones, ArrowRight,
   ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { fetchCategories } from '@/lib/api';
 
-const CATEGORY_IMAGES: Record<string, string> = {
-  cpu: '/images/cpu-box.jpg',
-  mainboard: '/images/cat-mainboard.jpg',
-  ram: '/images/ram-rgb.jpg',
-  gpu: '/images/gpu-strix.jpg',
-  storage: '/images/ssd-nvme.jpg',
-  psu: '/images/cat-psu.jpg',
-  case: '/images/hero-pc.jpg',
-  cooling: '/images/build-neon.jpg',
-  monitor: '/images/cat-monitor.jpg',
-  gear: '/images/cat-gear.jpg',
-  headset: '/images/cat-headset.jpg',
+// Custom high-precision SVG icon for GPU / Graphics Card
+const GpuIcon = ({ size = 24, className }: { size?: number; className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="8" cy="12" r="2.5" />
+    <circle cx="16" cy="12" r="2.5" />
+    <path d="M6 18v2M10 18v2M14 18v2M18 18v2" />
+  </svg>
+);
+
+interface CategoryStyleConfig {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  badge: string;
+  color: string;
+  bgLight: string;
+  bgGradient: string;
+  borderColor: string;
+}
+
+const CATEGORY_CONFIG: Record<string, CategoryStyleConfig> = {
+  cpu: {
+    icon: Cpu,
+    badge: 'CPU',
+    color: '#2563eb', // Vibrant Blue
+    bgLight: '#eff6ff',
+    bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+    borderColor: '#93c5fd',
+  },
+  gpu: {
+    icon: GpuIcon,
+    badge: 'GPU',
+    color: '#7c3aed', // Purple / Violet
+    bgLight: '#f5f3ff',
+    bgGradient: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+    borderColor: '#c4b5fd',
+  },
+  mainboard: {
+    icon: CircuitBoard,
+    badge: 'Mainboard',
+    color: '#4f46e5', // Indigo
+    bgLight: '#eef2ff',
+    bgGradient: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
+    borderColor: '#a5b4fc',
+  },
+  ram: {
+    icon: MemoryStick,
+    badge: 'RAM',
+    color: '#059669', // Emerald Green
+    bgLight: '#ecfdf5',
+    bgGradient: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+    borderColor: '#6ee7b7',
+  },
+  storage: {
+    icon: HardDrive,
+    badge: 'SSD / HDD',
+    color: '#d97706', // Amber
+    bgLight: '#fffbeb',
+    bgGradient: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+    borderColor: '#fcd34d',
+  },
+  psu: {
+    icon: Zap,
+    badge: 'PSU',
+    color: '#ea580c', // Orange
+    bgLight: '#fff7ed',
+    bgGradient: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+    borderColor: '#fdba74',
+  },
+  case: {
+    icon: Box,
+    badge: 'Case',
+    color: '#475569', // Slate
+    bgLight: '#f8fafc',
+    bgGradient: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+    borderColor: '#cbd5e1',
+  },
+  cooling: {
+    icon: Fan,
+    badge: 'Cooling',
+    color: '#0891b2', // Cyan
+    bgLight: '#ecfeff',
+    bgGradient: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)',
+    borderColor: '#67e8f9',
+  },
+  monitor: {
+    icon: Tv,
+    badge: 'Monitor',
+    color: '#1d4ed8', // Royal Blue
+    bgLight: '#eff6ff',
+    bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+    borderColor: '#93c5fd',
+  },
+  gear: {
+    icon: Keyboard,
+    badge: 'Gaming Gear',
+    color: '#e11d48', // Rose
+    bgLight: '#fff1f2',
+    bgGradient: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
+    borderColor: '#fda4af',
+  },
+  headset: {
+    icon: Headphones,
+    badge: 'Audio',
+    color: '#0d9488', // Teal
+    bgLight: '#f0fdfa',
+    bgGradient: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
+    borderColor: '#5eead4',
+  },
 };
 
-const CATEGORY_BADGES: Record<string, string> = {
-  cpu: 'CPU',
-  mainboard: 'Mainboard',
-  ram: 'RAM',
-  gpu: 'GPU',
-  storage: 'SSD / HDD',
-  psu: 'PSU',
-  case: 'Case',
-  cooling: 'Cooling',
-  monitor: 'Monitor',
-  gear: 'Gaming Gear',
-  headset: 'Audio',
-};
-
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-  cpu: Cpu,
-  mainboard: CircuitBoard,
-  ram: MemoryStick,
-  gpu: Monitor,
-  storage: HardDrive,
-  psu: Zap,
-  case: Box,
-  cooling: Fan,
-  monitor: Tv,
-  gear: Keyboard,
-  headset: Headphones,
+const DEFAULT_CONFIG: CategoryStyleConfig = {
+  icon: Cpu,
+  badge: 'Linh kiện',
+  color: '#2563eb',
+  bgLight: '#eff6ff',
+  bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+  borderColor: '#93c5fd',
 };
 
 interface CategoryItem {
@@ -90,12 +177,12 @@ export default function CategoryGrid() {
         .category-row-container {
           display: flex;
           align-items: stretch;
-          gap: 10px;
+          gap: 12px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
-          padding: 4px 2px 14px;
+          padding: 6px 2px 16px;
         }
 
         .category-row-container::-webkit-scrollbar {
@@ -103,127 +190,103 @@ export default function CategoryGrid() {
         }
 
         .category-card {
-          flex: 0 0 136px;
-          min-width: 136px;
+          flex: 0 0 142px;
+          min-width: 142px;
           scroll-snap-align: start;
           position: relative;
-          border-radius: 12px;
-          overflow: hidden;
-          background: #0f172a;
+          border-radius: 16px;
+          background: #ffffff;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           text-decoration: none;
           display: flex;
           flex-direction: column;
-          aspect-ratio: 3.4 / 5;
+          align-items: center;
+          text-align: center;
+          padding: 18px 10px 14px;
         }
 
         @media (min-width: 1220px) {
           .category-card {
             flex: 1 1 0;
-            min-width: 98px;
+            min-width: 100px;
           }
         }
 
-        .category-card-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-          transition: transform 0.4s ease;
+        .category-icon-wrapper {
+          width: 52px;
+          height: 52px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+          transition: all 0.3s ease;
         }
 
-        .category-card-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.5) 55%, rgba(0, 0, 0, 0.1) 100%);
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-end;
-          padding: 10px 9px;
-          transition: background 0.3s ease;
+        .category-card:hover .category-icon-wrapper {
+          transform: scale(1.1) translateY(-2px);
         }
 
         .category-card-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          background: rgba(255, 255, 255, 0.18);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          color: #ffffff;
-          padding: 2px 6px;
-          border-radius: 12px;
-          font-size: 9.5px;
+          display: inline-block;
+          padding: 2px 8px;
+          border-radius: 20px;
+          font-size: 10px;
           font-weight: 700;
-          margin-bottom: 5px;
-          width: fit-content;
-          border: 1px solid rgba(255,255,255,0.25);
-          transition: all 0.3s ease;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
           white-space: nowrap;
         }
 
         .category-card-title {
-          font-size: 11.5px;
-          font-weight: 800;
-          color: #ffffff;
-          margin: 0 0 3px 0;
-          line-height: 1.25;
-          letter-spacing: -0.01em;
+          font-size: 12px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 6px 0;
+          line-height: 1.35;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          height: 32px;
+          transition: color 0.2s ease;
         }
 
         .category-card-count {
-          font-size: 10.5px;
-          color: #94a3b8;
+          font-size: 11px;
+          color: #64748b;
           font-weight: 600;
+          margin-top: auto;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          transition: color 0.3s ease;
-          white-space: nowrap;
+          gap: 4px;
+          transition: color 0.2s ease;
         }
 
-        .category-card-action {
+        .category-card-arrow {
           opacity: 0;
-          transform: translateY(4px);
+          transform: translateX(-4px);
           transition: all 0.3s ease;
-          color: #38bdf8;
-          font-size: 10px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 3px;
-          margin-top: 3px;
+          display: inline-flex;
         }
 
         .category-card:hover {
-          transform: translateY(-4px);
-          border-color: #2563eb;
-          box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+          transform: translateY(-5px);
+          border-color: var(--accent-color);
+          box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.06), 0 4px 12px var(--accent-border-rgba);
         }
 
-        .category-card:hover .category-card-img {
-          transform: scale(1.08);
+        .category-card:hover .category-card-title,
+        .category-card:hover .category-card-count {
+          color: var(--accent-color);
         }
 
-        .category-card:hover .category-card-overlay {
-          background: linear-gradient(to top, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.65) 60%, rgba(37, 99, 235, 0.2) 100%);
-        }
-
-        .category-card:hover .category-card-badge {
-          background: #2563eb;
-          border-color: #3b82f6;
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-        }
-
-        .category-card:hover .category-card-action {
+        .category-card:hover .category-card-arrow {
           opacity: 1;
-          transform: translateY(0);
+          transform: translateX(0);
         }
 
         .category-nav-btn {
@@ -265,7 +328,7 @@ export default function CategoryGrid() {
       `}</style>
 
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <h2 style={{
               fontSize: '22px',
@@ -276,7 +339,7 @@ export default function CategoryGrid() {
             }}>
               Danh mục linh kiện
             </h2>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '3px 0 0 0' }}>
               Khám phá linh kiện máy tính chính hãng theo từng danh mục
             </p>
           </div>
@@ -310,9 +373,8 @@ export default function CategoryGrid() {
 
         <div ref={scrollRef} className="category-row-container">
           {categories.map(cat => {
-            const IconComponent = ICON_MAP[cat.slug] || Cpu;
-            const bgImage = CATEGORY_IMAGES[cat.slug] || '/images/cpu-box.jpg';
-            const badgeLabel = CATEGORY_BADGES[cat.slug] || cat.name.split(' (')[0].split(' - ')[0];
+            const config = CATEGORY_CONFIG[cat.slug] || DEFAULT_CONFIG;
+            const IconComponent = config.icon;
 
             return (
               <Link
@@ -320,32 +382,42 @@ export default function CategoryGrid() {
                 href={`/danh-muc/${cat.slug}`}
                 className="category-card"
                 title={`Xem sản phẩm danh mục ${cat.name}`}
+                style={{
+                  '--accent-color': config.color,
+                  '--accent-border-rgba': `${config.color}33`,
+                } as React.CSSProperties}
               >
-                <img
-                  src={bgImage}
-                  alt={cat.name}
-                  className="category-card-img"
-                  onError={e => { e.currentTarget.src = '/images/cpu-box.jpg'; }}
-                />
+                <div 
+                  className="category-icon-wrapper"
+                  style={{
+                    background: config.bgGradient,
+                    color: config.color,
+                    border: `1px solid ${config.borderColor}`,
+                  }}
+                >
+                  <IconComponent size={26} />
+                </div>
 
-                <div className="category-card-overlay">
-                  <div className="category-card-badge">
-                    <IconComponent size={11} />
-                    <span>{badgeLabel}</span>
-                  </div>
+                <span
+                  className="category-card-badge"
+                  style={{
+                    background: config.bgLight,
+                    color: config.color,
+                    border: `1px solid ${config.borderColor}`,
+                  }}
+                >
+                  {config.badge}
+                </span>
 
-                  <h3 className="category-card-title">
-                    {cat.name}
-                  </h3>
+                <h3 className="category-card-title">
+                  {cat.name}
+                </h3>
 
-                  <div className="category-card-count">
-                    <span>{cat.product_count ?? 0} SP</span>
-                  </div>
-
-                  <div className="category-card-action">
-                    <span>Khám phá</span>
-                    <ArrowRight size={10} />
-                  </div>
+                <div className="category-card-count">
+                  <span>{cat.product_count ?? 0} SP</span>
+                  <span className="category-card-arrow" style={{ color: config.color }}>
+                    <ArrowRight size={12} />
+                  </span>
                 </div>
               </Link>
             );
@@ -355,3 +427,4 @@ export default function CategoryGrid() {
     </section>
   );
 }
+

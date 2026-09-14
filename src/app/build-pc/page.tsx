@@ -10,9 +10,10 @@ import {
   Save, FolderOpen, Minus, X
 } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
-import ComponentSelectorModal from '@/components/builder/ComponentSelectorModal';
+import ComponentSelectorModal, { getProductAiCompatibilityInfo } from '@/components/builder/ComponentSelectorModal';
 import CompatibilityReportModal from '@/components/builder/CompatibilityReportModal';
 import { CompatibilityReport } from '@/lib/gemini';
+import seed from '@/lib/seed.json';
 
 const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
   cpu: '/images/cpu-box.jpg',
@@ -367,6 +368,79 @@ export default function BuildPcPage() {
     const slotTitle = components.find(s => s.key === activeModalSlotKey)?.category || 'linh kiện';
     setNotice(`Đã chọn ${slotTitle}: ${product.name}`);
     setTimeout(() => setNotice(null), 3000);
+  };
+
+  const handleAiAutoSelectProduct = (targetSlotKey: string) => {
+    const slotLower = targetSlotKey.toLowerCase();
+    
+    // Find products from seed matching category/slot
+    const matchingProducts = seed.products.filter(p => {
+      const cat = (p.category_id || '').toLowerCase();
+      const slug = (p.slug || '').toLowerCase();
+      const name = (p.name || '').toLowerCase();
+      return slug.includes(slotLower) || cat.includes(slotLower) || name.includes(slotLower);
+    });
+
+    const candidates = matchingProducts.length > 0 ? matchingProducts : seed.products;
+
+    // Sort by AI compatibility score (highest compatible product first)
+    const sortedCompat = [...candidates].sort((a, b) => {
+      const compatA = getProductAiCompatibilityInfo(a, targetSlotKey, components).isCompatible ? 1 : 0;
+      const compatB = getProductAiCompatibilityInfo(b, targetSlotKey, components).isCompatible ? 1 : 0;
+      return compatB - compatA;
+    });
+
+    const selectedProduct = sortedCompat[0];
+    if (selectedProduct) {
+      const prodAny = selectedProduct as any;
+      const specsAny = selectedProduct.specs as any;
+
+      let tdp = 20;
+      if (specsAny?.tdp_watt) tdp = Number(specsAny.tdp_watt);
+      else if (specsAny?.tdp) tdp = Number(specsAny.tdp);
+      else if (slotLower === 'gpu') tdp = 250;
+      else if (slotLower === 'cpu') tdp = 125;
+
+      let specsStr = 'Chính hãng | Bảo hành 36 tháng';
+      if (specsAny && typeof specsAny === 'object') {
+        const parts: string[] = [];
+        if (specsAny.socket) parts.push(`Socket ${specsAny.socket}`);
+        if (specsAny.chipset) parts.push(`Chipset ${specsAny.chipset}`);
+        if (specsAny.cores || specsAny.core_count) {
+          const c = specsAny.cores || specsAny.core_count;
+          const t = specsAny.threads || specsAny.thread_count || c;
+          parts.push(`${c} Nhân ${t} Luồng`);
+        }
+        if (specsAny.capacity || specsAny.capacity_gb) {
+          parts.push(`Dung lượng: ${specsAny.capacity || `${specsAny.capacity_gb}GB`}`);
+        }
+        if (specsAny.bus_mhz || specsAny.speed) {
+          parts.push(`Bus: ${specsAny.bus_mhz || specsAny.speed}MHz`);
+        }
+        if (parts.length > 0) specsStr = parts.join(' | ');
+      }
+
+      const fallbackImg = CATEGORY_DEFAULT_IMAGE[targetSlotKey] || '/images/cpu-box.jpg';
+      const newComponent: SelectedComponent = {
+        id: prodAny.id,
+        name: prodAny.name,
+        price: Number(prodAny.price),
+        tdp,
+        specs: specsStr,
+        image: prodAny.image_url || prodAny.image || fallbackImg,
+        slug: prodAny.slug,
+        sku: prodAny.sku,
+        stock: prodAny.stock,
+      };
+
+      setComponents(prev => prev.map(s => s.key === targetSlotKey ? { ...s, selected: newComponent, quantity: 1 } : s));
+
+      const slotTitle = components.find(s => s.key === targetSlotKey)?.category || 'linh kiện';
+      setNotice(`🤖 AI Smart Advisor: Đã chọn ${slotTitle} tương thích — ${selectedProduct.name}`);
+      setTimeout(() => setNotice(null), 3500);
+    } else {
+      setActiveModalSlotKey(targetSlotKey);
+    }
   };
 
   const handleAddAllToCart = () => {
@@ -1123,13 +1197,11 @@ export default function BuildPcPage() {
                   {aiNextSuggestions.slice(0, 3).map((item: { targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string }) => (
                     <div
                       key={item.targetSlotKey}
-                      onClick={() => setActiveModalSlotKey(item.targetSlotKey)}
                       style={{
                         background: '#ffffff',
                         border: '1px solid #cbd5e1',
                         borderRadius: '12px',
                         padding: '14px 16px',
-                        cursor: 'pointer',
                         transition: 'all 0.15s ease',
                         display: 'flex',
                         flexDirection: 'column',
@@ -1152,8 +1224,50 @@ export default function BuildPcPage() {
                         </p>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '10px', fontSize: '12px', fontWeight: 800, color: '#2563eb' }}>
-                        Chọn ngay linh kiện này →
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveModalSlotKey(item.targetSlotKey)}
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            color: '#475569',
+                            background: '#f1f5f9',
+                            border: 'none',
+                            borderRadius: '7px',
+                            padding: '6px 10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                          title="Duyệt tất cả linh kiện thuộc nhóm này"
+                        >
+                          Xem thêm
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAiAutoSelectProduct(item.targetSlotKey)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            background: '#2563eb',
+                            border: 'none',
+                            borderRadius: '7px',
+                            padding: '6px 14px',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; }}
+                        >
+                          <Sparkles size={13} />
+                          Chọn ngay linh kiện này →
+                        </button>
                       </div>
                     </div>
                   ))}
