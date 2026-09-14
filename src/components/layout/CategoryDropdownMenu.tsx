@@ -141,16 +141,19 @@ export default function CategoryDropdownMenu() {
               paddingBottom: '8px',
               marginBottom: '8px',
               borderBottom: '1px solid #f1f5f9',
-              fontSize: '11px',
+              fontSize: '10.5px',
               fontWeight: 700,
               color: '#64748b',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
+              letterSpacing: '0.3px',
+              gap: '8px',
             }}
           >
-            <span>Tất cả linh kiện & phụ kiện</span>
-            <span style={{ color: '#2563eb', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <Sparkles size={12} /> {filteredCategories.length} danh mục
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Tất cả linh kiện & phụ kiện
+            </span>
+            <span style={{ color: '#2563eb', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {filteredCategories.length} DANH MỤC
             </span>
           </div>
 
