@@ -809,6 +809,10 @@ export default function BuildPcPage() {
     }> = [];
 
     const cpu = cpuSelected;
+    if (!cpu) {
+      return [];
+    }
+
     const mb = mainboardSelected;
     const ram = ramSelected;
     const gpu = gpuSelected;
@@ -862,18 +866,7 @@ export default function BuildPcPage() {
       });
     };
 
-    // 1. CPU Recommendation (if not selected)
-    if (!cpu) {
-      list.push({
-        categoryKey: 'cpu',
-        categoryTitle: 'CPU - BỘ VI XỬ LÝ',
-        badge: 'Khuyên Dùng Hàng Đầu',
-        explanation: 'Vi xử lý đóng vai trò trung tâm xử lý dữ liệu. AI tự động đề xuất 3 dòng CPU có số nhân/luồng cao, xung nhịp Turbo ấn tượng để cân tốt các tựa game AAA và ứng dụng đồ họa nặng.',
-        products: getCandidateProducts('cpu', 3),
-      });
-    }
-
-    // 2. Mainboard Recommendation (if not selected)
+    // 1. Mainboard Recommendation (if not selected)
     if (!mb) {
       list.push({
         categoryKey: 'mainboard',
@@ -1282,41 +1275,94 @@ export default function BuildPcPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
             {/* AI Smart Suggestion Banner & Multi-Product Recommendations */}
-            {aiCategoryRecommendations.length > 0 && (
+            {!cpuSelected ? (
               <div style={{
-                background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
-                border: '1px solid #bfdbfe',
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+                border: '1.5px dashed #bfdbfe',
                 borderRadius: '16px',
-                padding: '20px 24px',
+                padding: '18px 24px',
                 marginBottom: '8px',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                boxShadow: '0 2px 10px rgba(37,99,235,0.05)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ background: '#2563eb', color: '#fff', borderRadius: '10px', padding: '8px', display: 'flex', alignItems: 'center' }}>
-                      <Sparkles size={20} />
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                        🤖 AI Smart Advisor — Gợi Ý & So Sánh Linh Kiện Phù Hợp
-                      </h3>
-                      <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
-                        Dựa trên cấu hình hiện tại, AI phân tích thông số kỹ thuật và gợi ý các sản phẩm tối ưu nhất trong danh mục để bạn dễ dàng so sánh:
-                      </p>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ background: '#2563eb', color: '#fff', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center' }}>
+                    <Sparkles size={20} />
                   </div>
-                  <span style={{
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    color: '#16a34a',
-                    background: '#dcfce7',
-                    border: '1px solid #86efac',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                  }}>
-                    AI SMART RECOMMEND
-                  </span>
+                  <div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                      🤖 AI Smart Advisor — Vui Lòng Chọn CPU Đầu Tiên
+                    </h3>
+                    <p style={{ fontSize: '12.5px', color: '#475569', margin: '3px 0 0 0' }}>
+                      Hãy chọn <b>CPU (Bộ Vi Xử Lý)</b> đầu tiên để AI tự động lọc và gợi ý Mainboard chuẩn Socket, Tản nhiệt đủ công suất TDP, RAM Dual-Channel và Nguồn tối ưu nhất!
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveModalSlotKey('cpu')}
+                  style={{
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; }}
+                >
+                  <Plus size={14} />
+                  Chọn CPU Ngay →
+                </button>
+              </div>
+            ) : (
+              aiCategoryRecommendations.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '16px',
+                  padding: '20px 24px',
+                  marginBottom: '8px',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ background: '#2563eb', color: '#fff', borderRadius: '10px', padding: '8px', display: 'flex', alignItems: 'center' }}>
+                        <Sparkles size={20} />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                          🤖 AI Smart Advisor — Linh Kiện Tương Thích Với {cpuSelected.name}
+                        </h3>
+                        <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
+                          Dựa trên CPU đã chọn, AI tự động phân tích thông số kỹ thuật và gợi ý các linh kiện chuẩn Socket, TDP & băng thông tối ưu nhất:
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      color: '#16a34a',
+                      background: '#dcfce7',
+                      border: '1px solid #86efac',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                    }}>
+                      AI SMART RECOMMEND
+                    </span>
+                  </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {aiCategoryRecommendations.map(cat => (
@@ -1480,7 +1526,7 @@ export default function BuildPcPage() {
                   ))}
                 </div>
               </div>
-            )}
+            ))}
 
             {/* Core Components Section */}
             <div>
