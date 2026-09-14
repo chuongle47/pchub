@@ -53,7 +53,7 @@ export default function ProductCard({
   onAddToCart,
   onCompare,
   isCompared: externalIsCompared,
-  showCompare = true,
+  showCompare = false,
   className = '',
   style = {},
 }: ProductCardProps) {
@@ -98,13 +98,6 @@ export default function ProductCard({
       ? Math.round(((effectiveOldPrice - price) / effectiveOldPrice) * 100)
       : 0;
 
-  const isAvailable =
-    stock === undefined
-      ? true
-      : typeof stock === 'boolean'
-      ? stock
-      : Number(stock) > 0;
-
   // Specs text formatting
   const specsText =
     typeof specs === 'string'
@@ -113,7 +106,7 @@ export default function ProductCard({
       ? Object.values(specs).filter(Boolean).slice(0, 4).join(' · ')
       : null;
 
-  // Handle Add To Cart / Mua ngay
+  // Handle Add To Cart
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -194,7 +187,7 @@ export default function ProductCard({
         borderRadius: '16px',
         overflow: 'hidden',
         position: 'relative',
-        padding: '16px',
+        padding: '14px',
         boxShadow: isHovered
           ? '0 10px 25px rgba(0,0,0,0.07)'
           : '0 2px 8px rgba(0,0,0,0.03)',
@@ -205,10 +198,11 @@ export default function ProductCard({
         flexDirection: 'column',
         justifyContent: 'space-between',
         height: '100%',
+        boxSizing: 'border-box',
         ...style,
       }}
     >
-      {/* Top Left Badge: SALE or Custom Tag */}
+      {/* Top Left Badge */}
       {effectiveDiscount > 0 ? (
         <div
           style={{
@@ -243,7 +237,7 @@ export default function ProductCard({
                 ? '#f59e0b'
                 : badgeColor === 'green'
                 ? '#16a34a'
-                : 'var(--color-primary)',
+                : '#2563eb',
             color: '#ffffff',
             fontSize: '11px',
             fontWeight: 800,
@@ -297,7 +291,7 @@ export default function ProductCard({
             width: '100%',
             borderRadius: '10px',
             overflow: 'hidden',
-            marginBottom: '14px',
+            marginBottom: '12px',
             display: 'block',
             textDecoration: 'none',
             background: '#f8fafc',
@@ -311,10 +305,10 @@ export default function ProductCard({
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
+              objectFit: 'contain',
+              padding: '6px',
               transition: 'transform 0.3s ease',
-              transform: isHovered ? 'scale(1.04)' : 'scale(1)',
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
             }}
           />
         </Link>
@@ -324,7 +318,7 @@ export default function ProductCard({
           style={{
             fontSize: '11px',
             fontWeight: 800,
-            color: 'var(--color-primary)',
+            color: '#2563eb',
             textTransform: 'uppercase',
             marginBottom: '4px',
             letterSpacing: '0.4px',
@@ -340,11 +334,11 @@ export default function ProductCard({
         >
           <h3
             style={{
-              fontSize: '13.5px',
+              fontSize: '13px',
               fontWeight: 700,
-              color: isHovered ? 'var(--color-primary)' : '#0f172a',
+              color: isHovered ? '#2563eb' : '#0f172a',
               lineHeight: '1.35',
-              height: '36px',
+              height: '35px',
               overflow: 'hidden',
               marginBottom: specsText ? '4px' : '8px',
               display: '-webkit-box',
@@ -377,13 +371,13 @@ export default function ProductCard({
         )}
       </div>
 
-      {/* Bottom Section: Price, Stock, Action Buttons */}
-      <div>
+      {/* Bottom Section: Price & Action Buttons */}
+      <div style={{ marginTop: 'auto' }}>
         {/* Price Section */}
-        <div style={{ marginTop: '4px', marginBottom: '12px' }}>
+        <div style={{ marginTop: '4px', marginBottom: '10px' }}>
           <div
             style={{
-              fontSize: '17px',
+              fontSize: '16px',
               fontWeight: 900,
               color: '#ef4444',
               fontVariantNumeric: 'tabular-nums',
@@ -396,11 +390,11 @@ export default function ProductCard({
           {effectiveOldPrice && effectiveOldPrice > price && (
             <div
               style={{
-                fontSize: '12.5px',
+                fontSize: '12px',
                 color: '#94a3b8',
                 textDecoration: 'line-through',
                 fontVariantNumeric: 'tabular-nums',
-                marginTop: '3px',
+                marginTop: '2px',
                 fontWeight: 500,
               }}
             >
@@ -409,86 +403,91 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Action Buttons: Thêm vào giỏ + Mua ngay + So sánh */}
-        <div style={{ display: 'flex', gap: '6px' }}>
+        {/* Action Buttons: 2 hàng riêng biệt */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {/* Row 1: Thêm vào giỏ hàng (Rộng 100%) */}
           <button
             type="button"
             onClick={handleAddToCart}
             title="Thêm sản phẩm vào giỏ hàng"
             style={{
-              flex: 1,
-              padding: '9px 8px',
-              borderRadius: '10px',
-              fontSize: '11.5px',
+              width: '100%',
+              padding: '8.5px 10px',
+              borderRadius: '9px',
+              fontSize: '12px',
               fontWeight: 700,
               background: isAdded ? '#16a34a' : '#eff6ff',
-              color: isAdded ? '#ffffff' : 'var(--color-primary)',
+              color: isAdded ? '#ffffff' : '#2563eb',
               border: `1px solid ${isAdded ? '#16a34a' : '#bfdbfe'}`,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px',
+              gap: '6px',
               transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap',
+              boxSizing: 'border-box',
             }}
           >
-            {isAdded ? <Check size={13} /> : <ShoppingCart size={13} />}
-            {isAdded ? 'Đã thêm' : 'Thêm giỏ'}
+            {isAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
+            {isAdded ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
           </button>
 
-          <button
-            type="button"
-            onClick={handleBuyNow}
-            title="Mua ngay và thanh toán"
-            style={{
-              flex: 1,
-              padding: '9px 8px',
-              borderRadius: '10px',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              background: 'var(--color-primary)',
-              color: '#ffffff',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              boxShadow: '0 2px 6px rgba(0, 85, 212, 0.25)',
-              transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Zap size={13} />
-            Mua ngay
-          </button>
-
-          {showCompare && (
+          {/* Row 2: Mua ngay [+ Biểu tượng so sánh nếu bật] */}
+          <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
             <button
               type="button"
-              onClick={handleToggleCompare}
-              title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh'}
+              onClick={handleBuyNow}
+              title="Mua ngay và thanh toán"
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                border: `1.5px solid ${
-                  isCompared ? 'var(--color-primary)' : '#e2e8f0'
-                }`,
-                background: isCompared ? '#eff6ff' : '#ffffff',
-                color: 'var(--color-primary)',
+                flex: 1,
+                padding: '8.5px 10px',
+                borderRadius: '9px',
+                fontSize: '12px',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#ffffff',
+                border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0,
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
                 transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
               }}
             >
-              <ArrowLeftRight size={14} />
+              <Zap size={14} />
+              Mua ngay
             </button>
-          )}
+
+            {showCompare && (
+              <button
+                type="button"
+                onClick={handleToggleCompare}
+                title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh'}
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '9px',
+                  border: `1.5px solid ${
+                    isCompared ? '#2563eb' : '#cbd5e1'
+                  }`,
+                  background: isCompared ? '#eff6ff' : '#ffffff',
+                  color: '#2563eb',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <ArrowLeftRight size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

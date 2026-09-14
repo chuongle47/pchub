@@ -29,6 +29,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
           brand={product.brand}
           stock={product.stock}
           specs={product.specs}
+          showCompare={true}
         />
       ))}
     </div>
