@@ -370,6 +370,7 @@ export default function CategoryProductSections() {
                     badge={p.badge}
                     badgeColor={p.badgeColor}
                     stock={true}
+                    showCompare={false}
                   />
                 ))}
               </div>

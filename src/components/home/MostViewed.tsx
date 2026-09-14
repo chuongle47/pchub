@@ -130,6 +130,7 @@ export default function MostViewed() {
               badge={p.badge}
               badgeColor={p.badgeColor}
               stock={true}
+              showCompare={false}
             />
           ))}
         </div>

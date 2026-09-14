@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, ShoppingCart, ArrowLeftRight, Check, Zap } from 'lucide-react';
+import { Heart, ShoppingCart, Check, Zap, PlusCircle } from 'lucide-react';
 import { useCartStore, useWishlistStore, useCompareStore } from '@/lib/store';
 import { getProductOriginalPrice, getProductImage } from '@/lib/product-ui';
 
@@ -53,7 +53,7 @@ export default function ProductCard({
   onAddToCart,
   onCompare,
   isCompared: externalIsCompared,
-  showCompare = false,
+  showCompare = true,
   className = '',
   style = {},
 }: ProductCardProps) {
@@ -410,27 +410,27 @@ export default function ProductCard({
               onClick={handleToggleCompare}
               title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào danh sách so sánh'}
               style={{
-                padding: '5px 9px',
-                borderRadius: '8px',
+                padding: '4px 10px',
+                borderRadius: '20px',
                 border: `1.5px solid ${
-                  isCompared ? '#2563eb' : '#cbd5e1'
+                  isCompared ? '#2563eb' : '#3b82f6'
                 }`,
                 background: isCompared ? '#eff6ff' : '#ffffff',
-                color: isCompared ? '#2563eb' : '#475569',
-                fontSize: '11px',
-                fontWeight: 700,
+                color: '#2563eb',
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
                 flexShrink: 0,
                 transition: 'all 0.15s ease',
                 boxSizing: 'border-box',
                 whiteSpace: 'nowrap',
               }}
             >
-              <ArrowLeftRight size={12} />
-              <span>{isCompared ? 'Đã so sánh' : '+ So sánh'}</span>
+              {isCompared ? <Check size={13} /> : <PlusCircle size={13} />}
+              <span>{isCompared ? 'Đã so sánh' : 'So sánh'}</span>
             </button>
           )}
         </div>

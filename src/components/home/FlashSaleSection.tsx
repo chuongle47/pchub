@@ -277,6 +277,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
               originalPrice={p.originalPrice}
               discount={p.discount}
               stock={true}
+              showCompare={false}
             />
           ))}
         </div>
