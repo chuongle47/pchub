@@ -16,8 +16,6 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { label: 'Xây dựng PC', href: '/build-pc', highlight: true },
-  { label: 'Linh kiện', href: '/search' },
-  { label: 'Phụ kiện Gaming', href: '/search?category=gear' },
   { label: 'Cộng đồng', href: '/community' },
   { label: 'Khuyến mãi', href: '/search?sale=true' },
 ];
@@ -110,11 +108,6 @@ export default function Navbar() {
             Hub
           </Link>
 
-          {/* Category Dropdown Menu Button (☰ Danh mục sản phẩm) */}
-          <div className="nav-cat-dropdown" style={{ flexShrink: 0 }}>
-            <CategoryDropdownMenu />
-          </div>
-
           {/* Search Bar */}
           {!isAuthPage && (
             <form onSubmit={handleSearchSubmit} className="nav-search-form" style={{
@@ -171,36 +164,46 @@ export default function Navbar() {
           <nav className={`navbar-links${isMobileNavOpen ? ' is-open' : ''}`} style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '2px',
+            gap: '4px',
             fontSize: '13px',
             fontWeight: 500,
           }}>
-            {NAV_LINKS.map(link => (
+            <Link
+              href="/build-pc"
+              onClick={() => setIsMobileNavOpen(false)}
+              style={{
+                color: '#38bdf8',
+                textDecoration: 'none',
+                padding: '6px 10px',
+                borderRadius: '7px',
+                fontWeight: 700,
+                transition: 'all 0.15s',
+                background: pathname === '/build-pc' ? 'rgba(255,255,255,0.07)' : 'transparent',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Xây dựng PC
+            </Link>
+
+            {/* Category Dropdown Menu Button (☰ Danh mục sản phẩm) */}
+            <div style={{ flexShrink: 0 }}>
+              <CategoryDropdownMenu />
+            </div>
+
+            {NAV_LINKS.filter(l => l.href !== '/build-pc').map(link => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMobileNavOpen(false)}
                 style={{
-                  color: link.highlight ? '#38bdf8' : pathname === link.href ? '#fff' : 'rgba(255,255,255,0.75)',
+                  color: pathname === link.href ? '#fff' : 'rgba(255,255,255,0.75)',
                   textDecoration: 'none',
                   padding: '6px 10px',
                   borderRadius: '7px',
-                  fontWeight: link.highlight ? 700 : 500,
+                  fontWeight: 500,
                   transition: 'all 0.15s',
                   background: pathname === link.href ? 'rgba(255,255,255,0.07)' : 'transparent',
                   whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => {
-                  if (!link.highlight && pathname !== link.href) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
-                    e.currentTarget.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!link.highlight && pathname !== link.href) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
-                  }
                 }}
               >
                 {link.label}
