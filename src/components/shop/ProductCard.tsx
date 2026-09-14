@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Heart, ShoppingCart, ArrowLeftRight, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Heart, ShoppingCart, ArrowLeftRight, Check, Zap } from 'lucide-react';
 import { useCartStore, useWishlistStore, useCompareStore } from '@/lib/store';
 import { getProductOriginalPrice, getProductImage } from '@/lib/product-ui';
 
@@ -59,6 +60,7 @@ export default function ProductCard({
   const [isHovered, setIsHovered] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const router = useRouter();
 
   // Global Stores
   const addItem = useCartStore((state) => state.addItem);
@@ -143,6 +145,24 @@ export default function ProductCard({
 
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 1500);
+  };
+
+  // Handle Buy Now (Direct Checkout)
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    addItem({
+      id,
+      name,
+      price,
+      originalPrice: effectiveOldPrice,
+      image: displayImage,
+      category: category || 'Linh kiện',
+      brand: displayBrand,
+      slug,
+    });
+    router.push('/thanh-toan');
   };
 
   // Handle Wishlist Toggle
@@ -389,35 +409,59 @@ export default function ProductCard({
           )}
         </div>
 
-
-
-        {/* Action Buttons: Mua ngay + So sánh */}
+        {/* Action Buttons: Thêm vào giỏ + Mua ngay + So sánh */}
         <div style={{ display: 'flex', gap: '6px' }}>
           <button
             type="button"
             onClick={handleAddToCart}
+            title="Thêm sản phẩm vào giỏ hàng"
             style={{
               flex: 1,
-              padding: '9px 10px',
+              padding: '9px 8px',
               borderRadius: '10px',
-              fontSize: '12px',
+              fontSize: '11.5px',
               fontWeight: 700,
-              background: isAdded ? '#16a34a' : 'var(--color-primary)',
+              background: isAdded ? '#16a34a' : '#eff6ff',
+              color: isAdded ? '#ffffff' : 'var(--color-primary)',
+              border: `1px solid ${isAdded ? '#16a34a' : '#bfdbfe'}`,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isAdded ? <Check size={13} /> : <ShoppingCart size={13} />}
+            {isAdded ? 'Đã thêm' : 'Thêm giỏ'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            title="Mua ngay và thanh toán"
+            style={{
+              flex: 1,
+              padding: '9px 8px',
+              borderRadius: '10px',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              background: 'var(--color-primary)',
               color: '#ffffff',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '5px',
-              boxShadow: isAdded
-                ? '0 2px 6px rgba(22, 163, 74, 0.3)'
-                : '0 2px 6px rgba(0, 85, 212, 0.25)',
+              gap: '4px',
+              boxShadow: '0 2px 6px rgba(0, 85, 212, 0.25)',
               transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
             }}
           >
-            {isAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
-            {isAdded ? 'Đã thêm' : 'Mua ngay'}
+            <Zap size={13} />
+            Mua ngay
           </button>
 
           {showCompare && (

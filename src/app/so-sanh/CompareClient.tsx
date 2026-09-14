@@ -775,7 +775,7 @@ export default function CompareClient() {
                         }}
                       >
                         <ShoppingCart size={14} />
-                        <span>Mua ngay</span>
+                        <span>Thêm vào giỏ hàng</span>
                       </button>
                     </div>
                   ))}
