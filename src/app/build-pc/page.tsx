@@ -232,7 +232,7 @@ export default function BuildPcPage() {
   const addMultipleItems = useCartStore(s => s.addMultipleItems);
   const setCartOpen = useCartStore(s => s.setOpen);
 
-  // Read saved builds from localStorage on mount
+  // Read saved builds & pending AI presets from localStorage on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem('pchub_saved_builds');
@@ -242,6 +242,52 @@ export default function BuildPcPage() {
     } catch (e) {
       console.error('Error reading saved builds:', e);
     }
+  }, []);
+
+  // Listen for AI Preset application (from AI Advisor Chat)
+  useEffect(() => {
+    const applyAiPreset = (preset: any) => {
+      if (!preset || !preset.components) return;
+      setComponents(prev => prev.map(slot => {
+        const item = preset.components[slot.key];
+        if (item) {
+          return {
+            ...slot,
+            selected: {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              tdp: item.tdp,
+              specs: item.specs,
+              image: item.image,
+              slug: item.slug,
+            },
+            quantity: 1,
+          };
+        }
+        return slot;
+      }));
+
+      setNotice(`🎉 Đã áp dụng thành công ${preset.title} (${preset.budgetLabel}) vào PC Builder!`);
+      setTimeout(() => setNotice(null), 5000);
+    };
+
+    try {
+      const pendingRaw = localStorage.getItem('pchub_pending_ai_preset');
+      if (pendingRaw) {
+        localStorage.removeItem('pchub_pending_ai_preset');
+        const parsed = JSON.parse(pendingRaw);
+        applyAiPreset(parsed);
+      }
+    } catch (e) {
+      console.error('Error parsing pending AI preset:', e);
+    }
+
+    const handleEvent = (e: any) => {
+      if (e.detail) applyAiPreset(e.detail);
+    };
+    window.addEventListener('pchub_apply_ai_preset', handleEvent);
+    return () => window.removeEventListener('pchub_apply_ai_preset', handleEvent);
   }, []);
 
   const totalPrice = components.reduce((acc, slot) => acc + (slot.selected ? slot.selected.price * slot.quantity : 0), 0);

@@ -2,7 +2,9 @@
 
 import { FormEvent, useState, useRef, useEffect } from 'react';
 import { Bot, ChevronDown, MessageCircle, Send, X, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/lib/store';
+import { matchPresetKeyFromText, AI_BUILD_PRESETS } from '@/lib/buildPresets';
 
 type Message = {
   from: 'ai' | 'user';
@@ -19,6 +21,7 @@ const QUICK_QUESTIONS = [
 ];
 
 export default function AIChatWidget() {
+  const router = useRouter();
   const open = useUIStore(state => state.isChatOpen);
   const setOpen = useUIStore(state => state.setChatOpen);
   const [input, setInput] = useState('');
@@ -31,6 +34,19 @@ export default function AIChatWidget() {
   ]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleApplyBuild = (text: string) => {
+    const key = matchPresetKeyFromText(text);
+    const preset = AI_BUILD_PRESETS[key] || AI_BUILD_PRESETS['25m'];
+    try {
+      localStorage.setItem('pchub_pending_ai_preset', JSON.stringify(preset));
+      window.dispatchEvent(new CustomEvent('pchub_apply_ai_preset', { detail: preset }));
+    } catch (e) {
+      console.error('Failed to save preset to storage:', e);
+    }
+    setOpen(false);
+    router.push('/build-pc');
+  };
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -258,10 +274,39 @@ export default function AIChatWidget() {
                     boxShadow: message.from === 'user' ? 'none' : '0 2px 6px rgba(0,0,0,0.03)',
                   }}
                 >
-                  {renderFormattedText(message.text)}
+                    {renderFormattedText(message.text)}
+                    {message.from === 'ai' && index > 0 && (
+                      <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleApplyBuild(message.text)}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '7px 12px',
+                            fontSize: '11.5px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Sparkles size={13} />
+                          <span>⚡ Áp Dụng Cấu Hình Này Vào PC Builder →</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {loading && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '12px', paddingLeft: '32px' }}>
