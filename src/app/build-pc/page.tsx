@@ -946,7 +946,7 @@ export default function BuildPcPage() {
   const renderSlotRow = (slot: ComponentSlot) => {
     const Icon = slot.icon;
     const isSelected = slot.selected !== null;
-    const slotAiSuggestion = aiNextSuggestions.find(s => s.targetSlotKey === slot.key);
+    const slotAiSuggestion = aiCategoryRecommendations.find(cat => cat.categoryKey === slot.key);
 
     return (
       <div key={slot.key} className="builder-slot-card" style={{
