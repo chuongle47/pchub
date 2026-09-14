@@ -28,7 +28,7 @@ export default function Navbar() {
 
   // Cart & UI Store State
   const getItemCount = useCartStore((s) => s.getItemCount);
-  const toggleCart = useUIStore((s) => s.toggleCart);
+  const toggleCart = useCartStore((s) => s.toggleCart);
   const setChatOpen = useUIStore((s) => s.setChatOpen);
   const wishlistCount = useWishlistStore((s) => s.ids.length);
 

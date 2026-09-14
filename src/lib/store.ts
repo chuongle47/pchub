@@ -28,6 +28,9 @@ interface CartStore {
   getTotal: () => number;
   getItemCount: () => number;
   setOpen: (open: boolean) => void;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
   count: () => number;
 }
 
@@ -112,6 +115,9 @@ export const useCartStore = create<CartStore>()(
       },
 
       setOpen: (open) => set({ isOpen: open }),
+      openCart: () => set({ isOpen: true }),
+      closeCart: () => set({ isOpen: false }),
+      toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
     }),
     { name: 'pchub-cart' }
   )
@@ -239,9 +245,20 @@ interface UIStore {
 
 export const useUIStore = create<UIStore>()((set) => ({
   isCartOpen: false,
-  openCart: () => set({ isCartOpen: true }),
-  closeCart: () => set({ isCartOpen: false }),
-  toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
+  openCart: () => {
+    set({ isCartOpen: true });
+    useCartStore.getState().setOpen(true);
+  },
+  closeCart: () => {
+    set({ isCartOpen: false });
+    useCartStore.getState().setOpen(false);
+  },
+  toggleCart: () => {
+    const currentCartOpen = useCartStore.getState().isOpen;
+    const nextState = !currentCartOpen;
+    set({ isCartOpen: nextState });
+    useCartStore.getState().setOpen(nextState);
+  },
   isChatOpen: false,
   setChatOpen: (open) => set({ isChatOpen: open }),
 }));
