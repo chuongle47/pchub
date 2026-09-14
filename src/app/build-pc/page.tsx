@@ -940,7 +940,18 @@ export default function BuildPcPage() {
       });
     }
 
-    return list.slice(0, 3);
+    // 8. Case Recommendation (if not selected)
+    if (!components.find(s => s.key === 'case')?.selected) {
+      list.push({
+        categoryKey: 'case',
+        categoryTitle: 'CASE - VỎ MÁY TÍNH',
+        badge: 'Kính Cường Lực & Airflow Đỉnh Cao',
+        explanation: 'Vỏ máy tính (Case) bảo vệ toàn bộ phần cứng và điều hòa luồng khí. AI gợi ý các dòng Case chuẩn Mid-Tower/ATX rộng rãi, thiết kế mặt kính cường lực sang trọng, hỗ trợ lắp tản AIO 360mm ở nóc và cân tốt các dòng Card màn hình kích thước lớn.',
+        products: getCandidateProducts('case', 3),
+      });
+    }
+
+    return list;
   }, [cpuSelected, mainboardSelected, ramSelected, gpuSelected, psuSelected, components, totalTdp]);
 
   const renderSlotRow = (slot: ComponentSlot) => {
