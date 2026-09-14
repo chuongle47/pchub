@@ -175,11 +175,11 @@ export default function CategoryDropdownMenu() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
+                    padding: '7.5px 10px',
+                    borderRadius: '7px',
                     textDecoration: 'none',
-                    color: '#0f172a',
-                    fontSize: '13.5px',
+                    color: '#1e293b',
+                    fontSize: '12.5px',
                     fontWeight: 600,
                     transition: 'all 0.15s ease',
                     background: 'transparent',
@@ -187,16 +187,16 @@ export default function CategoryDropdownMenu() {
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = '#eff6ff';
                     e.currentTarget.style.color = '#2563eb';
-                    e.currentTarget.style.transform = 'translateX(3px)';
+                    e.currentTarget.style.transform = 'translateX(2px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#0f172a';
+                    e.currentTarget.style.color = '#1e293b';
                     e.currentTarget.style.transform = 'none';
                   }}
                 >
                   <span>{cat.name}</span>
-                  <ChevronRight size={15} color="#94a3b8" />
+                  <ChevronRight size={14} color="#94a3b8" />
                 </Link>
               ))
             ) : (
