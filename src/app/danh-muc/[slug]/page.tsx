@@ -88,43 +88,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             <CategoryDropdownMenu />
-            <Link
-              href="/danh-muc/tat-ca"
-              style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                background: slug === 'tat-ca' ? '#2563eb' : 'rgba(255,255,255,0.1)',
-                color: slug === 'tat-ca' ? '#fff' : '#cbd5e1',
-                border: `1px solid ${slug === 'tat-ca' ? '#3b82f6' : 'rgba(255,255,255,0.15)'}`,
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Tất cả
-            </Link>
-            {categories.map(cat => (
-              <Link
-                key={cat.id}
-                href={`/danh-muc/${cat.slug}`}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  background: cat.slug === slug ? '#2563eb' : 'rgba(255,255,255,0.1)',
-                  color: cat.slug === slug ? '#fff' : '#cbd5e1',
-                  border: `1px solid ${cat.slug === slug ? '#3b82f6' : 'rgba(255,255,255,0.15)'}`,
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {cat.name.split(' - ')[0].split(' (')[0]}
-              </Link>
-            ))}
           </div>
         </div>
 
