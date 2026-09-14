@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeftRight, Check, ChevronRight, X, Trash2, Plus, ShoppingCart, Search, Sparkles } from 'lucide-react';
 import { useCompareStore, useCartStore, getCompareCategoryKey } from '@/lib/store';
 import { formatVnd, getProductImage } from '@/lib/product-ui';
+import seed from '@/lib/seed.json';
 
 // Bảng dịch tên thông số kỹ thuật sang tiếng Việt
 const SPEC_KEY_VI: Record<string, string> = {
@@ -263,24 +264,39 @@ export default function CompareClient() {
   const currentCategoryParam = products[0]?.categorySlug || currentCategoryName || '';
   const currentCategoryKey = products[0] ? getCompareCategoryKey(products[0].category) : null;
 
-  // Fetch suggestions in selector modal (supports live search & category filter locked to current category if set)
   useEffect(() => {
-    const catToUse = currentCategoryKey ? '' : (modalCategory || currentCategoryParam || activeCategory || '');
+    if (isSelectorOpen && currentCategoryKey) {
+      setModalCategory(currentCategoryKey);
+    }
+  }, [isSelectorOpen, currentCategoryKey]);
+
+  // Fetch suggestions in selector modal (supports live search & category filter)
+  useEffect(() => {
+    const catToUse = modalCategory || currentCategoryParam || currentCategoryKey || activeCategory || '';
     const timer = setTimeout(async () => {
       setModalLoading(true);
       try {
-        let endpoint = `/api/products?limit=30`;
+        let endpoint = `/api/products?limit=50`;
         if (modalSearch.trim()) {
           endpoint += `&search=${encodeURIComponent(modalSearch.trim())}`;
-        } else if (catToUse) {
+        }
+        if (catToUse) {
           endpoint += `&category=${encodeURIComponent(catToUse)}`;
         }
-        const res = await fetch(endpoint);
-        const data = await res.json();
+        let res = await fetch(endpoint);
+        let data = await res.json();
+
+        // Fallback: if category filter returned no items, fetch broader list and filter by category key
+        if ((!data.products || data.products.length === 0) && catToUse) {
+          const fallbackEndpoint = `/api/products?limit=60${modalSearch.trim() ? `&search=${encodeURIComponent(modalSearch.trim())}` : ''}`;
+          res = await fetch(fallbackEndpoint);
+          data = await res.json();
+        }
+
         if (data.products && Array.isArray(data.products)) {
-          const currentSlugs = new Set(products.map((p) => p.slug));
+          const currentSlugs = new Set(products.map((p) => p.slug || p.id));
           let mapped: CompareProduct[] = data.products
-            .filter((p: any) => !currentSlugs.has(p.slug))
+            .filter((p: any) => !currentSlugs.has(p.slug) && !currentSlugs.has(p.id))
             .map((p: any) => ({
               id: p.id,
               slug: p.slug,
@@ -295,11 +311,36 @@ export default function CompareClient() {
               warrantyMonths: 36,
             }));
 
-          // Lock suggestions to current category key if comparing existing products
-          if (currentCategoryKey) {
-            mapped = mapped.filter(
-              (p) => getCompareCategoryKey(p.category) === currentCategoryKey
-            );
+          // Lock suggestions to target category key if comparing existing products
+          const targetKey = currentCategoryKey || getCompareCategoryKey(modalCategory);
+          if (targetKey) {
+            mapped = mapped.filter((p) => {
+              const pKey = getCompareCategoryKey(p.category) || getCompareCategoryKey(p.categorySlug) || getCompareCategoryKey(p.name);
+              return pKey === targetKey;
+            });
+          }
+
+          // Fallback: if API returned no items for targetKey, fill from seed catalog
+          if (mapped.length === 0 && targetKey && seed && seed.products) {
+            const seedMatched: CompareProduct[] = seed.products
+              .filter((p: any) => {
+                const pKey = getCompareCategoryKey(p.category_name) || getCompareCategoryKey(p.category_id) || getCompareCategoryKey(p.name);
+                return pKey === targetKey && !currentSlugs.has(p.slug) && !currentSlugs.has(p.id);
+              })
+              .map((p: any) => ({
+                id: p.id,
+                slug: p.slug,
+                name: p.name,
+                price: Number(p.price),
+                stock: Number(p.stock ?? 15),
+                brand: p.brand_name || 'Thương hiệu',
+                category: p.category_name || 'Danh mục',
+                categorySlug: p.category_slug || p.category_id,
+                image: getProductImage({ name: p.name, categoryName: p.category_name, image_url: p.image_url }),
+                specs: p.specs || {},
+                warrantyMonths: 36,
+              }));
+            mapped = seedMatched;
           }
 
           setSuggestions(mapped);
@@ -312,7 +353,7 @@ export default function CompareClient() {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam, currentCategoryKey]);
+  }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam, currentCategoryKey, isSelectorOpen]);
 
   const handleAddProductToCompare = (slug: string, categoryName?: string, alternateId?: string) => {
     const res = addCompare(slug, categoryName, alternateId);

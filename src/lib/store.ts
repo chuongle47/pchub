@@ -306,15 +306,15 @@ export interface ToggleCompareResult {
 export function getCompareCategoryKey(cat?: string | null): string {
   if (!cat) return '';
   const c = cat.toLowerCase().trim();
-  if (c.includes('cpu') || c.includes('vi xử lý')) return 'cpu';
-  if (c.includes('vga') || c.includes('gpu') || c.includes('card màn hình')) return 'vga';
-  if (c.includes('ram') || c.includes('bộ nhớ')) return 'ram';
-  if (c.includes('main') || c.includes('bo mạch')) return 'mainboard';
-  if (c.includes('ssd') || c.includes('hdd') || c.includes('ổ đĩa') || c.includes('cứng') || c.includes('storage')) return 'storage';
-  if (c.includes('psu') || c.includes('nguồn')) return 'psu';
-  if (c.includes('case') || c.includes('vỏ')) return 'case';
-  if (c.includes('tản') || c.includes('cooling')) return 'cooling';
-  if (c.includes('màn') || c.includes('monitor')) return 'monitor';
+  if (c.includes('cpu') || c.includes('vi xử lý') || c.includes('intel') || c.includes('ryzen') || c === 'cpu') return 'cpu';
+  if (c.includes('vga') || c.includes('gpu') || c.includes('card màn hình') || c.includes('card đồ họa') || c.includes('geforce') || c.includes('radeon') || c === 'vga') return 'vga';
+  if (c.includes('ram') || c.includes('bộ nhớ') || c === 'ram') return 'ram';
+  if (c.includes('main') || c.includes('bo mạch') || c.includes('motherboard') || c === 'mainboard') return 'mainboard';
+  if (c.includes('ssd') || c.includes('hdd') || c.includes('ổ đĩa') || c.includes('ổ cứng') || c.includes('cứng') || c.includes('storage') || c === 'storage') return 'storage';
+  if (c.includes('psu') || c.includes('nguồn') || c.includes('power supply') || c === 'psu') return 'psu';
+  if (c.includes('case') || c.includes('vỏ') || c.includes('thùng máy') || c === 'case') return 'case';
+  if (c.includes('tản') || c.includes('cooling') || c.includes('cooler') || c === 'cooling') return 'cooling';
+  if (c.includes('màn') || c.includes('monitor') || c === 'monitor') return 'monitor';
   return c;
 }
 
