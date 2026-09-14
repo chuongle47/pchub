@@ -26,8 +26,13 @@ const CATEGORY_ITEMS: CategoryMenuItem[] = [
   { name: 'Tai Nghe & Audio', slug: 'headset', icon: '🎧', desc: 'Tai nghe Gaming 7.1, Loa soundbar' },
 ];
 
-export default function CategoryDropdownMenu() {
+export interface CategoryDropdownMenuProps {
+  variant?: 'dark' | 'light';
+}
+
+export default function CategoryDropdownMenu({ variant = 'dark' }: CategoryDropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -48,34 +53,50 @@ export default function CategoryDropdownMenu() {
     item.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const isDark = variant === 'dark';
+
   return (
     <div ref={menuRef} style={{ position: 'relative', display: 'inline-block' }}>
       {/* Category Dropdown Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          padding: '8px 14px',
-          background: isOpen ? '#ffffff' : '#f8fafc',
-          color: '#0f172a',
-          border: `1px solid ${isOpen ? '#2563eb' : '#cbd5e1'}`,
-          borderRadius: '10px',
+          gap: '6px',
+          padding: '6px 10px',
+          background: isDark
+            ? isOpen || isHovered
+              ? 'rgba(255,255,255,0.1)'
+              : 'transparent'
+            : isOpen
+            ? '#ffffff'
+            : '#f8fafc',
+          color: isDark
+            ? isOpen || isHovered
+              ? '#ffffff'
+              : 'rgba(255,255,255,0.85)'
+            : '#0f172a',
+          border: isDark
+            ? '1px solid transparent'
+            : `1px solid ${isOpen ? '#2563eb' : '#cbd5e1'}`,
+          borderRadius: '7px',
           fontSize: '13px',
-          fontWeight: 700,
+          fontWeight: 500,
           cursor: 'pointer',
-          boxShadow: isOpen ? '0 0 0 3px rgba(37,99,235,0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
-          transition: 'all 0.2s ease',
+          boxShadow: 'none',
+          transition: 'all 0.15s ease',
           whiteSpace: 'nowrap',
         }}
       >
-        <Menu size={17} color="#2563eb" />
+        <Menu size={16} color={isDark ? (isOpen || isHovered ? '#ffffff' : 'rgba(255,255,255,0.85)') : '#2563eb'} />
         <span>Danh mục sản phẩm</span>
         <ChevronDown
-          size={15}
-          color="#64748b"
+          size={14}
+          color={isDark ? 'rgba(255,255,255,0.6)' : '#64748b'}
           style={{
             transition: 'transform 0.2s ease',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',

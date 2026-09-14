@@ -87,7 +87,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <CategoryDropdownMenu />
+            <CategoryDropdownMenu variant="light" />
           </div>
         </div>
 
