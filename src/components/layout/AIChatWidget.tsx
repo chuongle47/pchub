@@ -305,8 +305,7 @@ export default function AIChatWidget() {
                     )}
                   </div>
                 </div>
-              );
-            })}
+              ))}
 
             {loading && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '12px', paddingLeft: '32px' }}>
