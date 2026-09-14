@@ -172,7 +172,15 @@ export default function ProductCard({
     if (onCompare) {
       onCompare(slug || id);
     } else {
-      toggleGlobalCompare(slug || id, category || brandName || brand, id);
+      const res = toggleGlobalCompare(slug || id, category || brandName || brand, id);
+      if (res && !res.success && res.categoryMismatch) {
+        const confirmSwitch = window.confirm(
+          `Chỉ có thể so sánh sản phẩm trong cùng danh mục.\n\nDanh sách hiện tại đang so sánh danh mục: "${res.activeCategory || 'khác'}".\n\nBạn có muốn XÓA danh sách cũ để chuyển sang so sánh danh mục "${category || 'mới'}" không?`
+        );
+        if (confirmSwitch) {
+          toggleGlobalCompare(slug || id, category || brandName || brand, id, true);
+        }
+      }
     }
   };
 

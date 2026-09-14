@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeftRight, Check, ChevronRight, X, Trash2, Plus, ShoppingCart, Search, Sparkles } from 'lucide-react';
-import { useCompareStore, useCartStore } from '@/lib/store';
+import { useCompareStore, useCartStore, getCompareCategoryKey } from '@/lib/store';
 import { formatVnd, getProductImage } from '@/lib/product-ui';
 
 // Bảng dịch tên thông số kỹ thuật sang tiếng Việt
@@ -230,8 +230,24 @@ export default function CompareClient() {
             warrantyMonths: 36,
           }));
 
-          setProducts(mapped);
-          setSpecKeys(data.specKeys || [...new Set(mapped.flatMap((m) => Object.keys(m.specs)))]);
+          // Filtering: Enforce same-category comparison only!
+          if (mapped.length > 0) {
+            const firstCategoryKey = getCompareCategoryKey(mapped[0].category);
+            const sameCatMapped = mapped.filter(
+              (p) => getCompareCategoryKey(p.category) === firstCategoryKey
+            );
+
+            setProducts(sameCatMapped);
+            setSpecKeys(data.specKeys || [...new Set(sameCatMapped.flatMap((m) => Object.keys(m.specs)))]);
+
+            if (sameCatMapped.length < mapped.length) {
+              const cleanSlugs = sameCatMapped.map((p) => p.slug || p.id);
+              router.replace(`/so-sanh?ids=${encodeURIComponent(cleanSlugs.join(','))}`);
+            }
+          } else {
+            setProducts([]);
+            setSpecKeys([]);
+          }
         }
       } catch (err) {
         console.error('Failed to load compare products:', err);
@@ -241,18 +257,19 @@ export default function CompareClient() {
     }
 
     fetchCompareData();
-  }, [urlIdsParam, items]);
+  }, [urlIdsParam, items, router]);
 
   const currentCategoryName = activeCategory || products[0]?.category || null;
   const currentCategoryParam = products[0]?.categorySlug || currentCategoryName || '';
+  const currentCategoryKey = products[0] ? getCompareCategoryKey(products[0].category) : null;
 
-  // Fetch suggestions in selector modal (supports live search & category filter)
+  // Fetch suggestions in selector modal (supports live search & category filter locked to current category if set)
   useEffect(() => {
-    const catToUse = modalCategory || currentCategoryParam || activeCategory || '';
+    const catToUse = currentCategoryKey ? '' : (modalCategory || currentCategoryParam || activeCategory || '');
     const timer = setTimeout(async () => {
       setModalLoading(true);
       try {
-        let endpoint = `/api/products?limit=24`;
+        let endpoint = `/api/products?limit=30`;
         if (modalSearch.trim()) {
           endpoint += `&search=${encodeURIComponent(modalSearch.trim())}`;
         } else if (catToUse) {
@@ -262,7 +279,7 @@ export default function CompareClient() {
         const data = await res.json();
         if (data.products && Array.isArray(data.products)) {
           const currentSlugs = new Set(products.map((p) => p.slug));
-          const mapped: CompareProduct[] = data.products
+          let mapped: CompareProduct[] = data.products
             .filter((p: any) => !currentSlugs.has(p.slug))
             .map((p: any) => ({
               id: p.id,
@@ -277,6 +294,14 @@ export default function CompareClient() {
               specs: p.specs || {},
               warrantyMonths: 36,
             }));
+
+          // Lock suggestions to current category key if comparing existing products
+          if (currentCategoryKey) {
+            mapped = mapped.filter(
+              (p) => getCompareCategoryKey(p.category) === currentCategoryKey
+            );
+          }
+
           setSuggestions(mapped);
         }
       } catch (err) {
@@ -287,10 +312,14 @@ export default function CompareClient() {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam]);
+  }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam, currentCategoryKey]);
 
   const handleAddProductToCompare = (slug: string, categoryName?: string, alternateId?: string) => {
-    addCompare(slug, categoryName, alternateId);
+    const res = addCompare(slug, categoryName, alternateId);
+    if (res && !res.success && res.categoryMismatch) {
+      alert(`Chỉ được so sánh các sản phẩm trong cùng danh mục (${res.activeCategory})!`);
+      return;
+    }
     const existingSlugs = products.map((p) => p.slug || p.id);
     if (!existingSlugs.includes(slug)) {
       const newSlugs = [...existingSlugs, slug];

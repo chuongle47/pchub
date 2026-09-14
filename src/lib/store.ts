@@ -297,16 +297,34 @@ export const useOrderStore = create<OrderStore>()(
 // ==================== COMPARE STORE ====================
 export interface ToggleCompareResult {
   success: boolean;
+  categoryMismatch?: boolean;
   switchedCategory?: boolean;
   notice?: string;
+  activeCategory?: string | null;
+}
+
+export function getCompareCategoryKey(cat?: string | null): string {
+  if (!cat) return '';
+  const c = cat.toLowerCase().trim();
+  if (c.includes('cpu') || c.includes('vi xử lý')) return 'cpu';
+  if (c.includes('vga') || c.includes('gpu') || c.includes('card màn hình')) return 'vga';
+  if (c.includes('ram') || c.includes('bộ nhớ')) return 'ram';
+  if (c.includes('main') || c.includes('bo mạch')) return 'mainboard';
+  if (c.includes('ssd') || c.includes('hdd') || c.includes('ổ đĩa') || c.includes('cứng') || c.includes('storage')) return 'storage';
+  if (c.includes('psu') || c.includes('nguồn')) return 'psu';
+  if (c.includes('case') || c.includes('vỏ')) return 'case';
+  if (c.includes('tản') || c.includes('cooling')) return 'cooling';
+  if (c.includes('màn') || c.includes('monitor')) return 'monitor';
+  return c;
 }
 
 interface CompareStore {
   items: string[];
   activeCategory: string | null;
-  addCompare: (slug: string, categoryName?: string, alternateId?: string) => ToggleCompareResult;
+  activeCategoryKey: string | null;
+  addCompare: (slug: string, categoryName?: string, alternateId?: string, forceSwitch?: boolean) => ToggleCompareResult;
   removeCompare: (slug: string, alternateId?: string) => void;
-  toggleCompare: (slug: string, categoryName?: string, alternateId?: string) => ToggleCompareResult;
+  toggleCompare: (slug: string, categoryName?: string, alternateId?: string, forceSwitch?: boolean) => ToggleCompareResult;
   clearCompare: () => void;
 }
 
@@ -315,10 +333,12 @@ export const useCompareStore = create<CompareStore>()(
     (set, get) => ({
       items: [],
       activeCategory: null,
+      activeCategoryKey: null,
 
-      addCompare: (slug, categoryName, alternateId) => {
+      addCompare: (slug, categoryName, alternateId, forceSwitch = false) => {
         const currentItems = get().items;
-        const cat = categoryName ? categoryName.trim() : null;
+        const catName = categoryName ? categoryName.trim() : null;
+        const incomingKey = getCompareCategoryKey(catName);
 
         // If already in list by slug or alternateId
         const alreadyExists = currentItems.includes(slug) || (alternateId ? currentItems.includes(alternateId) : false);
@@ -326,12 +346,40 @@ export const useCompareStore = create<CompareStore>()(
           return { success: true, notice: 'Sản phẩm đã có trong danh sách so sánh' };
         }
 
+        const currentActiveKey = get().activeCategoryKey || getCompareCategoryKey(get().activeCategory);
+
+        // Enforce same category constraint if list already has items
+        if (currentItems.length > 0 && currentActiveKey && incomingKey && currentActiveKey !== incomingKey) {
+          if (forceSwitch) {
+            set({
+              items: [slug],
+              activeCategory: catName,
+              activeCategoryKey: incomingKey,
+            });
+            return {
+              success: true,
+              switchedCategory: true,
+              notice: `Đã chuyển sang so sánh danh mục "${catName || 'mới'}"`,
+            };
+          }
+
+          return {
+            success: false,
+            categoryMismatch: true,
+            activeCategory: get().activeCategory,
+            notice: `Chỉ được so sánh các sản phẩm trong cùng danh mục (${get().activeCategory || 'hiện tại'})`,
+          };
+        }
+
         // Append to compare list up to 4 items
         if (currentItems.length < 4) {
           const newItems = [...currentItems, slug];
+          const newCatName = get().activeCategory || catName;
+          const newCatKey = currentActiveKey || incomingKey;
           set({
             items: newItems,
-            activeCategory: get().activeCategory || cat,
+            activeCategory: newCatName,
+            activeCategoryKey: newCatKey,
           });
           return {
             success: true,
@@ -352,21 +400,22 @@ export const useCompareStore = create<CompareStore>()(
         set({
           items: remaining,
           activeCategory: remaining.length === 0 ? null : get().activeCategory,
+          activeCategoryKey: remaining.length === 0 ? null : get().activeCategoryKey,
         });
       },
 
-      toggleCompare: (slug, categoryName, alternateId) => {
+      toggleCompare: (slug, categoryName, alternateId, forceSwitch = false) => {
         const exists = get().items.includes(slug) || (alternateId ? get().items.includes(alternateId) : false);
         if (exists) {
           get().removeCompare(slug, alternateId);
           return { success: true, notice: 'Đã bỏ sản phẩm khỏi so sánh' };
         } else {
-          return get().addCompare(slug, categoryName, alternateId);
+          return get().addCompare(slug, categoryName, alternateId, forceSwitch);
         }
       },
 
       clearCompare: () => {
-        set({ items: [], activeCategory: null });
+        set({ items: [], activeCategory: null, activeCategoryKey: null });
       },
     }),
     { name: 'pchub-compare' }
