@@ -352,6 +352,74 @@ export default function BuildPcPage() {
     setComponents(prev => prev.map(slot => slot.key === key ? { ...slot, selected: null, quantity: 1 } : slot));
   };
 
+  const CATEGORY_ID_MAP: Record<string, string> = {
+    cpu: 'c1000000-0000-0000-0000-000000000001',
+    mainboard: 'c1000000-0000-0000-0000-000000000002',
+    ram: 'c1000000-0000-0000-0000-000000000003',
+    gpu: 'c1000000-0000-0000-0000-000000000004',
+    storage: 'c1000000-0000-0000-0000-000000000005',
+    psu: 'c1000000-0000-0000-0000-000000000006',
+    case: 'c1000000-0000-0000-0000-000000000007',
+    cooling: 'c1000000-0000-0000-0000-000000000008',
+    monitor: 'c1000000-0000-0000-0000-000000000009',
+    gear: 'c1000000-0000-0000-0000-000000000010',
+  };
+
+  function formatComponentSpecs(slotKey: string, product: any): string {
+    if (!product) return 'Chính hãng | Bảo hành 36 tháng';
+    const specs = product.specs || {};
+    const slot = (slotKey || '').toLowerCase();
+
+    if (typeof specs === 'string' && specs.trim().length > 0) {
+      return specs;
+    }
+
+    const parts: string[] = [];
+
+    if (slot === 'ram' || slot === 'memory') {
+      if (specs.ram_type || specs.type) parts.push(String(specs.ram_type || specs.type));
+      if (specs.kit) parts.push(String(specs.kit));
+      else if (specs.capacity_gb || specs.capacity) parts.push(`${specs.capacity_gb || specs.capacity}GB`);
+      if (specs.bus_speed_mhz || specs.bus_mhz || specs.speed) parts.push(`${specs.bus_speed_mhz || specs.bus_mhz || specs.speed}MHz`);
+      if (specs.cas_latency || specs.timing) parts.push(String(specs.cas_latency || specs.timing));
+    } else if (slot === 'cpu') {
+      if (specs.socket) parts.push(`Socket ${specs.socket}`);
+      if (specs.core_count || specs.cores) parts.push(`${specs.core_count || specs.cores} Nhân ${specs.thread_count || specs.threads || ''} Luồng`.trim());
+      if (specs.cache || specs.cache_mb) parts.push(`${specs.cache || `${specs.cache_mb}MB`} Cache`);
+      if (specs.tdp_watt || specs.tdp) parts.push(`${specs.tdp_watt || specs.tdp}W TDP`);
+    } else if (slot === 'mainboard' || slot === 'mb') {
+      if (specs.socket) parts.push(`Socket ${specs.socket}`);
+      if (specs.ram_type) parts.push(`RAM ${specs.ram_type}`);
+      if (specs.chipset) parts.push(`Chipset ${specs.chipset}`);
+      if (specs.form_factor) parts.push(String(specs.form_factor));
+    } else if (slot === 'gpu' || slot === 'vga') {
+      if (specs.vram_gb || specs.vram) parts.push(`${specs.vram_gb || specs.vram}GB ${specs.memory_type || 'GDDR6'}`);
+      if (specs.bus_width || specs.bus) parts.push(`${specs.bus_width || specs.bus}`);
+      if (specs.cooling) parts.push(String(specs.cooling));
+    } else if (slot === 'storage' || slot === 'ssd' || slot === 'hdd') {
+      if (specs.capacity || specs.capacity_gb) parts.push(`${specs.capacity || `${specs.capacity_gb}GB`}`);
+      if (specs.read_speed_mbps) parts.push(`Đọc ${specs.read_speed_mbps}MB/s`);
+      if (specs.write_speed_mbps) parts.push(`Ghi ${specs.write_speed_mbps}MB/s`);
+    } else if (slot === 'psu' || slot === 'power') {
+      if (specs.wattage || specs.watt) parts.push(`${specs.wattage || specs.watt}W`);
+      if (specs.efficiency || specs.rating) parts.push(String(specs.efficiency || specs.rating));
+      if (specs.modular) parts.push(String(specs.modular));
+    } else if (slot === 'cooling' || slot === 'cooler') {
+      if (specs.cooler_type || specs.type) parts.push(String(specs.cooler_type || specs.type));
+      if (specs.radiator_size_mm) parts.push(`${specs.radiator_size_mm}mm`);
+      if (specs.fan_size_mm) parts.push(`Fan ${specs.fan_size_mm}mm`);
+    }
+
+    if (parts.length === 0 && typeof specs === 'object') {
+      Object.entries(specs)
+        .filter(([k]) => !['tdp', 'tdp_watt', 'integrated_gpu', 'id'].includes(k))
+        .slice(0, 3)
+        .forEach(([k, v]) => parts.push(`${k.replace(/_/g, ' ').toUpperCase()}: ${Array.isArray(v) ? v.join('/') : v}`));
+    }
+
+    return parts.length > 0 ? parts.join(' | ') : 'Chính hãng | Bảo hành 36 tháng';
+  }
+
   const handleSelectProductForSlot = (product: any) => {
     if (!activeModalSlotKey) return;
 
@@ -361,40 +429,7 @@ export default function BuildPcPage() {
     else if (activeModalSlotKey === 'gpu') tdp = 250;
     else if (activeModalSlotKey === 'cpu') tdp = 125;
 
-    let specsStr = 'Chính hãng | Bảo hành 36 tháng';
-    if (product.specs && typeof product.specs === 'object') {
-      const parts: string[] = [];
-      if (product.specs.socket) parts.push(`Socket ${product.specs.socket}`);
-      if (product.specs.chipset) parts.push(`Chipset ${product.specs.chipset}`);
-      if (product.specs.cores || product.specs.core_count) {
-        const c = product.specs.cores || product.specs.core_count;
-        const t = product.specs.threads || product.specs.thread_count || c;
-        parts.push(`${c} Nhân ${t} Luồng`);
-      }
-      if (product.specs.clock_ghz || product.specs.boost_clock_ghz) {
-        parts.push(`Xung ${product.specs.boost_clock_ghz || product.specs.clock_ghz}GHz`);
-      }
-      if (product.specs.capacity || product.specs.capacity_gb) {
-        parts.push(`Dung lượng: ${product.specs.capacity || `${product.specs.capacity_gb}GB`}`);
-      }
-      if (product.specs.bus_mhz || product.specs.speed) {
-        parts.push(`Bus: ${product.specs.bus_mhz || product.specs.speed}MHz`);
-      }
-      if (product.specs.vram_gb) {
-        parts.push(`VRAM: ${product.specs.vram_gb}GB ${product.specs.memory_type || ''}`.trim());
-      }
-      if (product.specs.wattage) parts.push(`Công suất: ${product.specs.wattage}W`);
-      if (product.specs.efficiency) parts.push(`Chuẩn: ${product.specs.efficiency}`);
-
-      if (parts.length === 0) {
-        Object.entries(product.specs)
-          .filter(([k]) => k !== 'tdp' && k !== 'tdp_watt' && k !== 'integrated_gpu')
-          .slice(0, 3)
-          .forEach(([k, v]) => parts.push(`${k.toUpperCase()}: ${Array.isArray(v) ? v.join('/') : v}`));
-      }
-      if (parts.length > 0) specsStr = parts.join(' | ');
-    }
-
+    const specsStr = formatComponentSpecs(activeModalSlotKey, product);
     const fallbackImg = CATEGORY_DEFAULT_IMAGE[activeModalSlotKey] || '/images/cpu-box.jpg';
     const newComponent: SelectedComponent = {
       id: product.id,
@@ -418,16 +453,19 @@ export default function BuildPcPage() {
 
   const handleAiAutoSelectProduct = (targetSlotKey: string) => {
     const slotLower = targetSlotKey.toLowerCase();
+    const targetCatId = CATEGORY_ID_MAP[slotLower];
     
-    // Find products from seed matching category/slot
+    // Find products from seed matching category/slot strictly
     const matchingProducts = seed.products.filter(p => {
-      const cat = (p.category_id || '').toLowerCase();
+      const catId = (p.category_id || '').toLowerCase();
       const slug = (p.slug || '').toLowerCase();
       const name = (p.name || '').toLowerCase();
-      return slug.includes(slotLower) || cat.includes(slotLower) || name.includes(slotLower);
+      return (targetCatId && catId === targetCatId) || slug.includes(slotLower) || name.includes(slotLower);
     });
 
-    const candidates = matchingProducts.length > 0 ? matchingProducts : seed.products;
+    const candidates = matchingProducts.length > 0 
+      ? matchingProducts 
+      : seed.products.filter(p => (targetCatId ? p.category_id === targetCatId : true));
 
     // Sort by AI compatibility score (highest compatible product first)
     const sortedCompat = [...candidates].sort((a, b) => {
@@ -447,25 +485,7 @@ export default function BuildPcPage() {
       else if (slotLower === 'gpu') tdp = 250;
       else if (slotLower === 'cpu') tdp = 125;
 
-      let specsStr = 'Chính hãng | Bảo hành 36 tháng';
-      if (specsAny && typeof specsAny === 'object') {
-        const parts: string[] = [];
-        if (specsAny.socket) parts.push(`Socket ${specsAny.socket}`);
-        if (specsAny.chipset) parts.push(`Chipset ${specsAny.chipset}`);
-        if (specsAny.cores || specsAny.core_count) {
-          const c = specsAny.cores || specsAny.core_count;
-          const t = specsAny.threads || specsAny.thread_count || c;
-          parts.push(`${c} Nhân ${t} Luồng`);
-        }
-        if (specsAny.capacity || specsAny.capacity_gb) {
-          parts.push(`Dung lượng: ${specsAny.capacity || `${specsAny.capacity_gb}GB`}`);
-        }
-        if (specsAny.bus_mhz || specsAny.speed) {
-          parts.push(`Bus: ${specsAny.bus_mhz || specsAny.speed}MHz`);
-        }
-        if (parts.length > 0) specsStr = parts.join(' | ');
-      }
-
+      const specsStr = formatComponentSpecs(targetSlotKey, selectedProduct);
       const fallbackImg = CATEGORY_DEFAULT_IMAGE[targetSlotKey] || '/images/cpu-box.jpg';
       const newComponent: SelectedComponent = {
         id: prodAny.id,
@@ -477,12 +497,13 @@ export default function BuildPcPage() {
         slug: prodAny.slug,
         sku: prodAny.sku,
         stock: prodAny.stock,
+        brand: prodAny.brand_name || prodAny.brand,
       };
 
       setComponents(prev => prev.map(s => s.key === targetSlotKey ? { ...s, selected: newComponent, quantity: 1 } : s));
 
       const slotTitle = components.find(s => s.key === targetSlotKey)?.category || 'linh kiện';
-      setNotice(`🤖 AI Smart Advisor: Đã chọn ${slotTitle} tương thích — ${selectedProduct.name}`);
+      setNotice(`🤖 AI Auto-Match: Đã chọn ${selectedProduct.name} cho ô ${slotTitle}`);
       setTimeout(() => setNotice(null), 3500);
     } else {
       setActiveModalSlotKey(targetSlotKey);
