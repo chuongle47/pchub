@@ -867,22 +867,38 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                         onClick={() => setSelectedVariantId(v.id)}
                         style={{
                           background: isSelected ? '#eff6ff' : '#ffffff',
-                          border: isSelected ? '2px solid var(--color-primary)' : '1px solid #cbd5e1',
-                          color: isSelected ? 'var(--color-primary)' : '#334155',
+                          border: isSelected ? '2px solid #2563eb' : '2px solid #cbd5e1',
+                          color: isSelected ? '#2563eb' : '#334155',
                           borderRadius: '8px',
-                          padding: '8px 12px',
+                          padding: '7px 12px',
                           fontSize: '12.5px',
-                          fontWeight: isSelected ? 800 : 600,
+                          fontWeight: 700,
                           cursor: 'pointer',
-                          transition: 'all 0.15s ease',
+                          transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
                           maxWidth: '100%',
                           textAlign: 'left',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        {isSelected && <Check size={14} color="var(--color-primary)" style={{ flexShrink: 0 }} />}
+                        <span
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: isSelected ? '#2563eb' : '#e2e8f0',
+                            color: '#ffffff',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {isSelected ? <Check size={11} strokeWidth={3} /> : null}
+                        </span>
                         <span>{v.name}</span>
                         {v.priceDelta > 0 && (
                           <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700, flexShrink: 0 }}>
