@@ -1309,12 +1309,9 @@ export default function BuildPcPage() {
                 boxShadow: '0 2px 10px rgba(37,99,235,0.05)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ background: '#2563eb', color: '#fff', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center' }}>
-                    <Sparkles size={20} />
-                  </div>
                   <div>
                     <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                      🤖 AI Smart Advisor — Vui Lòng Chọn CPU Đầu Tiên
+                      AI Smart Advisor — Vui Lòng Chọn CPU Đầu Tiên
                     </h3>
                     <p style={{ fontSize: '12.5px', color: '#475569', margin: '3px 0 0 0' }}>
                       Hãy chọn <b>CPU (Bộ Vi Xử Lý)</b> đầu tiên để AI tự động lọc và gợi ý Mainboard chuẩn Socket, Tản nhiệt đủ công suất TDP, RAM Dual-Channel và Nguồn tối ưu nhất!
@@ -1357,18 +1354,13 @@ export default function BuildPcPage() {
                   boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ background: '#2563eb', color: '#fff', borderRadius: '10px', padding: '8px', display: 'flex', alignItems: 'center' }}>
-                        <Sparkles size={20} />
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                          🤖 AI Smart Advisor — Linh Kiện Tương Thích Với {cpuSelected.name}
-                        </h3>
-                        <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
-                          Dựa trên CPU đã chọn, AI tự động phân tích thông số kỹ thuật và gợi ý các linh kiện chuẩn Socket, TDP & băng thông tối ưu nhất:
-                        </p>
-                      </div>
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                        AI Smart Advisor — Linh Kiện Tương Thích Với {cpuSelected.name}
+                      </h3>
+                      <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
+                        Dựa trên CPU đã chọn, AI tự động phân tích thông số kỹ thuật và gợi ý các linh kiện chuẩn Socket, TDP & băng thông tối ưu nhất:
+                      </p>
                     </div>
                     <span style={{
                       fontSize: '11px',
@@ -1406,7 +1398,7 @@ export default function BuildPcPage() {
                           </span>
                         </div>
                         <p style={{ fontSize: '12.5px', color: '#334155', margin: 0, lineHeight: '1.5', background: '#f8fafc', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #2563eb' }}>
-                          <span style={{ fontWeight: 700, color: '#1d4ed8' }}>💡 Giải thích chuyên sâu: </span>
+                          <span style={{ fontWeight: 700, color: '#1d4ed8' }}>Giải thích chuyên sâu: </span>
                           {cat.explanation}
                         </p>
                       </div>
@@ -1643,19 +1635,6 @@ export default function BuildPcPage() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '8px',
-                    background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    flexShrink: 0
-                  }}>
-                    <Bot size={16} />
-                  </div>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
                       AI Phân Tích Tương Thích
@@ -1676,7 +1655,6 @@ export default function BuildPcPage() {
                     background: aiReport.compatibilityScore >= 90 ? '#dcfce7' : aiReport.compatibilityScore >= 75 ? '#fef3c7' : '#fee2e2',
                     color: aiReport.compatibilityScore >= 90 ? '#15803d' : aiReport.compatibilityScore >= 75 ? '#b45309' : '#b91c1c',
                   }}>
-                    <Sparkles size={11} />
                     <span>{aiReport.compatibilityScore}/100</span>
                   </div>
                 )}
@@ -1717,7 +1695,6 @@ export default function BuildPcPage() {
                         gap: '6px',
                       }}
                     >
-                      <Sparkles size={13} />
                       Xem phân tích chi tiết
                     </button>
                   </div>
