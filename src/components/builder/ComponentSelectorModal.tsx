@@ -620,12 +620,9 @@ export default function ComponentSelectorModal({
               boxShadow: '0 2px 8px rgba(37,99,235,0.06)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ background: '#2563eb', color: '#fff', padding: '5px', borderRadius: '8px', display: 'flex' }}>
-                  <Sparkles size={16} />
-                </div>
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
-                    🤖 AI Auto-Match Đang Kích Hoạt
+                    AI Auto-Match Đang Kích Hoạt
                   </div>
                   <div style={{ fontSize: '12px', color: '#475569' }}>
                     Tự động ưu tiên xếp sản phẩm 100% tương thích Socket & Chuẩn RAM lên trên cùng với nhãn xanh <span style={{ color: '#16a34a', fontWeight: 800 }}>✓ AI Tương Thích</span>
@@ -783,7 +780,6 @@ export default function ComponentSelectorModal({
                             gap: '3px',
                             boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                           }}>
-                            <Sparkles size={10} />
                             {aiInfo.label}
                           </span>
                         )}

@@ -254,7 +254,6 @@ export default function CompatibilityReportModal({
             padding: '14px 18px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-              <Sparkles size={14} color="#2563eb" />
               <span>Nhận định từ Kỹ Sư Trưởng AI:</span>
             </div>
             <p style={{ margin: 0, fontSize: '13.5px', color: '#1e293b', lineHeight: '1.55', fontWeight: 500 }}>

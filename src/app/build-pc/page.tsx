@@ -1043,7 +1043,6 @@ export default function BuildPcPage() {
                     padding: '2px 8px',
                     borderRadius: '12px',
                   }}>
-                    <Sparkles size={12} color="#2563eb" />
                     AI gợi ý: {slotAiSuggestion.badge}
                   </div>
                 )}
@@ -1210,7 +1209,6 @@ export default function BuildPcPage() {
         }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Sparkles size={24} color="#38bdf8" />
               Xây Dựng Cấu Hình PC Tự Chọn
             </h1>
             <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 0 0' }}>
@@ -1760,7 +1758,6 @@ export default function BuildPcPage() {
                       </>
                     ) : (
                       <>
-                        <Sparkles size={14} />
                         <span>Hỏi AI Phân Tích Chuyên Sâu</span>
                       </>
                     )}
