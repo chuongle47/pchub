@@ -809,14 +809,12 @@ export default function BuildPcPage() {
     }> = [];
 
     const cpu = cpuSelected;
-    if (!cpu) {
-      return [];
-    }
-
     const mb = mainboardSelected;
     const ram = ramSelected;
     const gpu = gpuSelected;
+    const storage = components.find(s => s.key === 'storage')?.selected;
     const psu = psuSelected;
+    const pcCase = components.find(s => s.key === 'case')?.selected;
     const cooling = components.find(s => s.key === 'cooling')?.selected;
 
     const cpuText = cpu ? `${cpu.name} ${cpu.specs}`.toUpperCase() : '';
@@ -845,7 +843,6 @@ export default function BuildPcPage() {
         return (targetCatId && catId === targetCatId) || slug.includes(slotKey) || name.includes(slotKey);
       });
 
-      // Filter STRICTLY by AI compatibility first!
       const compatibleItems = items.filter(p => getProductAiCompatibilityInfo(p, slotKey, components).isCompatible);
       const candidates = compatibleItems.length > 0
         ? compatibleItems
@@ -869,78 +866,101 @@ export default function BuildPcPage() {
       });
     };
 
-    // Step 1: If Mainboard is NOT selected yet -> ONLY return Mainboard recommendation!
+    // Step 1: CPU (if not selected)
+    if (!cpu) {
+      list.push({
+        categoryKey: 'cpu',
+        categoryTitle: 'BƯỚC 1: CHỌN CPU - BỘ VI XỬ LÝ',
+        badge: 'Khuyên Dùng Hàng Đầu',
+        explanation: 'Vi xử lý đóng vai trò hạt nhân điều khiển toàn bộ dàn PC. AI gợi ý 3 dòng CPU có số nhân/luồng cao và xung nhịp Turbo ấn tượng. Hãy chọn CPU đầu tiên để bắt đầu build theo thứ tự từ trên xuống dưới!',
+        products: getCandidateProducts('cpu', 3),
+      });
+      return list;
+    }
+
+    // Step 2: Mainboard (if not selected)
     if (!mb) {
       list.push({
         categoryKey: 'mainboard',
-        categoryTitle: 'MAINBOARD - BO MẠCH CHỦ',
+        categoryTitle: 'BƯỚC 2: CHỌN MAINBOARD - BO MẠCH CHỦ',
         badge: `Chuẩn Socket ${socket}`,
-        explanation: `Dựa trên vi xử lý ${cpu.name}, Bo mạch chủ cần trang bị chuẩn Socket ${socket} và hệ thống tản nhiệt VRM cao cấp để khai thác 100% công suất CPU. Hãy chọn 1 Bo mạch chủ bên dưới để mở khóa toàn bộ gợi ý linh kiện tiếp theo!`,
+        explanation: `Dựa trên CPU ${cpu.name}, Bo mạch chủ cần trang bị chuẩn Socket ${socket} và hệ thống cấp điện VRM cao cấp để khai thác 100% công suất CPU. Chọn Bo mạch chủ để mở bước tiếp theo!`,
         products: getCandidateProducts('mainboard', 3),
       });
-      return list; // Require Mainboard selection before unlocking subsequent categories!
+      return list;
     }
 
-    // Step 2: Mainboard IS selected! Now unlock and display remaining compatible components
-    if (!cooling) {
-      const cpuTdpEst = cpu ? (cpu.tdp || 253) : 200;
-      list.push({
-        categoryKey: 'cooling',
-        categoryTitle: 'TẢN NHIỆT (COOLING)',
-        badge: cpuTdpEst >= 200 ? 'Tản AIO 360mm Khuyên Dùng' : 'Tản Nhiệt Khí Đôi',
-        explanation: `CPU ${cpu.name} tỏa nhiệt lượng khoảng ~${cpuTdpEst}W TDP khi xử lý tác vụ nặng. AI đề xuất sử dụng Tản Nhiệt Nước AIO 360mm hoặc Tản Khí 6 Ống Đồng để giữ nhiệt độ luôn dưới 68°C.`,
-        products: getCandidateProducts('cooling', 3),
-      });
-    }
-
+    // Step 3: RAM (if not selected)
     if (!ram) {
       list.push({
         categoryKey: 'ram',
-        categoryTitle: 'RAM - BỘ NHỚ TRONG',
+        categoryTitle: 'BƯỚC 3: CHỌN RAM - BỘ NHỚ TRONG',
         badge: `RAM ${ramGen} Dual-Channel`,
         explanation: `Phù hợp với Bo mạch chủ ${mb.name}, khuyên dùng Kit RAM ${ramGen} Kênh Đôi (Dual-Channel 2x16GB) để nhân đôi băng thông truyền tải dữ liệu giữa CPU và RAM.`,
         products: getCandidateProducts('ram', 3),
       });
+      return list;
     }
 
+    // Step 4: GPU (if not selected)
     if (!gpu) {
       list.push({
         categoryKey: 'gpu',
-        categoryTitle: 'VGA - CARD MÀN HÌNH',
+        categoryTitle: 'BƯỚC 4: CHỌN VGA - CARD MÀN HÌNH',
         badge: 'Đồ Họa & Game 4K/2K',
-        explanation: 'Card màn hình đảm nhận xử lý hình ảnh 3D và thuật toán AI Ray Tracing. AI đề xuất các mẫu Card đồ họa hiệu năng cao để bạn so sánh theo mức ngân sách.',
+        explanation: 'Card màn hình đảm nhận xử lý hình ảnh 3D và thuật toán Ray Tracing. AI đề xuất các mẫu Card đồ họa hiệu năng cao để bạn chọn lựa theo mức ngân sách.',
         products: getCandidateProducts('gpu', 3),
       });
+      return list;
     }
 
+    // Step 5: Storage (if not selected)
+    if (!storage) {
+      list.push({
+        categoryKey: 'storage',
+        categoryTitle: 'BƯỚC 5: CHỌN SSD - Ổ ĐĨA CỨNG NVME',
+        badge: 'PCIe Gen 4.0 SuperSpeed',
+        explanation: 'Ổ cứng SSD NVMe PCIe 4.0 cung cấp tốc độ đọc ghi vượt trội (lên tới 7000MB/s), giúp khởi động hệ điều hành Windows trong vài giây và tải game nhanh chóng.',
+        products: getCandidateProducts('storage', 3),
+      });
+      return list;
+    }
+
+    // Step 6: PSU (if not selected)
     if (!psu) {
       list.push({
         categoryKey: 'psu',
-        categoryTitle: 'PSU - NGUỒN MÁY TÍNH',
+        categoryTitle: 'BƯỚC 6: CHỌN PSU - NGUỒN MÁY TÍNH',
         badge: `Đề Xuất ≥ ${recWatts}W Gold`,
-        explanation: `Với tổng công suất linh kiện ước tính ~${totalTdp}W TDP, AI khuyến nghị bộ nguồn công suất thực từ ${recWatts}W đạt chuẩn 80 Plus Gold và chuẩn PCIe 5.0 ATX 3.0 để cấp điện an toàn.`,
+        explanation: `Dựa trên tổng công suất tiêu thụ ước tính của CPU ${cpu.name} & Card đồ họa ${gpu ? gpu.name : ''} (~${totalTdp}W TDP), AI khuyến nghị bộ nguồn công suất thực từ ${recWatts}W đạt chuẩn 80 Plus Gold.`,
         products: getCandidateProducts('psu', 3),
       });
+      return list;
     }
 
-    if (!components.find(s => s.key === 'storage')?.selected) {
-      list.push({
-        categoryKey: 'storage',
-        categoryTitle: 'SSD - Ổ ĐĨA CỨNG NVME',
-        badge: 'PCIe Gen 4.0 Tốc Độ Cao',
-        explanation: 'Ổ cứng SSD NVMe PCIe 4.0 cung cấp tốc độ đọc ghi vượt trội (lên tới 7000MB/s), giúp khởi động Windows trong vài giây và tải game nhanh chóng.',
-        products: getCandidateProducts('storage', 3),
-      });
-    }
-
-    if (!components.find(s => s.key === 'case')?.selected) {
+    // Step 7: Case (if not selected)
+    if (!pcCase) {
       list.push({
         categoryKey: 'case',
-        categoryTitle: 'CASE - VỎ MÁY TÍNH',
-        badge: 'Kính Cường Lực & Airflow Đỉnh Cao',
-        explanation: 'Vỏ máy tính (Case) bảo vệ toàn bộ phần cứng và điều hòa luồng khí. AI gợi ý các dòng Case chuẩn Mid-Tower/ATX rộng rãi, hỗ trợ lắp tản AIO 360mm ở nóc và vừa vặn các dòng VGA lớn.',
+        categoryTitle: 'BƯỚC 7: CHỌN CASE - VỎ MÁY TÍNH',
+        badge: 'Mid-Tower & Airflow Đỉnh Cao',
+        explanation: 'Vỏ máy tính (Case) bảo vệ toàn bộ phần cứng và điều hòa luồng khí. AI gợi ý các dòng Case chuẩn Mid-Tower/ATX rộng rãi, hỗ trợ lắp tản AIO 360mm ở nóc và vừa vặn các dòng Card màn hình lớn.',
         products: getCandidateProducts('case', 3),
       });
+      return list;
+    }
+
+    // Step 8: Cooling (if not selected)
+    if (!cooling) {
+      const cpuTdpEst = cpu ? (cpu.tdp || 253) : 200;
+      list.push({
+        categoryKey: 'cooling',
+        categoryTitle: 'BƯỚC 8: CHỌN TẢN NHIỆT (COOLING)',
+        badge: cpuTdpEst >= 200 ? 'Tản AIO 360mm Khuyên Dùng' : 'Tản Nhiệt Khí Đôi',
+        explanation: `CPU ${cpu.name} tỏa nhiệt lượng khoảng ~${cpuTdpEst}W TDP khi xử lý tác vụ nặng. AI đề xuất sử dụng Tản Nhiệt Nước AIO 360mm hoặc Tản Khí 6 Ống Đồng để giữ nhiệt độ luôn dưới 68°C.`,
+        products: getCandidateProducts('cooling', 3),
+      });
+      return list;
     }
 
     return list;
