@@ -172,17 +172,17 @@ export default function CategoryGrid() {
   if (categories.length === 0) return null;
 
   return (
-    <section className="home-category-grid" style={{ background: '#ffffff', padding: '36px 0 44px' }}>
+    <section className="home-category-grid" style={{ background: '#ffffff', padding: '20px 0 24px' }}>
       <style>{`
         .category-row-container {
           display: flex;
           align-items: stretch;
-          gap: 12px;
+          gap: 10px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
-          padding: 6px 2px 16px;
+          padding: 4px 2px 8px;
         }
 
         .category-row-container::-webkit-scrollbar {
@@ -190,103 +190,79 @@ export default function CategoryGrid() {
         }
 
         .category-card {
-          flex: 0 0 142px;
-          min-width: 142px;
+          flex: 0 0 115px;
+          min-width: 115px;
           scroll-snap-align: start;
           position: relative;
-          border-radius: 16px;
+          border-radius: 12px;
           background: #ffffff;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           text-decoration: none;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
-          padding: 18px 10px 14px;
+          padding: 12px 6px 10px;
         }
 
         @media (min-width: 1220px) {
           .category-card {
             flex: 1 1 0;
-            min-width: 100px;
+            min-width: 90px;
           }
         }
 
         .category-icon-wrapper {
-          width: 52px;
-          height: 52px;
-          border-radius: 14px;
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 12px;
-          transition: all 0.3s ease;
+          margin-bottom: 6px;
+          transition: all 0.25s ease;
         }
 
         .category-card:hover .category-icon-wrapper {
-          transform: scale(1.1) translateY(-2px);
+          transform: scale(1.08) translateY(-1px);
         }
 
         .category-card-badge {
           display: inline-block;
-          padding: 2px 8px;
-          border-radius: 20px;
-          font-size: 10px;
+          padding: 1.5px 6px;
+          border-radius: 12px;
+          font-size: 9px;
           font-weight: 700;
-          margin-bottom: 8px;
+          margin-bottom: 4px;
           text-transform: uppercase;
-          letter-spacing: 0.03em;
+          letter-spacing: 0.02em;
           white-space: nowrap;
         }
 
         .category-card-title {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
           color: #0f172a;
-          margin: 0 0 6px 0;
-          line-height: 1.35;
+          margin: 0;
+          line-height: 1.25;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          height: 32px;
+          height: 28px;
           transition: color 0.2s ease;
-        }
-
-        .category-card-count {
-          font-size: 11px;
-          color: #64748b;
-          font-weight: 600;
-          margin-top: auto;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          transition: color 0.2s ease;
-        }
-
-        .category-card-arrow {
-          opacity: 0;
-          transform: translateX(-4px);
-          transition: all 0.3s ease;
-          display: inline-flex;
         }
 
         .category-card:hover {
-          transform: translateY(-5px);
+          transform: translateY(-3px);
           border-color: var(--accent-color);
-          box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.06), 0 4px 12px var(--accent-border-rgba);
+          box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.06), 0 2px 8px var(--accent-border-rgba);
         }
 
-        .category-card:hover .category-card-title,
-        .category-card:hover .category-card-count {
+        .category-card:hover .category-card-title {
           color: var(--accent-color);
-        }
-
-        .category-card:hover .category-card-arrow {
-          opacity: 1;
-          transform: translateX(0);
         }
 
         .category-nav-btn {
@@ -328,10 +304,10 @@ export default function CategoryGrid() {
       `}</style>
 
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div>
             <h2 style={{
-              fontSize: '22px',
+              fontSize: '20px',
               fontWeight: 800,
               color: '#0f172a',
               margin: 0,
@@ -339,7 +315,7 @@ export default function CategoryGrid() {
             }}>
               Danh mục linh kiện
             </h2>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '3px 0 0 0' }}>
+            <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
               Khám phá linh kiện máy tính chính hãng theo từng danh mục
             </p>
           </div>
@@ -395,7 +371,7 @@ export default function CategoryGrid() {
                     border: `1px solid ${config.borderColor}`,
                   }}
                 >
-                  <IconComponent size={26} />
+                  <IconComponent size={20} />
                 </div>
 
                 <span
@@ -412,12 +388,6 @@ export default function CategoryGrid() {
                 <h3 className="category-card-title">
                   {cat.name}
                 </h3>
-
-                <div className="category-card-count">
-                  <span className="category-card-arrow" style={{ color: config.color }}>
-                    <ArrowRight size={12} />
-                  </span>
-                </div>
               </Link>
             );
           })}
