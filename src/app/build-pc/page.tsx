@@ -824,15 +824,15 @@ export default function BuildPcPage() {
 
     let socket = 'LGA1700';
     let isIntel = true;
-    if (cpuText.includes('AM5') || cpuText.includes('7800X3D') || cpuText.includes('7600') || cpuText.includes('9700') || cpuText.includes('9800X3D')) {
+    if (cpuText.includes('AM5') || cpuText.includes('7800X3D') || cpuText.includes('7900') || cpuText.includes('7600') || cpuText.includes('9700') || cpuText.includes('9800X3D')) {
       socket = 'AM5';
       isIntel = false;
-    } else if (cpuText.includes('AM4') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D')) {
+    } else if (cpuText.includes('AM4') || cpuText.includes('ATHLON') || cpuText.includes('3000G') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D') || cpuText.includes('3600') || cpuText.includes('3200G') || cpuText.includes('3400G') || cpuText.includes('5500')) {
       socket = 'AM4';
       isIntel = false;
     }
 
-    const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650') || !mb;
+    const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650') || (!mb && (cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('AM5')));
     const ramGen = isDdr5 ? 'DDR5' : 'DDR4';
     const recWatts = Math.max(750, Math.ceil((totalTdp + 150) / 50) * 50);
 
@@ -844,13 +844,16 @@ export default function BuildPcPage() {
         const name = (p.name || '').toLowerCase();
         return (targetCatId && catId === targetCatId) || slug.includes(slotKey) || name.includes(slotKey);
       });
-      const candidates = items.length > 0 ? items : seed.products.filter(p => (targetCatId ? p.category_id === targetCatId : true));
-      const sorted = [...candidates].sort((a, b) => {
-        const compatA = getProductAiCompatibilityInfo(a, slotKey, components).isCompatible ? 1 : 0;
-        const compatB = getProductAiCompatibilityInfo(b, slotKey, components).isCompatible ? 1 : 0;
-        return compatB - compatA;
-      });
-      return sorted.slice(0, limit).map(p => {
+
+      // Filter STRICTLY by AI compatibility first!
+      const compatibleItems = items.filter(p => getProductAiCompatibilityInfo(p, slotKey, components).isCompatible);
+      const candidates = compatibleItems.length > 0
+        ? compatibleItems
+        : items.length > 0
+        ? items
+        : seed.products.filter(p => (targetCatId ? p.category_id === targetCatId : true));
+
+      return candidates.slice(0, limit).map(p => {
         const specsStr = formatComponentSpecs(slotKey, p);
         const fallbackImg = CATEGORY_DEFAULT_IMAGE[slotKey] || '/images/cpu-box.jpg';
         return {
@@ -866,80 +869,76 @@ export default function BuildPcPage() {
       });
     };
 
-    // 1. Mainboard Recommendation (if not selected)
+    // Step 1: If Mainboard is NOT selected yet -> ONLY return Mainboard recommendation!
     if (!mb) {
       list.push({
         categoryKey: 'mainboard',
         categoryTitle: 'MAINBOARD - BO MẠCH CHỦ',
         badge: `Chuẩn Socket ${socket}`,
-        explanation: `Dựa trên vi xử lý ${cpu ? cpu.name : 'đã chọn'}, Bo mạch chủ cần trang bị Socket ${socket} và hệ thống tản nhiệt VRM cao cấp để khai thác 100% công suất CPU, hỗ trợ chuẩn RAM ${ramGen} tốc độ cao.`,
+        explanation: `Dựa trên vi xử lý ${cpu.name}, Bo mạch chủ cần trang bị chuẩn Socket ${socket} và hệ thống tản nhiệt VRM cao cấp để khai thác 100% công suất CPU. Hãy chọn 1 Bo mạch chủ bên dưới để mở khóa toàn bộ gợi ý linh kiện tiếp theo!`,
         products: getCandidateProducts('mainboard', 3),
       });
+      return list; // Require Mainboard selection before unlocking subsequent categories!
     }
 
-    // 3. Cooling Recommendation (if not selected)
+    // Step 2: Mainboard IS selected! Now unlock and display remaining compatible components
     if (!cooling) {
       const cpuTdpEst = cpu ? (cpu.tdp || 253) : 200;
       list.push({
         categoryKey: 'cooling',
         categoryTitle: 'TẢN NHIỆT (COOLING)',
         badge: cpuTdpEst >= 200 ? 'Tản AIO 360mm Khuyên Dùng' : 'Tản Nhiệt Khí Đôi',
-        explanation: `CPU của bạn tỏa nhiệt lượng khoảng ~${cpuTdpEst}W TDP khi xử lý tác vụ nặng. AI đề xuất sử dụng Tản Nhiệt Nước AIO 360mm hoặc Tản Khí 6 Ống Đồng để giữ nhiệt độ luôn dưới 68°C, đảm bảo máy vận hành mượt mà lâu dài.`,
+        explanation: `CPU ${cpu.name} tỏa nhiệt lượng khoảng ~${cpuTdpEst}W TDP khi xử lý tác vụ nặng. AI đề xuất sử dụng Tản Nhiệt Nước AIO 360mm hoặc Tản Khí 6 Ống Đồng để giữ nhiệt độ luôn dưới 68°C.`,
         products: getCandidateProducts('cooling', 3),
       });
     }
 
-    // 4. RAM Recommendation (if not selected)
     if (!ram) {
       list.push({
         categoryKey: 'ram',
         categoryTitle: 'RAM - BỘ NHỚ TRONG',
         badge: `RAM ${ramGen} Dual-Channel`,
-        explanation: `Khuyên dùng Kit RAM ${ramGen} Kênh Đôi (Dual-Channel 2x16GB) để nhân đôi băng thông truyền tải dữ liệu giữa CPU và RAM, giúp chuyển cảnh trong game cực mượt và không giật lag khi mở nhiều tab trình duyệt.`,
+        explanation: `Phù hợp với Bo mạch chủ ${mb.name}, khuyên dùng Kit RAM ${ramGen} Kênh Đôi (Dual-Channel 2x16GB) để nhân đôi băng thông truyền tải dữ liệu giữa CPU và RAM.`,
         products: getCandidateProducts('ram', 3),
       });
     }
 
-    // 5. GPU Recommendation (if not selected)
     if (!gpu) {
       list.push({
         categoryKey: 'gpu',
         categoryTitle: 'VGA - CARD MÀN HÌNH',
         badge: 'Đồ Họa & Game 4K/2K',
-        explanation: 'Card màn hình đảm nhận xử lý hình ảnh 3D và thuật toán AI Ray Tracing. AI đề xuất các mẫu Card đồ họa từ RTX 4060 đến RTX 4080 Super để bạn so sánh theo mức ngân sách.',
+        explanation: 'Card màn hình đảm nhận xử lý hình ảnh 3D và thuật toán AI Ray Tracing. AI đề xuất các mẫu Card đồ họa hiệu năng cao để bạn so sánh theo mức ngân sách.',
         products: getCandidateProducts('gpu', 3),
       });
     }
 
-    // 6. PSU Recommendation (if not selected)
     if (!psu) {
       list.push({
         categoryKey: 'psu',
         categoryTitle: 'PSU - NGUỒN MÁY TÍNH',
         badge: `Đề Xuất ≥ ${recWatts}W Gold`,
-        explanation: `Với tổng công suất linh kiện ước tính ~${totalTdp}W TDP, AI khuyến nghị bộ nguồn công suất thực từ ${recWatts}W đạt chuẩn 80 Plus Gold và chuẩn PCIe 5.0 ATX 3.0 để cấp điện an toàn, chống cháy nổ.`,
+        explanation: `Với tổng công suất linh kiện ước tính ~${totalTdp}W TDP, AI khuyến nghị bộ nguồn công suất thực từ ${recWatts}W đạt chuẩn 80 Plus Gold và chuẩn PCIe 5.0 ATX 3.0 để cấp điện an toàn.`,
         products: getCandidateProducts('psu', 3),
       });
     }
 
-    // 7. Storage (if not selected)
     if (!components.find(s => s.key === 'storage')?.selected) {
       list.push({
         categoryKey: 'storage',
         categoryTitle: 'SSD - Ổ ĐĨA CỨNG NVME',
         badge: 'PCIe Gen 4.0 Tốc Độ Cao',
-        explanation: 'Ổ cứng SSD NVMe PCIe 4.0 cung cấp tốc độ đọc ghi vượt trội (lên tới 7000MB/s), giúp khởi động hệ điều hành Windows trong vài giây và tải game nhanh chóng.',
+        explanation: 'Ổ cứng SSD NVMe PCIe 4.0 cung cấp tốc độ đọc ghi vượt trội (lên tới 7000MB/s), giúp khởi động Windows trong vài giây và tải game nhanh chóng.',
         products: getCandidateProducts('storage', 3),
       });
     }
 
-    // 8. Case Recommendation (if not selected)
     if (!components.find(s => s.key === 'case')?.selected) {
       list.push({
         categoryKey: 'case',
         categoryTitle: 'CASE - VỎ MÁY TÍNH',
         badge: 'Kính Cường Lực & Airflow Đỉnh Cao',
-        explanation: 'Vỏ máy tính (Case) bảo vệ toàn bộ phần cứng và điều hòa luồng khí. AI gợi ý các dòng Case chuẩn Mid-Tower/ATX rộng rãi, thiết kế mặt kính cường lực sang trọng, hỗ trợ lắp tản AIO 360mm ở nóc và cân tốt các dòng Card màn hình kích thước lớn.',
+        explanation: 'Vỏ máy tính (Case) bảo vệ toàn bộ phần cứng và điều hòa luồng khí. AI gợi ý các dòng Case chuẩn Mid-Tower/ATX rộng rãi, hỗ trợ lắp tản AIO 360mm ở nóc và vừa vặn các dòng VGA lớn.',
         products: getCandidateProducts('case', 3),
       });
     }

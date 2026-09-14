@@ -42,26 +42,31 @@ export function getProductAiCompatibilityInfo(
   let targetSocket = '';
   if (combinedCpuText.includes('LGA1700') || combinedCpuText.includes('14700') || combinedCpuText.includes('14900') || combinedCpuText.includes('13700') || combinedCpuText.includes('13600') || combinedCpuText.includes('12700') || combinedCpuText.includes('12400')) targetSocket = 'LGA1700';
   else if (combinedCpuText.includes('AM5') || combinedCpuText.includes('7800X3D') || combinedCpuText.includes('7900') || combinedCpuText.includes('7600') || combinedCpuText.includes('9700') || combinedCpuText.includes('9800X3D') || combinedCpuText.includes('9950') || combinedCpuText.includes('B650') || combinedCpuText.includes('X670')) targetSocket = 'AM5';
-  else if (combinedCpuText.includes('AM4') || combinedCpuText.includes('5600') || combinedCpuText.includes('5700') || combinedCpuText.includes('5800X3D') || combinedCpuText.includes('B550') || combinedCpuText.includes('A520')) targetSocket = 'AM4';
+  else if (combinedCpuText.includes('AM4') || combinedCpuText.includes('ATHLON') || combinedCpuText.includes('3000G') || combinedCpuText.includes('5600') || combinedCpuText.includes('5700') || combinedCpuText.includes('5800X3D') || combinedCpuText.includes('3600') || combinedCpuText.includes('3200G') || combinedCpuText.includes('3400G') || combinedCpuText.includes('5500') || combinedCpuText.includes('B550') || combinedCpuText.includes('A520')) targetSocket = 'AM4';
   else if (combinedCpuText.includes('LGA1851') || combinedCpuText.includes('245K') || combinedCpuText.includes('265K') || combinedCpuText.includes('285K')) targetSocket = 'LGA1851';
 
   if (!targetSocket && combinedMbText) {
     if (combinedMbText.includes('LGA1700') || combinedMbText.includes('Z790') || combinedMbText.includes('B760') || combinedMbText.includes('H610')) targetSocket = 'LGA1700';
     else if (combinedMbText.includes('AM5') || combinedMbText.includes('B650') || combinedMbText.includes('X670') || combinedMbText.includes('B850')) targetSocket = 'AM5';
-    else if (combinedMbText.includes('AM4') || combinedMbText.includes('B550') || combinedMbText.includes('A520') || combinedMbText.includes('X570')) targetSocket = 'AM4';
+    else if (combinedMbText.includes('AM4') || combinedMbText.includes('B550') || combinedMbText.includes('A520') || combinedMbText.includes('X570') || combinedMbText.includes('B450')) targetSocket = 'AM4';
   }
 
   // RAM Gen detection
   let targetRam = '';
   if (combinedMbText.includes('DDR5') || combinedCpuText.includes('AM5') || combinedMbText.includes('Z790') || combinedMbText.includes('B650') || combinedMbText.includes('X670')) targetRam = 'DDR5';
-  else if (combinedMbText.includes('DDR4') || combinedMbText.includes('B550') || combinedMbText.includes('A520')) targetRam = 'DDR4';
+  else if (combinedMbText.includes('DDR4') || combinedMbText.includes('B550') || combinedMbText.includes('A520') || combinedMbText.includes('ATHLON') || combinedCpuText.includes('3000G')) targetRam = 'DDR4';
 
   const normalizedSlot = slotKey.toLowerCase();
 
   // 1. Mainboard slot
   if (normalizedSlot === 'mainboard' || normalizedSlot === 'mb') {
     if (targetSocket) {
-      if (prodText.includes(targetSocket) || (targetSocket === 'LGA1700' && (prodText.includes('Z790') || prodText.includes('B760') || prodText.includes('H610'))) || (targetSocket === 'AM5' && (prodText.includes('B650') || prodText.includes('X670') || prodText.includes('B850')))) {
+      if (
+        prodText.includes(targetSocket) ||
+        (targetSocket === 'LGA1700' && (prodText.includes('Z790') || prodText.includes('B760') || prodText.includes('H610') || prodText.includes('Z690') || prodText.includes('B660'))) ||
+        (targetSocket === 'AM5' && (prodText.includes('B650') || prodText.includes('X670') || prodText.includes('B850') || prodText.includes('A620'))) ||
+        (targetSocket === 'AM4' && (prodText.includes('B550') || prodText.includes('A520') || prodText.includes('X570') || prodText.includes('B450') || prodText.includes('A320')))
+      ) {
         return { isCompatible: true, label: `✓ AI Tương Thích (${targetSocket})` };
       } else {
         return { isCompatible: false, label: `⚠️ Khác Socket (${targetSocket})` };
