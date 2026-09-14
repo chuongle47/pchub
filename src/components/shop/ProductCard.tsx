@@ -408,26 +408,29 @@ export default function ProductCard({
             <button
               type="button"
               onClick={handleToggleCompare}
-              title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh'}
+              title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào danh sách so sánh'}
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '9px',
+                padding: '5px 9px',
+                borderRadius: '8px',
                 border: `1.5px solid ${
                   isCompared ? '#2563eb' : '#cbd5e1'
                 }`,
                 background: isCompared ? '#eff6ff' : '#ffffff',
-                color: '#2563eb',
+                color: isCompared ? '#2563eb' : '#475569',
+                fontSize: '11px',
+                fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                gap: '4px',
                 flexShrink: 0,
                 transition: 'all 0.15s ease',
                 boxSizing: 'border-box',
+                whiteSpace: 'nowrap',
               }}
             >
-              <ArrowLeftRight size={14} />
+              <ArrowLeftRight size={12} />
+              <span>{isCompared ? 'Đã so sánh' : '+ So sánh'}</span>
             </button>
           )}
         </div>
