@@ -373,39 +373,68 @@ export default function ProductCard({
 
       {/* Bottom Section: Price & Action Buttons */}
       <div style={{ marginTop: 'auto' }}>
-        {/* Price Section */}
-        <div style={{ marginTop: '4px', marginBottom: '10px' }}>
-          <div
-            style={{
-              fontSize: '16px',
-              fontWeight: 900,
-              color: '#ef4444',
-              fontVariantNumeric: 'tabular-nums',
-              letterSpacing: '-0.3px',
-              lineHeight: 1.2,
-            }}
-          >
-            {price.toLocaleString('vi-VN')} ₫
-          </div>
-          {effectiveOldPrice && effectiveOldPrice > price && (
+        {/* Price & Compare Section (Cùng hàng với giá) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', marginBottom: '10px' }}>
+          <div>
             <div
               style={{
-                fontSize: '12px',
-                color: '#94a3b8',
-                textDecoration: 'line-through',
+                fontSize: '16px',
+                fontWeight: 900,
+                color: '#ef4444',
                 fontVariantNumeric: 'tabular-nums',
-                marginTop: '2px',
-                fontWeight: 500,
+                letterSpacing: '-0.3px',
+                lineHeight: 1.2,
               }}
             >
-              {effectiveOldPrice.toLocaleString('vi-VN')} ₫
+              {price.toLocaleString('vi-VN')} ₫
             </div>
+            {effectiveOldPrice && effectiveOldPrice > price && (
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  textDecoration: 'line-through',
+                  fontVariantNumeric: 'tabular-nums',
+                  marginTop: '2px',
+                  fontWeight: 500,
+                }}
+              >
+                {effectiveOldPrice.toLocaleString('vi-VN')} ₫
+              </div>
+            )}
+          </div>
+
+          {showCompare && (
+            <button
+              type="button"
+              onClick={handleToggleCompare}
+              title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh'}
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '9px',
+                border: `1.5px solid ${
+                  isCompared ? '#2563eb' : '#cbd5e1'
+                }`,
+                background: isCompared ? '#eff6ff' : '#ffffff',
+                color: '#2563eb',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
+              }}
+            >
+              <ArrowLeftRight size={14} />
+            </button>
           )}
         </div>
 
-        {/* Action Buttons: 2 hàng riêng biệt */}
+        {/* Action Buttons: 2 hàng riêng biệt full width */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {/* Row 1: Thêm vào giỏ hàng (Rộng 100%) */}
+          {/* Row 1: Thêm vào giỏ hàng */}
           <button
             type="button"
             onClick={handleAddToCart}
@@ -432,62 +461,33 @@ export default function ProductCard({
             {isAdded ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
           </button>
 
-          {/* Row 2: Mua ngay [+ Biểu tượng so sánh nếu bật] */}
-          <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              title="Mua ngay và thanh toán"
-              style={{
-                flex: 1,
-                padding: '8.5px 10px',
-                borderRadius: '9px',
-                fontSize: '12px',
-                fontWeight: 800,
-                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-                transition: 'all 0.15s ease',
-                boxSizing: 'border-box',
-              }}
-            >
-              <Zap size={14} />
-              Mua ngay
-            </button>
-
-            {showCompare && (
-              <button
-                type="button"
-                onClick={handleToggleCompare}
-                title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh'}
-                style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '9px',
-                  border: `1.5px solid ${
-                    isCompared ? '#2563eb' : '#cbd5e1'
-                  }`,
-                  background: isCompared ? '#eff6ff' : '#ffffff',
-                  color: '#2563eb',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <ArrowLeftRight size={14} />
-              </button>
-            )}
-          </div>
+          {/* Row 2: Mua ngay */}
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            title="Mua ngay và thanh toán"
+            style={{
+              width: '100%',
+              padding: '8.5px 10px',
+              borderRadius: '9px',
+              fontSize: '12px',
+              fontWeight: 800,
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              color: '#ffffff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+              transition: 'all 0.15s ease',
+              boxSizing: 'border-box',
+            }}
+          >
+            <Zap size={14} />
+            Mua ngay
+          </button>
         </div>
       </div>
     </div>
