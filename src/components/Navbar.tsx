@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Search, ShoppingCart, User, Bot, Heart, Menu, X } from 'lucide-react';
 import { useCartStore, useUIStore, useWishlistStore } from '@/lib/store';
 import CartDrawer from './layout/CartDrawer';
+import CategoryDropdownMenu from './layout/CategoryDropdownMenu';
 
 interface NavLink {
   label: string;
@@ -108,6 +109,11 @@ export default function Navbar() {
             }}>PC</span>
             Hub
           </Link>
+
+          {/* Category Dropdown Menu Button (☰ Danh mục sản phẩm) */}
+          <div className="nav-cat-dropdown" style={{ flexShrink: 0 }}>
+            <CategoryDropdownMenu />
+          </div>
 
           {/* Search Bar */}
           {!isAuthPage && (

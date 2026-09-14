@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import CategoryFeatured from '@/components/shop/CategoryFeatured';
+import CategoryDropdownMenu from '@/components/layout/CategoryDropdownMenu';
 import ProductGrid from '@/components/shop/ProductGrid';
 import { getCategories, getProducts } from '@/lib/db';
 import { ChevronRight, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
@@ -84,8 +86,26 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               {totalProducts > 0 ? `${totalProducts} sản phẩm chính hãng` : 'Đang tải sản phẩm...'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {categories.slice(0, 6).map(cat => (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <CategoryDropdownMenu />
+            <Link
+              href="/danh-muc/tat-ca"
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 600,
+                textDecoration: 'none',
+                background: slug === 'tat-ca' ? '#2563eb' : 'rgba(255,255,255,0.1)',
+                color: slug === 'tat-ca' ? '#fff' : '#cbd5e1',
+                border: `1px solid ${slug === 'tat-ca' ? '#3b82f6' : 'rgba(255,255,255,0.15)'}`,
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Tất cả
+            </Link>
+            {categories.map(cat => (
               <Link
                 key={cat.id}
                 href={`/danh-muc/${cat.slug}`}
@@ -107,6 +127,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Featured Products Section */}
+        <CategoryFeatured
+          categorySlug={slug}
+          categoryName={title}
+          products={result.products}
+        />
 
         {/* Sort & Filter Bar */}
         <div style={{
