@@ -414,7 +414,6 @@ export default function CategoryGrid() {
                 </h3>
 
                 <div className="category-card-count">
-                  <span>{cat.product_count ?? 0} SP</span>
                   <span className="category-card-arrow" style={{ color: config.color }}>
                     <ArrowRight size={12} />
                   </span>
