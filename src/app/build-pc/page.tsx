@@ -789,205 +789,158 @@ export default function BuildPcPage() {
   }
   const isPsuAdequate = !psuSelected || (psuWatts >= recommendedPsuWatts - 50);
 
-  // Compute AI Next Device Suggestions in strict PC Hardware Assembly Sequence Order
-  const aiNextSuggestions = useMemo(() => {
-    const list: Array<{ targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string; isSelectedSlot?: boolean }> = [];
+  // Compute Rich AI Category Recommendations (No Step Numbers, Full Technical Explanations, Images & Multi-Product Comparisons)
+  const aiCategoryRecommendations = useMemo(() => {
+    const list: Array<{
+      categoryKey: string;
+      categoryTitle: string;
+      badge: string;
+      explanation: string;
+      products: Array<{
+        id: string;
+        name: string;
+        price: number;
+        tdp: number;
+        specs: string;
+        image: string;
+        slug: string;
+        rawProduct: any;
+      }>;
+    }> = [];
 
     const cpu = cpuSelected;
     const mb = mainboardSelected;
     const ram = ramSelected;
     const gpu = gpuSelected;
     const psu = psuSelected;
-    const caseItem = components.find(s => s.key === 'case')?.selected;
     const cooling = components.find(s => s.key === 'cooling')?.selected;
-    const monitor = components.find(s => s.key === 'monitor')?.selected;
 
     const cpuText = cpu ? `${cpu.name} ${cpu.specs}`.toUpperCase() : '';
     const mbText = mb ? `${mb.name} ${mb.specs}`.toUpperCase() : '';
-    const gpuText = gpu ? `${gpu.name} ${gpu.specs}`.toUpperCase() : '';
 
     let socket = 'LGA1700';
-    if (cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13700') || cpuText.includes('13600') || cpuText.includes('12700') || cpuText.includes('LGA1700')) socket = 'LGA1700';
-    else if (cpuText.includes('AM5') || cpuText.includes('7800X3D') || cpuText.includes('7600') || cpuText.includes('9700') || cpuText.includes('9800X3D')) socket = 'AM5';
-    else if (cpuText.includes('AM4') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D')) socket = 'AM4';
+    let isIntel = true;
+    if (cpuText.includes('AM5') || cpuText.includes('7800X3D') || cpuText.includes('7600') || cpuText.includes('9700') || cpuText.includes('9800X3D')) {
+      socket = 'AM5';
+      isIntel = false;
+    } else if (cpuText.includes('AM4') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D')) {
+      socket = 'AM4';
+      isIntel = false;
+    }
 
-    const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650');
+    const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650') || !mb;
     const ramGen = isDdr5 ? 'DDR5' : 'DDR4';
     const recWatts = Math.max(750, Math.ceil((totalTdp + 150) / 50) * 50);
 
-    const HARDWARE_SEQUENCE_ORDER: Record<string, number> = {
-      cpu: 1,
-      mainboard: 2,
-      cooling: 3,
-      ram: 4,
-      gpu: 5,
-      storage: 6,
-      psu: 7,
-      case: 8,
-      monitor: 9,
-      gear: 10,
-      headset: 11,
+    const getCandidateProducts = (slotKey: string, limit = 3) => {
+      const targetCatId = CATEGORY_ID_MAP[slotKey];
+      const items = seed.products.filter(p => {
+        const catId = (p.category_id || '').toLowerCase();
+        const slug = (p.slug || '').toLowerCase();
+        const name = (p.name || '').toLowerCase();
+        return (targetCatId && catId === targetCatId) || slug.includes(slotKey) || name.includes(slotKey);
+      });
+      const candidates = items.length > 0 ? items : seed.products.filter(p => (targetCatId ? p.category_id === targetCatId : true));
+      const sorted = [...candidates].sort((a, b) => {
+        const compatA = getProductAiCompatibilityInfo(a, slotKey, components).isCompatible ? 1 : 0;
+        const compatB = getProductAiCompatibilityInfo(b, slotKey, components).isCompatible ? 1 : 0;
+        return compatB - compatA;
+      });
+      return sorted.slice(0, limit).map(p => {
+        const specsStr = formatComponentSpecs(slotKey, p);
+        const fallbackImg = CATEGORY_DEFAULT_IMAGE[slotKey] || '/images/cpu-box.jpg';
+        return {
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          tdp: Number((p.specs as any)?.tdp_watt || (p.specs as any)?.tdp || (slotKey === 'gpu' ? 250 : slotKey === 'cpu' ? 125 : 20)),
+          specs: specsStr,
+          image: p.image_url || (p as any).image || fallbackImg,
+          slug: p.slug,
+          rawProduct: p,
+        };
+      });
     };
 
-    // Step 1: Unselected CPU
+    // 1. CPU Recommendation (if not selected)
     if (!cpu) {
       list.push({
-        targetSlotKey: 'cpu',
-        targetCategoryTitle: 'Vi Xử Lý (CPU)',
-        reason: 'AI gợi ý: Bắt đầu chọn CPU để định hình Socket, nền tảng hiệu năng & chuẩn linh kiện tương thích.',
-        badge: 'Bước 1 · Chọn CPU',
-        isSelectedSlot: false,
+        categoryKey: 'cpu',
+        categoryTitle: 'CPU - BỘ VI XỬ LÝ',
+        badge: 'Khuyên Dùng Hàng Đầu',
+        explanation: 'Vi xử lý đóng vai trò trung tâm xử lý dữ liệu. AI tự động đề xuất 3 dòng CPU có số nhân/luồng cao, xung nhịp Turbo ấn tượng để cân tốt các tựa game AAA và ứng dụng đồ họa nặng.',
+        products: getCandidateProducts('cpu', 3),
       });
     }
 
-    // Step 2: Unselected Mainboard
+    // 2. Mainboard Recommendation (if not selected)
     if (!mb) {
       list.push({
-        targetSlotKey: 'mainboard',
-        targetCategoryTitle: 'Bo Mạch Chủ (Mainboard)',
-        reason: cpu
-          ? `AI gợi ý: Chọn Mainboard Socket ${socket} hỗ trợ RAM ${ramGen} để phát huy hết sức mạnh CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''}`
-          : 'AI gợi ý: Chọn Bo Mạch Chủ tương thích chuẩn Socket với CPU.',
-        badge: cpu ? `Socket ${socket} · ${ramGen}` : 'Bước 2 · Mainboard',
-        isSelectedSlot: false,
+        categoryKey: 'mainboard',
+        categoryTitle: 'MAINBOARD - BO MẠCH CHỦ',
+        badge: `Chuẩn Socket ${socket}`,
+        explanation: `Dựa trên vi xử lý ${cpu ? cpu.name : 'đã chọn'}, Bo mạch chủ cần trang bị Socket ${socket} và hệ thống tản nhiệt VRM cao cấp để khai thác 100% công suất CPU, hỗ trợ chuẩn RAM ${ramGen} tốc độ cao.`,
+        products: getCandidateProducts('mainboard', 3),
       });
     }
 
-    // Step 3: Unselected Cooling (When CPU is selected)
-    if (cpu && !cooling) {
-      const isHighTdp = (cpu.tdp || 0) >= 180 || cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13900');
+    // 3. Cooling Recommendation (if not selected)
+    if (!cooling) {
+      const cpuTdpEst = cpu ? (cpu.tdp || 253) : 200;
       list.push({
-        targetSlotKey: 'cooling',
-        targetCategoryTitle: 'Tản Nhiệt (Cooling)',
-        reason: isHighTdp
-          ? `CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''} tỏa nhiệt lượng lớn (~${cpu.tdp}W). AI khuyên dùng Tản nước AIO 360mm.`
-          : `AI gợi ý chọn Tản nhiệt khí tháp đôi hoặc AIO 240mm để giải nhiệt mát mẻ cho CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''}.`,
-        badge: isHighTdp ? 'AIO 360mm (Khuyên dùng)' : 'Bước 3 · Tản Nhiệt',
-        isSelectedSlot: false,
+        categoryKey: 'cooling',
+        categoryTitle: 'TẢN NHIỆT (COOLING)',
+        badge: cpuTdpEst >= 200 ? 'Tản AIO 360mm Khuyên Dùng' : 'Tản Nhiệt Khí Đôi',
+        explanation: `CPU của bạn tỏa nhiệt lượng khoảng ~${cpuTdpEst}W TDP khi xử lý tác vụ nặng. AI đề xuất sử dụng Tản Nhiệt Nước AIO 360mm hoặc Tản Khí 6 Ống Đồng để giữ nhiệt độ luôn dưới 68°C, đảm bảo máy vận hành mượt mà lâu dài.`,
+        products: getCandidateProducts('cooling', 3),
       });
     }
 
-    // Step 4: Unselected RAM
+    // 4. RAM Recommendation (if not selected)
     if (!ram) {
       list.push({
-        targetSlotKey: 'ram',
-        targetCategoryTitle: 'Bộ Nhớ Trong (RAM)',
-        reason: `AI gợi ý: Bo mạch chủ yêu cầu chuẩn RAM ${ramGen}. Khuyên chọn kit Dual-Channel 16GB/32GB bus tốc độ cao.`,
-        badge: `RAM ${ramGen} · 32GB`,
-        isSelectedSlot: false,
+        categoryKey: 'ram',
+        categoryTitle: 'RAM - BỘ NHỚ TRONG',
+        badge: `RAM ${ramGen} Dual-Channel`,
+        explanation: `Khuyên dùng Kit RAM ${ramGen} Kênh Đôi (Dual-Channel 2x16GB) để nhân đôi băng thông truyền tải dữ liệu giữa CPU và RAM, giúp chuyển cảnh trong game cực mượt và không giật lag khi mở nhiều tab trình duyệt.`,
+        products: getCandidateProducts('ram', 3),
       });
     }
 
-    // Step 5: Unselected GPU / VGA
+    // 5. GPU Recommendation (if not selected)
     if (!gpu) {
       list.push({
-        targetSlotKey: 'gpu',
-        targetCategoryTitle: 'Card Màn Hình (VGA / GPU)',
-        reason: 'AI gợi ý: Chọn VGA phù hợp với nhu cầu Gaming & Đồ họa (RTX 40 Series / AMD RX) để xử lý hình ảnh mượt mà.',
-        badge: 'RTX 40 Series / AMD RX',
-        isSelectedSlot: false,
+        categoryKey: 'gpu',
+        categoryTitle: 'VGA - CARD MÀN HÌNH',
+        badge: 'Đồ Họa & Game 4K/2K',
+        explanation: 'Card màn hình đảm nhận xử lý hình ảnh 3D và thuật toán AI Ray Tracing. AI đề xuất các mẫu Card đồ họa từ RTX 4060 đến RTX 4080 Super để bạn so sánh theo mức ngân sách.',
+        products: getCandidateProducts('gpu', 3),
       });
     }
 
-    // Step 6: Unselected Storage (SSD)
-    if (!components.find(s => s.key === 'storage')?.selected) {
-      list.push({
-        targetSlotKey: 'storage',
-        targetCategoryTitle: 'Ổ Cứng (SSD / HDD)',
-        reason: 'AI gợi ý: Khuyên chọn SSD NVMe PCIe 4.0 dung lượng 1TB (Read 7000MB/s) để khởi động Win & load game cực nhanh.',
-        badge: 'SSD NVMe PCIe 4.0 1TB',
-        isSelectedSlot: false,
-      });
-    }
-
-    // Step 7: Unselected PSU
+    // 6. PSU Recommendation (if not selected)
     if (!psu) {
       list.push({
-        targetSlotKey: 'psu',
-        targetCategoryTitle: 'Nguồn Máy Tính (PSU)',
-        reason: totalTdp > 0
-          ? `Tổng công suất tiêu thụ ~${totalTdp}W. AI khuyên chọn Nguồn công suất tối thiểu ${recWatts}W (80 Plus Gold).`
-          : 'AI gợi ý: Chọn Nguồn máy tính công suất thực đủ tải cho dàn PC.',
-        badge: totalTdp > 0 ? `≥ ${recWatts}W 80 Plus Gold` : 'Nguồn Công Suất Thực',
-        isSelectedSlot: false,
+        categoryKey: 'psu',
+        categoryTitle: 'PSU - NGUỒN MÁY TÍNH',
+        badge: `Đề Xuất ≥ ${recWatts}W Gold`,
+        explanation: `Với tổng công suất linh kiện ước tính ~${totalTdp}W TDP, AI khuyến nghị bộ nguồn công suất thực từ ${recWatts}W đạt chuẩn 80 Plus Gold và chuẩn PCIe 5.0 ATX 3.0 để cấp điện an toàn, chống cháy nổ.`,
+        products: getCandidateProducts('psu', 3),
       });
     }
 
-    // Step 8: Unselected Case
-    if (!caseItem) {
+    // 7. Storage (if not selected)
+    if (!components.find(s => s.key === 'storage')?.selected) {
       list.push({
-        targetSlotKey: 'case',
-        targetCategoryTitle: 'Vỏ Máy Tính (Case)',
-        reason: 'AI gợi ý: Chọn vỏ Case Mid-Tower hoặc Dual Chamber có thiết kế luồng gió mát mẻ.',
-        badge: 'Case Airflow / Bể Kính',
-        isSelectedSlot: false,
+        categoryKey: 'storage',
+        categoryTitle: 'SSD - Ổ ĐĨA CỨNG NVME',
+        badge: 'PCIe Gen 4.0 Tốc Độ Cao',
+        explanation: 'Ổ cứng SSD NVMe PCIe 4.0 cung cấp tốc độ đọc ghi vượt trội (lên tới 7000MB/s), giúp khởi động hệ điều hành Windows trong vài giây và tải game nhanh chóng.',
+        products: getCandidateProducts('storage', 3),
       });
     }
 
-    // Step 9: Unselected Monitor
-    if (gpu && !monitor) {
-      list.push({
-        targetSlotKey: 'monitor',
-        targetCategoryTitle: 'Màn Hình Gaming (Tương thích GPU)',
-        reason: `Card màn hình ${gpu.name.split(' ')[0]} ${gpu.name.split(' ')[1] || ''} rất mạnh! AI gợi ý kết hợp cùng Màn hình Gaming 4K hoặc 2K 240Hz OLED.`,
-        badge: 'Màn 4K / 2K 240Hz',
-        isSelectedSlot: false,
-      });
-    }
-
-    // Fallback Verification Cards when full preset is selected (Show Optimization Verifications in Hardware Order)
-    if (list.length === 0) {
-      if (mb) {
-        list.push({
-          targetSlotKey: 'mainboard',
-          targetCategoryTitle: 'Mainboard Tương Thích Chuẩn',
-          reason: `Bo mạch chủ ${mb.name.split(' ')[0]} ${mb.name.split(' ')[1] || ''} đã chọn tương thích 100% Socket ${socket} & ${ramGen} với CPU.`,
-          badge: `✓ Auto-Match Socket ${socket}`,
-          isSelectedSlot: true,
-        });
-      }
-      if (cooling) {
-        list.push({
-          targetSlotKey: 'cooling',
-          targetCategoryTitle: 'Tản Nhiệt Khuyến Nghị',
-          reason: `Tản nhiệt ${cooling.name.split(' ')[0]} ${cooling.name.split(' ')[1] || ''} làm mát cực mượt cho CPU ${cpu?.name.split(' ')[0] || ''} (${cpu?.tdp || 253}W TDP).`,
-          badge: '✓ Giải nhiệt tối ưu',
-          isSelectedSlot: true,
-        });
-      }
-      if (ram) {
-        list.push({
-          targetSlotKey: 'ram',
-          targetCategoryTitle: 'RAM Dual-Channel Tối Ưu',
-          reason: `Kit RAM ${ram.name.split(' ')[0]} ${ram.name.split(' ')[1] || ''} giúp kích hoạt chuẩn Kênh Đôi (Dual-Channel) truyền tải băng thông nhanh nhất.`,
-          badge: `✓ RAM ${ramGen} Băng Thông Cao`,
-          isSelectedSlot: true,
-        });
-      }
-      if (gpu) {
-        list.push({
-          targetSlotKey: 'gpu',
-          targetCategoryTitle: 'VGA Đồ Họa Đỉnh Cao',
-          reason: `Card màn hình ${gpu.name.split(' ')[0]} ${gpu.name.split(' ')[1] || ''} gánh mượt mà các tựa game 4K & tác vụ AI/Render nặng.`,
-          badge: '⚡ Đồ Họa Đỉnh Cao',
-          isSelectedSlot: true,
-        });
-      }
-      if (psu) {
-        list.push({
-          targetSlotKey: 'psu',
-          targetCategoryTitle: 'Nguồn Điện Chuẩn An Toàn',
-          reason: `Bộ nguồn ${psu.name.split(' ')[0]} ${psu.name.split(' ')[1] || ''} đáp ứng vượt công suất ước tính (${totalTdp}W TDP), đảm bảo dàn PC bền bỉ.`,
-          badge: '✓ Điện Áp Ổn Định',
-          isSelectedSlot: true,
-        });
-      }
-    }
-
-    // Sort strictly by standard PC Hardware Building Sequence Order (CPU -> Mainboard -> Cooling -> RAM -> GPU -> Storage -> PSU -> Case -> Monitor)
-    list.sort((a, b) => (HARDWARE_SEQUENCE_ORDER[a.targetSlotKey] || 99) - (HARDWARE_SEQUENCE_ORDER[b.targetSlotKey] || 99));
-
-    return list;
+    return list.slice(0, 3);
   }, [cpuSelected, mainboardSelected, ramSelected, gpuSelected, psuSelected, components, totalTdp]);
 
   const renderSlotRow = (slot: ComponentSlot) => {
@@ -1317,159 +1270,206 @@ export default function BuildPcPage() {
           {/* Left Column: Component Slots List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-            {/* AI Smart Suggestion Banner */}
-            {aiNextSuggestions.length > 0 && (() => {
-              const hasUnselectedSuggestions = aiNextSuggestions.some(s => !s.isSelectedSlot);
-              return (
-                <div style={{
-                  background: hasUnselectedSuggestions
-                    ? 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)'
-                    : 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)',
-                  border: `1px solid ${hasUnselectedSuggestions ? '#bfdbfe' : '#86efac'}`,
-                  borderRadius: '16px',
-                  padding: '20px 24px',
-                  marginBottom: '8px',
-                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ background: hasUnselectedSuggestions ? '#2563eb' : '#16a34a', color: '#fff', borderRadius: '10px', padding: '7px', display: 'flex', alignItems: 'center' }}>
-                        <Sparkles size={18} />
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                          {hasUnselectedSuggestions
-                            ? '🤖 AI Smart Advisor — Gợi Ý Thiết Bị Tương Thích Tiếp Theo'
-                            : '🤖 AI Smart Advisor — Xác Nhận Cấu Hình Tương Thích 100%'}
-                        </h3>
-                        <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
-                          {hasUnselectedSuggestions
-                            ? 'Dựa trên cấu hình hiện tại, AI tự động gợi ý thiết bị chuẩn Socket & công suất tiếp theo cần chọn:'
-                            : 'Tất cả linh kiện cốt lõi đã được chọn đầy đủ & đạt chuẩn tương thích phần cứng:'}
+            {/* AI Smart Suggestion Banner & Multi-Product Recommendations */}
+            {aiCategoryRecommendations.length > 0 && (
+              <div style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '16px',
+                padding: '20px 24px',
+                marginBottom: '8px',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ background: '#2563eb', color: '#fff', borderRadius: '10px', padding: '8px', display: 'flex', alignItems: 'center' }}>
+                      <Sparkles size={20} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                        🤖 AI Smart Advisor — Gợi Ý & So Sánh Linh Kiện Phù Hợp
+                      </h3>
+                      <p style={{ fontSize: '12.5px', color: '#475569', margin: '2px 0 0 0' }}>
+                        Dựa trên cấu hình hiện tại, AI phân tích thông số kỹ thuật và gợi ý các sản phẩm tối ưu nhất trong danh mục để bạn dễ dàng so sánh:
+                      </p>
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: '#16a34a',
+                    background: '#dcfce7',
+                    border: '1px solid #86efac',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                  }}>
+                    AI SMART RECOMMEND
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {aiCategoryRecommendations.map(cat => (
+                    <div
+                      key={cat.categoryKey}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '14px',
+                        padding: '16px 18px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      }}
+                    >
+                      {/* Header category info & technical explanation */}
+                      <div style={{ marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 900, color: '#1e293b', letterSpacing: '0.3px' }}>
+                            {cat.categoryTitle}
+                          </span>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 10px', borderRadius: '12px' }}>
+                            {cat.badge}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '12.5px', color: '#334155', margin: 0, lineHeight: '1.5', background: '#f8fafc', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #2563eb' }}>
+                          <span style={{ fontWeight: 700, color: '#1d4ed8' }}>💡 Giải thích chuyên sâu: </span>
+                          {cat.explanation}
                         </p>
                       </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      color: hasUnselectedSuggestions ? '#16a34a' : '#15803d',
-                      background: '#dcfce7',
-                      border: `1px solid ${hasUnselectedSuggestions ? '#86efac' : '#4ade80'}`,
-                      padding: '3px 10px',
-                      borderRadius: '20px',
-                    }}>
-                      {hasUnselectedSuggestions ? 'AI AUTO-MATCH' : '✓ 100% TƯƠNG THÍCH'}
-                    </span>
-                  </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
-                    {aiNextSuggestions.slice(0, 3).map((item: { targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string; isSelectedSlot?: boolean }) => (
-                      <div
-                        key={item.targetSlotKey}
-                        style={{
-                          background: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '12px',
-                          padding: '14px 16px',
-                          transition: 'all 0.15s ease',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563eb'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(37,99,235,0.12)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.boxShadow = 'none'; }}
-                      >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                              {item.targetCategoryTitle}
-                            </span>
-                            <span style={{ fontSize: '10.5px', fontWeight: 800, color: item.isSelectedSlot ? '#15803d' : '#2563eb', background: item.isSelectedSlot ? '#dcfce7' : '#eff6ff', border: `1px solid ${item.isSelectedSlot ? '#86efac' : '#bfdbfe'}`, padding: '2px 8px', borderRadius: '10px' }}>
-                              {item.badge}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '12.5px', color: '#1e293b', margin: 0, lineHeight: '1.45', fontWeight: 600 }}>
-                            {item.reason}
-                          </p>
-                        </div>
+                      {/* Side-by-side Multi-Product Comparison Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
+                        {cat.products.map(prod => {
+                          const isCurrentlySelected = components.find(s => s.key === cat.categoryKey)?.selected?.id === prod.id;
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px', gap: '8px' }}>
-                          <button
-                            type="button"
-                            onClick={() => setActiveModalSlotKey(item.targetSlotKey)}
-                            style={{
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              color: '#475569',
-                              background: '#f1f5f9',
-                              border: 'none',
-                              borderRadius: '7px',
-                              padding: '6px 10px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease',
-                            }}
-                            title="Duyệt tất cả linh kiện thuộc nhóm này"
-                          >
-                            Xem thêm
-                          </button>
-
-                          {item.isSelectedSlot ? (
-                            <button
-                              type="button"
-                              onClick={() => setActiveModalSlotKey(item.targetSlotKey)}
+                          return (
+                            <div
+                              key={prod.id}
                               style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                color: '#1d4ed8',
-                                background: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                borderRadius: '7px',
-                                padding: '6px 12px',
-                                cursor: 'pointer',
+                                background: isCurrentlySelected ? '#f0fdf4' : '#ffffff',
+                                border: `1.5px solid ${isCurrentlySelected ? '#22c55e' : '#e2e8f0'}`,
+                                borderRadius: '12px',
+                                padding: '12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
                                 transition: 'all 0.15s ease',
+                                position: 'relative',
                               }}
-                              onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; }}
-                              onMouseLeave={e => { e.currentTarget.style.background = '#eff6ff'; }}
-                            >
-                              <RefreshCw size={12} />
-                              Đổi linh kiện khác
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleAiAutoSelectProduct(item.targetSlotKey)}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                color: '#ffffff',
-                                background: '#2563eb',
-                                border: 'none',
-                                borderRadius: '7px',
-                                padding: '6px 14px',
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
-                                transition: 'all 0.15s ease',
+                              onMouseEnter={e => {
+                                if (!isCurrentlySelected) {
+                                  e.currentTarget.style.borderColor = '#2563eb';
+                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(37,99,235,0.12)';
+                                }
                               }}
-                              onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; }}
-                              onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; }}
+                              onMouseLeave={e => {
+                                if (!isCurrentlySelected) {
+                                  e.currentTarget.style.borderColor = '#e2e8f0';
+                                  e.currentTarget.style.boxShadow = 'none';
+                                }
+                              }}
                             >
-                              <Sparkles size={13} />
-                              Chọn ngay linh kiện này →
-                            </button>
-                          )}
-                        </div>
+                              {/* Product Thumbnail & Details */}
+                              <div>
+                                <div style={{
+                                  width: '100%',
+                                  height: '110px',
+                                  borderRadius: '8px',
+                                  background: '#f8fafc',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  marginBottom: '10px',
+                                  overflow: 'hidden',
+                                  padding: '6px',
+                                }}>
+                                  <img
+                                    src={prod.image}
+                                    alt={prod.name}
+                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                    onError={e => { (e.target as any).src = CATEGORY_DEFAULT_IMAGE[cat.categoryKey] || '/images/cpu-box.jpg'; }}
+                                  />
+                                </div>
+
+                                <h4 style={{
+                                  fontSize: '12.5px',
+                                  fontWeight: 700,
+                                  color: '#0f172a',
+                                  margin: '0 0 6px 0',
+                                  lineHeight: '1.35',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  height: '34px',
+                                }} title={prod.name}>
+                                  {prod.name}
+                                </h4>
+
+                                <p style={{ fontSize: '11px', color: '#64748b', margin: '0 0 8px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {prod.specs || `${prod.tdp}W TDP`}
+                                </p>
+                              </div>
+
+                              <div>
+                                <div style={{ fontSize: '14px', fontWeight: 900, color: '#2563eb', marginBottom: '8px' }}>
+                                  {prod.price.toLocaleString('vi-VN')} ₫
+                                </div>
+
+                                {isCurrentlySelected ? (
+                                  <div style={{
+                                    fontSize: '11.5px',
+                                    fontWeight: 800,
+                                    color: '#15803d',
+                                    background: '#dcfce7',
+                                    border: '1px solid #86efac',
+                                    borderRadius: '6px',
+                                    padding: '6px 8px',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px',
+                                  }}>
+                                    <Check size={13} />
+                                    Đã chọn linh kiện này
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAiAutoSelectProduct(cat.categoryKey)}
+                                    style={{
+                                      width: '100%',
+                                      fontSize: '11.5px',
+                                      fontWeight: 800,
+                                      color: '#ffffff',
+                                      background: '#2563eb',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      padding: '7px 8px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '4px',
+                                      boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; }}
+                                  >
+                                    <Plus size={13} />
+                                    Chọn linh kiện này
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              );
-            })()}
+              </div>
+            )}
 
             {/* Core Components Section */}
             <div>
