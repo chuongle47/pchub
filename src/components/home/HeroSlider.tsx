@@ -91,7 +91,7 @@ export default function HeroSlider() {
             </Link>
 
             <Link
-              href="/kiem-tra-tuong-thich"
+              href="/build-pc"
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
                 color: '#e2e8f0',
@@ -110,7 +110,7 @@ export default function HeroSlider() {
               onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'; }}
             >
               <Bot size={16} style={{ color: '#38bdf8' }} />
-              Kiểm tra tương thích
+              Xây dựng PC AI
             </Link>
           </div>
         </div>

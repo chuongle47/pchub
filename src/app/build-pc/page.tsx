@@ -717,7 +717,7 @@ export default function BuildPcPage() {
   }
   const isPsuAdequate = !psuSelected || (psuWatts >= recommendedPsuWatts - 50);
 
-  // Compute AI Next Device Suggestions (Always active for both full presets & custom builds)
+  // Compute AI Next Device Suggestions in strict PC Hardware Assembly Sequence Order
   const aiNextSuggestions = useMemo(() => {
     const list: Array<{ targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string }> = [];
 
@@ -743,7 +743,21 @@ export default function BuildPcPage() {
     const ramGen = isDdr5 ? 'DDR5' : 'DDR4';
     const recWatts = Math.max(750, Math.ceil((totalTdp + 150) / 50) * 50);
 
-    // Dynamic condition 1: Unselected Mainboard
+    const HARDWARE_SEQUENCE_ORDER: Record<string, number> = {
+      cpu: 1,
+      mainboard: 2,
+      ram: 3,
+      gpu: 4,
+      storage: 5,
+      psu: 6,
+      case: 7,
+      cooling: 8,
+      monitor: 9,
+      gear: 10,
+      headset: 11,
+    };
+
+    // Dynamic condition 1: Unselected Mainboard (when CPU is selected)
     if (cpu && !mb) {
       list.push({
         targetSlotKey: 'mainboard',
@@ -753,7 +767,7 @@ export default function BuildPcPage() {
       });
     }
 
-    // Dynamic condition 2: Unselected CPU
+    // Dynamic condition 2: Unselected CPU (when Mainboard is selected)
     if (mb && !cpu) {
       list.push({
         targetSlotKey: 'cpu',
@@ -773,7 +787,37 @@ export default function BuildPcPage() {
       });
     }
 
-    // Dynamic condition 4: Unselected Cooling
+    // Dynamic condition 4: Unselected GPU / VGA
+    if ((cpu || mb) && !gpu) {
+      list.push({
+        targetSlotKey: 'gpu',
+        targetCategoryTitle: 'Card Màn Hình (VGA / GPU)',
+        reason: `AI gợi ý: Chọn VGA phù hợp với nhu cầu Gaming & Đồ họa (RTX 4060 / 4070 SUPER / 4080 SUPER) để xử lý hình ảnh mượt mà.`,
+        badge: 'RTX 40 Series / AMD RX',
+      });
+    }
+
+    // Dynamic condition 5: Unselected Storage (SSD)
+    if ((cpu || mb) && !components.find(s => s.key === 'storage')?.selected) {
+      list.push({
+        targetSlotKey: 'storage',
+        targetCategoryTitle: 'Ổ Cứng (SSD / HDD)',
+        reason: `AI gợi ý: Khuyên chọn SSD NVMe PCIe 4.0 dung lượng 1TB (Read 7000MB/s) để khởi động Win & load game cực nhanh.`,
+        badge: 'SSD NVMe PCIe 4.0 1TB',
+      });
+    }
+
+    // Dynamic condition 6: Unselected PSU
+    if ((cpu || gpu) && !psu) {
+      list.push({
+        targetSlotKey: 'psu',
+        targetCategoryTitle: 'Nguồn Máy Tính (PSU)',
+        reason: `Tổng công suất tiêu thụ ~${totalTdp}W. AI khuyên chọn Nguồn công suất tối thiểu ${recWatts}W (80 Plus Gold).`,
+        badge: `≥ ${recWatts}W 80 Plus Gold`,
+      });
+    }
+
+    // Dynamic condition 7: Unselected Cooling
     if (cpu && !cooling) {
       const isHighTdp = cpu.tdp >= 180 || cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13900');
       list.push({
@@ -786,17 +830,7 @@ export default function BuildPcPage() {
       });
     }
 
-    // Dynamic condition 5: Unselected PSU
-    if ((cpu || gpu) && !psu) {
-      list.push({
-        targetSlotKey: 'psu',
-        targetCategoryTitle: 'Nguồn Máy Tính (PSU)',
-        reason: `Tổng công suất tiêu thụ ~${totalTdp}W. AI khuyên chọn Nguồn công suất tối thiểu ${recWatts}W (80 Plus Gold).`,
-        badge: `≥ ${recWatts}W 80 Plus Gold`,
-      });
-    }
-
-    // Dynamic condition 6: Unselected Monitor
+    // Dynamic condition 8: Unselected Monitor
     if (gpu && !monitor) {
       list.push({
         targetSlotKey: 'monitor',
@@ -806,7 +840,7 @@ export default function BuildPcPage() {
       });
     }
 
-    // Fallback Suggestions when full preset is selected (Show Optimization & Upgrade Recommendations)
+    // Fallback Suggestions when full preset is selected (Show Optimization Recommendations in Hardware Order)
     if (list.length === 0) {
       if (mb) {
         list.push({
@@ -814,6 +848,22 @@ export default function BuildPcPage() {
           targetCategoryTitle: 'Mainboard Tương Thích Chuẩn',
           reason: `Bo mạch chủ ${mb.name.split(' ')[0]} ${mb.name.split(' ')[1] || ''} đã chọn tương thích 100% Socket ${socket} & ${ramGen} với CPU.`,
           badge: `✓ Auto-Match Socket ${socket}`,
+        });
+      }
+      if (ram) {
+        list.push({
+          targetSlotKey: 'ram',
+          targetCategoryTitle: 'RAM Dual-Channel Tối Ưu',
+          reason: `Kit RAM ${ram.name.split(' ')[0]} ${ram.name.split(' ')[1] || ''} giúp kích hoạt chuẩn Kênh Đôi (Dual-Channel) truyền tải băng thông nhanh nhất.`,
+          badge: `✓ RAM ${ramGen} Băng Thông Cao`,
+        });
+      }
+      if (psu) {
+        list.push({
+          targetSlotKey: 'psu',
+          targetCategoryTitle: 'Nguồn Điện Chuẩn An Toàn',
+          reason: `Bộ nguồn ${psu.name.split(' ')[0]} ${psu.name.split(' ')[1] || ''} đáp ứng vượt công suất ước tính (${totalTdp}W TDP), đảm bảo dàn PC bền bỉ.`,
+          badge: '✓ Điện Áp Ổn Định',
         });
       }
       if (cooling) {
@@ -833,6 +883,9 @@ export default function BuildPcPage() {
         });
       }
     }
+
+    // Sort strictly by standard PC Hardware Building Sequence Order (CPU -> MB -> RAM -> GPU -> SSD -> PSU -> Case -> Cooling -> Monitor)
+    list.sort((a, b) => (HARDWARE_SEQUENCE_ORDER[a.targetSlotKey] || 99) - (HARDWARE_SEQUENCE_ORDER[b.targetSlotKey] || 99));
 
     return list;
   }, [cpuSelected, mainboardSelected, ramSelected, gpuSelected, psuSelected, components, totalTdp]);

@@ -38,7 +38,7 @@ export default function AIHistoryPage() {
           <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Xem lại các đoạn hội thoại tư vấn và phân tích từ AI Advisor</p>
         </div>
         <Link
-          href="/kiem-tra-tuong-thich"
+          href="/build-pc"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -114,7 +114,7 @@ export default function AIHistoryPage() {
             </div>
 
             <Link
-              href="/kiem-tra-tuong-thich"
+              href="/build-pc"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

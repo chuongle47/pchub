@@ -302,7 +302,7 @@ export default function CartPage() {
                   Các sản phẩm trong giỏ đã được AI xác nhận tương thích. Xem chi tiết phân tích.
                 </div>
               </div>
-              <Link href="/kiem-tra-tuong-thich" style={{
+              <Link href="/build-pc" style={{
                 flexShrink: 0, background: 'rgba(255,255,255,0.15)',
                 color: '#fff', textDecoration: 'none', padding: '8px 14px',
                 borderRadius: '8px', fontSize: '12px', fontWeight: 700,
