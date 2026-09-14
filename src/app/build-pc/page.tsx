@@ -70,15 +70,7 @@ export default function BuildPcPage() {
       icon: Cpu,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000001',
-        name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)',
-        price: 13990000,
-        tdp: 253,
-        specs: 'LGA1700 | 36MB Cache | 125W-253W',
-        image: '/images/cpu-box.jpg',
-        slug: 'intel-core-i9-14900k'
-      }
+      selected: null,
     },
     {
       key: 'mainboard',
@@ -86,15 +78,7 @@ export default function BuildPcPage() {
       icon: Layers,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000003',
-        name: 'ASUS ROG STRIX Z790-E GAMING WIFI II',
-        price: 11490000,
-        tdp: 50,
-        specs: 'LGA1700 | 4x DDR5 | PCIe 5.0 | ATX',
-        image: '/images/cat-mainboard.jpg',
-        slug: 'asus-rog-strix-z790-e'
-      }
+      selected: null,
     },
     {
       key: 'ram',
@@ -102,15 +86,7 @@ export default function BuildPcPage() {
       icon: Sliders,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000005',
-        name: 'G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz',
-        price: 6290000,
-        tdp: 15,
-        specs: '2x32GB | DDR5 | 6000MHz | CL30',
-        image: '/images/ram-rgb.jpg',
-        slug: 'gskill-trident-z5-ddr5'
-      }
+      selected: null,
     },
     {
       key: 'gpu',
@@ -118,15 +94,7 @@ export default function BuildPcPage() {
       icon: Layers,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000002',
-        name: 'ASUS ROG Strix GeForce RTX 4080 SUPER 16GB GDDR6X',
-        price: 31490000,
-        tdp: 320,
-        specs: '16GB GDDR6X | 256-bit | Triple Fan',
-        image: '/images/gpu-strix.jpg',
-        slug: 'asus-rog-strix-rtx-4080-super'
-      }
+      selected: null,
     },
     {
       key: 'storage',
@@ -134,15 +102,7 @@ export default function BuildPcPage() {
       icon: HardDrive,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000004',
-        name: 'Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2',
-        price: 4890000,
-        tdp: 10,
-        specs: '2TB | Đọc 7450MB/s - Ghi 6900MB/s',
-        image: '/images/ssd-nvme.jpg',
-        slug: 'samsung-990-pro-2tb'
-      }
+      selected: null,
     },
     {
       key: 'psu',
@@ -150,15 +110,7 @@ export default function BuildPcPage() {
       icon: Zap,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000006',
-        name: 'Corsair RM1000x 1000W 80 Plus Gold Full Modular',
-        price: 4390000,
-        tdp: 0,
-        specs: '1000W | 80 Plus Gold | Full Modular',
-        image: '/images/cat-psu.jpg',
-        slug: 'corsair-rm1000x'
-      }
+      selected: null,
     },
     {
       key: 'case',
@@ -166,15 +118,7 @@ export default function BuildPcPage() {
       icon: Box,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000007',
-        name: 'NZXT H9 Flow RGB Dual-Chamber Mid-Tower Black',
-        price: 4290000,
-        tdp: 0,
-        specs: 'Hỗ trợ GPU 435mm | Tản nước 360mm',
-        image: '/images/hero-pc.jpg',
-        slug: 'nzxt-h9-flow-black'
-      }
+      selected: null,
     },
     {
       key: 'cooling',
@@ -182,15 +126,7 @@ export default function BuildPcPage() {
       icon: Fan,
       required: true,
       quantity: 1,
-      selected: {
-        id: 'd1000000-0000-0000-0000-000000000008',
-        name: 'NZXT Kraken Elite 360 RGB Black Liquid Cooler',
-        price: 6890000,
-        tdp: 25,
-        specs: 'AIO 360mm | 3x 120mm RGB Fan | Màn hình LCD',
-        image: '/images/hero-pc.jpg',
-        slug: 'nzxt-kraken-elite-360'
-      }
+      selected: null,
     },
     {
       key: 'monitor',
@@ -198,7 +134,7 @@ export default function BuildPcPage() {
       icon: Tv,
       required: false,
       quantity: 1,
-      selected: null
+      selected: null,
     },
     {
       key: 'gear',
@@ -206,7 +142,7 @@ export default function BuildPcPage() {
       icon: Sliders,
       required: false,
       quantity: 1,
-      selected: null
+      selected: null,
     },
     {
       key: 'headset',
@@ -214,8 +150,8 @@ export default function BuildPcPage() {
       icon: Headphones,
       required: false,
       quantity: 1,
-      selected: null
-    }
+      selected: null,
+    },
   ]);
 
   const [activeModalSlotKey, setActiveModalSlotKey] = useState<string | null>(null);
@@ -299,7 +235,7 @@ export default function BuildPcPage() {
 
   const totalPrice = components.reduce((acc, slot) => acc + (slot.selected ? slot.selected.price * slot.quantity : 0), 0);
   const totalTdp = components.reduce((acc, slot) => acc + (slot.selected ? slot.selected.tdp * slot.quantity : 0), 0);
-  const recommendedPsuWatts = Math.max(650, Math.ceil((totalTdp + 150) / 50) * 50);
+  const recommendedPsuWatts = totalTdp > 0 ? Math.max(550, Math.ceil((totalTdp + 150) / 50) * 50) : 0;
 
   const handleQtyChange = (key: string, delta: number) => {
     setComponents(prev => prev.map(s => {
@@ -1598,9 +1534,11 @@ export default function BuildPcPage() {
               <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
                 <div style={{ width: `${Math.min(100, (totalTdp / 1000) * 100)}%`, height: '100%', background: '#22c55e' }} />
               </div>
-              <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700 }}>
-                ✓ Đề xuất nguồn: {recommendedPsuWatts}W 80 Plus Gold
-              </div>
+              {totalTdp > 0 && recommendedPsuWatts > 0 && (
+                <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700 }}>
+                  ✓ Đề xuất nguồn: {recommendedPsuWatts}W 80 Plus Gold
+                </div>
+              )}
             </div>
 
             {/* AI Diagnostics Box with Gemini Integration */}
