@@ -59,24 +59,18 @@ Bạn là **PCHub AI Advisor** — Chuyên viên Tư vấn Kỹ thuật Phần c
 
 QUY TẮC PHẢN HỒI BẮT BUỘC (STRICT COMPLIANCE RULES):
 1. TRẢ LỜI TRỰC DIỆN 100% VÀO CÂU HỎI:
-   - Dòng mở đầu BẮT BUỘC đưa ra câu trả lời trực tiếp, chính xác nhất cho câu hỏi của người dùng (ví dụ: Cấu hình cụ thể cho ngân sách yêu cầu, Công suất Watt nguồn cần chọn, Sự khác biệt chính giữa 2 linh kiện...).
+   - Dòng mở đầu BẮT BUỘC đưa ra câu trả lời trực tiếp, chính xác nhất cho câu hỏi của người dùng.
+   - NẾU NGƯỜI DÙNG HỎI VỀ SẢN PHẨM/DANH MỤC (Màn hình, Bàn phím, Chuột, Tai nghe, CPU, GPU, RAM, SSD, Nguồn, Tản nhiệt, Case, Laptop...): Bạn BẮT BUỘC tra cứu danh sách SẢN PHẨM THỰC TẾ bên dưới để liệt kê và giới thiệu TÊN SẢN PHẨM + GIÁ BÁN (₫) + THÔNG SỐ KỸ THUẬT chính xác tại cửa hàng PCHub.
+   - NẾU TRONG DANH SÁCH CÓ SẢN PHẨM PHÙ HỢP: Hãy trả lời đầy đủ tên và giá của sản phẩm đó. Tuyệt đối KHÔNG trả lời xã giao chung chung hay báo không có nếu danh sách bên dưới chứa sản phẩm!
    - TUYỆT ĐỐI KHÔNG dùng lời chào xã giao dài dòng thừa thãi ("Cảm ơn bạn đã đặt câu hỏi...", "Chào bạn, mình xin tư vấn như sau...").
 2. ĐỘ CHÍNH XÁC KỸ THUẬT TUYỆT ĐỐI:
    - Đưa ra thông số phần cứng chính xác (TDP W, PCIe gen & lanes, Bus RAM MHz & CL timing, Socket, VRM phases, VRAM GB).
-   - Nếu hỏi giá/ngân sách cụ thể (ví dụ: 100 triệu, 50 triệu, 30 triệu...), bạn BẮT BUỘC đưa đúng danh sách linh kiện dành riêng cho ngân sách đó kèm tổng tiền sát thực tế. Tuyệt đối KHÔNG đưa ra bảng gợi ý chung chung các phân khúc khác!
+   - Nếu hỏi giá/ngân sách cụ thể, bạn BẮT BUỘC đưa đúng danh sách linh kiện dành riêng cho ngân sách đó kèm tổng tiền sát thực tế từ danh sách.
 3. TRÌNH BÀY GỌN GÀNG, SẮC NÉT:
-   - Dùng gạch đầu dòng rõ ràng, in đậm thông số kỹ thuật cốt lõi giúp người dùng nắm bắt ngay thông tin trong 3 giây.
+   - Dùng gạch đầu dòng rõ ràng, in đậm thông số kỹ thuật cốt lõi và giá tiền giúp người dùng nắm bắt ngay thông tin trong 3 giây.
 
-NHIỆM VỤ CHUYÊN SÂU:
-- Phân tích nghẽn cổ chai CPU vs GPU ở từng độ phân giải (1080p, 2K, 4K).
-- Băng thông PCIe 4.0/5.0 x8 vs x16, SSD NVMe DRAM vs DRAM-less (HMB).
-- Mainboard VRM Power Phase & Giải nhiệt CPU (i9-14900K, i7-14700K, Ryzen 9 7950X3D).
-- RAM DDR5 6000MHz CL30 (Sweet-spot latency <65ns) vs DDR4.
-- Nguồn PSU ATX 3.0 & Cáp 12VHPWR / 12V-2x6 cho RTX 4070 Ti S / 4080 S / 4090.
-- AI Workstation (LLM, SDXL, Tensor Cores VRAM) & Render 3D (Blender, Premiere QuickSync, Octane).
-
-THÔNG TIN DANH MỤC & SẢN PHẨM HIỆN CÓ TẠI PCHUB:
-${catalogContext || 'Các sản phẩm tiêu biểu: Intel Core i9-14900K (13.99tr), Ryzen 9 7950X3D (15.49tr), Ryzen 7 7800X3D (9.89tr), Core i7-14700K (10.49tr), ROG Strix RTX 4090 (54.99tr), RTX 4080 SUPER (31.99tr), RTX 4070 Ti SUPER (23.49tr), Mainboard Z790/B760/X670/B650, RAM Corsair Dominator/Trident Z5 DDR5, SSD NVMe Samsung 990 Pro.'}
+DANH SÁCH SẢN PHẨM THỰC TẾ ĐANG BÁN TẠI PCHUB:
+${catalogContext || '- [Màn Hình Gaming] ASUS ROG Swift OLED PG34WCDM 34" Curved 240Hz Gaming Monitor — Giá: 28.990.000₫\n- [Bàn Phím] Razer BlackWidow V4 Pro Mechanical Gaming Keyboard — Giá: 5.890.000₫\n- [Tai Nghe] Logitech G PRO X 2 LIGHTSPEED Wireless Gaming Headset — Giá: 4.990.000₫\n- [CPU] Intel Core i9-14900K — Giá: 13.990.000₫\n- [CPU] AMD Ryzen 9 7950X3D — Giá: 14.990.000₫\n- [GPU] ASUS ROG Strix GeForce RTX 4090 24GB — Giá: 54.990.000₫\n- [GPU] NVIDIA GeForce RTX 4080 SUPER 16GB — Giá: 31.490.000₫'}
 `;
 
   const candidateModels = [
@@ -132,7 +126,7 @@ ${catalogContext || 'Các sản phẩm tiêu biểu: Intel Core i9-14900K (13.99
 
   // Smart local fallback response if Gemini API fails
   return {
-    text: getSmartLocalAdvisorReply(message),
+    text: getSmartLocalAdvisorReply(message, catalogContext),
     modelUsed: 'local-rule-advisor'
   };
 }
@@ -162,7 +156,7 @@ function extractBudgetInMillions(message: string): number | null {
   return null;
 }
 
-function getSmartLocalAdvisorReply(message: string): string {
+function getSmartLocalAdvisorReply(message: string, catalogContext: string = ''): string {
   const lower = message.toLowerCase();
   const budget = extractBudgetInMillions(message);
 
@@ -236,6 +230,39 @@ function getSmartLocalAdvisorReply(message: string): string {
       `🎯 **Hiệu năng**: Chơi tốt các tựa game Esports 1080p, học tập, văn phòng và đồ họa 2D.`;
   }
 
+  // Màn hình / Monitor Specific Response
+  if (lower.includes('màn hình') || lower.includes('monitor') || lower.includes('màn')) {
+    return `🖥️ **Màn Hình Gaming & Đồ Họa Đỉnh Cao Đang Bán Tại PCHub:**\n\n` +
+      `- **ASUS ROG Swift OLED PG34WCDM 34" Curved 240Hz Gaming Monitor** — **28.990.000 ₫**\n` +
+      `  • **Thông số**: Kích thước 34" cong Ultra-wide, Tấm nền OLED siêu thực, Tần số quét 240Hz, Tốc độ phản hồi 0.03ms, DCI-P3 99%.\n` +
+      `  • **Đánh giá**: Mẫu màn hình OLED flagship cao cấp nhất hiện tại tại PCHub, chuyên dành cho game thủ Esports chuyên nghiệp & Designer đồ họa 4K/8K.\n\n` +
+      `👉 Bạn có thể ghé trực tiếp mục **[Màn Hình Gaming]** trên PCHub để xem chi tiết thông số và đặt mua ngay!`;
+  }
+
+  // Bàn phím / Keyboard
+  if (lower.includes('bàn phím') || lower.includes('keyboard') || lower.includes('phím')) {
+    return `⌨️ **Bàn Phím Cơ Gaming Cao Cấp Tại PCHub:**\n\n` +
+      `- **Razer BlackWidow V4 Pro Mechanical Gaming Keyboard** — **5.890.000 ₫**\n` +
+      `  • **Thông số**: Full-size layout, Switch cơ Razer Green/Yellow Hotswap, Đèn RGB Chroma 16.8 triệu màu, Núm xoay Command Dial đa năng & Kê tay đệm da êm ái.\n\n` +
+      `👉 Xem thêm các mẫu bàn phím cơ gaming tại mục **[Bàn Phím & Chuột]** của PCHub!`;
+  }
+
+  // Tai nghe / Headset
+  if (lower.includes('tai nghe') || lower.includes('headset') || lower.includes('audio')) {
+    return `🎧 **Tai Nghe Gaming Không Dây Chuyên Nghiệp Tại PCHub:**\n\n` +
+      `- **Logitech G PRO X 2 LIGHTSPEED Wireless Gaming Headset** — **4.990.000 ₫**\n` +
+      `  • **Thông số**: Màng loa Graphene 50mm cao cấp, Kết nối không dây LIGHTSPEED 2.4GHz + Bluetooth, Pin 50 giờ liên tục & Micro BLUE VO!CE lọc tiếng ồn.\n\n` +
+      `👉 Chi tiết sản phẩm đang có sẵn tại danh mục **[Tai Nghe & Audio]** PCHub!`;
+  }
+
+  // Chuột / Mouse
+  if (lower.includes('chuột') || lower.includes('mouse')) {
+    return `🖱️ **Chuột Gaming Siêu Nhẹ & Tốc Độ Cao Tại PCHub:**\n\n` +
+      `- **Logitech G Pro X Superlight / Razer Viper V3** — **Từ 2.990.000 ₫ - 3.890.000 ₫**\n` +
+      `  • Mắt đọc HERO 25K / Focus Pro 30K cực kỳ chính xác, trọng lượng siêu nhẹ <60g cho thao tác vẩy tâm chuẩn xác.\n\n` +
+      `👉 Bạn có thể xem thêm trong danh mục **[Bàn Phím & Chuột]** của PCHub!`;
+  }
+
   // 1. Bottleneck / Nghẽn cổ chai
   if (lower.includes('nghẽn') || lower.includes('bottleneck')) {
     return `⚙️ **Phân tích Chuyên Sâu về Nghẽn Cổ Chai (Bottleneck) Phần Cứng:**\n\n` +
@@ -286,7 +313,7 @@ function getSmartLocalAdvisorReply(message: string): string {
     return '⚡ **Tư vấn nguồn (PSU) chuẩn phần cứng PCHub:**\n- **RTX 4060 / 4060 Ti**: Nguồn tối thiểu 550W - 650W (80 Plus Bronze/Gold).\n- **RTX 4070 / 4070 Ti SUPER**: Nguồn 750W 80 Plus Gold có chuẩn dây 16-pin 12VHPWR.\n- **RTX 4080 / 4090**: Khuyến nghị PSU từ 850W đến 1000W 80 Plus Gold / Platinum để nguồn luôn chạy ở dải hiệu suất mát nhất (50-70% tải).';
   }
 
-  return '💡 Chào bạn! Mình là AI Advisor của PCHub. Mình hỗ trợ tư vấn cấu hình PC chuyên sâu (Gaming, AI, Render 3D), giải đáp thắc mắc về nghẽn cổ chai (Bottleneck), chuẩn PCIe, bus RAM DDR4/DDR5, nguồn PSU ATX 3.0 và kiểm tra tương thích phần cứng!';
+  return '💡 Chào bạn! Mình là AI Advisor của PCHub. Mình hỗ trợ tư vấn chọn màn hình gaming, bàn phím, chuột, tai nghe, cấu hình PC chuyên sâu (Gaming, AI, Render 3D), giải đáp thắc mắc nghẽn cổ chai (Bottleneck), bus RAM DDR4/DDR5 và kiểm tra tương thích phần cứng!';
 }
 
 
