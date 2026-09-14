@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Cpu, Layers, Sliders, HardDrive, Zap, Box, 
   Fan, Sparkles, Check, Trash2, Plus, ShoppingCart, 
   Download, RotateCcw, ChevronRight, Bot, RefreshCw, AlertCircle,
-  Printer, FileSpreadsheet, FileText, ChevronDown, Tv, Headphones
+  Printer, FileSpreadsheet, FileText, ChevronDown, Tv, Headphones,
+  Save, FolderOpen, Minus, X
 } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import ComponentSelectorModal from '@/components/builder/ComponentSelectorModal';
@@ -45,7 +46,17 @@ interface ComponentSlot {
   key: string;
   category: string;
   icon: any;
+  required: boolean;
+  quantity: number;
   selected: SelectedComponent | null;
+}
+
+interface SavedBuild {
+  id: string;
+  title: string;
+  createdAt: string;
+  totalPrice: number;
+  slots: { key: string; selected: SelectedComponent | null; quantity: number }[];
 }
 
 export default function BuildPcPage() {
@@ -54,6 +65,8 @@ export default function BuildPcPage() {
       key: 'cpu',
       category: 'CPU - Bộ Vi Xử Lý',
       icon: Cpu,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000001',
         name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)',
@@ -68,6 +81,8 @@ export default function BuildPcPage() {
       key: 'mainboard',
       category: 'Mainboard - Bo Mạch Chủ',
       icon: Layers,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000003',
         name: 'ASUS ROG STRIX Z790-E GAMING WIFI II',
@@ -82,6 +97,8 @@ export default function BuildPcPage() {
       key: 'ram',
       category: 'RAM - Bộ Nhớ Trong',
       icon: Sliders,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000005',
         name: 'G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz',
@@ -96,6 +113,8 @@ export default function BuildPcPage() {
       key: 'gpu',
       category: 'VGA - Card Màn Hình',
       icon: Layers,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000002',
         name: 'ASUS ROG Strix GeForce RTX 4080 SUPER 16GB GDDR6X',
@@ -110,6 +129,8 @@ export default function BuildPcPage() {
       key: 'storage',
       category: 'SSD / HDD - Ổ Đĩa Cứng',
       icon: HardDrive,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000004',
         name: 'Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2',
@@ -124,6 +145,8 @@ export default function BuildPcPage() {
       key: 'psu',
       category: 'PSU - Nguồn Máy Tính',
       icon: Zap,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000006',
         name: 'Corsair RM1000x 1000W 80 Plus Gold Full Modular',
@@ -138,6 +161,8 @@ export default function BuildPcPage() {
       key: 'case',
       category: 'Case - Vỏ Máy Tính',
       icon: Box,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000007',
         name: 'NZXT H9 Flow RGB Dual-Chamber Mid-Tower Black',
@@ -152,6 +177,8 @@ export default function BuildPcPage() {
       key: 'cooling',
       category: 'Tản Nhiệt (Cooling)',
       icon: Fan,
+      required: true,
+      quantity: 1,
       selected: {
         id: 'd1000000-0000-0000-0000-000000000008',
         name: 'NZXT Kraken Elite 360 RGB Black Liquid Cooler',
@@ -166,18 +193,24 @@ export default function BuildPcPage() {
       key: 'monitor',
       category: 'Màn Hình Gaming',
       icon: Tv,
+      required: false,
+      quantity: 1,
       selected: null
     },
     {
       key: 'gear',
       category: 'Bàn Phím & Chuột',
       icon: Sliders,
+      required: false,
+      quantity: 1,
       selected: null
     },
     {
       key: 'headset',
       category: 'Tai Nghe & Audio',
       icon: Headphones,
+      required: false,
+      quantity: 1,
       selected: null
     }
   ]);
@@ -189,9 +222,40 @@ export default function BuildPcPage() {
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const [showFullReportModal, setShowFullReportModal] = useState(false);
 
-  const addItem = useCartStore(s => s.addItem);
+  // Save / Load Build Modals
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [buildTitleInput, setBuildTitleInput] = useState('');
+  const [savedBuildsList, setSavedBuildsList] = useState<SavedBuild[]>([]);
+
   const addMultipleItems = useCartStore(s => s.addMultipleItems);
   const setCartOpen = useCartStore(s => s.setOpen);
+
+  // Read saved builds from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('pchub_saved_builds');
+      if (raw) {
+        setSavedBuildsList(JSON.parse(raw));
+      }
+    } catch (e) {
+      console.error('Error reading saved builds:', e);
+    }
+  }, []);
+
+  const totalPrice = components.reduce((acc, slot) => acc + (slot.selected ? slot.selected.price * slot.quantity : 0), 0);
+  const totalTdp = components.reduce((acc, slot) => acc + (slot.selected ? slot.selected.tdp * slot.quantity : 0), 0);
+  const recommendedPsuWatts = Math.max(650, Math.ceil((totalTdp + 150) / 50) * 50);
+
+  const handleQtyChange = (key: string, delta: number) => {
+    setComponents(prev => prev.map(s => {
+      if (s.key === key) {
+        const newQty = Math.max(1, Math.min(10, s.quantity + delta));
+        return { ...s, quantity: newQty };
+      }
+      return s;
+    }));
+  };
 
   const handleRunAiAnalysis = async () => {
     const selectedItems = components.filter(s => s.selected !== null);
@@ -211,6 +275,7 @@ export default function BuildPcPage() {
           specs: s.selected!.specs,
           price: s.selected!.price,
           tdp: s.selected!.tdp,
+          quantity: s.quantity,
         })),
       };
 
@@ -237,13 +302,12 @@ export default function BuildPcPage() {
   };
 
   const handleRemove = (key: string) => {
-    setComponents(prev => prev.map(slot => slot.key === key ? { ...slot, selected: null } : slot));
+    setComponents(prev => prev.map(slot => slot.key === key ? { ...slot, selected: null, quantity: 1 } : slot));
   };
 
   const handleSelectProductForSlot = (product: any) => {
     if (!activeModalSlotKey) return;
 
-    // Estimate specs & tdp string
     let tdp = 20;
     if (product.specs?.tdp_watt) tdp = Number(product.specs.tdp_watt);
     else if (product.specs?.tdp) tdp = Number(product.specs.tdp);
@@ -298,10 +362,10 @@ export default function BuildPcPage() {
       brand: product.brand_name || product.brand,
     };
 
-    setComponents(prev => prev.map(s => s.key === activeModalSlotKey ? { ...s, selected: newComponent } : s));
+    setComponents(prev => prev.map(s => s.key === activeModalSlotKey ? { ...s, selected: newComponent, quantity: 1 } : s));
 
     const slotTitle = components.find(s => s.key === activeModalSlotKey)?.category || 'linh kiện';
-    setNotice(`Đã cập nhật ${slotTitle}: ${product.name}`);
+    setNotice(`Đã chọn ${slotTitle}: ${product.name}`);
     setTimeout(() => setNotice(null), 3000);
   };
 
@@ -320,13 +384,71 @@ export default function BuildPcPage() {
       image: s.selected!.image,
       category: s.category,
       slug: s.selected!.slug || s.selected!.id,
-      quantity: 1,
+      quantity: s.quantity,
     }));
 
     addMultipleItems(itemsToAdd);
     setCartOpen(true);
     setNotice(`Đã thêm ${itemsToAdd.length} linh kiện vào giỏ hàng thành công!`);
     setTimeout(() => setNotice(null), 3000);
+  };
+
+  // Save Build logic
+  const handleConfirmSaveBuild = () => {
+    const title = buildTitleInput.trim() || `Cấu hình PC ${new Date().toLocaleDateString('vi-VN')}`;
+    const selectedCount = components.filter(s => s.selected !== null).length;
+    if (selectedCount === 0) {
+      setNotice('Vui lòng chọn linh kiện trước khi lưu!');
+      setTimeout(() => setNotice(null), 2500);
+      return;
+    }
+
+    const newBuild: SavedBuild = {
+      id: `build-${Date.now()}`,
+      title,
+      createdAt: new Date().toLocaleString('vi-VN'),
+      totalPrice,
+      slots: components.map(s => ({ key: s.key, selected: s.selected, quantity: s.quantity })),
+    };
+
+    const updated = [newBuild, ...savedBuildsList];
+    setSavedBuildsList(updated);
+    try {
+      localStorage.setItem('pchub_saved_builds', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+
+    setShowSaveModal(false);
+    setBuildTitleInput('');
+    setNotice(`Đã lưu cấu hình "${title}" thành công!`);
+    setTimeout(() => setNotice(null), 3000);
+  };
+
+  // Load Build logic
+  const handleLoadBuildItem = (saved: SavedBuild) => {
+    setComponents(prev => prev.map(s => {
+      const found = saved.slots.find(x => x.key === s.key);
+      if (found) {
+        return { ...s, selected: found.selected, quantity: found.quantity || 1 };
+      }
+      return { ...s, selected: null, quantity: 1 };
+    }));
+
+    setShowLoadModal(false);
+    setAiReport(null);
+    setNotice(`Đã tải cấu hình "${saved.title}"!`);
+    setTimeout(() => setNotice(null), 3000);
+  };
+
+  const handleDeleteBuildItem = (id: string) => {
+    const updated = savedBuildsList.filter(b => b.id !== id);
+    setSavedBuildsList(updated);
+    try {
+      localStorage.setItem('pchub_saved_builds', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handlePrintPdf = () => {
@@ -336,7 +458,7 @@ export default function BuildPcPage() {
       setTimeout(() => setNotice(null), 2500);
       return;
     }
-    const total = selectedItems.reduce((sum, s) => sum + (s.selected?.price || 0), 0);
+    const total = selectedItems.reduce((sum, s) => sum + (s.selected ? s.selected.price * s.quantity : 0), 0);
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -384,8 +506,9 @@ export default function BuildPcPage() {
               <th style="width: 40px; text-align: center;">STT</th>
               <th style="width: 140px;">Danh mục</th>
               <th>Tên linh kiện</th>
-              <th>Thông số kỹ thuật</th>
-              <th style="width: 140px; text-align: right;">Đơn giá</th>
+              <th style="width: 70px; text-align: center;">Số lượng</th>
+              <th style="width: 130px; text-align: right;">Đơn giá</th>
+              <th style="width: 130px; text-align: right;">Thành tiền</th>
             </tr>
           </thead>
           <tbody>
@@ -393,13 +516,14 @@ export default function BuildPcPage() {
               <tr>
                 <td style="text-align: center;">${idx + 1}</td>
                 <td><b>${s.category}</b></td>
-                <td><b>${s.selected?.name}</b></td>
-                <td style="color: #475569; font-size: 12px;">${s.selected?.specs || ''}</td>
-                <td style="text-align: right; font-weight: bold; color: #2563eb;">${s.selected?.price.toLocaleString('vi-VN')} ₫</td>
+                <td><b>${s.selected?.name}</b><br><span style="color: #64748b; font-size: 11px;">${s.selected?.specs || ''}</span></td>
+                <td style="text-align: center;">${s.quantity}</td>
+                <td style="text-align: right;">${s.selected?.price.toLocaleString('vi-VN')} ₫</td>
+                <td style="text-align: right; font-weight: bold; color: #2563eb;">${((s.selected?.price || 0) * s.quantity).toLocaleString('vi-VN')} ₫</td>
               </tr>
             `).join('')}
             <tr class="total-row">
-              <td colspan="4" style="text-align: right; padding: 14px 12px;">TỔNG CHI PHÍ TẠM TÍNH:</td>
+              <td colspan="5" style="text-align: right; padding: 14px 12px;">TỔNG CHI PHÍ TẠM TÍNH:</td>
               <td style="text-align: right; padding: 14px 12px; color: #2563eb; font-size: 18px;">${total.toLocaleString('vi-VN')} ₫</td>
             </tr>
           </tbody>
@@ -426,15 +550,16 @@ export default function BuildPcPage() {
       setTimeout(() => setNotice(null), 2500);
       return;
     }
-    const total = selectedItems.reduce((sum, s) => sum + (s.selected?.price || 0), 0);
+    const total = selectedItems.reduce((sum, s) => sum + (s.selected ? s.selected.price * s.quantity : 0), 0);
 
-    let csv = '\uFEFFSTT,Danh mục,Tên linh kiện,Thông số,Đơn giá (VNĐ)\n';
+    let csv = '\uFEFFSTT,Danh mục,Tên linh kiện,Số lượng,Đơn giá (VNĐ),Thành tiền (VNĐ)\n';
     selectedItems.forEach((s, idx) => {
       const name = `"${(s.selected?.name || '').replace(/"/g, '""')}"`;
-      const specs = `"${(s.selected?.specs || '').replace(/"/g, '""')}"`;
-      csv += `${idx + 1},"${s.category}",${name},${specs},${s.selected?.price || 0}\n`;
+      const price = s.selected?.price || 0;
+      const subtotal = price * s.quantity;
+      csv += `${idx + 1},"${s.category}",${name},${s.quantity},${price},${subtotal}\n`;
     });
-    csv += `,,,TỔNG CỘNG,${total}\n`;
+    csv += `,,,,TỔNG CỘNG,${total}\n`;
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -448,202 +573,25 @@ export default function BuildPcPage() {
     setTimeout(() => setNotice(null), 3000);
   };
 
-  const handleExportTxt = () => {
-    const selectedItems = components.filter(s => s.selected !== null);
-    if (selectedItems.length === 0) {
-      setNotice('Chưa có linh kiện nào để xuất cấu hình!');
-      setTimeout(() => setNotice(null), 2500);
-      return;
-    }
-
-    let text = `=======================================\n`;
-    text += `   PCHUB - BẢNG CẤU HÌNH PC XÂY DỰNG   \n`;
-    text += `   Website: https://pchub-iota.vercel.app\n`;
-    text += `=======================================\n\n`;
-
-    selectedItems.forEach((s, idx) => {
-      text += `${idx + 1}. [${s.category}]\n`;
-      text += `   Tên: ${s.selected?.name}\n`;
-      text += `   Giá: ${s.selected?.price.toLocaleString('vi-VN')} VNĐ\n`;
-      text += `   Thông số: ${s.selected?.specs}\n\n`;
-    });
-
-    const total = selectedItems.reduce((sum, s) => sum + (s.selected?.price || 0), 0);
-    text += `---------------------------------------\n`;
-    text += `TỔNG CHI PHÍ TẠM TÍNH: ${total.toLocaleString('vi-VN')} VNĐ\n`;
-    text += `=======================================\n`;
-
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `PCHub_Config_${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
-    setNotice('Đã tải xuống file cấu hình Text (.txt)!');
-    setTimeout(() => setNotice(null), 3000);
-  };
-
   const applyPresetEmpty = () => {
-    setComponents(prev => prev.map(s => ({ ...s, selected: null })));
+    setComponents(prev => prev.map(s => ({ ...s, selected: null, quantity: 1 })));
     setAiReport(null);
     setNotice('Đã làm trống toàn bộ cấu hình. Hãy bắt đầu chọn từng linh kiện theo ý bạn!');
     setTimeout(() => setNotice(null), 3000);
   };
 
-  const applyPresetGaming = () => {
-    setComponents([
-      {
-        key: 'cpu',
-        category: 'CPU - Bộ Vi Xử Lý',
-        icon: Cpu,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000001',
-          name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)',
-          price: 13990000,
-          tdp: 253,
-          specs: 'LGA1700 | 36MB Cache | 125W-253W',
-          image: '/images/cpu-box.jpg',
-          slug: 'intel-core-i9-14900k'
-        }
-      },
-      {
-        key: 'mainboard',
-        category: 'Mainboard - Bo Mạch Chủ',
-        icon: Layers,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000003',
-          name: 'ASUS ROG STRIX Z790-E GAMING WIFI II',
-          price: 11490000,
-          tdp: 50,
-          specs: 'LGA1700 | 4x DDR5 | PCIe 5.0 | ATX',
-          image: '/images/gpu-white.jpg',
-          slug: 'asus-rog-strix-z790-e'
-        }
-      },
-      {
-        key: 'ram',
-        category: 'RAM - Bộ Nhớ Trong',
-        icon: Sliders,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000005',
-          name: 'G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz',
-          price: 6290000,
-          tdp: 15,
-          specs: '2x32GB | DDR5 | 6000MHz | CL30',
-          image: '/images/ram-rgb.jpg',
-          slug: 'gskill-trident-z5-ddr5'
-        }
-      },
-      {
-        key: 'gpu',
-        category: 'VGA - Card Màn Hình',
-        icon: Layers,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000002',
-          name: 'ASUS ROG Strix GeForce RTX 4080 SUPER 16GB GDDR6X',
-          price: 31490000,
-          tdp: 320,
-          specs: '16GB GDDR6X | 256-bit | Triple Fan',
-          image: '/images/gpu-strix.jpg',
-          slug: 'asus-rog-strix-rtx-4080-super'
-        }
-      },
-      {
-        key: 'storage',
-        category: 'SSD / HDD - Ổ Đĩa Cứng',
-        icon: HardDrive,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000004',
-          name: 'Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2',
-          price: 4890000,
-          tdp: 10,
-          specs: '2TB | Đọc 7450MB/s - Ghi 6900MB/s',
-          image: '/images/ssd-nvme.jpg',
-          slug: 'samsung-990-pro-2tb'
-        }
-      },
-      {
-        key: 'psu',
-        category: 'PSU - Nguồn Máy Tính',
-        icon: Zap,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000006',
-          name: 'Corsair RM1000x 1000W 80 Plus Gold Full Modular',
-          price: 4390000,
-          tdp: 0,
-          specs: '1000W | 80 Plus Gold | Full Modular',
-          image: '/images/gpu-white.jpg',
-          slug: 'corsair-rm1000x'
-        }
-      },
-      {
-        key: 'case',
-        category: 'Case - Vỏ Máy Tính',
-        icon: Box,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000007',
-          name: 'NZXT H9 Flow RGB Dual-Chamber Mid-Tower Black',
-          price: 4290000,
-          tdp: 0,
-          specs: 'Hỗ trợ GPU 435mm | Tản nước 360mm',
-          image: '/images/hero-pc.jpg',
-          slug: 'nzxt-h9-flow-black'
-        }
-      },
-      {
-        key: 'cooling',
-        category: 'Tản Nhiệt (Cooling)',
-        icon: Fan,
-        selected: {
-          id: 'd1000000-0000-0000-0000-000000000008',
-          name: 'NZXT Kraken Elite 360 RGB Black Liquid Cooler',
-          price: 6890000,
-          tdp: 25,
-          specs: 'AIO 360mm | 3x 120mm RGB Fan | Màn hình LCD',
-          image: '/images/hero-pc.jpg',
-          slug: 'nzxt-kraken-elite-360'
-        }
-      },
-      {
-        key: 'monitor',
-        category: 'Màn Hình Gaming',
-        icon: Tv,
-        selected: null
-      },
-      {
-        key: 'gear',
-        category: 'Bàn Phím & Chuột',
-        icon: Sliders,
-        selected: null
-      },
-      {
-        key: 'headset',
-        category: 'Tai Nghe & Audio',
-        icon: Headphones,
-        selected: null
-      }
-    ]);
-    setNotice('Đã nạp cấu hình mẫu Gaming Ultra High-End!');
-    setTimeout(() => setNotice(null), 3000);
-  };
-
-  const totalPrice = components.reduce((acc, slot) => acc + (slot.selected?.price || 0), 0);
-  const totalTdp = components.reduce((acc, slot) => acc + (slot.selected?.tdp || 0), 0);
-  const recommendedPsuWatts = Math.max(650, Math.ceil((totalTdp + 150) / 50) * 50);
+  const coreComponents = components.filter(s => s.required);
+  const peripheralComponents = components.filter(s => !s.required);
 
   const activeSlotCategory = components.find(s => s.key === activeModalSlotKey)?.category || 'Linh kiện';
   const activeSlotSelectedId = components.find(s => s.key === activeModalSlotKey)?.selected?.id;
 
-  // AI Diagnostic Logic
+  // AI Heuristic Diagnosis
   const cpuSelected = components.find(s => s.key === 'cpu')?.selected;
   const mainboardSelected = components.find(s => s.key === 'mainboard')?.selected;
   const ramSelected = components.find(s => s.key === 'ram')?.selected;
-  const gpuSelected = components.find(s => s.key === 'gpu')?.selected;
   const psuSelected = components.find(s => s.key === 'psu')?.selected;
 
-  // 1. Socket compatibility
   const isIntel = cpuSelected?.name.toLowerCase().includes('intel') || cpuSelected?.name.toLowerCase().includes('core');
   const isAmd = cpuSelected?.name.toLowerCase().includes('amd') || cpuSelected?.name.toLowerCase().includes('ryzen');
   const isLga1700Cpu = cpuSelected?.specs?.includes('LGA1700') || cpuSelected?.name?.includes('14') || cpuSelected?.name?.includes('13') || cpuSelected?.name?.includes('12');
@@ -670,7 +618,6 @@ export default function BuildPcPage() {
     }
   }
 
-  // 2. RAM vs Mainboard DDR4/DDR5
   const isDdr5Mb = mainboardSelected?.name?.includes('DDR5') || mainboardSelected?.specs?.includes('DDR5');
   const isDdr4Mb = mainboardSelected?.name?.includes('DDR4') || mainboardSelected?.specs?.includes('DDR4');
   const isDdr5Ram = ramSelected?.name?.includes('DDR5') || ramSelected?.specs?.includes('DDR5');
@@ -688,18 +635,187 @@ export default function BuildPcPage() {
     }
   }
 
-  // 3. PSU Wattage Check
   let psuWatts = 0;
   if (psuSelected) {
     const match = psuSelected.name.match(/(\d{3,4})\s*W/i) || psuSelected.specs.match(/(\d{3,4})\s*W/i);
     psuWatts = match ? parseInt(match[1], 10) : 750;
   }
   const isPsuAdequate = !psuSelected || (psuWatts >= recommendedPsuWatts - 50);
-  let psuMessage = psuSelected
-    ? (isPsuAdequate 
-        ? `Nguồn ${psuWatts}W đáp ứng hoàn hảo công suất tải tối đa (${recommendedPsuWatts}W)`
-        : `⚠️ Cảnh báo: Nguồn ${psuWatts}W thấp hơn công suất đề xuất (${recommendedPsuWatts}W)`)
-    : `Đề xuất trang bị bộ nguồn tối thiểu ${recommendedPsuWatts}W`;
+
+  const renderSlotRow = (slot: ComponentSlot) => {
+    const Icon = slot.icon;
+    const isSelected = slot.selected !== null;
+
+    return (
+      <div key={slot.key} className="builder-slot-card" style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '14px',
+        padding: '16px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ flex: 1, minWidth: '240px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '10px',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            overflow: 'hidden',
+            padding: isSelected ? '2px' : '0',
+          }}>
+            {isSelected ? (
+              <img
+                src={slot.selected!.image}
+                alt={slot.selected!.name}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : (
+              <div style={{ color: '#2563eb' }}>
+                <Icon size={22} />
+              </div>
+            )}
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              {slot.category} {slot.required && <span style={{ color: '#ef4444' }}>*</span>}
+            </div>
+            {isSelected ? (
+              <div>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '3px 0 4px', lineHeight: '1.4' }}>
+                  {slot.selected!.name}
+                </h4>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                  {slot.selected!.specs}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '13.5px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
+                Vui lòng chọn linh kiện
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions & Quantity Adjuster */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {isSelected ? (
+            <>
+              {/* Quantity Control Buttons [- Qty +] */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#f8fafc',
+                overflow: 'hidden',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => handleQtyChange(slot.key, -1)}
+                  style={{
+                    padding: '6px 10px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: '#475569',
+                  }}
+                >
+                  <Minus size={13} />
+                </button>
+                <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 8px', color: '#0f172a' }}>
+                  {slot.quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleQtyChange(slot.key, 1)}
+                  style={{
+                    padding: '6px 10px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: '#475569',
+                  }}
+                >
+                  <Plus size={13} />
+                </button>
+              </div>
+
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', minWidth: '100px', textAlign: 'right' }}>
+                {((slot.selected?.price || 0) * slot.quantity).toLocaleString('vi-VN')} ₫
+              </div>
+
+              <button
+                onClick={() => setActiveModalSlotKey(slot.key)}
+                style={{
+                  background: '#eff6ff',
+                  color: '#2563eb',
+                  border: '1.5px solid #bfdbfe',
+                  borderRadius: '8px',
+                  padding: '7px 12px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <RefreshCw size={13} />
+                Đổi
+              </button>
+
+              <button
+                onClick={() => handleRemove(slot.key)}
+                style={{
+                  background: '#fef2f2',
+                  color: '#ef4444',
+                  border: '1px solid #fecdd3',
+                  borderRadius: '8px',
+                  padding: '7px',
+                  cursor: 'pointer'
+                }}
+                title="Xóa linh kiện"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={() => setActiveModalSlotKey(slot.key)}
+              style={{
+                background: '#2563eb',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
+              }}
+            >
+              <Plus size={14} />
+              Chọn linh kiện
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ background: '#f8fafc', color: '#1e293b', minHeight: '100vh', padding: '24px 0 60px' }}>
@@ -733,228 +849,152 @@ export default function BuildPcPage() {
           </div>
         )}
 
-        {/* Header */}
-        <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Sparkles size={24} color="#2563eb" />
-            Xây dựng Cấu hình PC & Tối ưu AI
-          </h1>
-          <p style={{ fontSize: '13.5px', color: '#64748b', marginTop: '4px' }}>
-            Hệ thống AI tự động kiểm tra tương thích chân cắm Socket, kích thước linh kiện và ước tính công suất nguồn thời gian thực.
-          </p>
-        </div>
-
-        {/* 2-Columns Layout */}
-        <div className="builder-layout-grid" style={{ alignItems: 'flex-start' }}>
-          
-          {/* Left: Component List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-            {/* Quick Template Preset Bar */}
-            <div style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px',
-              padding: '12px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '10px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#334155' }}>
-                <span>⚡ Cấu hình mẫu:</span>
-                <button
-                  type="button"
-                  onClick={applyPresetGaming}
-                  style={{
-                    background: '#eff6ff',
-                    color: '#2563eb',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: '6px',
-                    padding: '5px 12px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Gaming Ultra High-End
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={applyPresetEmpty}
-                style={{
-                  background: '#fef2f2',
-                  color: '#ef4444',
-                  border: '1px solid #fecdd3',
-                  borderRadius: '6px',
-                  padding: '5px 12px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <Trash2 size={13} />
-                Làm trống để tự build từ đầu
-              </button>
-            </div>
-            {components.map(slot => {
-              const Icon = slot.icon;
-              return (
-                <div key={slot.key} className="builder-slot-card">
-                  <div className="builder-slot-card-header" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    {/* Category Icon or Component Thumbnail */}
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '10px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      overflow: 'hidden',
-                      padding: slot.selected?.image ? '2px' : '0',
-                    }}>
-                      {slot.selected?.image ? (
-                        <img
-                          src={slot.selected.image}
-                          alt={slot.selected.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div style={{ color: '#2563eb' }}>
-                          <Icon size={22} />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Component Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                        {slot.category}
-                      </div>
-                      {slot.selected ? (
-                        <div>
-                          <h4 style={{
-                            fontSize: '14px',
-                            fontWeight: 700,
-                            color: '#0f172a',
-                            margin: '3px 0 4px',
-                            lineHeight: '1.4',
-                          }}>
-                            {slot.selected.name}
-                          </h4>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#64748b', flexWrap: 'wrap' }}>
-                            <span>{slot.selected.specs}</span>
-                            {slot.selected.tdp > 0 && (
-                              <span style={{ color: '#ea580c', fontWeight: 600 }}>TDP: {slot.selected.tdp}W</span>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '13.5px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
-                          Chưa chọn linh kiện
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Price & Action Buttons */}
-                  <div className="builder-slot-card-actions" style={{ flexShrink: 0 }}>
-                    {slot.selected ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                        <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb' }}>
-                          {slot.selected.price.toLocaleString('vi-VN')} ₫
-                        </div>
-
-                        {/* Replace Button */}
-                        <button
-                          onClick={() => setActiveModalSlotKey(slot.key)}
-                          style={{
-                            background: '#eff6ff',
-                            color: '#2563eb',
-                            border: '1.5px solid #bfdbfe',
-                            borderRadius: '8px',
-                            padding: '8px 14px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            transition: 'all 0.15s ease',
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = '#2563eb';
-                            e.currentTarget.style.color = '#ffffff';
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = '#eff6ff';
-                            e.currentTarget.style.color = '#2563eb';
-                          }}
-                          title="Đổi sang linh kiện khác"
-                        >
-                          <RefreshCw size={14} />
-                          Đổi linh kiện
-                        </button>
-
-                        {/* Trash Remove Button */}
-                        <button
-                          onClick={() => handleRemove(slot.key)}
-                          style={{
-                            background: '#fef2f2',
-                            color: '#ef4444',
-                            border: '1px solid #fecdd3',
-                            borderRadius: '8px',
-                            padding: '8px',
-                            cursor: 'pointer'
-                          }}
-                          title="Xóa linh kiện"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => setActiveModalSlotKey(slot.key)}
-                        style={{
-                          background: '#2563eb',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '9px 18px',
-                          borderRadius: '8px',
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
-                        }}
-                      >
-                        <Plus size={14} />
-                        Chọn linh kiện
-                      </button>
-                    )}
-                  </div>
-
-                </div>
-              );
-            })}
+        {/* Top Header Banner & Action Bar */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
+          borderRadius: '16px',
+          padding: '24px 28px',
+          marginBottom: '24px',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
+        }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Sparkles size={24} color="#38bdf8" />
+              Xây Dựng Cấu Hình PC Tự Chọn
+            </h1>
+            <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 0 0' }}>
+              Lựa chọn linh kiện chuẩn xác, tự động kiểm tra tương thích Socket & công suất nguồn với Gemini AI
+            </p>
           </div>
 
-          {/* Right: Build Summary & AI Diagnostic */}
+          {/* Toolbar Action Buttons (Save Build, Load Build, Reset) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setShowSaveModal(true)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                borderRadius: '9px',
+                padding: '8px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Save size={15} color="#38bdf8" />
+              Lưu cấu hình
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowLoadModal(true)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                borderRadius: '9px',
+                padding: '8px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <FolderOpen size={15} color="#fbbf24" />
+              Tải cấu hình ({savedBuildsList.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={applyPresetEmpty}
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                color: '#fca5a5',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                borderRadius: '9px',
+                padding: '8px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <RotateCcw size={15} />
+              Làm mới
+            </button>
+          </div>
+        </div>
+
+        {/* 2-Columns Main Layout */}
+        <div className="builder-layout-grid" style={{ alignItems: 'flex-start' }}>
+          
+          {/* Left Column: Component Slots List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Core Components Section */}
+            <div>
+              <div style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                color: '#0f172a',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                <Cpu size={16} color="#2563eb" />
+                Linh Kiện Bắt Buộc (Core Hardware)
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {coreComponents.map(slot => renderSlotRow(slot))}
+              </div>
+            </div>
+
+            {/* Peripherals Section */}
+            <div>
+              <div style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                color: '#0f172a',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                margin: '8px 0 12px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                <Tv size={16} color="#9333ea" />
+                Thiết Bị Ngoại Vi & Phụ Kiện (Optional Peripherals)
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {peripheralComponents.map(slot => renderSlotRow(slot))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column: Build Summary & AI Diagnostic */}
           <aside style={{
             background: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -965,7 +1005,7 @@ export default function BuildPcPage() {
             boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
           }}>
             <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
-              Chi tiết cấu hình
+              Tóm Tắt Cấu Hình PC
             </h3>
 
             {/* Total Price */}
@@ -983,7 +1023,6 @@ export default function BuildPcPage() {
                 <span style={{ color: '#ea580c', fontWeight: 800 }}>{totalTdp} W</span>
               </div>
               
-              {/* Progress bar */}
               <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
                 <div style={{ width: `${Math.min(100, (totalTdp / 1000) * 100)}%`, height: '100%', background: '#22c55e' }} />
               </div>
@@ -1000,9 +1039,7 @@ export default function BuildPcPage() {
               padding: '16px',
               marginBottom: '20px',
               boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
-              position: 'relative',
             }}>
-              {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
@@ -1019,14 +1056,13 @@ export default function BuildPcPage() {
                     <Bot size={16} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>AI Phân Tích Tương Thích</span>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
+                      AI Phân Tích Tương Thích
                     </div>
                     <span style={{ fontSize: '10px', color: '#64748b' }}>Powered by Google Gemini</span>
                   </div>
                 </div>
 
-                {/* Score badge if available */}
                 {aiReport && (
                   <div style={{
                     display: 'flex',
@@ -1045,7 +1081,6 @@ export default function BuildPcPage() {
                 )}
               </div>
 
-              {/* Summary if AI Report is available */}
               {aiReport ? (
                 <div>
                   <p style={{
@@ -1061,25 +1096,6 @@ export default function BuildPcPage() {
                     {aiReport.summary}
                   </p>
 
-                  {/* Checklist summary items */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                    {aiReport.checklist.slice(0, 3).map((item, i) => (
-                      <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', fontSize: '11.5px', color: '#1e293b' }}>
-                        {item.status === 'PASS' ? (
-                          <Check size={13} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        ) : item.status === 'WARN' ? (
-                          <AlertCircle size={13} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        ) : (
-                          <AlertCircle size={13} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        )}
-                        <span style={{ lineHeight: '1.35' }}>
-                          <strong style={{ color: '#0f172a' }}>{item.category}:</strong> {item.detail}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Button to view full report modal */}
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <button
                       type="button"
@@ -1098,40 +1114,17 @@ export default function BuildPcPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
-                        transition: 'all 0.15s ease',
                       }}
                     >
                       <Sparkles size={13} />
                       Xem phân tích chi tiết
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={handleRunAiAnalysis}
-                      disabled={isAiAnalyzing}
-                      title="Chạy lại phân tích Gemini"
-                      style={{
-                        background: '#f1f5f9',
-                        color: '#475569',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        padding: '8px 10px',
-                        cursor: isAiAnalyzing ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <RefreshCw size={13} className={isAiAnalyzing ? 'animate-spin' : ''} />
-                    </button>
                   </div>
                 </div>
               ) : (
                 <div>
-                  {/* Only show heuristic items when relevant components are selected */}
                   {(cpuSelected || mainboardSelected || ramSelected || psuSelected) ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', fontSize: '12px', color: '#1e3a8a', marginBottom: '12px' }}>
-                      {/* Socket check — only when CPU and Mainboard are both chosen */}
                       {cpuSelected && mainboardSelected && (
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
                           {isSocketCompatible ? (
@@ -1143,7 +1136,6 @@ export default function BuildPcPage() {
                         </div>
                       )}
 
-                      {/* RAM check — only when RAM and Mainboard are both chosen */}
                       {mainboardSelected && ramSelected && (
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
                           {isRamCompatible ? (
@@ -1154,28 +1146,14 @@ export default function BuildPcPage() {
                           <span>{ramMessage}</span>
                         </div>
                       )}
-
-                      {/* PSU check — only when PSU is chosen */}
-                      {psuSelected && (
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-                          {isPsuAdequate ? (
-                            <Check size={14} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          ) : (
-                            <AlertCircle size={14} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          )}
-                          <span>{psuMessage}</span>
-                        </div>
-                      )}
                     </div>
                   ) : (
-                    /* Empty state: guide user to pick components first */
                     <div style={{ textAlign: 'center', padding: '10px 0 14px', color: '#94a3b8', fontSize: '12px' }}>
                       <Cpu size={24} color="#cbd5e1" style={{ marginBottom: '6px' }} />
                       <div>Chọn linh kiện để AI phân tích tương thích</div>
                     </div>
                   )}
 
-                  {/* Primary AI CTA Button */}
                   <button
                     type="button"
                     onClick={handleRunAiAnalysis}
@@ -1195,14 +1173,12 @@ export default function BuildPcPage() {
                       justifyContent: 'center',
                       gap: '8px',
                       boxShadow: '0 3px 10px rgba(37, 99, 235, 0.25)',
-                      transition: 'all 0.2s ease',
-                      opacity: isAiAnalyzing ? 0.75 : 1
                     }}
                   >
                     {isAiAnalyzing ? (
                       <>
                         <RefreshCw size={14} className="animate-spin" />
-                        <span>Gemini đang phân tích cấu hình...</span>
+                        <span>Gemini đang phân tích...</span>
                       </>
                     ) : (
                       <>
@@ -1233,14 +1209,12 @@ export default function BuildPcPage() {
                   gap: '8px',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
-                  transition: 'all 0.2s',
                 }}
               >
                 <ShoppingCart size={16} />
                 Thêm tất cả vào giỏ hàng
               </button>
 
-              {/* Export Config Dropdown Container */}
               <div style={{ position: 'relative' }}>
                 <button
                   type="button"
@@ -1259,7 +1233,6 @@ export default function BuildPcPage() {
                     justifyContent: 'center',
                     gap: '6px',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
                   }}
                 >
                   <Download size={15} />
@@ -1297,11 +1270,8 @@ export default function BuildPcPage() {
                         fontSize: '13px',
                         fontWeight: 600,
                         color: '#0f172a',
-                        textAlign: 'left',
                         cursor: 'pointer',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       <Printer size={15} color="#2563eb" />
                       In / Lưu PDF Báo Giá A4
@@ -1321,63 +1291,15 @@ export default function BuildPcPage() {
                         fontSize: '13px',
                         fontWeight: 600,
                         color: '#0f172a',
-                        textAlign: 'left',
                         cursor: 'pointer',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       <FileSpreadsheet size={15} color="#16a34a" />
                       Tải bảng tính Excel (.CSV)
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={handleExportTxt}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '9px 12px',
-                        border: 'none',
-                        background: 'transparent',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#0f172a',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <FileText size={15} color="#64748b" />
-                      Tải file văn bản (.TXT)
-                    </button>
                   </div>
                 )}
               </div>
-
-              <button 
-                onClick={applyPresetEmpty}
-                style={{
-                  background: 'none',
-                  color: '#64748b',
-                  border: 'none',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  padding: '6px',
-                  marginTop: '4px',
-                }}
-              >
-                <RotateCcw size={12} />
-                Làm mới cấu hình
-              </button>
             </div>
 
           </aside>
@@ -1385,6 +1307,78 @@ export default function BuildPcPage() {
         </div>
 
       </div>
+
+
+
+      {/* Save Build Modal */}
+      {showSaveModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#ffffff', borderRadius: '16px', width: '420px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Lưu cấu hình PC này</h3>
+              <button onClick={() => setShowSaveModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={18} /></button>
+            </div>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+              Đặt tên cho cấu hình để dễ dàng tải lại hoặc chia sẻ sau này:
+            </p>
+            <input
+              type="text"
+              placeholder="Ví dụ: Dàn PC Gaming 30 Triệu..."
+              value={buildTitleInput}
+              onChange={(e) => setBuildTitleInput(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', marginBottom: '20px' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSaveModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                Hủy
+              </button>
+              <button onClick={handleConfirmSaveBuild} style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#2563eb', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                Lưu cấu hình
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Build Modal */}
+      {showLoadModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#ffffff', borderRadius: '16px', width: '520px', maxWidth: '92vw', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cấu hình đã lưu ({savedBuildsList.length})</h3>
+              <button onClick={() => setShowLoadModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={18} /></button>
+            </div>
+
+            <div style={{ maxHeight: '360px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {savedBuildsList.length > 0 ? (
+                savedBuildsList.map(b => (
+                  <div key={b.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{b.title}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        Lưu ngày: {b.createdAt} · <span style={{ color: '#2563eb', fontWeight: 700 }}>{b.totalPrice.toLocaleString('vi-VN')} ₫</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button onClick={() => handleLoadBuildItem(b)} style={{ padding: '6px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                        Tải
+                      </button>
+                      <button onClick={() => handleDeleteBuildItem(b.id)} style={{ padding: '6px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecdd3', borderRadius: '7px', cursor: 'pointer' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontSize: '13.5px' }}>
+                  Chưa có cấu hình nào được lưu. Hãy bấm "Lưu cấu hình" để lưu lại bộ PC của bạn!
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Component Selection Modal */}
       {activeModalSlotKey && (
