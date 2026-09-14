@@ -307,7 +307,16 @@ export default function ComponentSelectorModal({
       return true;
     });
 
-    // 4. Sorting
+    // 4. AI Compatibility Sorting (prioritize compatible products at the top)
+    if (currentBuildState && currentBuildState.length > 0 && sortBy === 'DEFAULT') {
+      result.sort((a, b) => {
+        const compatA = getProductAiCompatibilityInfo(a, slotKey, currentBuildState).isCompatible ? 1 : 0;
+        const compatB = getProductAiCompatibilityInfo(b, slotKey, currentBuildState).isCompatible ? 1 : 0;
+        return compatB - compatA;
+      });
+    }
+
+    // 5. Price Sorting
     if (sortBy === 'PRICE_ASC') {
       result.sort((a, b) => Number(a.price) - Number(b.price));
     } else if (sortBy === 'PRICE_DESC') {
@@ -315,7 +324,7 @@ export default function ComponentSelectorModal({
     }
 
     return result;
-  }, [products, searchTerm, selectedBrand, priceRange, sortBy]);
+  }, [products, searchTerm, selectedBrand, priceRange, sortBy, currentBuildState, slotKey]);
 
   if (!isOpen) return null;
 
@@ -605,6 +614,38 @@ export default function ComponentSelectorModal({
             }
           }}
         >
+          {/* AI Auto-Match Notification Banner */}
+          {currentBuildState && currentBuildState.some(s => s.selected !== null) && (
+            <div style={{
+              padding: '12px 18px',
+              marginBottom: '20px',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+              border: '1px solid #bfdbfe',
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.06)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: '#2563eb', color: '#fff', padding: '5px', borderRadius: '8px', display: 'flex' }}>
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
+                    🤖 AI Auto-Match Đang Kích Hoạt
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#475569' }}>
+                    Tự động ưu tiên xếp sản phẩm 100% tương thích Socket & Chuẩn RAM lên trên cùng với nhãn xanh <span style={{ color: '#16a34a', fontWeight: 800 }}>✓ AI Tương Thích</span>
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', border: '1px solid #86efac', padding: '3px 10px', borderRadius: '20px', flexShrink: 0 }}>
+                ĐÃ LỌC TỰ ĐỘNG
+              </span>
+            </div>
+          )}
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
               <div style={{

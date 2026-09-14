@@ -643,7 +643,7 @@ export default function BuildPcPage() {
   }
   const isPsuAdequate = !psuSelected || (psuWatts >= recommendedPsuWatts - 50);
 
-  // Compute AI Next Device Suggestions
+  // Compute AI Next Device Suggestions (Always active for both full presets & custom builds)
   const aiNextSuggestions = useMemo(() => {
     const list: Array<{ targetSlotKey: string; targetCategoryTitle: string; reason: string; badge: string }> = [];
 
@@ -654,79 +654,110 @@ export default function BuildPcPage() {
     const psu = psuSelected;
     const caseItem = components.find(s => s.key === 'case')?.selected;
     const cooling = components.find(s => s.key === 'cooling')?.selected;
+    const monitor = components.find(s => s.key === 'monitor')?.selected;
 
     const cpuText = cpu ? `${cpu.name} ${cpu.specs}`.toUpperCase() : '';
     const mbText = mb ? `${mb.name} ${mb.specs}`.toUpperCase() : '';
+    const gpuText = gpu ? `${gpu.name} ${gpu.specs}`.toUpperCase() : '';
 
-    let socket = '';
+    let socket = 'LGA1700';
     if (cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13700') || cpuText.includes('13600') || cpuText.includes('12700') || cpuText.includes('LGA1700')) socket = 'LGA1700';
     else if (cpuText.includes('AM5') || cpuText.includes('7800X3D') || cpuText.includes('7600') || cpuText.includes('9700') || cpuText.includes('9800X3D')) socket = 'AM5';
     else if (cpuText.includes('AM4') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D')) socket = 'AM4';
 
-    if (!socket && mbText) {
-      if (mbText.includes('Z790') || mbText.includes('B760') || mbText.includes('LGA1700')) socket = 'LGA1700';
-      else if (mbText.includes('B650') || mbText.includes('X670') || mbText.includes('AM5')) socket = 'AM5';
-      else if (mbText.includes('B550') || mbText.includes('A520') || mbText.includes('AM4')) socket = 'AM4';
-    }
+    const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650');
+    const ramGen = isDdr5 ? 'DDR5' : 'DDR4';
+    const recWatts = Math.max(750, Math.ceil((totalTdp + 150) / 50) * 50);
 
+    // Dynamic condition 1: Unselected Mainboard
     if (cpu && !mb) {
       list.push({
         targetSlotKey: 'mainboard',
         targetCategoryTitle: 'Bo Mạch Chủ (Mainboard)',
-        reason: `AI gợi ý: Chọn Mainboard Socket ${socket || 'phù hợp'} để phát huy tối đa sức mạnh của CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''}`,
-        badge: `Socket ${socket || 'Chuẩn'}`,
+        reason: `AI gợi ý: Chọn Mainboard Socket ${socket} hỗ trợ RAM ${ramGen} để phát huy hết sức mạnh CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''}`,
+        badge: `Socket ${socket} · ${ramGen}`,
       });
     }
 
+    // Dynamic condition 2: Unselected CPU
     if (mb && !cpu) {
       list.push({
         targetSlotKey: 'cpu',
         targetCategoryTitle: 'Vi Xử Lý (CPU)',
-        reason: `AI gợi ý: Mainboard ${mb.name.split(' ')[0]} ${mb.name.split(' ')[1] || ''} yêu cầu chọn CPU đúng Socket ${socket || 'tương thích'}`,
-        badge: `Socket ${socket || 'Tương thích'}`,
+        reason: `AI gợi ý: Mainboard ${mb.name.split(' ')[0]} ${mb.name.split(' ')[1] || ''} yêu cầu chọn CPU đúng Socket ${socket}`,
+        badge: `Socket ${socket}`,
       });
     }
 
+    // Dynamic condition 3: Unselected RAM
     if ((cpu || mb) && !ram) {
-      const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650');
-      const ramGen = isDdr5 ? 'DDR5' : 'DDR4';
       list.push({
         targetSlotKey: 'ram',
         targetCategoryTitle: 'Bộ Nhớ Trong (RAM)',
-        reason: `AI gợi ý: Bo mạch chủ chạy mượt nhất với RAM ${ramGen}. Khuyên chọn kit Dual-Channel 32GB (2x16GB).`,
+        reason: `AI gợi ý: Bo mạch chủ yêu cầu chuẩn RAM ${ramGen}. Khuyên chọn kit Dual-Channel 32GB (2x16GB) bus 6000MHz.`,
         badge: `RAM ${ramGen} · 32GB`,
       });
     }
 
+    // Dynamic condition 4: Unselected Cooling
     if (cpu && !cooling) {
-      const isHighTdp = cpu.tdp >= 180 || cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13900') || cpuText.includes('7950X');
+      const isHighTdp = cpu.tdp >= 180 || cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('13900');
       list.push({
         targetSlotKey: 'cooling',
         targetCategoryTitle: 'Tản Nhiệt (Cooling)',
         reason: isHighTdp
           ? `CPU ${cpu.name.split(' ')[0]} ${cpu.name.split(' ')[1] || ''} tỏa nhiệt lượng lớn (~${cpu.tdp}W). AI khuyên dùng Tản nước AIO 360mm.`
-          : `AI gợi ý: Chọn Tản nhiệt khí tháp đôi hoặc AIO 240mm để CPU luôn mát mẻ.`,
-        badge: isHighTdp ? 'AIO 360mm' : 'Tản Tháp / AIO 240mm',
+          : `AI gợi ý chọn Tản nhiệt khí tháp đôi hoặc AIO 240mm để CPU luôn mát mẻ.`,
+        badge: isHighTdp ? 'AIO 360mm (Khuyên dùng)' : 'Tản Tháp / AIO 240mm',
       });
     }
 
+    // Dynamic condition 5: Unselected PSU
     if ((cpu || gpu) && !psu) {
-      const recWatts = Math.max(650, Math.ceil((totalTdp + 150) / 50) * 50);
       list.push({
         targetSlotKey: 'psu',
         targetCategoryTitle: 'Nguồn Máy Tính (PSU)',
-        reason: `Tổng công suất dàn PC ~${totalTdp}W. AI khuyên chọn Nguồn công suất tối thiểu ${recWatts}W (80 Plus Gold).`,
+        reason: `Tổng công suất tiêu thụ ~${totalTdp}W. AI khuyên chọn Nguồn công suất tối thiểu ${recWatts}W (80 Plus Gold).`,
         badge: `≥ ${recWatts}W 80 Plus Gold`,
       });
     }
 
-    if (gpu && !caseItem) {
+    // Dynamic condition 6: Unselected Monitor
+    if (gpu && !monitor) {
       list.push({
-        targetSlotKey: 'case',
-        targetCategoryTitle: 'Vỏ Máy Tính (Case)',
-        reason: `Card đồ họa ${gpu.name.split(' ')[0]} ${gpu.name.split(' ')[1] || ''} có kích thước lớn. AI khuyên chọn Case Mid-Tower rộng rãi.`,
-        badge: 'Mid-Tower / Dual Chamber',
+        targetSlotKey: 'monitor',
+        targetCategoryTitle: 'Màn Hình Gaming (Tương thích GPU)',
+        reason: `Card màn hình ${gpu.name.split(' ')[0]} ${gpu.name.split(' ')[1] || ''} rất mạnh! AI gợi ý kết hợp cùng Màn hình Gaming 4K hoặc 2K 240Hz OLED.`,
+        badge: 'Màn 4K / 2K 240Hz',
       });
+    }
+
+    // Fallback Suggestions when full preset is selected (Show Optimization & Upgrade Recommendations)
+    if (list.length === 0) {
+      if (mb) {
+        list.push({
+          targetSlotKey: 'mainboard',
+          targetCategoryTitle: 'Mainboard Tương Thích Chuẩn',
+          reason: `Bo mạch chủ ${mb.name.split(' ')[0]} ${mb.name.split(' ')[1] || ''} đã chọn tương thích 100% Socket ${socket} & ${ramGen} với CPU.`,
+          badge: `✓ Auto-Match Socket ${socket}`,
+        });
+      }
+      if (cooling) {
+        list.push({
+          targetSlotKey: 'cooling',
+          targetCategoryTitle: 'Tản Nhiệt Khuyến Nghị',
+          reason: `Tản nhiệt ${cooling.name.split(' ')[0]} ${cooling.name.split(' ')[1] || ''} làm mát cực mượt cho CPU ${cpu?.name.split(' ')[0] || ''} (${cpu?.tdp || 253}W TDP).`,
+          badge: '✓ Giải nhiệt tối ưu',
+        });
+      }
+      if (gpu) {
+        list.push({
+          targetSlotKey: 'monitor',
+          targetCategoryTitle: 'Gợi Ý Màn Hình Phù Hợp',
+          reason: `VGA ${gpu.name.split(' ')[0]} ${gpu.name.split(' ')[1] || ''} gánh cực ngon 4K Gaming. AI khuyên ghép với Màn hình 4K/2K 240Hz.`,
+          badge: '⚡ Ghép cặp màn hình 4K',
+        });
+      }
     }
 
     return list;
