@@ -367,7 +367,7 @@ export default function ComponentSelectorModal({
           }}>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--color-accent-cyan)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-              BỘ LỌC TÌM KIẾM LINH KIỆN TỪ SUPABASE
+              BỘ LỌC TÌM KIẾM LINH KIỆN SBUY API
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
               <h3 style={{ fontSize: '20px', fontWeight: 900, margin: 0, color: '#ffffff' }}>

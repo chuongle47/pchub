@@ -222,22 +222,82 @@ function inferProductSpecs(raw: SbuyRawProduct, categorySlug: string): Record<st
   return specs;
 }
 
+const FALLBACK_CATEGORY = {
+  id: 'c1000000-0000-0000-0000-000000000099',
+  slug: 'accessory',
+  name: 'Phụ Kiện & Khác',
+  icon: 'box'
+};
+
+function inferCategory(raw: SbuyRawProduct): { id: string; slug: string; name: string; icon: string } {
+  // 1. Try matching against Sbuy product categories (excluding generic non-component categories)
+  if (Array.isArray(raw.categories) && raw.categories.length > 0) {
+    for (const cat of raw.categories) {
+      const catSlug = (cat.slug || '').toLowerCase();
+      if (['linh-kien-may-tinh', 'uncategorized', 'giai-phap-doanh-nghiep', 'hang-thanh-ly', 'dien-may', 'loai-camera'].includes(catSlug)) {
+        continue;
+      }
+      if (CATEGORY_MAPPING[catSlug]) {
+        return CATEGORY_MAPPING[catSlug];
+      }
+    }
+  }
+
+  // 2. Infer from product Name
+  const name = (raw.name || '').toLowerCase();
+  if (name.includes('cpu') || name.includes('ryzen') || name.includes('i3-') || name.includes('i5-') || name.includes('i7-') || name.includes('i9-') || name.includes('bộ vi xử lý')) {
+    return CATEGORY_MAPPING['cpu'];
+  }
+  if (name.includes('mainboard') || name.includes('bo mạch') || name.includes('b760') || name.includes('b650') || name.includes('b550') || name.includes('h510') || name.includes('z790') || name.includes('z690') || name.includes('b560')) {
+    return CATEGORY_MAPPING['mainboard'];
+  }
+  if (name.includes('ram') || name.includes('ddr4') || name.includes('ddr5')) {
+    return CATEGORY_MAPPING['ram'];
+  }
+  if (name.includes('vga') || name.includes('rtx') || name.includes('gtx') || name.includes('radeon') || name.includes('card màn hình')) {
+    return CATEGORY_MAPPING['gpu'];
+  }
+  if (name.includes('ổ cứng') || name.includes('ssd') || name.includes('hdd') || name.includes('nvme')) {
+    return CATEGORY_MAPPING['o-cung'];
+  }
+  if (name.includes('nguồn') || name.includes('psu') || name.includes('power supply')) {
+    return CATEGORY_MAPPING['nguon'];
+  }
+  if (name.includes('case') || name.includes('vỏ máy tính') || name.includes('vỏ case')) {
+    return CATEGORY_MAPPING['case'];
+  }
+  if (name.includes('tản nhiệt') || name.includes('cooler') || name.includes('deepcool') || name.includes('aio')) {
+    return CATEGORY_MAPPING['tan-nhiet'];
+  }
+  if (name.includes('màn hình')) {
+    return CATEGORY_MAPPING['man-hinh'];
+  }
+  if (name.includes('bàn phím')) {
+    return CATEGORY_MAPPING['ban-phim'];
+  }
+  if (name.includes('chuột')) {
+    return CATEGORY_MAPPING['chuot'];
+  }
+  if (name.includes('tai nghe')) {
+    return CATEGORY_MAPPING['tai-nghe'];
+  }
+  if (name.includes('loa')) {
+    return CATEGORY_MAPPING['loa-may-tinh'];
+  }
+  if (name.includes('laptop')) {
+    return CATEGORY_MAPPING['laptop'];
+  }
+
+  return FALLBACK_CATEGORY;
+}
+
 // Convert SbuyRawProduct to internal AppProduct
 export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
   const price = parseFloat(raw.price) || parseFloat(raw.regular_price) || 0;
   const originalPrice = parseFloat(raw.regular_price) || price;
 
-  // Primary Category Matching
-  let matchedCat = CATEGORY_MAPPING['cpu']; // default fallback
-  if (Array.isArray(raw.categories) && raw.categories.length > 0) {
-    for (const cat of raw.categories) {
-      const catSlug = (cat.slug || '').toLowerCase();
-      if (CATEGORY_MAPPING[catSlug]) {
-        matchedCat = CATEGORY_MAPPING[catSlug];
-        break;
-      }
-    }
-  }
+  // Primary Category Matching via inferCategory
+  const matchedCat = inferCategory(raw);
 
   // Infer Brand
   const brand = inferBrand(raw.name);
