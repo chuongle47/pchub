@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: Props) {
   }
 
   // Fetch related products
-  let relatedProducts = [];
+  let relatedProducts: any[] = [];
   try {
     const res = await getProducts({
       category_id: product.category_id,
@@ -109,7 +109,7 @@ export default async function ProductPage({ params }: Props) {
         ? (product.image_url.startsWith('http') ? product.image_url : `https://pchub-iota.vercel.app${product.image_url}`)
         : 'https://pchub-iota.vercel.app/images/cpu-box.jpg',
     ],
-    description: product.description || `Mua ${product.name} chính hãng tại PCHub với giá tốt nhất, bảo hành 36 tháng.`,
+    description: (product as any).description || `Mua ${product.name} chính hãng tại PCHub với giá tốt nhất, bảo hành 36 tháng.`,
     sku: product.sku || product.id,
     mpn: product.sku || product.id,
     brand: {
@@ -124,7 +124,7 @@ export default async function ProductPage({ params }: Props) {
       price: Number(product.price),
       priceValidUntil: '2026-12-31',
       itemCondition: 'https://schema.org/NewCondition',
-      availability: Number(product.stock_quantity ?? 10) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability: Number(product.stock ?? (product as any).stock_quantity ?? 10) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       seller: {
         '@type': 'Organization',
         name: 'PCHub Technology',

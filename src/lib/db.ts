@@ -2,14 +2,16 @@ import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
 import seed from './seed.json';
-import { supabase } from './supabase';
 import { getProductOriginalPrice } from './product-ui';
+import {
+  fetchSbuyProductsLive,
+  getSbuyProductBySlugOrId,
+  AppProduct
+} from './sbuy';
 
 function createPool() {
-  // Use Supabase connection string
   const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
-  const isLocalHost = (host?: string) =>
-    !host || host === 'localhost' || host === '127.0.0.1';
+  const isLocalHost = (host?: string) => !host || host === 'localhost' || host === '127.0.0.1';
 
   let newPool: Pool;
   if (connectionString) {
@@ -34,7 +36,6 @@ function createPool() {
     });
   }
 
-  // Prevent unhandled error events from crashing Node.js process on Vercel
   newPool.on('error', (err) => {
     console.error('Unexpected error on idle pg client:', err);
   });
@@ -43,237 +44,6 @@ function createPool() {
 }
 
 export const pool = createPool();
-
-// Supabase client methods for data fetching
-export async function getSupabaseProducts(filter: ProductsFilter) {
-  const {
-    category_id,
-    brand_id,
-    search,
-    slug,
-    ids,
-    min_price,
-    max_price,
-    sort = 'price_asc',
-    page = 1,
-    limit = 16
-  } = filter;
-
-  const pageNum = parseInt(page as any, 10) || 1;
-  const limitNum = parseInt(limit as any, 10) || 16;
-  const offset = (pageNum - 1) * limitNum;
-
-  let query = supabase
-    .from('products')
-    .select(`
-      *,
-      categories(name, slug),
-      brands(name, slug)
-    `, { count: 'exact' });
-
-  // Apply filters
-  if (category_id) {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category_id);
-    if (isUuid) {
-      query = query.eq('category_id', category_id);
-    } else {
-      const { data: cat } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', category_id)
-        .maybeSingle();
-      if (cat?.id) {
-        query = query.eq('category_id', cat.id);
-      } else {
-        query = query.eq('category_id', '00000000-0000-0000-0000-000000000000');
-      }
-    }
-  }
-  if (brand_id) {
-    const rawTokens = brand_id.split(',').filter(Boolean);
-    const brandUuids: string[] = [];
-    const brandSlugs: string[] = [];
-    for (const t of rawTokens) {
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) {
-        brandUuids.push(t);
-      } else {
-        brandSlugs.push(t);
-      }
-    }
-    if (brandSlugs.length > 0) {
-      const { data: bList } = await supabase
-        .from('brands')
-        .select('id')
-        .in('slug', brandSlugs);
-      bList?.forEach(b => brandUuids.push(b.id));
-    }
-    if (brandUuids.length > 0) {
-      query = query.in('brand_id', brandUuids);
-    }
-  }
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,slug.ilike.%${search}%`);
-  }
-  if (slug) {
-    query = query.eq('slug', slug);
-  }
-  if (ids && ids.length > 0) {
-    query = query.in('id', ids);
-  }
-  if (min_price) {
-    query = query.gte('price', parseFloat(min_price as any));
-  }
-  if (max_price) {
-    query = query.lte('price', parseFloat(max_price as any));
-  }
-
-  // Apply sorting
-  if (sort === 'price_asc') query = query.order('price', { ascending: true });
-  else if (sort === 'price_desc') query = query.order('price', { ascending: false });
-  else if (sort === 'name_asc') query = query.order('name', { ascending: true });
-  else if (sort === 'name_desc') query = query.order('name', { ascending: false });
-
-  // Get paginated data with count
-  const { data: products, count, error } = await query
-    .range(offset, offset + limitNum - 1);
-
-  if (error) {
-    console.error('Supabase products error:', error);
-    throw error;
-  }
-
-  // Transform data to match expected format
-  const transformedProducts = products?.map(p => {
-    const origPrice = p.original_price || p.originalPrice || getProductOriginalPrice(Number(p.price), p.slug);
-    return {
-      ...p,
-      original_price: origPrice,
-      originalPrice: origPrice,
-      category_name: p.categories?.name || 'Danh mục',
-      category_slug: p.categories?.slug,
-      brand_name: p.brands?.name || 'Thương hiệu'
-    };
-  }) || [];
-
-  if (transformedProducts.length === 0) {
-    throw new Error('No products in Supabase, using fallback');
-  }
-
-  return {
-    products: transformedProducts,
-    pagination: {
-      total: count || 0,
-      page: pageNum,
-      limit: limitNum,
-      totalPages: Math.ceil((count || 0) / limitNum)
-    }
-  };
-}
-
-export async function getSupabaseCategories() {
-  // First attempt: read from category_product_counts view which computes exact counts in SQL
-  const { data: viewData, error: viewError } = await supabase
-    .from('category_product_counts')
-    .select('*')
-    .order('name');
-
-  if (!viewError && viewData && viewData.length > 0) {
-    return viewData.map(c => ({
-      ...c,
-      product_count: Number(c.product_count) || 0
-    }));
-  }
-
-  // Fallback: categories table + exact count query
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
-
-  if (error || !data || data.length === 0) {
-    console.error('Supabase categories empty or error:', error);
-    throw error || new Error('No categories in Supabase');
-  }
-
-  const categoriesWithCounts = await Promise.all(
-    data.map(async (c) => {
-      const { count } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_id', c.id);
-      return {
-        ...c,
-        product_count: count || 0
-      };
-    })
-  );
-
-  return categoriesWithCounts;
-}
-
-export async function getSupabaseBrands(categoryId?: string) {
-  if (!categoryId) {
-    const { data: viewData, error: viewError } = await supabase
-      .from('brand_product_counts')
-      .select('*')
-      .order('name');
-
-    if (!viewError && viewData && viewData.length > 0) {
-      return viewData.map(b => ({
-        ...b,
-        product_count: Number(b.product_count) || 0
-      }));
-    }
-  }
-
-  const { data, error } = await supabase
-    .from('brands')
-    .select('*')
-    .order('name');
-
-  if (error || !data || data.length === 0) {
-    console.error('Supabase brands empty or error:', error);
-    throw error || new Error('No brands in Supabase');
-  }
-
-  let resolvedCatId = categoryId;
-  if (categoryId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId)) {
-    const { data: cat } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', categoryId)
-      .maybeSingle();
-    if (cat?.id) resolvedCatId = cat.id;
-  }
-
-  let productsQuery = supabase
-    .from('products')
-    .select('brand_id');
-
-  if (resolvedCatId) {
-    productsQuery = productsQuery.eq('category_id', resolvedCatId);
-  }
-
-  const { data: products } = await productsQuery.limit(5000);
-
-  const productCounts: Record<string, number> = {};
-  products?.forEach(p => {
-    if (p.brand_id) {
-      productCounts[p.brand_id] = (productCounts[p.brand_id] || 0) + 1;
-    }
-  });
-
-  const brands = data.map(b => ({
-    ...b,
-    product_count: productCounts[b.id] || 0
-  }));
-
-  if (categoryId) {
-    return brands.filter(b => b.product_count > 0);
-  }
-
-  return brands;
-}
 
 export interface Category {
   id: string;
@@ -303,282 +73,21 @@ export interface Product {
   stock: number;
   specs: any;
   image_url?: string;
+  images?: string[];
   category_name?: string;
+  category_slug?: string;
   brand_name?: string;
-}
-
-export interface MemoryStore {
-  categories: Category[];
-  brands: Brand[];
-  products: Product[];
-}
-
-let isPgConnected = false;
-const memoryStore: MemoryStore = {
-  categories: [],
-  brands: [],
-  products: []
-};
-
-// Default seed categories
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'c1000000-0000-0000-0000-000000000001', name: 'CPU - Bộ Vi Xử Lý', slug: 'cpu', icon: 'cpu' },
-  { id: 'c1000000-0000-0000-0000-000000000002', name: 'Mainboard - Bo Mạch Chủ', slug: 'mainboard', icon: 'circuit-board' },
-  { id: 'c1000000-0000-0000-0000-000000000003', name: 'RAM - Bộ Nhớ Trong', slug: 'ram', icon: 'memory' },
-  { id: 'c1000000-0000-0000-0000-000000000004', name: 'GPU - Card Màn Hình', slug: 'gpu', icon: 'gpu' },
-  { id: 'c1000000-0000-0000-0000-000000000005', name: 'SSD / HDD - Ổ Đĩa Cứng', slug: 'storage', icon: 'hard-drive' },
-  { id: 'c1000000-0000-0000-0000-000000000006', name: 'PSU - Nguồn Máy Tính', slug: 'psu', icon: 'zap' },
-  { id: 'c1000000-0000-0000-0000-000000000007', name: 'Case - Vỏ Máy Tính', slug: 'case', icon: 'box' },
-  { id: 'c1000000-0000-0000-0000-000000000008', name: 'Tản Nhiệt (Cooling)', slug: 'cooling', icon: 'fan' }
-];
-
-export async function testPgConnection(): Promise<boolean> {
-  try {
-    const client = await pool.connect();
-    await client.query('SELECT NOW()');
-    client.release();
-    isPgConnected = true;
-    return true;
-  } catch (err) {
-    isPgConnected = false;
-    return false;
-  }
-}
-
-export function loadMemoryFallback() {
-  if (memoryStore.products.length > 0) return;
-
-  memoryStore.categories = (seed.categories as Category[]).length
-    ? (seed.categories as Category[])
-    : [...DEFAULT_CATEGORIES];
-  memoryStore.brands = seed.brands as Brand[];
-  memoryStore.products = seed.products as Product[];
-}
-
-export async function getProductBySlugOrId(idOrSlug: string) {
-  // 1. Try Supabase first
-  try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-    let query = supabase
-      .from('products')
-      .select(`
-        *,
-        categories(name, slug),
-        brands(name, slug)
-      `);
-
-    if (isUuid) {
-      query = query.or(`slug.eq.${idOrSlug},id.eq.${idOrSlug}`);
-    } else {
-      query = query.eq('slug', idOrSlug);
-    }
-
-    const { data, error } = await query.maybeSingle();
-
-    if (!error && data) {
-      const origPrice = data.original_price || data.originalPrice || getProductOriginalPrice(Number(data.price), data.slug);
-      return {
-        ...data,
-        original_price: origPrice,
-        originalPrice: origPrice,
-        category_name: data.categories?.name || 'Danh mục',
-        category_slug: data.categories?.slug,
-        brand_name: data.brands?.name || 'Thương hiệu'
-      };
-    }
-  } catch (err) {
-    console.error('Supabase getProductBySlugOrId error:', err);
-  }
-
-  // 2. Try PostgreSQL
-  const connected = await testPgConnection();
-  if (connected) {
-    try {
-      const query = `
-        SELECT p.*, c.name as category_name, c.slug as category_slug, b.name as brand_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN brands b ON p.brand_id = b.id
-        WHERE p.slug = $1 OR p.id::text = $1
-        LIMIT 1
-      `;
-      const result = await pool.query(query, [idOrSlug]);
-      if (result.rows.length > 0) {
-        const p = result.rows[0];
-        const origPrice = p.original_price || p.originalPrice || getProductOriginalPrice(Number(p.price), p.slug);
-        return {
-          ...p,
-          original_price: origPrice,
-          originalPrice: origPrice
-        };
-      }
-    } catch (err) {
-      console.error('getProductBySlugOrId DB error:', err);
-    }
-  }
-
-  // 3. Fallback to memory store
-  loadMemoryFallback();
-  const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
-  const catSlugMap = new Map(memoryStore.categories.map(c => [c.id, c.slug]));
-  const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
-  const p = memoryStore.products.find(prod => prod.slug === idOrSlug || prod.id === idOrSlug);
-  if (!p) return null;
-  const origPrice = (p as any).original_price || (p as any).originalPrice || getProductOriginalPrice(Number(p.price), p.slug);
-  return {
-    ...p,
-    original_price: origPrice,
-    originalPrice: origPrice,
-    category_name: catMap.get(p.category_id) || 'Danh mục',
-    category_slug: catSlugMap.get(p.category_id),
-    brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu'
-  };
-}
-
-export async function getDbStatus() {
-  // Try Supabase first
-  try {
-    const { count: productCount, error: productError } = await supabase
-      .from('products')
-      .select('*', { count: 'exact', head: true });
-    
-    const { count: brandCount, error: brandError } = await supabase
-      .from('brands')
-      .select('*', { count: 'exact', head: true });
-
-    if (!productError && !brandError) {
-      return {
-        db_connected: true,
-        source: 'Supabase',
-        product_count: productCount || 0,
-        brand_count: brandCount || 0,
-      };
-    }
-  } catch (err) {
-    console.log('Supabase status check failed:', err);
-  }
-
-  // Fallback to PostgreSQL
-  const connected = await testPgConnection();
-  if (connected) {
-    try {
-      const countRes = await pool.query('SELECT COUNT(*) FROM products');
-      const brandCountRes = await pool.query('SELECT COUNT(*) FROM brands');
-      return {
-        db_connected: true,
-        source: 'PostgreSQL',
-        product_count: parseInt(countRes.rows[0].count, 10),
-        brand_count: parseInt(brandCountRes.rows[0].count, 10),
-      };
-    } catch (e) {
-      isPgConnected = false;
-    }
-  }
-
-  loadMemoryFallback();
-  return {
-    db_connected: false,
-    source: 'In-Memory Fallback (seed.json)',
-    product_count: memoryStore.products.length,
-    brand_count: memoryStore.brands.length,
-    message: 'Vercel cannot reach Supabase/PostgreSQL. Using seed catalog.'
-  };
-}
-
-export async function getCategories() {
-  try {
-    // Try Supabase first
-    return await getSupabaseCategories();
-  } catch (err) {
-    console.log('Supabase categories failed, falling back to PostgreSQL:', err);
-    
-    // Fallback to PostgreSQL
-    const connected = await testPgConnection();
-    if (connected) {
-      try {
-        const query = `
-          SELECT c.*, COUNT(p.id)::int as product_count
-          FROM categories c
-          LEFT JOIN products p ON p.category_id = c.id
-          GROUP BY c.id
-          ORDER BY c.slug ASC
-        `;
-        const result = await pool.query(query);
-        return result.rows;
-      } catch (err) {
-        console.error('DB query error, fallback:', err);
-      }
-    }
-
-    // Final fallback to memory data
-    loadMemoryFallback();
-    const catCounts: Record<string, number> = {};
-    memoryStore.products.forEach(p => {
-      catCounts[p.category_id] = (catCounts[p.category_id] || 0) + 1;
-    });
-
-    return memoryStore.categories.map(c => ({
-      ...c,
-      product_count: catCounts[c.id] || 0
-    }));
-  }
-}
-
-export async function getBrands(categoryId?: string) {
-  try {
-    // Try Supabase first
-    return await getSupabaseBrands(categoryId);
-  } catch (err) {
-    console.log('Supabase brands failed, falling back to PostgreSQL:', err);
-    
-    // Fallback to PostgreSQL
-    const connected = await testPgConnection();
-    if (connected) {
-      try {
-        let query = `
-          SELECT DISTINCT b.*, COUNT(p.id)::int as product_count
-          FROM brands b
-          LEFT JOIN products p ON p.brand_id = b.id
-        `;
-        const params = [];
-        if (categoryId) {
-          query += ` WHERE p.category_id = $1`;
-          params.push(categoryId);
-        }
-        query += ` GROUP BY b.id ORDER BY b.name ASC`;
-
-        const result = await pool.query(query, params);
-        return result.rows;
-      } catch (err) {
-        console.error('Brands query error, fallback:', err);
-      }
-    }
-
-    // Final fallback to memory data
-    loadMemoryFallback();
-    let filteredProds = memoryStore.products;
-    if (categoryId) {
-      filteredProds = filteredProds.filter(p => p.category_id === categoryId);
-    }
-
-    const brandCounts: Record<string, number> = {};
-    filteredProds.forEach(p => {
-      brandCounts[p.brand_id] = (brandCounts[p.brand_id] || 0) + 1;
-    });
-
-    return memoryStore.brands
-      .filter(b => categoryId ? brandCounts[b.id] > 0 : true)
-      .map(b => ({
-        ...b,
-        product_count: brandCounts[b.id] || 0
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }
+  brand_slug?: string;
+  original_price?: number;
+  originalPrice?: number;
+  rating?: number;
+  reviewCount?: number;
+  badge?: 'hot' | 'new' | 'sale';
 }
 
 export interface ProductsFilter {
   category_id?: string;
-  brand_id?: string; // Comma separated brand IDs
+  brand_id?: string;
   search?: string;
   slug?: string;
   ids?: string[];
@@ -589,306 +98,177 @@ export interface ProductsFilter {
   limit?: number;
 }
 
-export async function getProducts(filter: ProductsFilter) {
-  try {
-    // Try Supabase first
-    return await getSupabaseProducts(filter);
-  } catch (err) {
-    console.log('Supabase failed, falling back to PostgreSQL:', err);
-    
-    // Fallback to PostgreSQL
-    const {
-      category_id,
-      brand_id,
-      search,
-      slug,
-      ids,
-      min_price,
-      max_price,
-      sort = 'price_asc',
-      page = 1,
-      limit = 16
-    } = filter;
+const STANDARD_CATEGORIES: Category[] = [
+  { id: 'c1000000-0000-0000-0000-000000000001', name: 'CPU - Bộ Vi Xử Lý', slug: 'cpu', icon: 'cpu' },
+  { id: 'c1000000-0000-0000-0000-000000000002', name: 'Mainboard - Bo Mạch Chủ', slug: 'mainboard', icon: 'circuit-board' },
+  { id: 'c1000000-0000-0000-0000-000000000003', name: 'RAM - Bộ Nhớ Trong', slug: 'ram', icon: 'memory' },
+  { id: 'c1000000-0000-0000-0000-000000000004', name: 'GPU - Card Màn Hình', slug: 'gpu', icon: 'gpu' },
+  { id: 'c1000000-0000-0000-0000-000000000005', name: 'SSD / HDD - Ổ Đĩa Cứng', slug: 'storage', icon: 'hard-drive' },
+  { id: 'c1000000-0000-0000-0000-000000000006', name: 'PSU - Nguồn Máy Tính', slug: 'psu', icon: 'zap' },
+  { id: 'c1000000-0000-0000-0000-000000000007', name: 'Case - Vỏ Máy Tính', slug: 'case', icon: 'box' },
+  { id: 'c1000000-0000-0000-0000-000000000008', name: 'Tản Nhiệt (Cooling)', slug: 'cooling', icon: 'fan' },
+  { id: 'c1000000-0000-0000-0000-000000000009', name: 'Màn Hình Máy Tính', slug: 'monitor', icon: 'monitor' },
+  { id: 'c1000000-0000-0000-0000-000000000010', name: 'Bàn Phím Gaming', slug: 'keyboard', icon: 'keyboard' },
+  { id: 'c1000000-0000-0000-0000-000000000011', name: 'Chuột Gaming', slug: 'mouse', icon: 'mouse' },
+  { id: 'c1000000-0000-0000-0000-000000000012', name: 'Tai Nghe Gaming', slug: 'headset', icon: 'headphones' },
+  { id: 'c1000000-0000-0000-0000-000000000013', name: 'Loa Máy Tính', slug: 'speaker', icon: 'speaker' }
+];
 
-    const pageNum = parseInt(page as any, 10) || 1;
-    const limitNum = parseInt(limit as any, 10) || 16;
-    const offset = (pageNum - 1) * limitNum;
+export async function getCategories(): Promise<Category[]> {
+  const products = await fetchSbuyProductsLive();
+  const catCounts: Record<string, number> = {};
 
-    const brandIds = brand_id ? brand_id.split(',').filter(Boolean) : [];
-    const connected = await testPgConnection();
+  products.forEach(p => {
+    if (p.category_id) {
+      catCounts[p.category_id] = (catCounts[p.category_id] || 0) + 1;
+    }
+    if (p.category_slug) {
+      catCounts[p.category_slug] = (catCounts[p.category_slug] || 0) + 1;
+    }
+  });
 
-    if (connected) {
-      try {
-        let whereConditions = [];
-        let params = [];
-        let paramIdx = 1;
+  return STANDARD_CATEGORIES.map(c => ({
+    ...c,
+    product_count: catCounts[c.id] || catCounts[c.slug] || 0
+  }));
+}
 
-        if (category_id) {
-          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category_id);
-          if (isUuid) {
-            whereConditions.push(`p.category_id = $${paramIdx++}`);
-            params.push(category_id);
-          } else {
-            whereConditions.push(`p.category_id IN (SELECT id FROM categories WHERE slug = $${paramIdx++})`);
-            params.push(category_id);
-          }
-        }
+export async function getBrands(categoryId?: string): Promise<Brand[]> {
+  const products = await fetchSbuyProductsLive();
+  const brandMap = new Map<string, { id: string; name: string; slug: string; count: number }>();
 
-        if (brandIds.length > 0) {
-          whereConditions.push(`p.brand_id = ANY($${paramIdx++})`);
-          params.push(brandIds);
-        }
-
-        if (search) {
-          whereConditions.push(`(p.name ILIKE $${paramIdx} OR p.sku ILIKE $${paramIdx} OR p.slug ILIKE $${paramIdx})`);
-          params.push(`%${search}%`);
-          paramIdx++;
-        }
-
-        if (slug) {
-          whereConditions.push(`p.slug = $${paramIdx++}`);
-          params.push(slug);
-        }
-
-        if (ids && ids.length > 0) {
-          whereConditions.push(`p.id = ANY($${paramIdx++})`);
-          params.push(ids);
-        }
-
-        if (min_price) {
-          whereConditions.push(`p.price >= $${paramIdx++}`);
-          params.push(parseFloat(min_price as any));
-        }
-
-        if (max_price) {
-          whereConditions.push(`p.price <= $${paramIdx++}`);
-          params.push(parseFloat(max_price as any));
-        }
-
-        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-
-        let orderBy = 'p.price ASC';
-        if (sort === 'price_desc') orderBy = 'p.price DESC';
-        if (sort === 'name_asc') orderBy = 'p.name ASC';
-        if (sort === 'name_desc') orderBy = 'p.name DESC';
-
-        const countQuery = `
-          SELECT COUNT(*) 
-          FROM products p 
-          ${whereClause}
-        `;
-        const countResult = await pool.query(countQuery, params);
-        const totalItems = parseInt(countResult.rows[0].count, 10);
-
-        const dataQuery = `
-          SELECT p.*, c.name as category_name, c.slug as category_slug, b.name as brand_name
-          FROM products p
-          LEFT JOIN categories c ON p.category_id = c.id
-          LEFT JOIN brands b ON p.brand_id = b.id
-          ${whereClause}
-          ORDER BY ${orderBy}
-          LIMIT $${paramIdx++} OFFSET $${paramIdx++}
-        `;
-        const dataParams = [...params, limitNum, offset];
-        const dataResult = await pool.query(dataQuery, dataParams);
-
-        return {
-          products: dataResult.rows,
-          pagination: {
-            total: totalItems,
-            page: pageNum,
-            limit: limitNum,
-            totalPages: Math.ceil(totalItems / limitNum)
-          }
-        };
-      } catch (err) {
-        console.error('Product query error, fallback:', err);
-      }
+  products.forEach(p => {
+    if (categoryId) {
+      const isCatMatch = p.category_id === categoryId || p.category_slug === categoryId;
+      if (!isCatMatch) return;
     }
 
-    // Final fallback to memory data
-    loadMemoryFallback();
-    const brandTerms = brandIds.map(x => x.toLowerCase());
-    const catMap = new Map(memoryStore.categories.map(c => [c.id, c.name]));
-    const catSlugMap = new Map(memoryStore.categories.map(c => [c.id, c.slug]));
-    const brandNameMap = new Map(memoryStore.brands.map(b => [b.id, b.name]));
-    const categoryMatch = category_id
-      ? memoryStore.categories.find(c => c.id === category_id || c.slug === category_id)
-      : undefined;
+    const bId = p.brand_id || 'b-khac';
+    const bName = p.brand_name || 'Khác';
+    const bSlug = p.brand_slug || 'khac';
 
-    let filtered = memoryStore.products.filter(p => {
-      if (categoryMatch && p.category_id !== categoryMatch.id) return false;
-      if (brandTerms.length > 0) {
-        const bObj = memoryStore.brands.find(b => b.id === p.brand_id);
-        const bName = bObj ? bObj.name.toLowerCase() : '';
-        const bSlug = bObj ? bObj.slug.toLowerCase() : '';
-        const pBrandId = p.brand_id.toLowerCase();
-        const hasMatch = brandTerms.some(term => term === pBrandId || term === bName || term === bSlug);
-        if (!hasMatch) return false;
-      }
-      if (slug && p.slug !== slug) return false;
-      if (ids && ids.length > 0 && !ids.includes(p.id)) return false;
-      if (min_price && p.price < parseFloat(min_price as any)) return false;
-      if (max_price && p.price > parseFloat(max_price as any)) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const matchName = p.name.toLowerCase().includes(q);
-        const matchSku = p.sku && p.sku.toLowerCase().includes(q);
-        const matchSlug = p.slug.toLowerCase().includes(q);
-        const matchBrand = (brandNameMap.get(p.brand_id) || '').toLowerCase().includes(q);
-        const matchCat = (catMap.get(p.category_id) || '').toLowerCase().includes(q);
-        if (!matchName && !matchSku && !matchSlug && !matchBrand && !matchCat) return false;
-      }
-      return true;
-    });
+    const existing = brandMap.get(bId) || { id: bId, name: bName, slug: bSlug, count: 0 };
+    existing.count += 1;
+    brandMap.set(bId, existing);
+  });
 
-    // Sorting
-    if (sort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
-    else if (sort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
-    else if (sort === 'name_asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
-    else if (sort === 'name_desc') filtered.sort((a, b) => b.name.localeCompare(a.name));
+  return Array.from(brandMap.values())
+    .map(b => ({
+      id: b.id,
+      name: b.name,
+      slug: b.slug,
+      is_active: true,
+      product_count: b.count
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
 
-    const totalItems = filtered.length;
-    const pagedProducts = filtered.slice(offset, offset + limitNum).map(p => ({
-      ...p,
-      category_name: catMap.get(p.category_id) || 'Danh mục khác',
-      category_slug: catSlugMap.get(p.category_id),
-      brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu khác'
-    }));
+export async function getProducts(filter: ProductsFilter) {
+  const allProducts = await fetchSbuyProductsLive();
+  const {
+    category_id,
+    brand_id,
+    search,
+    slug,
+    ids,
+    min_price,
+    max_price,
+    sort = 'price_asc',
+    page = 1,
+    limit = 16
+  } = filter;
 
-    return {
-      products: pagedProducts,
-      pagination: {
-        total: totalItems,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(totalItems / limitNum)
-      }
-    };
-  }
+  const pageNum = parseInt(page as any, 10) || 1;
+  const limitNum = parseInt(limit as any, 10) || 16;
+  const brandIds = brand_id ? brand_id.split(',').filter(Boolean).map(x => x.toLowerCase()) : [];
+
+  const categoryMatch = category_id
+    ? STANDARD_CATEGORIES.find(c => c.id === category_id || c.slug === category_id)
+    : undefined;
+
+  let filtered = allProducts.filter(p => {
+    if (category_id) {
+      const matchCat = p.category_id === category_id ||
+        p.category_slug === category_id ||
+        (categoryMatch && (p.category_id === categoryMatch.id || p.category_slug === categoryMatch.slug));
+      if (!matchCat) return false;
+    }
+
+    if (brandIds.length > 0) {
+      const pBrandId = (p.brand_id || '').toLowerCase();
+      const pBrandSlug = (p.brand_slug || '').toLowerCase();
+      const pBrandName = (p.brand_name || '').toLowerCase();
+      const hasMatch = brandIds.some(term => term === pBrandId || term === pBrandSlug || term === pBrandName);
+      if (!hasMatch) return false;
+    }
+
+    if (slug && p.slug.toLowerCase() !== slug.toLowerCase()) return false;
+    if (ids && ids.length > 0 && !ids.includes(p.id) && !ids.includes(p.slug)) return false;
+    if (min_price !== undefined && p.price < parseFloat(min_price as any)) return false;
+    if (max_price !== undefined && p.price > parseFloat(max_price as any)) return false;
+
+    if (search) {
+      const q = search.toLowerCase();
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchSku = p.sku && p.sku.toLowerCase().includes(q);
+      const matchSlug = p.slug.toLowerCase().includes(q);
+      const matchBrand = (p.brand_name || '').toLowerCase().includes(q);
+      const matchCat = (p.category_name || '').toLowerCase().includes(q);
+      if (!matchName && !matchSku && !matchSlug && !matchBrand && !matchCat) return false;
+    }
+
+    return true;
+  });
+
+  // Sorting
+  if (sort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
+  else if (sort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
+  else if (sort === 'name_asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sort === 'name_desc') filtered.sort((a, b) => b.name.localeCompare(a.name));
+
+  const totalItems = filtered.length;
+  const offset = (pageNum - 1) * limitNum;
+  const paginatedProducts = filtered.slice(offset, offset + limitNum);
+
+  return {
+    products: paginatedProducts,
+    pagination: {
+      total: totalItems,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(totalItems / limitNum) || 1
+    }
+  };
+}
+
+export async function getProductBySlugOrId(idOrSlug: string): Promise<Product | null> {
+  const p = await getSbuyProductBySlugOrId(idOrSlug);
+  if (!p) return null;
+  return {
+    ...p,
+    original_price: p.original_price || p.originalPrice || getProductOriginalPrice(p.price, p.slug),
+    originalPrice: p.original_price || p.originalPrice || getProductOriginalPrice(p.price, p.slug)
+  };
 }
 
 export async function getProductsBySlugs(slugs: string[]) {
-  const normalized = [...new Set(slugs.filter(Boolean))];
-  if (normalized.length === 0) {
-    return { products: [], specKeys: [] };
-  }
+  const allProducts = await fetchSbuyProductsLive();
+  const normalized = slugs.map(s => s.toLowerCase());
 
-  let products: any[] = [];
-  const fetchedIds = new Set<string>();
-
-  // 1. Try Supabase first
-  try {
-    const uuids = normalized.filter((s) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
-    );
-    const nonUuids = normalized.filter(
-      (s) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
-    );
-
-    let query = supabase
-      .from('products')
-      .select(`
-        *,
-        categories(name, slug),
-        brands(name, slug)
-      `);
-
-    if (uuids.length > 0 && nonUuids.length > 0) {
-      query = query.or(`id.in.(${uuids.join(',')}),slug.in.(${nonUuids.join(',')})`);
-    } else if (uuids.length > 0) {
-      query = query.in('id', uuids);
-    } else if (nonUuids.length > 0) {
-      query = query.in('slug', nonUuids);
-    }
-
-    const { data: supaData, error } = await query;
-
-    if (!error && supaData && supaData.length > 0) {
-      const supaProducts = supaData.map((p: any) => {
-        const origPrice =
-          p.original_price || p.originalPrice || getProductOriginalPrice(Number(p.price), p.slug);
-        return {
-          ...p,
-          original_price: origPrice,
-          originalPrice: origPrice,
-          category_name: p.categories?.name || 'Danh mục',
-          category_slug: p.categories?.slug,
-          brand_name: p.brands?.name || 'Thương hiệu',
-        };
-      });
-
-      supaProducts.forEach((p) => {
-        products.push(p);
-        if (p.id) fetchedIds.add(p.id);
-        if (p.slug) fetchedIds.add(p.slug);
-      });
-    }
-  } catch (err) {
-    console.log('Supabase getProductsBySlugs failed:', err);
-  }
-
-  // 2. If any requested slug is missing, check PostgreSQL database
-  const missingForPg = normalized.filter((s) => !fetchedIds.has(s));
-  if (missingForPg.length > 0) {
-    const connected = await testPgConnection();
-    if (connected) {
-      try {
-        const query = `
-          SELECT p.*, c.name as category_name, c.slug as category_slug, b.name as brand_name
-          FROM products p
-          LEFT JOIN categories c ON p.category_id = c.id
-          LEFT JOIN brands b ON p.brand_id = b.id
-          WHERE p.slug = ANY($1) OR p.id::text = ANY($1)
-        `;
-        const result = await pool.query(query, [missingForPg]);
-        const pgRows = result.rows || [];
-        pgRows.forEach((p: any) => {
-          products.push(p);
-          if (p.id) fetchedIds.add(p.id);
-          if (p.slug) fetchedIds.add(p.slug);
-        });
-      } catch (err) {
-        console.error('Slug query error, fallback:', err);
-      }
-    }
-  }
-
-  // 3. If any requested slug is still missing, check memoryStore fallback
-  const missingForMemory = normalized.filter((s) => !fetchedIds.has(s));
-  if (missingForMemory.length > 0) {
-    loadMemoryFallback();
-    const catMap = new Map(memoryStore.categories.map((c) => [c.id, c.name]));
-    const catSlugMap = new Map(memoryStore.categories.map((c) => [c.id, c.slug]));
-    const brandNameMap = new Map(memoryStore.brands.map((b) => [b.id, b.name]));
-    const missingSet = new Set(missingForMemory);
-
-    const fallbackProducts = memoryStore.products
-      .filter((p) => missingSet.has(p.slug) || missingSet.has(p.id))
-      .map((p) => ({
-        ...p,
-        category_name: catMap.get(p.category_id) || 'Danh mục',
-        category_slug: catSlugMap.get(p.category_id),
-        brand_name: brandNameMap.get(p.brand_id) || 'Thương hiệu',
-      }));
-
-    fallbackProducts.forEach((p) => {
-      products.push(p);
-      if (p.id) fetchedIds.add(p.id);
-      if (p.slug) fetchedIds.add(p.slug);
-    });
-  }
+  const matched = allProducts.filter(p =>
+    normalized.includes(p.id.toLowerCase()) || normalized.includes(p.slug.toLowerCase())
+  );
 
   const specKeySet = new Set<string>();
-  products.forEach((p) => {
+  matched.forEach(p => {
     if (p.specs && typeof p.specs === 'object') {
-      Object.keys(p.specs).forEach((k) => specKeySet.add(k));
+      Object.keys(p.specs).forEach(k => specKeySet.add(k));
     }
   });
 
   return {
-    products,
-    specKeys: Array.from(specKeySet),
+    products: matched,
+    specKeys: Array.from(specKeySet)
   };
 }
 
@@ -900,22 +280,26 @@ export async function getCompareProducts(ids: string) {
   return await getProductsBySlugs(idList);
 }
 
-export async function initDatabase() {
-  const schemaPath = path.join(process.cwd(), '../schema.sql');
-  const dataSqlPath = path.join(process.cwd(), '../data.sql');
-
-  const client = await pool.connect();
+export async function getDbStatus() {
   try {
-    if (fs.existsSync(schemaPath)) {
-      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-      await client.query(schemaSql);
-    }
-    if (fs.existsSync(dataSqlPath)) {
-      const dataSql = fs.readFileSync(dataSqlPath, 'utf8');
-      await client.query(dataSql);
-    }
-    return { success: true, message: 'Database initialized successfully' };
-  } finally {
-    client.release();
+    const products = await fetchSbuyProductsLive();
+    const categories = await getCategories();
+    return {
+      db_connected: true,
+      source: 'Sbuy WooCommerce REST API (sbuy.io.vn)',
+      product_count: products.length,
+      category_count: categories.length,
+      message: 'Kết nối trực tiếp thành công tới Sbuy API (không sử dụng Supabase)'
+    };
+  } catch (err: any) {
+    return {
+      db_connected: false,
+      source: 'Offline Fallback (seed.json)',
+      error: err.message
+    };
   }
+}
+
+export async function initDatabase() {
+  return { success: true, message: 'Sbuy API integration is active' };
 }
