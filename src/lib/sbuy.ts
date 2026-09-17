@@ -103,7 +103,8 @@ const CATEGORY_MAPPING: Record<string, { id: string; slug: string; name: string;
   'chuot': { id: 'c1000000-0000-0000-0000-000000000011', slug: 'mouse', name: 'Chuột Gaming & Văn Phòng', icon: 'mouse' },
   'tai-nghe': { id: 'c1000000-0000-0000-0000-000000000012', slug: 'headset', name: 'Tai Nghe Gaming', icon: 'headphones' },
   'loa-may-tinh': { id: 'c1000000-0000-0000-0000-000000000013', slug: 'speaker', name: 'Loa Máy Tính', icon: 'speaker' },
-  'laptop': { id: 'c1000000-0000-0000-0000-000000000014', slug: 'laptop', name: 'Laptop Gaming & Văn Phòng', icon: 'laptop' }
+  'laptop': { id: 'c1000000-0000-0000-0000-000000000014', slug: 'laptop', name: 'Laptop Gaming & Văn Phòng', icon: 'laptop' },
+  'pc-may-tinh-ban': { id: 'c1000000-0000-0000-0000-000000000098', slug: 'prebuilt', name: 'PC Nguyên Bộ - Máy Tính Bàn', icon: 'monitor' }
 };
 
 // Known brands to infer from product names
@@ -230,6 +231,13 @@ const FALLBACK_CATEGORY = {
 };
 
 function inferCategory(raw: SbuyRawProduct): { id: string; slug: string; name: string; icon: string } {
+  const name = (raw.name || '').toLowerCase();
+
+  // 0. Check if Prebuilt PC system
+  if (name.startsWith('pc ') || name.startsWith('pc-') || (raw.categories || []).some(c => (c.slug || '').toLowerCase() === 'pc-may-tinh-ban')) {
+    return CATEGORY_MAPPING['pc-may-tinh-ban'];
+  }
+
   // 1. Try matching against Sbuy product categories (excluding generic non-component categories)
   if (Array.isArray(raw.categories) && raw.categories.length > 0) {
     for (const cat of raw.categories) {
@@ -243,30 +251,29 @@ function inferCategory(raw: SbuyRawProduct): { id: string; slug: string; name: s
     }
   }
 
-  // 2. Infer from product Name
-  const name = (raw.name || '').toLowerCase();
-  if (name.includes('cpu') || name.includes('ryzen') || name.includes('i3-') || name.includes('i5-') || name.includes('i7-') || name.includes('i9-') || name.includes('bộ vi xử lý')) {
+  // 2. Infer from product Name with strict component criteria
+  if (name.includes('cpu ') || name.startsWith('cpu') || name.includes('bộ vi xử lý')) {
     return CATEGORY_MAPPING['cpu'];
   }
-  if (name.includes('mainboard') || name.includes('bo mạch') || name.includes('b760') || name.includes('b650') || name.includes('b550') || name.includes('h510') || name.includes('z790') || name.includes('z690') || name.includes('b560')) {
+  if (name.includes('mainboard') || name.includes('bo mạch')) {
     return CATEGORY_MAPPING['mainboard'];
   }
-  if (name.includes('ram') || name.includes('ddr4') || name.includes('ddr5')) {
+  if (name.includes('ram')) {
     return CATEGORY_MAPPING['ram'];
   }
-  if (name.includes('vga') || name.includes('rtx') || name.includes('gtx') || name.includes('radeon') || name.includes('card màn hình')) {
+  if (name.includes('vga') || name.includes('card màn hình')) {
     return CATEGORY_MAPPING['gpu'];
   }
-  if (name.includes('ổ cứng') || name.includes('ssd') || name.includes('hdd') || name.includes('nvme')) {
+  if (name.includes('ổ cứng') || name.includes('ssd') || name.includes('hdd')) {
     return CATEGORY_MAPPING['o-cung'];
   }
-  if (name.includes('nguồn') || name.includes('psu') || name.includes('power supply')) {
+  if (name.includes('nguồn máy tính') || name.includes('nguồn seasonic') || name.includes('nguồn corsair')) {
     return CATEGORY_MAPPING['nguon'];
   }
-  if (name.includes('case') || name.includes('vỏ máy tính') || name.includes('vỏ case')) {
+  if (name.includes('case máy tính')) {
     return CATEGORY_MAPPING['case'];
   }
-  if (name.includes('tản nhiệt') || name.includes('cooler') || name.includes('deepcool') || name.includes('aio')) {
+  if (name.includes('tản nhiệt')) {
     return CATEGORY_MAPPING['tan-nhiet'];
   }
   if (name.includes('màn hình')) {
