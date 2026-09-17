@@ -174,6 +174,25 @@ export default function BuildPcPage() {
   const cartItems = useCartStore(s => s.items);
 
   const [showCartChoiceModal, setShowCartChoiceModal] = useState(false);
+  const [liveSbuyProducts, setLiveSbuyProducts] = useState<any[]>([]);
+
+  // Fetch live Sbuy products on mount for AI Advisor and Auto-match
+  useEffect(() => {
+    async function loadLiveSbuyCatalog() {
+      try {
+        const res = await fetch('/api/products?limit=1000', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+            setLiveSbuyProducts(data.products);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load live Sbuy products for PC Builder:', err);
+      }
+    }
+    loadLiveSbuyCatalog();
+  }, []);
 
   // Read saved builds & pending AI presets from localStorage on mount
   useEffect(() => {
@@ -397,18 +416,22 @@ export default function BuildPcPage() {
   const handleAiAutoSelectProduct = (targetSlotKey: string) => {
     const slotLower = targetSlotKey.toLowerCase();
     const targetCatId = CATEGORY_ID_MAP[slotLower];
+    const catalogSource = liveSbuyProducts.length > 0 ? liveSbuyProducts : seed.products;
     
-    // Find products from seed matching category/slot strictly
-    const matchingProducts = seed.products.filter(p => {
+    // Find products matching category/slot strictly
+    const matchingProducts = catalogSource.filter(p => {
       const catId = (p.category_id || '').toLowerCase();
-      const slug = (p.slug || '').toLowerCase();
-      const name = (p.name || '').toLowerCase();
-      return (targetCatId && catId === targetCatId) || slug.includes(slotLower) || name.includes(slotLower);
+      const catSlug = (p.category_slug || '').toLowerCase();
+      return (targetCatId && catId === targetCatId) || catSlug === slotLower;
     });
 
     const candidates = matchingProducts.length > 0 
       ? matchingProducts 
-      : seed.products.filter(p => (targetCatId ? p.category_id === targetCatId : true));
+      : catalogSource.filter(p => {
+          const catId = (p.category_id || '').toLowerCase();
+          const catSlug = (p.category_slug || '').toLowerCase();
+          return (targetCatId && catId === targetCatId) || catSlug === slotLower;
+        });
 
     // Sort by AI compatibility score (highest compatible product first)
     const sortedCompat = [...candidates].sort((a, b) => {
@@ -835,12 +858,12 @@ export default function BuildPcPage() {
     const recWatts = Math.max(750, Math.ceil((totalTdp + 150) / 50) * 50);
 
     const getCandidateProducts = (slotKey: string, limit = 3) => {
+      const catalogSource = liveSbuyProducts.length > 0 ? liveSbuyProducts : seed.products;
       const targetCatId = CATEGORY_ID_MAP[slotKey];
-      const items = seed.products.filter(p => {
+      const items = catalogSource.filter(p => {
         const catId = (p.category_id || '').toLowerCase();
-        const slug = (p.slug || '').toLowerCase();
-        const name = (p.name || '').toLowerCase();
-        return (targetCatId && catId === targetCatId) || slug.includes(slotKey) || name.includes(slotKey);
+        const catSlug = (p.category_slug || '').toLowerCase();
+        return (targetCatId && catId === targetCatId) || catSlug === slotKey;
       });
 
       const compatibleItems = items.filter(p => getProductAiCompatibilityInfo(p, slotKey, components).isCompatible);
@@ -848,7 +871,11 @@ export default function BuildPcPage() {
         ? compatibleItems
         : items.length > 0
         ? items
-        : seed.products.filter(p => (targetCatId ? p.category_id === targetCatId : true));
+        : catalogSource.filter(p => {
+            const catId = (p.category_id || '').toLowerCase();
+            const catSlug = (p.category_slug || '').toLowerCase();
+            return (targetCatId && catId === targetCatId) || catSlug === slotKey;
+          });
 
       return candidates.slice(0, limit).map(p => {
         const specsStr = formatComponentSpecs(slotKey, p);
