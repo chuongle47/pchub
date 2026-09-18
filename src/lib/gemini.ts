@@ -67,6 +67,11 @@ HƯỚNG DẪN TRẢ LỜI CHO KHÁCH HÀNG (STRICT FORMATTING RULES):
    - Dùng đúng tên sản phẩm và giá tiền từ danh sách sản phẩm Sbuy API bên dưới.
    - Tuyệt đối không lặp lại cùng một sản phẩm nhiều lần.
 
+3. NGUYÊN TẮC TƯƠNG THÍCH PHẦN CỨNG 100% (STRICT HARDWARE COMPATIBILITY RULES):
+   - CPU & MAINBOARD: Phải đúng Socket (Intel Gen 12/13/14 -> LGA1700 như B760, H610, Z790; AMD Ryzen 7000/8000/9000 -> AM5 như B650, X670; AMD Ryzen 5000 -> AM4 như B550, B450).
+   - RAM & MAINBOARD: BẮT BUỘC cùng chuẩn DDR4 hoặc DDR5 (Mainboard DDR4 cắm RAM DDR4, Mainboard DDR5 cắm RAM DDR5). TUYỆT ĐỐI KHÔNG chọn Mainboard DDR4 đi với RAM DDR5 hoặc ngược lại!
+   - NGUỒN (PSU): Phải đủ công suất cho VGA + CPU (RTX 3060/4060 -> Nguồn >= 550W-650W; RTX 4070/4070 Super -> Nguồn >= 650W-750W).
+
 DANH SÁCH SẢN PHẨM THỰC TẾ (SBUY API):
 ${catalogContext}
 `;

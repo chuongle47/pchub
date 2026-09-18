@@ -90,6 +90,41 @@ export default function AIChatWidget() {
       }
     });
 
+    // Enforce 100% hardware compatibility (RAM DDR generation & Socket matching)
+    if (componentsMap.mainboard && componentsMap.ram) {
+      const mbText = `${componentsMap.mainboard.name} ${componentsMap.mainboard.specs || ''}`.toLowerCase();
+      const ramText = `${componentsMap.ram.name} ${componentsMap.ram.specs || ''}`.toLowerCase();
+
+      const mbIsDdr5 = mbText.includes('ddr5') || mbText.includes('d5') || mbText.includes('b650') || mbText.includes('x670') || mbText.includes('z790-d5');
+      const ramIsDdr5 = ramText.includes('ddr5');
+
+      if (mbIsDdr5 && !ramIsDdr5) {
+        // Swap RAM to DDR5 if Mainboard requires DDR5
+        componentsMap.ram = {
+          key: 'ram',
+          id: 'p-ram-32g-d5',
+          name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz',
+          price: 2890000,
+          tdp: 15,
+          specs: '2x16GB | DDR5 | 6000MHz | CL36',
+          image: '/images/ram-rgb.jpg',
+          slug: 'corsair-vengeance-32gb-d5',
+        };
+      } else if (!mbIsDdr5 && ramIsDdr5) {
+        // Swap RAM to DDR4 if Mainboard is DDR4
+        componentsMap.ram = {
+          key: 'ram',
+          id: 'p-ram-16g',
+          name: 'RAM Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz',
+          price: 1190000,
+          tdp: 10,
+          specs: '2x8GB | DDR4 | 3200MHz | CL16',
+          image: '/images/ram-rgb.jpg',
+          slug: 'kingston-fury-beast-16gb',
+        };
+      }
+    }
+
     const dynamicPreset = {
       id: `custom-ai-${Date.now()}`,
       title: 'Cấu hình gợi ý từ AI Advisor',
