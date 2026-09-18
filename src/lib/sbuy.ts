@@ -358,6 +358,41 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
   };
 }
 
+function isComputerComponentProduct(p: SbuyRawProduct): boolean {
+  if (!p || p.status !== 'publish' || !p.name || !p.name.trim()) return false;
+  const nameLower = p.name.toLowerCase().trim();
+
+  // Exclude non-product or test names
+  if (nameLower === 'test' || nameLower.includes('đăng ký tên miền') || nameLower.includes('tên miền')) {
+    return false;
+  }
+
+  // Check categories
+  const categories = Array.isArray(p.categories) ? p.categories : [];
+  const categorySlugs = categories.map(c => (c.slug || '').toLowerCase());
+  const categoryNames = categories.map(c => (c.name || '').toLowerCase());
+
+  // 1. Is explicitly in "Linh kiện máy tính" category or subcategories
+  const isLinhKienCategory = categorySlugs.some(slug => 
+    slug === 'linh-kien-may-tinh' || 
+    slug.includes('linh-kien') || 
+    CATEGORY_MAPPING[slug] !== undefined
+  ) || categoryNames.some(name => name.includes('linh kiện'));
+
+  if (isLinhKienCategory) return true;
+
+  // 2. Check name keywords for computer hardware & peripherals
+  const compKeywords = [
+    'cpu', 'intel', 'ryzen', 'mainboard', 'bo mạch', 'ram', 'vga', 'gpu', 
+    'rtx', 'gtx', 'radeon', 'card màn', 'ssd', 'nvme', 'hdd', 'ổ cứng', 
+    'nguồn', 'psu', 'case', 'vỏ máy', 'vỏ case', 'tản nhiệt', 'cooling', 
+    'màn hình', 'monitor', 'bàn phím', 'keyboard', 'chuột', 'mouse', 
+    'tai nghe', 'headset', 'loa', 'laptop', 'pc '
+  ];
+
+  return compKeywords.some(kw => nameLower.includes(kw));
+}
+
 // Server Cache for Sbuy Products
 let sbuyProductsCache: { data: AppProduct[]; timestamp: number } | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 1 minute cache for fast updates when adding new products
@@ -381,8 +416,8 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
       throw new Error('Invalid JSON format from Sbuy API');
     }
 
-    // Keep all published products from Sbuy API
-    const validRaw = rawProducts.filter(p => p && p.status === 'publish' && p.name && p.name.trim() !== '');
+    // Keep only published products in "Linh kiện máy tính" / Computer Hardware & Peripherals
+    const validRaw = rawProducts.filter(isComputerComponentProduct);
     const mappedProducts = validRaw.map(mapSbuyProduct);
 
     if (mappedProducts.length > 0) {
