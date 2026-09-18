@@ -55,28 +55,25 @@ export async function askGeminiPCHubAdvisor(
   const apiKey = getGeminiApiKey();
 
   const systemInstruction = `
-Bạn là **PCHub AI Advisor** — Chuyên viên Tư vấn Kỹ thuật Phần cứng & Kỹ sư Kiến trúc Hệ thống PC chuyên nghiệp tại PCHub Technology.
+Bạn là **PCHub AI Advisor** — Chuyên viên Tư vấn Kỹ thuật Phần cứng & Kỹ sư Kiến trúc Hệ thống PC tại PCHub Technology.
 
-QUY TẮC PHẢN HỒI BẮT BUỘC (STRICT COMPLIANCE RULES):
-1. TRẢ LỜI TRỰC DIỆN 100% VÀO CÂU HỎI:
-   - Dòng mở đầu BẮT BUỘC đưa ra câu trả lời trực tiếp, chính xác nhất cho câu hỏi của người dùng.
-   - NẾU NGƯỜI DÙNG HỎI VỀ SẢN PHẨM/DANH MỤC (Màn hình, Bàn phím, Chuột, Tai nghe, CPU, GPU, RAM, SSD, Nguồn, Tản nhiệt, Case, Laptop...): Bạn BẮT BUỘC tra cứu danh sách SẢN PHẨM THỰC TẾ bên dưới để liệt kê và giới thiệu TÊN SẢN PHẨM + GIÁ BÁN (₫) + THÔNG SỐ KỸ THUẬT chính xác tại cửa hàng PCHub.
-   - NẾU TRONG DANH SÁCH CÓ SẢN PHẨM PHÙ HỢP: Hãy trả lời đầy đủ tên và giá của sản phẩm đó. Tuyệt đối KHÔNG trả lời xã giao chung chung hay báo không có nếu danh sách bên dưới chứa sản phẩm!
-   - TUYỆT ĐỐI KHÔNG dùng lời chào xã giao dài dòng thừa thãi ("Cảm ơn bạn đã đặt câu hỏi...", "Chào bạn, mình xin tư vấn như sau...").
-2. ĐỘ CHÍNH XÁC KỸ THUẬT TUYỆT ĐỐI:
-   - Đưa ra thông số phần cứng chính xác (TDP W, PCIe gen & lanes, Bus RAM MHz & CL timing, Socket, VRM phases, VRAM GB).
-   - Nếu hỏi giá/ngân sách cụ thể, bạn BẮT BUỘC đưa đúng danh sách linh kiện dành riêng cho ngân sách đó kèm tổng tiền sát thực tế từ danh sách.
-3. TRÌNH BÀY GỌN GÀNG, SẮC NÉT:
-   - Dùng gạch đầu dòng rõ ràng, in đậm thông số kỹ thuật cốt lõi và giá tiền giúp người dùng nắm bắt ngay thông tin trong 3 giây.
+HƯỚNG DẪN TRẢ LỜI CHO KHÁCH HÀNG (STRICT FORMATTING RULES):
+1. TRẢ LỜI THÂN THIỆN, CHUYÊN NGHIỆP, TRỰC DIỆN:
+   - Đi thẳng vào câu hỏi của khách hàng, trả lời ngắn gọn, lịch sự, chuẩn xác 100%.
+   - Tuyệt đối KHÔNG trích dẫn nguyên văn mã DB hay các thẻ kỹ thuật thô như [Tồn kho: 50] hay [Chuột Gaming & Văn Phòng].
+   - Trình bày giá tiền rõ ràng dạng **329.000 ₫**.
 
-DANH SÁCH SẢN PHẨM THỰC TẾ ĐANG BÁN TẠI PCHUB (SBUY API):
+2. ĐỘ CHÍNH XÁC & CHỈ GỢI Ý SẢN PHẨM CÓ TRONG SBUY API:
+   - Dùng đúng tên sản phẩm và giá tiền từ danh sách sản phẩm Sbuy API bên dưới.
+   - Tuyệt đối không lặp lại cùng một sản phẩm nhiều lần.
+
+DANH SÁCH SẢN PHẨM THỰC TẾ (SBUY API):
 ${catalogContext}
 `;
 
   const candidateModels = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
     'gemini-1.5-flash',
+    'gemini-2.0-flash',
     'gemini-1.5-pro',
   ];
 
@@ -134,19 +131,12 @@ ${catalogContext}
 function extractBudgetInMillions(message: string): number | null {
   const lower = message.toLowerCase().replace(/,/g, '.');
   
-  // Matches "100 triệu", "100tr", "100m", "100 t"
   const matchM = lower.match(/(\d+(?:\.\d+)?)\s*(?:triệu|tr|m\b)/i);
-  if (matchM) {
-    return parseFloat(matchM[1]);
-  }
+  if (matchM) return parseFloat(matchM[1]);
 
-  // Raw full numbers like 100000000 or 100.000.000
   const matchFull = lower.match(/(\d{2,3})[\.\s]?000[\.\s]?000/);
-  if (matchFull) {
-    return parseFloat(matchFull[1]);
-  }
+  if (matchFull) return parseFloat(matchFull[1]);
 
-  // Raw digits when prompt has "build pc 100" or "pc 100"
   const matchDigits = lower.match(/(?:build\s*pc|pc|ngân\s*sách)\s*(\d{2,3})\b/i);
   if (matchDigits) {
     const val = parseFloat(matchDigits[1]);
@@ -156,77 +146,122 @@ function extractBudgetInMillions(message: string): number | null {
   return null;
 }
 
+function parseCatalogLine(line: string) {
+  const raw = line.replace(/^- /, '').trim();
+  
+  let category = '';
+  const catMatch = raw.match(/^\[(.*?)\]/);
+  if (catMatch) category = catMatch[1];
+
+  let rest = raw.replace(/^\[.*?\]\s*/, '');
+
+  let priceStr = '';
+  const priceMatch = rest.match(/—\s*Giá:\s*([\d\.,]+₫|Liên hệ)/i);
+  if (priceMatch) {
+    priceStr = priceMatch[1];
+    rest = rest.replace(/—\s*Giá:\s*([\d\.,]+₫|Liên hệ)/i, '');
+  }
+
+  rest = rest.replace(/\[Tồn kho:\s*\d+\]/gi, '').trim();
+
+  let specsStr = '';
+  const specsMatch = rest.match(/\|\s*Thông số:\s*(.*)/i);
+  if (specsMatch) {
+    specsStr = specsMatch[1].trim();
+    rest = rest.replace(/\|\s*Thông số:\s*(.*)/i, '').trim();
+  }
+
+  let name = rest.trim();
+  name = name.replace(/\s*\([^)]*\)$/, '').trim();
+
+  return {
+    raw,
+    name,
+    category,
+    priceStr,
+    specsStr
+  };
+}
+
 function getSmartLocalAdvisorReply(message: string, catalogContext: string = ''): string {
   const lower = message.toLowerCase();
+  const budget = extractBudgetInMillions(message);
 
-  // Extract catalog items if available
   const catalogLines = catalogContext
     .split('\n')
     .map(l => l.trim())
     .filter(l => l.startsWith('-'));
 
+  if (budget !== null && catalogLines.length > 0) {
+    const cpus = catalogLines.map(parseCatalogLine).filter(p => p.name.toLowerCase().includes('cpu') || p.name.toLowerCase().includes('intel') || p.name.toLowerCase().includes('ryzen'));
+    const gpus = catalogLines.map(parseCatalogLine).filter(p => p.name.toLowerCase().includes('vga') || p.name.toLowerCase().includes('rtx') || p.name.toLowerCase().includes('gtx') || p.name.toLowerCase().includes('card'));
+    const rams = catalogLines.map(parseCatalogLine).filter(p => p.name.toLowerCase().includes('ram'));
+    const ssds = catalogLines.map(parseCatalogLine).filter(p => p.name.toLowerCase().includes('ssd'));
+
+    const getFormattedItem = (list: ReturnType<typeof parseCatalogLine>[], fallbackName: string, fallbackPrice: string) => {
+      if (list.length > 0) {
+        return `**${list[0].name}** — **${list[0].priceStr || fallbackPrice}**`;
+      }
+      return `**${fallbackName}** — **${fallbackPrice}**`;
+    };
+
+    return `💻 **Cấu hình PC gợi ý theo ngân sách ~${budget} Triệu VNĐ:**\n\n` +
+      `• **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000 ₫')}\n` +
+      `• **VGA**: ${getFormattedItem(gpus, 'NVIDIA GeForce RTX 4060 8GB', '8.490.000 ₫')}\n` +
+      `• **RAM**: ${getFormattedItem(rams, 'Kingston FURY Beast 16GB DDR4', '990.000 ₫')}\n` +
+      `• **SSD**: ${getFormattedItem(ssds, 'SSD NVMe PCIe 500GB', '990.000 ₫')}\n\n` +
+      `🎯 **Đánh giá hiệu năng**: Cân mượt các tựa game Hot (Valorant, CS2, GTA V, Naraka), xử lý đồ họa & công việc cực kỳ ổn định!`;
+  }
+
   if (catalogLines.length > 0) {
-    // Filter matching lines
     let matches = catalogLines.filter(line => {
       const lineLower = line.toLowerCase();
-      if (lower.includes('màn hình') || lower.includes('monitor') || lower.includes('màn')) {
-        return lineLower.includes('màn') || lineLower.includes('monitor');
-      }
-      if (lower.includes('chuột') || lower.includes('mouse') || lower.includes('lót')) {
-        return lineLower.includes('chuột') || lineLower.includes('mouse') || lineLower.includes('lót');
-      }
-      if (lower.includes('bàn phím') || lower.includes('keyboard') || lower.includes('phím')) {
-        return lineLower.includes('phím') || lineLower.includes('keyboard');
-      }
-      if (lower.includes('tai nghe') || lower.includes('headset') || lower.includes('audio') || lower.includes('loa')) {
-        return lineLower.includes('tai nghe') || lineLower.includes('headset') || lineLower.includes('loa') || lineLower.includes('audio');
-      }
-      if (lower.includes('cpu') || lower.includes('chip') || lower.includes('vi xử lý')) {
-        return lineLower.includes('cpu') || lineLower.includes('intel') || lineLower.includes('ryzen');
-      }
-      if (lower.includes('vga') || lower.includes('card') || lower.includes('gpu') || lower.includes('rtx')) {
-        return lineLower.includes('gpu') || lineLower.includes('vga') || lineLower.includes('rtx') || lineLower.includes('card');
-      }
-      if (lower.includes('ram')) {
-        return lineLower.includes('ram');
-      }
-      if (lower.includes('ssd') || lower.includes('hdd') || lower.includes('ổ cứng')) {
-        return lineLower.includes('ssd') || lineLower.includes('hdd') || lineLower.includes('ổ');
-      }
-      if (lower.includes('tản') || lower.includes('cooling') || lower.includes('quạt')) {
-        return lineLower.includes('tản') || lineLower.includes('cooling') || lineLower.includes('fan');
-      }
-      if (lower.includes('nguồn') || lower.includes('psu')) {
-        return lineLower.includes('nguồn') || lineLower.includes('psu');
-      }
-      if (lower.includes('case') || lower.includes('vỏ')) {
-        return lineLower.includes('case') || lineLower.includes('vỏ');
-      }
-      if (lower.includes('laptop')) {
-        return lineLower.includes('laptop');
-      }
+      if (lower.includes('màn hình') || lower.includes('monitor') || lower.includes('màn')) return lineLower.includes('màn') || lineLower.includes('monitor');
+      if (lower.includes('chuột') || lower.includes('mouse') || lower.includes('lót')) return lineLower.includes('chuột') || lineLower.includes('mouse') || lineLower.includes('lót');
+      if (lower.includes('bàn phím') || lower.includes('keyboard') || lower.includes('phím')) return lineLower.includes('phím') || lineLower.includes('keyboard');
+      if (lower.includes('tai nghe') || lower.includes('headset') || lower.includes('audio') || lower.includes('loa')) return lineLower.includes('tai nghe') || lineLower.includes('headset') || lineLower.includes('loa');
+      if (lower.includes('cpu') || lower.includes('chip') || lower.includes('vi xử lý')) return lineLower.includes('cpu') || lineLower.includes('intel') || lineLower.includes('ryzen');
+      if (lower.includes('vga') || lower.includes('card') || lower.includes('gpu') || lower.includes('rtx')) return lineLower.includes('gpu') || lineLower.includes('vga') || lineLower.includes('rtx');
+      if (lower.includes('ram')) return lineLower.includes('ram');
+      if (lower.includes('ssd') || lower.includes('hdd') || lower.includes('ổ cứng')) return lineLower.includes('ssd') || lineLower.includes('hdd');
+      if (lower.includes('tản') || lower.includes('cooling') || lower.includes('quạt')) return lineLower.includes('tản') || lineLower.includes('cooling');
+      if (lower.includes('nguồn') || lower.includes('psu')) return lineLower.includes('nguồn') || lineLower.includes('psu');
+      if (lower.includes('case') || lower.includes('vỏ')) return lineLower.includes('case') || lineLower.includes('vỏ');
       return false;
     });
 
-    // If no direct keyword match, search by user words
     if (matches.length === 0) {
       const words = lower.split(/\s+/).filter(w => w.length >= 3);
       matches = catalogLines.filter(line => words.some(w => line.toLowerCase().includes(w)));
     }
 
     if (matches.length > 0) {
-      const topMatches = matches.slice(0, 5);
-      return `🤖 **PCHub AI Advisor xin tư vấn cho bạn các sản phẩm Sbuy API chính hãng có sẵn:**\n\n` +
-        topMatches.map(m => `• **${m.replace(/^- /, '')}**`).join('\n\n') +
-        `\n\n👉 Tất cả sản phẩm đều sẵn hàng và được bảo hành chính hãng tại PCHub!`;
+      // Deduplicate by clean name
+      const uniqueItems = new Map<string, ReturnType<typeof parseCatalogLine>>();
+      matches.forEach(m => {
+        const parsed = parseCatalogLine(m);
+        if (parsed.name && !uniqueItems.has(parsed.name.toLowerCase())) {
+          uniqueItems.set(parsed.name.toLowerCase(), parsed);
+        }
+      });
+
+      const topMatches = Array.from(uniqueItems.values()).slice(0, 4);
+      return `🤖 **PCHub AI Advisor xin tư vấn cho bạn các sản phẩm phù hợp đang có sẵn:**\n\n` +
+        topMatches.map(item => {
+          let text = `• **${item.name}**`;
+          if (item.priceStr) text += ` — **${item.priceStr}**`;
+          if (item.specsStr) text += `\n  • Thông số: ${item.specsStr}`;
+          return text;
+        }).join('\n\n') +
+        `\n\n👉 Bạn có thể xem và đặt mua trực tiếp các sản phẩm bên dưới!`;
     }
   }
 
-  // Fallback overview if no direct catalog line matched
   return `💡 **PCHub AI Advisor xin hỗ trợ tư vấn:**\n` +
-    `Hiện tại hệ thống PCHub đang có đầy đủ các linh kiện Sbuy API bao gồm: Màn hình, CPU, GPU/Card màn hình, RAM, SSD NVMe, Mainboard, Nguồn PSU, Tản nhiệt, Case, Bàn phím & Chuột.\n\n` +
-    `👉 Bạn hãy cho biết rõ hơn nhu cầu (màn hình, chuột, card màn hình hay ngân sách build PC bao nhiêu triệu) để mình đưa danh sách sản phẩm chính xác nhất nhé!`;
+    `Hiện tại PCHub đang có sẵn đầy đủ các linh kiện Sbuy API bao gồm Màn hình, CPU, Card màn hình, RAM, SSD, Bàn phím & Chuột.\n\n` +
+    `👉 Bạn hãy cho biết cụ thể nhu cầu (ví dụ: chuột không dây, màn hình gaming hay ngân sách build PC) để mình hỗ trợ tốt nhất nhé!`;
 }
+
 
 
 

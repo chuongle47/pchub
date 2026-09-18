@@ -78,31 +78,35 @@ export async function POST(request: NextRequest) {
 
     const advisorResult = await askGeminiPCHubAdvisor(message.trim(), history, catalogContext);
 
-    // Filter top 4 matching real Sbuy products to pass back to frontend for clickable cards
+    // Filter top 4 matching real Sbuy products to pass back to frontend for clickable cards (deduplicated)
     const userText = message.toLowerCase();
     const replyText = (advisorResult.text || '').toLowerCase();
     
-    const recommendedProducts = finalProductList
-      .filter((p: any) => {
-        const pName = (p.name || '').toLowerCase();
-        const pCat = (p.category_name || '').toLowerCase();
-        const pCatSlug = (p.category_slug || '').toLowerCase();
-        
-        // Match product name, category or brand against user query or reply text
-        return replyText.includes(pName) ||
-          userText.split(' ').some(word => word.length > 2 && (pName.includes(word) || pCat.includes(word) || pCatSlug.includes(word)));
-      })
-      .slice(0, 4)
-      .map((p: any) => ({
-        id: String(p.id),
-        name: p.name,
-        slug: p.slug,
-        price: Number(p.price) || 0,
-        original_price: Number(p.original_price || p.originalPrice || 0),
-        image_url: getProductImage({ name: p.name, category_name: p.category_name, category_slug: p.category_slug, brand_name: p.brand_name, image_url: p.image_url || p.image }),
-        category_name: p.category_name || 'Linh kiện',
-        brand_name: p.brand_name || 'Chính hãng',
-      }));
+    const recMap = new Map<string, any>();
+    finalProductList.forEach((p: any) => {
+      const pName = (p.name || '').toLowerCase();
+      const pCat = (p.category_name || '').toLowerCase();
+      const pCatSlug = (p.category_slug || '').toLowerCase();
+      
+      const isMatch = replyText.includes(pName) ||
+        userText.split(' ').some(word => word.length > 2 && (pName.includes(word) || pCat.includes(word) || pCatSlug.includes(word)));
+
+      if (isMatch && !recMap.has(pName)) {
+        recMap.set(pName, {
+          id: String(p.id),
+          name: p.name,
+          slug: p.slug,
+          price: Number(p.price) || 0,
+          original_price: Number(p.original_price || p.originalPrice || 0),
+          image_url: getProductImage({ name: p.name, category_name: p.category_name, category_slug: p.category_slug, brand_name: p.brand_name, image_url: p.image_url || p.image }),
+          category_name: p.category_name || 'Linh kiện',
+          brand_name: p.brand_name || 'Chính hãng',
+        });
+      }
+    });
+
+    const recommendedProducts = Array.from(recMap.values()).slice(0, 4);
+
 
     return NextResponse.json({
       reply: advisorResult.text,
