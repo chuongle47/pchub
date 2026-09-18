@@ -433,47 +433,6 @@ function SearchContent() {
           </div>
         </div>
 
-        {/* Mobile Filter Toggle Button */}
-        <button
-          type="button"
-          className="search-mobile-filter-toggle"
-          onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            padding: '12px 18px',
-            background: 'var(--color-bg-surface)',
-            border: '1.5px solid var(--color-border)',
-            borderRadius: '10px',
-            fontWeight: 700,
-            fontSize: '13.5px',
-            color: 'var(--color-text-primary)',
-            marginBottom: '16px',
-            cursor: 'pointer',
-            width: '100%',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <Filter size={16} color="var(--color-primary)" />
-          <span>{isMobileFilterOpen ? 'Đóng bộ lọc' : 'Mở bộ lọc tìm kiếm & thương hiệu'}</span>
-          {activeFilterCount > 0 && (
-            <span style={{
-              background: 'var(--color-primary)',
-              color: '#fff',
-              borderRadius: '50%',
-              width: '20px',
-              height: '20px',
-              fontSize: '11px',
-              fontWeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
 
         {/* MAIN 2-COLUMN LAYOUT */}
         <div className="search-layout-grid" style={{ alignItems: 'flex-start' }}>
