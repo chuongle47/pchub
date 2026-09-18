@@ -226,8 +226,8 @@ function inferProductSpecs(raw: SbuyRawProduct, categorySlug: string): Record<st
 
 const FALLBACK_CATEGORY = {
   id: 'c1000000-0000-0000-0000-000000000099',
-  slug: 'accessory',
-  name: 'Phụ Kiện & Khác',
+  slug: 'linh-kien',
+  name: 'Linh kiện PC',
   icon: 'box'
 };
 
@@ -360,7 +360,7 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
 
 // Server Cache for Sbuy Products
 let sbuyProductsCache: { data: AppProduct[]; timestamp: number } | null = null;
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes in-memory cache
+const CACHE_TTL_MS = 60 * 1000; // 1 minute cache for fast updates when adding new products
 
 export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
   const now = Date.now();
@@ -370,7 +370,7 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
 
   try {
     const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products?consumer_key=${SBUY_CONFIG.consumerKey}&consumer_secret=${SBUY_CONFIG.consumerSecret}&per_page=100`;
-    const res = await fetch(url, { next: { revalidate: 300 } });
+    const res = await fetch(url, { next: { revalidate: 60 } });
 
     if (!res.ok) {
       throw new Error(`Sbuy API returned HTTP ${res.status}`);
@@ -381,12 +381,8 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
       throw new Error('Invalid JSON format from Sbuy API');
     }
 
-    // Filter out draft/invalid products and non-computer items (keep only computer components & peripherals)
-    const validRaw = rawProducts.filter(p => {
-      if (p.status !== 'publish' || !p.name || p.name === 'test') return false;
-      const mapped = mapSbuyProduct(p);
-      return mapped.category_slug !== 'accessory';
-    });
+    // Keep all published products from Sbuy API
+    const validRaw = rawProducts.filter(p => p && p.status === 'publish' && p.name && p.name.trim() !== '');
     const mappedProducts = validRaw.map(mapSbuyProduct);
 
     if (mappedProducts.length > 0) {

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result, {
       headers: { 
         'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600'
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
       }
     });
   } catch (err: any) {
