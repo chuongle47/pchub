@@ -6,11 +6,23 @@ import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/lib/store';
 import { matchPresetKeyFromText, AI_BUILD_PRESETS } from '@/lib/buildPresets';
 
+type RecommendedProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  original_price?: number;
+  image_url: string;
+  category_name?: string;
+  brand_name?: string;
+};
+
 type Message = {
   from: 'ai' | 'user';
   text: string;
   timestamp?: string;
   isError?: boolean;
+  products?: RecommendedProduct[];
 };
 
 const QUICK_QUESTIONS = [
@@ -92,7 +104,7 @@ export default function AIChatWidget() {
       const data = await res.json();
 
       if (data.reply) {
-        setMessages(prev => [...prev, { from: 'ai', text: data.reply }]);
+        setMessages(prev => [...prev, { from: 'ai', text: data.reply, products: data.recommendedProducts }]);
       } else {
         throw new Error(data.error || 'API Error');
       }
@@ -275,6 +287,52 @@ export default function AIChatWidget() {
                   }}
                 >
                     {renderFormattedText(message.text)}
+
+                    {/* Interactive Recommended Products Cards */}
+                    {message.products && message.products.length > 0 && (
+                      <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          🛒 Sản phẩm có sẵn tại PCHub (Sbuy API):
+                        </div>
+                        {message.products.map(prod => (
+                          <div
+                            key={prod.id}
+                            onClick={() => { setOpen(false); router.push(`/product/${prod.slug}`); }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 10px',
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = '#3b82f6'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+                          >
+                            <img
+                              src={prod.image_url}
+                              alt={prod.name}
+                              style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '6px', background: '#fff', padding: '2px', border: '1px solid #f1f5f9' }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {prod.name}
+                              </div>
+                              <div style={{ fontSize: '11px', fontWeight: 800, color: '#ef4444', marginTop: '2px' }}>
+                                {prod.price ? `${prod.price.toLocaleString('vi-VN')}₫` : 'Liên hệ'}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '10px', fontWeight: 800, color: '#2563eb', background: '#eff6ff', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 }}>
+                              Xem →
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {message.from === 'ai' && index > 0 && (
                       <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1' }}>
                         <button
@@ -304,6 +362,7 @@ export default function AIChatWidget() {
                       </div>
                     )}
                   </div>
+
                 </div>
               ))}
 

@@ -69,8 +69,8 @@ QUY TẮC PHẢN HỒI BẮT BUỘC (STRICT COMPLIANCE RULES):
 3. TRÌNH BÀY GỌN GÀNG, SẮC NÉT:
    - Dùng gạch đầu dòng rõ ràng, in đậm thông số kỹ thuật cốt lõi và giá tiền giúp người dùng nắm bắt ngay thông tin trong 3 giây.
 
-DANH SÁCH SẢN PHẨM THỰC TẾ ĐANG BÁN TẠI PCHUB:
-${catalogContext || '- [Màn Hình Gaming] ASUS ROG Swift OLED PG34WCDM 34" Curved 240Hz Gaming Monitor — Giá: 28.990.000₫\n- [Bàn Phím] Razer BlackWidow V4 Pro Mechanical Gaming Keyboard — Giá: 5.890.000₫\n- [Tai Nghe] Logitech G PRO X 2 LIGHTSPEED Wireless Gaming Headset — Giá: 4.990.000₫\n- [CPU] Intel Core i9-14900K — Giá: 13.990.000₫\n- [CPU] AMD Ryzen 9 7950X3D — Giá: 14.990.000₫\n- [GPU] ASUS ROG Strix GeForce RTX 4090 24GB — Giá: 54.990.000₫\n- [GPU] NVIDIA GeForce RTX 4080 SUPER 16GB — Giá: 31.490.000₫'}
+DANH SÁCH SẢN PHẨM THỰC TẾ ĐANG BÁN TẠI PCHUB (SBUY API):
+${catalogContext}
 `;
 
   const candidateModels = [
@@ -158,163 +158,76 @@ function extractBudgetInMillions(message: string): number | null {
 
 function getSmartLocalAdvisorReply(message: string, catalogContext: string = ''): string {
   const lower = message.toLowerCase();
-  const budget = extractBudgetInMillions(message);
 
-  if (budget !== null) {
-    if (budget >= 80) {
-      return `🚀 **Cấu hình Flagship Workstation & Gaming 4K/8K (Tầm ${budget} Triệu VNĐ):**\n\n` +
-        `- **CPU**: Intel Core i9-14900K (24 Nhân 32 Luồng, Up to 6.0GHz) hoặc AMD Ryzen 9 7950X3D (~14.990.000 ₫)\n` +
-        `- **Mainboard**: ASUS ROG STRIX Z790-E GAMING WIFI II / ASUS ROG X670E (~11.490.000 ₫)\n` +
-        `- **VGA (Card màn hình)**: NVIDIA GeForce RTX 4090 24GB GDDR6X / RTX 4080 SUPER 16GB (~54.990.000 ₫)\n` +
-        `- **RAM**: G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz CL30 (~6.290.000 ₫)\n` +
-        `- **SSD**: Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2 (Đọc 7450MB/s - Ghi 6900MB/s) (~4.890.000 ₫)\n` +
-        `- **Tản nhiệt**: NZXT Kraken Elite 360 RGB Black (Màn hình LCD 2.36") (~6.890.000 ₫)\n` +
-        `- **Nguồn (PSU)**: Corsair RM1000x 1000W 80 Plus Gold Full Modular (ATX 3.0, Cáp 12VHPWR) (~4.390.000 ₫)\n` +
-        `- **Vỏ Case**: NZXT H9 Flow RGB Dual-Chamber Premium Black (~4.290.000 ₫)\n\n` +
-        `💰 **Tổng chi phí ước tính**: **~${Math.min(budget, 98.5).toLocaleString('vi-VN')}.000.000 ₫ - ${budget.toLocaleString('vi-VN')}.000.000 ₫**\n` +
-        `🎯 **Hiệu năng thực tế**: Chiến mượt 100% tựa game AAA ở độ phân giải 4K/8K Max Setting, Dựng phim 8K RAW, Train AI Deep Learning & Render 3D Octane/Blender cực nhanh!`;
+  // Extract catalog items if available
+  const catalogLines = catalogContext
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.startsWith('-'));
+
+  if (catalogLines.length > 0) {
+    // Filter matching lines
+    let matches = catalogLines.filter(line => {
+      const lineLower = line.toLowerCase();
+      if (lower.includes('màn hình') || lower.includes('monitor') || lower.includes('màn')) {
+        return lineLower.includes('màn') || lineLower.includes('monitor');
+      }
+      if (lower.includes('chuột') || lower.includes('mouse') || lower.includes('lót')) {
+        return lineLower.includes('chuột') || lineLower.includes('mouse') || lineLower.includes('lót');
+      }
+      if (lower.includes('bàn phím') || lower.includes('keyboard') || lower.includes('phím')) {
+        return lineLower.includes('phím') || lineLower.includes('keyboard');
+      }
+      if (lower.includes('tai nghe') || lower.includes('headset') || lower.includes('audio') || lower.includes('loa')) {
+        return lineLower.includes('tai nghe') || lineLower.includes('headset') || lineLower.includes('loa') || lineLower.includes('audio');
+      }
+      if (lower.includes('cpu') || lower.includes('chip') || lower.includes('vi xử lý')) {
+        return lineLower.includes('cpu') || lineLower.includes('intel') || lineLower.includes('ryzen');
+      }
+      if (lower.includes('vga') || lower.includes('card') || lower.includes('gpu') || lower.includes('rtx')) {
+        return lineLower.includes('gpu') || lineLower.includes('vga') || lineLower.includes('rtx') || lineLower.includes('card');
+      }
+      if (lower.includes('ram')) {
+        return lineLower.includes('ram');
+      }
+      if (lower.includes('ssd') || lower.includes('hdd') || lower.includes('ổ cứng')) {
+        return lineLower.includes('ssd') || lineLower.includes('hdd') || lineLower.includes('ổ');
+      }
+      if (lower.includes('tản') || lower.includes('cooling') || lower.includes('quạt')) {
+        return lineLower.includes('tản') || lineLower.includes('cooling') || lineLower.includes('fan');
+      }
+      if (lower.includes('nguồn') || lower.includes('psu')) {
+        return lineLower.includes('nguồn') || lineLower.includes('psu');
+      }
+      if (lower.includes('case') || lower.includes('vỏ')) {
+        return lineLower.includes('case') || lineLower.includes('vỏ');
+      }
+      if (lower.includes('laptop')) {
+        return lineLower.includes('laptop');
+      }
+      return false;
+    });
+
+    // If no direct keyword match, search by user words
+    if (matches.length === 0) {
+      const words = lower.split(/\s+/).filter(w => w.length >= 3);
+      matches = catalogLines.filter(line => words.some(w => line.toLowerCase().includes(w)));
     }
 
-    if (budget >= 45) {
-      return `🔥 **Cấu hình High-End PC Gaming 4K & Workstation (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
-        `- **CPU**: Intel Core i7-14700K (20 Nhân 28 Luồng) hoặc AMD Ryzen 7 7800X3D (~10.490.000 ₫)\n` +
-        `- **Mainboard**: ASUS ROG STRIX B760-F GAMING WIFI / Z790 DDR5 (~7.490.000 ₫)\n` +
-        `- **VGA**: ASUS ROG Strix GeForce RTX 4080 SUPER 16GB GDDR6X (~31.490.000 ₫)\n` +
-        `- **RAM**: Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz (~3.890.000 ₫)\n` +
-        `- **SSD**: Samsung 990 Pro 1TB PCIe 4.0 NVMe (~2.890.000 ₫)\n` +
-        `- **Tản nhiệt**: NZXT Kraken 360 RGB Liquid Cooler (~4.890.000 ₫)\n` +
-        `- **Nguồn (PSU)**: Corsair RM850x 850W 80 Plus Gold ATX 3.0 (~3.390.000 ₫)\n` +
-        `- **Case**: NZXT H7 Flow RGB Mid-Tower (~3.290.000 ₫)\n\n` +
-        `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
-        `🎯 **Hiệu năng**: Gaming 4K Ultra Setting 120+ FPS, Livestream 4K, Edit Video 4K Premiere / After Effects không giật lag.`;
+    if (matches.length > 0) {
+      const topMatches = matches.slice(0, 5);
+      return `🤖 **PCHub AI Advisor xin tư vấn cho bạn các sản phẩm Sbuy API chính hãng có sẵn:**\n\n` +
+        topMatches.map(m => `• **${m.replace(/^- /, '')}**`).join('\n\n') +
+        `\n\n👉 Tất cả sản phẩm đều sẵn hàng và được bảo hành chính hãng tại PCHub!`;
     }
-
-    if (budget >= 28) {
-      return `⚡ **Cấu hình PC Gaming 2K Ultra / Render 3D (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
-        `- **CPU**: Intel Core i5-14600K (14 Nhân 20 Luồng) hoặc AMD Ryzen 5 7600X (~7.490.000 ₫)\n` +
-        `- **Mainboard**: MSI MAG B760M MORTAR WIFI DDR5 (~4.490.000 ₫)\n` +
-        `- **VGA**: NVIDIA GeForce RTX 4070 SUPER 12GB GDDR6X (~18.490.000 ₫)\n` +
-        `- **RAM**: Kingston FURY Beast 32GB (2x16GB) DDR5 5600MHz (~2.890.000 ₫)\n` +
-        `- **SSD**: Kingston KC3000 1TB NVMe PCIe 4.0 (~2.190.000 ₫)\n` +
-        `- **Tản nhiệt**: Thermalright Peerless Assassin 120 SE / AIO 240mm (~1.290.000 ₫)\n` +
-        `- **Nguồn (PSU)**: MSI MAG A750GL 750W 80 Plus Gold Modular (~2.390.000 ₫)\n` +
-        `- **Case**: Montech Sky Two Glass ARGB (~1.890.000 ₫)\n\n` +
-        `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
-        `🎯 **Hiệu năng**: Cân mượt mọi game 2K Ultra 160+ FPS, hỗ trợ DLSS 3 Ray Tracing và dựng phim 4K mượt mà.`;
-    }
-
-    if (budget >= 17) {
-      return `🎮 **Cấu hình PC Gaming Esports & Stream 1080p/2K (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
-        `- **CPU**: Intel Core i5-13400F / i5-14400F (10 Nhân 16 Luồng) (~4.890.000 ₫)\n` +
-        `- **Mainboard**: ASUS TUF GAMING B760M-PLUS DDR4/DDR5 (~3.490.000 ₫)\n` +
-        `- **VGA**: NVIDIA GeForce RTX 4060 8GB GDDR6 (~8.490.000 ₫)\n` +
-        `- **RAM**: Corsair Vengeance LPX 16GB (2x8GB) DDR4 3200MHz (~1.190.000 ₫)\n` +
-        `- **SSD**: WD Black SN770 1TB PCIe 4.0 (~1.690.000 ₫)\n` +
-        `- **Tản nhiệt**: Deepcool AK400 Digital (~890.000 ₫)\n` +
-        `- **Nguồn (PSU)**: Corsair CV650 650W 80 Plus Bronze (~1.390.000 ₫)\n` +
-        `- **Case**: Antryx FX Air / Xigmatek (~990.000 ₫)\n\n` +
-        `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
-        `🎯 **Hiệu năng**: Chiến mượt Valorant, CS2, GTA V, Naraka 200+ FPS, đồ họa Photoshop/Illustrator cực kỳ ổn định.`;
-    }
-
-    return `💡 **Cấu hình PC Gaming & Học Tập Quốc Dân (Ngân sách ~${budget} Triệu VNĐ):**\n\n` +
-      `- **CPU**: Intel Core i5-12400F (6 Nhân 12 Luồng) (~2.890.000 ₫)\n` +
-      `- **Mainboard**: MSI PRO H610M-E DDR4 (~1.790.000 ₫)\n` +
-      `- **VGA**: NVIDIA GeForce RTX 3060 12GB GDDR6 / GTX 1660 SUPER (~6.890.000 ₫)\n` +
-      `- **RAM**: Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz (~950.000 ₫)\n` +
-      `- **SSD**: Kingston NV2 500GB NVMe PCIe 4.0 (~990.000 ₫)\n` +
-      `- **Tản nhiệt**: Jonsbo CR-1000 EVO RGB (~350.000 ₫)\n` +
-      `- **Nguồn (PSU)**: Mik C650B 650W 80 Plus (~890.000 ₫)\n` +
-      `- **Case**: Xigmatek Endorphin M Glass (~690.000 ₫)\n\n` +
-      `💰 **Tổng chi phí ước tính**: **~${budget}.000.000 ₫**\n` +
-      `🎯 **Hiệu năng**: Chơi tốt các tựa game Esports 1080p, học tập, văn phòng và đồ họa 2D.`;
   }
 
-  // Màn hình / Monitor Specific Response
-  if (lower.includes('màn hình') || lower.includes('monitor') || lower.includes('màn')) {
-    return `🖥️ **Màn Hình Gaming & Đồ Họa Đỉnh Cao Đang Bán Tại PCHub:**\n\n` +
-      `- **ASUS ROG Swift OLED PG34WCDM 34" Curved 240Hz Gaming Monitor** — **28.990.000 ₫**\n` +
-      `  • **Thông số**: Kích thước 34" cong Ultra-wide, Tấm nền OLED siêu thực, Tần số quét 240Hz, Tốc độ phản hồi 0.03ms, DCI-P3 99%.\n` +
-      `  • **Đánh giá**: Mẫu màn hình OLED flagship cao cấp nhất hiện tại tại PCHub, chuyên dành cho game thủ Esports chuyên nghiệp & Designer đồ họa 4K/8K.\n\n` +
-      `👉 Bạn có thể ghé trực tiếp mục **[Màn Hình Gaming]** trên PCHub để xem chi tiết thông số và đặt mua ngay!`;
-  }
-
-  // Bàn phím / Keyboard
-  if (lower.includes('bàn phím') || lower.includes('keyboard') || lower.includes('phím')) {
-    return `⌨️ **Bàn Phím Cơ Gaming Cao Cấp Tại PCHub:**\n\n` +
-      `- **Razer BlackWidow V4 Pro Mechanical Gaming Keyboard** — **5.890.000 ₫**\n` +
-      `  • **Thông số**: Full-size layout, Switch cơ Razer Green/Yellow Hotswap, Đèn RGB Chroma 16.8 triệu màu, Núm xoay Command Dial đa năng & Kê tay đệm da êm ái.\n\n` +
-      `👉 Xem thêm các mẫu bàn phím cơ gaming tại mục **[Bàn Phím & Chuột]** của PCHub!`;
-  }
-
-  // Tai nghe / Headset
-  if (lower.includes('tai nghe') || lower.includes('headset') || lower.includes('audio')) {
-    return `🎧 **Tai Nghe Gaming Không Dây Chuyên Nghiệp Tại PCHub:**\n\n` +
-      `- **Logitech G PRO X 2 LIGHTSPEED Wireless Gaming Headset** — **4.990.000 ₫**\n` +
-      `  • **Thông số**: Màng loa Graphene 50mm cao cấp, Kết nối không dây LIGHTSPEED 2.4GHz + Bluetooth, Pin 50 giờ liên tục & Micro BLUE VO!CE lọc tiếng ồn.\n\n` +
-      `👉 Chi tiết sản phẩm đang có sẵn tại danh mục **[Tai Nghe & Audio]** PCHub!`;
-  }
-
-  // Chuột / Mouse
-  if (lower.includes('chuột') || lower.includes('mouse')) {
-    return `🖱️ **Chuột Gaming Siêu Nhẹ & Tốc Độ Cao Tại PCHub:**\n\n` +
-      `- **Logitech G Pro X Superlight / Razer Viper V3** — **Từ 2.990.000 ₫ - 3.890.000 ₫**\n` +
-      `  • Mắt đọc HERO 25K / Focus Pro 30K cực kỳ chính xác, trọng lượng siêu nhẹ <60g cho thao tác vẩy tâm chuẩn xác.\n\n` +
-      `👉 Bạn có thể xem thêm trong danh mục **[Bàn Phím & Chuột]** của PCHub!`;
-  }
-
-  // 1. Bottleneck / Nghẽn cổ chai
-  if (lower.includes('nghẽn') || lower.includes('bottleneck')) {
-    return `⚙️ **Phân tích Chuyên Sâu về Nghẽn Cổ Chai (Bottleneck) Phần Cứng:**\n\n` +
-      `- **Nghẽn CPU (CPU Bottleneck)**: Xảy ra khi CPU xử lý dữ liệu game/lệnh không kịp cho GPU. Thường gặp ở độ phân giải **Full HD (1080p)** khi chơi game Esports tốc độ cao. Dấu hiệu: GPU hoạt động dưới 80%, CPU báo 90-100% gây sụt FPS đột ngột (Stuttering).\n` +
-      `- **Nghẽn GPU (GPU Bottleneck)**: Xảy ra khi độ phân giải đẩy lên **2K / 4K** hoặc bật Ray Tracing max setting. GPU gánh 99-100% tải, đây là trạng thái LÝ TƯỞNG giúp tận dụng hết sức mạnh card màn hình.\n` +
-      `- **Khuyên dùng tại PCHub**: Để không bị nghẽn, ghép đôi **i5-13400F/14400F** với **RTX 4060/4060 Ti**, ghép **i7-14700K / Ryzen 7 7800X3D** với **RTX 4070 Ti SUPER / 4080 SUPER / 4090**.`;
-  }
-
-  // 2. PCIe Lanes & Băng thông
-  if (lower.includes('pcie') || lower.includes('x8') || lower.includes('x16') || lower.includes('băng thông')) {
-    return `⚡ **Phân tích Băng thông PCIe 4.0 vs 3.0 & Số Làn (Lanes):**\n\n` +
-      `- **RTX 4060 / 4060 Ti / RX 7600**: Được thiết kế chuẩn **PCIe 4.0 x8** (chỉ có 8 làn dữ liệu thay vì 16 làn full). Nếu cắm vào Mainboard cũ chuẩn **PCIe 3.0** (như H410, B450, H510), băng thông bị giảm một nửa, có thể làm tụt 5 - 15% FPS trong các game ngốn VRAM.\n` +
-      `- **Khuyên dùng**: Nên chọn các dòng Mainboard hỗ trợ **PCIe 4.0 x16** trở lên như **B760 / Z790 (Intel)** hoặc **B650 / X670 (AMD)** để phát huy 100% hiệu năng Card màn hình và SSD NVMe.`;
-  }
-
-  // 3. RAM DDR4 vs DDR5, Bus & Timing (CL)
-  if (lower.includes('ddr4') || lower.includes('ddr5') || lower.includes('cl30') || lower.includes('bus ram') || lower.includes('expo') || lower.includes('xmp')) {
-    return `🧠 **So sánh Chuyên Sâu RAM DDR4 vs DDR5 & Độ trễ (Timing CL):**\n\n` +
-      `- **DDR4 3200MHz CL16**: Chi phí tiết kiệm, băng thông ~25.6 GB/s, phù hợp cho cấu hình giá rẻ - tầm trung.\n` +
-      `- **DDR5 6000MHz CL30**: Mức "Golden Spot" lý tưởng nhất cho AMD Ryzen 7000/9000 & Intel Gen 13/14. Băng thông gấp đôi (~48-52 GB/s), độ trễ cực thấp (<65ns). Giúp tăng 10-20% FPS tối thiểu (1% Low FPS) giúp game không bị khựng.\n` +
-      `- **Lưu ý**: Nhớ bật **XMP 3.0 (Intel)** hoặc **AMD EXPO** trong BIOS để RAM chạy chuẩn bus 6000MHz thay vì bus mặc định 4800MHz!`;
-  }
-
-  // 4. VRM Phase, Ép xung & Nhiệt độ
-  if (lower.includes('vrm') || lower.includes('ép xung') || lower.includes('overclock') || lower.includes('phase') || lower.includes('nhiệt độ')) {
-    return `🌡️ **Kiến thức VRM Mainboard & Giải nhiệt CPU:**\n\n` +
-      `- **Pha nguồn VRM (Voltage Regulator Module)**: CPU khủng như i7-14700K hay i9-14900K tiêu thụ từ 253W - 300W+. Cần Mainboard có tối thiểu **16+1+2 DrMOS Phase (Z790 / B760 cao cấp)** kèm tản nhiệt VRM dày dặn để tránh nổ tụ / hạ xung CPU (Thermal Throttling).\n` +
-      `- **Tản nhiệt**: Với i7/i9 hoặc Ryzen 9, khuyến nghị dùng **Tản nước AIO 360mm** (như NZXT Kraken / Corsair H150i) kết hợp **Gông chống cong LGA1700** để hạ từ 5 - 8°C.`;
-  }
-
-  // 5. AI Training, LLM & Stable Diffusion
-  if (lower.includes('stable diffusion') || lower.includes('deep learning') || lower.includes('llm') || lower.includes('ai') || lower.includes('cuda') || lower.includes('vram')) {
-    return `🤖 **Tư vấn Cấu hình Chuyên dụng Train AI & Chạy Model LLM / Stable Diffusion:**\n\n` +
-      `- **VRAM là Yếu tố Số 1**: Muốn chạy Stable Diffusion XL / SD3 / Flux.1 hay load model LLM (Llama 3 8B / Qwen 14B), VRAM tối thiểu là **12GB** (RTX 4070 / 4070 Ti SUPER), lý tưởng nhất là **24GB VRAM (RTX 4090 / RTX 3090)**.\n` +
-      `- **Nhân Tensor Cores**: Card NVIDIA luôn vượt trội nhờ hệ sinh thái **CUDA, cuDNN, PyTorch & FP16/INT8 Precision**.\n` +
-      `- **RAM Hệ thống**: Khuyên dùng tối thiểu **64GB DDR5** để không bị nạp swap data ra ổ đĩa khi load dataset nặng.`;
-  }
-
-  // 6. Workstation 3D Render & Dựng phim 4K/8K
-  if (lower.includes('blender') || lower.includes('premiere') || lower.includes('unreal') || lower.includes('octane') || lower.includes('3d') || lower.includes('render')) {
-    return `🎬 **Cấu hình Workstation Chuyên Nghiệp (Render 3D & Dựng Phim 4K/8K):**\n\n` +
-      `- **Dựng phim Premiere / After Effects**: Ưu tiên CPU Intel Core i7-14700K / i9-14900K nhờ công nghệ **Intel QuickSync** mã hóa/giải mã phần cứng video H.264/HEVC 10-bit 4:2:2 cực kỳ mượt mà.\n` +
-      `- **Render 3D (Blender, Octane, V-Ray)**: Tận dụng nhân **NVIDIA OptiX & Ray Tracing Cores** trên RTX 4080 SUPER / 4090 cho tốc độ render nhanh hơn gấp 3-5 lần so với render thuần bằng CPU.\n` +
-      `- **SSD Scratch Disk**: Nên dùng 2 SSD NVMe PCIe 4.0 riêng biệt (1 ổ OS + 1 ổ lưu Cache Read/Write 7000MB/s).`;
-  }
-
-  if (lower.includes('nguồn') || lower.includes('psu') || lower.includes('vga') || lower.includes('rtx')) {
-    return '⚡ **Tư vấn nguồn (PSU) chuẩn phần cứng PCHub:**\n- **RTX 4060 / 4060 Ti**: Nguồn tối thiểu 550W - 650W (80 Plus Bronze/Gold).\n- **RTX 4070 / 4070 Ti SUPER**: Nguồn 750W 80 Plus Gold có chuẩn dây 16-pin 12VHPWR.\n- **RTX 4080 / 4090**: Khuyến nghị PSU từ 850W đến 1000W 80 Plus Gold / Platinum để nguồn luôn chạy ở dải hiệu suất mát nhất (50-70% tải).';
-  }
-
-  return '💡 Chào bạn! Mình là AI Advisor của PCHub. Mình hỗ trợ tư vấn chọn màn hình gaming, bàn phím, chuột, tai nghe, cấu hình PC chuyên sâu (Gaming, AI, Render 3D), giải đáp thắc mắc nghẽn cổ chai (Bottleneck), bus RAM DDR4/DDR5 và kiểm tra tương thích phần cứng!';
+  // Fallback overview if no direct catalog line matched
+  return `💡 **PCHub AI Advisor xin hỗ trợ tư vấn:**\n` +
+    `Hiện tại hệ thống PCHub đang có đầy đủ các linh kiện Sbuy API bao gồm: Màn hình, CPU, GPU/Card màn hình, RAM, SSD NVMe, Mainboard, Nguồn PSU, Tản nhiệt, Case, Bàn phím & Chuột.\n\n` +
+    `👉 Bạn hãy cho biết rõ hơn nhu cầu (màn hình, chuột, card màn hình hay ngân sách build PC bao nhiêu triệu) để mình đưa danh sách sản phẩm chính xác nhất nhé!`;
 }
+
 
 
 /**
