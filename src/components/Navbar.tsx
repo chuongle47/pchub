@@ -220,7 +220,7 @@ export default function Navbar() {
           }}>
             {/* Wishlist */}
             <Link
-              href="/search?wishlist=true"
+              href="/tai-khoan/yeu-thich"
               aria-label={`Danh sách yêu thích${visibleWishlistCount ? ` (${visibleWishlistCount})` : ''}`}
               title="Danh sách yêu thích"
               style={{

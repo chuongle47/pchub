@@ -78,20 +78,78 @@ export async function POST(request: NextRequest) {
 
     const advisorResult = await askGeminiPCHubAdvisor(message.trim(), history, catalogContext);
 
-    // Filter top 4 matching real Sbuy products to pass back to frontend for clickable cards (deduplicated)
+    // Smart matching of real products to Gemini reply recommendations
     const userText = message.toLowerCase();
     const replyText = (advisorResult.text || '').toLowerCase();
-    
-    const recMap = new Map<string, any>();
+    const isBuildQuery = userText.includes('build') || userText.includes('pc') || userText.includes('cấu hình') || userText.includes('tư vấn') || userText.includes('triệu') || userText.includes('cpu') || userText.includes('vga') || replyText.includes('cpu:') || replyText.includes('vga:') || replyText.includes('ram:') || replyText.includes('ssd:');
+
+    // Score products based on token overlap with Gemini reply text
+    const scoredProducts: { product: any; score: number; catOrder: number }[] = [];
+
     finalProductList.forEach((p: any) => {
       const pName = (p.name || '').toLowerCase();
-      const pCat = (p.category_name || '').toLowerCase();
-      const pCatSlug = (p.category_slug || '').toLowerCase();
-      
-      const isMatch = replyText.includes(pName) ||
-        userText.split(' ').some(word => word.length > 2 && (pName.includes(word) || pCat.includes(word) || pCatSlug.includes(word)));
+      const pCat = (p.category_name || p.category_slug || '').toLowerCase();
+      let score = 0;
 
-      if (isMatch && !recMap.has(pName)) {
+      // Category ordering priority: CPU (1), Mainboard (2), RAM (3), SSD/Storage (4), VGA/GPU (5), PSU (6), Case (7), Cooling (8), Gear (9)
+      let catOrder = 9;
+      if (pCat.includes('cpu') || pName.includes('intel') || pName.includes('ryzen') || pName.includes('vi xử lý')) catOrder = 1;
+      else if (pCat.includes('mainboard') || pName.includes('b760') || pName.includes('z790') || pName.includes('b650') || pName.includes('h610') || pName.includes('bo mạch')) catOrder = 2;
+      else if (pCat.includes('ram') || pName.includes('ddr4') || pName.includes('ddr5')) catOrder = 3;
+      else if (pCat.includes('ssd') || pCat.includes('storage') || pName.includes('ssd') || pName.includes('nvme') || pName.includes('ổ cứng')) catOrder = 4;
+      else if (pCat.includes('vga') || pCat.includes('gpu') || pName.includes('rtx') || pName.includes('gtx') || pName.includes('radeon') || pName.includes('card màn')) catOrder = 5;
+      else if (pCat.includes('psu') || pName.includes('psu') || pName.includes('nguồn')) catOrder = 6;
+      else if (pCat.includes('case') || pName.includes('vỏ máy') || pName.includes('case')) catOrder = 7;
+      else if (pCat.includes('cooling') || pName.includes('tản')) catOrder = 8;
+
+      // 1. Direct name containment
+      if (pName.length >= 4 && replyText.includes(pName)) {
+        score += 100;
+      }
+
+      // 2. Token / model code matching
+      const words = pName.split(/[\s\-_\/,\.]+/).filter((w: string) => w.length >= 2);
+      let matchedWordCount = 0;
+      for (const w of words) {
+        // Skip generic words
+        if (['chính', 'hãng', 'cho', 'máy', 'tính', 'bộ', 'loại', 'cao', 'cấp', 'giá', 'rẻ'].includes(w)) continue;
+        if (replyText.includes(w)) {
+          matchedWordCount++;
+          // High boost for specific model codes (e.g., 12400f, 3060, 4070, b760, 980, ddr4, 650w)
+          if (/\d+/.test(w) || ['rtx', 'gtx', 'intel', 'ryzen', 'nvme', 'ssd', 'ram', 'ddr4', 'ddr5', 'b760', 'z790', 'b650'].includes(w)) {
+            score += 25;
+          } else {
+            score += 5;
+          }
+        }
+      }
+
+      // 3. Boost PC components for PC build queries
+      if (isBuildQuery && catOrder <= 7 && matchedWordCount >= 1) {
+        score += 30;
+      }
+
+      if (score > 15) {
+        scoredProducts.push({ product: p, score, catOrder });
+      }
+    });
+
+    // Sort by score descending, then category order
+    scoredProducts.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.catOrder - b.catOrder;
+    });
+
+    // Pick top unique categories to ensure balanced hardware selection
+    const recMap = new Map<string, any>();
+    const usedCatOrders = new Set<number>();
+
+    // Pass 1: One top product per hardware category
+    for (const item of scoredProducts) {
+      const p = item.product;
+      const pName = p.name;
+      if (!recMap.has(pName) && (!usedCatOrders.has(item.catOrder) || recMap.size >= 5)) {
+        usedCatOrders.add(item.catOrder);
         recMap.set(pName, {
           id: String(p.id),
           name: p.name,
@@ -100,12 +158,35 @@ export async function POST(request: NextRequest) {
           original_price: Number(p.original_price || p.originalPrice || 0),
           image_url: getProductImage({ name: p.name, category_name: p.category_name, category_slug: p.category_slug, brand_name: p.brand_name, image_url: p.image_url || p.image }),
           category_name: p.category_name || 'Linh kiện',
+          category_slug: p.category_slug,
           brand_name: p.brand_name || 'Chính hãng',
         });
       }
-    });
+      if (recMap.size >= 6) break;
+    }
 
-    const recommendedProducts = Array.from(recMap.values()).slice(0, 4);
+    // Pass 2: Fill remaining slots with top remaining scored products
+    if (recMap.size < 6) {
+      for (const item of scoredProducts) {
+        const p = item.product;
+        if (!recMap.has(p.name)) {
+          recMap.set(p.name, {
+            id: String(p.id),
+            name: p.name,
+            slug: p.slug,
+            price: Number(p.price) || 0,
+            original_price: Number(p.original_price || p.originalPrice || 0),
+            image_url: getProductImage({ name: p.name, category_name: p.category_name, category_slug: p.category_slug, brand_name: p.brand_name, image_url: p.image_url || p.image }),
+            category_name: p.category_name || 'Linh kiện',
+            category_slug: p.category_slug,
+            brand_name: p.brand_name || 'Chính hãng',
+          });
+        }
+        if (recMap.size >= 6) break;
+      }
+    }
+
+    const recommendedProducts = Array.from(recMap.values()).slice(0, 6);
 
 
     return NextResponse.json({

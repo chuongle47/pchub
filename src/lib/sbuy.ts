@@ -360,7 +360,7 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
 
 // Server Cache for Sbuy Products
 let sbuyProductsCache: { data: AppProduct[]; timestamp: number } | null = null;
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes in-memory cache
 
 export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
   const now = Date.now();
@@ -370,7 +370,7 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
 
   try {
     const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products?consumer_key=${SBUY_CONFIG.consumerKey}&consumer_secret=${SBUY_CONFIG.consumerSecret}&per_page=100`;
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { next: { revalidate: 300 } });
 
     if (!res.ok) {
       throw new Error(`Sbuy API returned HTTP ${res.status}`);

@@ -14,6 +14,7 @@ type RecommendedProduct = {
   original_price?: number;
   image_url: string;
   category_name?: string;
+  category_slug?: string;
   brand_name?: string;
 };
 
@@ -47,18 +48,66 @@ export default function AIChatWidget() {
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleApplyBuild = (text: string) => {
+  const handleApplyBuild = (text: string, products?: RecommendedProduct[]) => {
+    const componentsMap: Record<string, any> = {};
+
+    if (products && products.length > 0) {
+      products.forEach(p => {
+        const nameLower = p.name.toLowerCase();
+        const catLower = (p.category_name || '').toLowerCase();
+        const catSlug = (p.category_slug || '').toLowerCase();
+
+        let slotKey = '';
+        if (catSlug === 'cpu' || nameLower.includes('cpu') || nameLower.includes('intel') || nameLower.includes('ryzen')) slotKey = 'cpu';
+        else if (catSlug === 'gpu' || catSlug === 'vga' || nameLower.includes('vga') || nameLower.includes('rtx') || nameLower.includes('rx ') || nameLower.includes('card')) slotKey = 'gpu';
+        else if (catSlug === 'ram' || nameLower.includes('ram')) slotKey = 'ram';
+        else if (catSlug === 'storage' || catSlug === 'ssd' || nameLower.includes('ssd') || nameLower.includes('hdd') || nameLower.includes('ổ cứng')) slotKey = 'storage';
+        else if (catSlug === 'mainboard' || nameLower.includes('mainboard') || nameLower.includes('bo mạch')) slotKey = 'mainboard';
+        else if (catSlug === 'psu' || nameLower.includes('psu') || nameLower.includes('nguồn')) slotKey = 'psu';
+        else if (catSlug === 'case' || nameLower.includes('case') || nameLower.includes('vỏ')) slotKey = 'case';
+        else if (catSlug === 'cooling' || nameLower.includes('tản nhiệt') || nameLower.includes('cooling')) slotKey = 'cooling';
+
+        if (slotKey && !componentsMap[slotKey]) {
+          componentsMap[slotKey] = {
+            key: slotKey,
+            id: p.id,
+            name: p.name,
+            price: Number(p.price) || 0,
+            tdp: slotKey === 'cpu' ? 65 : slotKey === 'gpu' ? 170 : 15,
+            specs: p.category_name || 'Khớp từ tư vấn AI',
+            image: p.image_url,
+            slug: p.slug,
+          };
+        }
+      });
+    }
+
     const key = matchPresetKeyFromText(text);
-    const preset = AI_BUILD_PRESETS[key] || AI_BUILD_PRESETS['25m'];
+    const fallbackPreset = AI_BUILD_PRESETS[key] || AI_BUILD_PRESETS['25m'];
+    Object.keys(fallbackPreset.components).forEach(slotKey => {
+      if (!componentsMap[slotKey]) {
+        componentsMap[slotKey] = fallbackPreset.components[slotKey];
+      }
+    });
+
+    const dynamicPreset = {
+      id: `custom-ai-${Date.now()}`,
+      title: 'Cấu hình gợi ý từ AI Advisor',
+      budgetLabel: fallbackPreset.budgetLabel,
+      totalPrice: Object.values(componentsMap).reduce((acc: number, c: any) => acc + (c.price || 0), 0),
+      components: componentsMap,
+    };
+
     try {
-      localStorage.setItem('pchub_pending_ai_preset', JSON.stringify(preset));
-      window.dispatchEvent(new CustomEvent('pchub_apply_ai_preset', { detail: preset }));
+      localStorage.setItem('pchub_pending_ai_preset', JSON.stringify(dynamicPreset));
+      window.dispatchEvent(new CustomEvent('pchub_apply_ai_preset', { detail: dynamicPreset }));
     } catch (e) {
       console.error('Failed to save preset to storage:', e);
     }
     setOpen(false);
     router.push('/build-pc');
   };
+
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -292,7 +341,7 @@ export default function AIChatWidget() {
                     {message.products && message.products.length > 0 && (
                       <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          🛒 Sản phẩm có sẵn tại PCHub (Sbuy API):
+                          🛒 Sản phẩm gợi ý tại PCHub:
                         </div>
                         {message.products.map(prod => (
                           <div
@@ -337,7 +386,7 @@ export default function AIChatWidget() {
                       <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1' }}>
                         <button
                           type="button"
-                          onClick={() => handleApplyBuild(message.text)}
+                          onClick={() => handleApplyBuild(message.text, message.products)}
                           style={{
                             width: '100%',
                             background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',

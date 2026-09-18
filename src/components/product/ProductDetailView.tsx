@@ -30,7 +30,7 @@ import {
 import { useCartStore, useWishlistStore, useBuilderStore, useCompareStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
 import ProductQASection from './ProductQASection';
-import { getProductOriginalPrice, getProductImage } from '@/lib/product-ui';
+import { getProductOriginalPrice, resolveProductOriginalPrice, getProductImage } from '@/lib/product-ui';
 
 export interface ProductDetailProps {
   product: {
@@ -135,10 +135,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   const [selectedVariantId, setSelectedVariantId] = useState('v-std');
   const activeVariant = variants.find(v => v.id === selectedVariantId) || variants[0];
 
-  const rawOrigPrice =
-    product.originalPrice ||
-    (product as any).original_price ||
-    getProductOriginalPrice(Number(product.price), product.slug);
+  const rawOrigPrice = resolveProductOriginalPrice(product, true);
 
   const currentPrice = Number(product.price) + activeVariant.priceDelta;
   const currentOriginalPrice = rawOrigPrice > Number(product.price)
