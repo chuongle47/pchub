@@ -367,8 +367,12 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
       throw new Error('Invalid JSON format from Sbuy API');
     }
 
-    // Filter out draft/invalid products
-    const validRaw = rawProducts.filter(p => p.status === 'publish' && p.name && p.name !== 'test');
+    // Filter out draft/invalid products and non-computer items (keep only computer components & peripherals)
+    const validRaw = rawProducts.filter(p => {
+      if (p.status !== 'publish' || !p.name || p.name === 'test') return false;
+      const mapped = mapSbuyProduct(p);
+      return mapped.category_slug !== 'accessory';
+    });
     const mappedProducts = validRaw.map(mapSbuyProduct);
 
     if (mappedProducts.length > 0) {
