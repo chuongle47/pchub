@@ -300,6 +300,7 @@ HƯỚNG DẪN KIỂM TRA CHUYÊN SÂU:
 
 2. RAM & Mainboard / CPU:
    - Chuẩn RAM: DDR4 hay DDR5? Mainboard và RAM phải khớp chuẩn.
+   - Lưu ý quan trọng: Các bo mạch chủ Intel LGA1700 (H610, B760, Z790) tại Việt Nam phần lớn chạy chuẩn DDR4 (trừ mẫu ghi rõ DDR5/D5). Nếu Mainboard B760/H610 không ghi DDR5 và RAM chọn là DDR4 thì là TƯƠNG THÍCH HOÀN TOÀN (PASS).
    - Số khe và cấu hình kênh đôi (Dual-Channel).
    - Bus RAM và khả năng ép xung XMP / EXPO hỗ trợ trên bo mạch chủ.
 
@@ -545,10 +546,17 @@ function generateLocalFallbackReport(components: ComponentItem[]): Compatibility
 
   // 2. RAM Check
   if (mainboard && ram) {
-    const isDdr5Mb = mainboard.name.includes('DDR5') || mainboard.specs?.includes('DDR5');
-    const isDdr4Mb = mainboard.name.includes('DDR4') || mainboard.specs?.includes('DDR4');
-    const isDdr5Ram = ram.name.includes('DDR5') || ram.specs?.includes('DDR5');
-    const isDdr4Ram = ram.name.includes('DDR4') || ram.specs?.includes('DDR4');
+    const mbText = `${mainboard.name} ${mainboard.specs || ''}`.toUpperCase();
+    const ramText = `${ram.name} ${ram.specs || ''}`.toUpperCase();
+
+    const explicitDdr5Mb = mbText.includes('DDR5') || mbText.includes(' D5') || mbText.includes('B650') || mbText.includes('X670') || mbText.includes('A620') || mbText.includes('Z890');
+    const explicitDdr4Mb = mbText.includes('DDR4') || mbText.includes('B550') || mbText.includes('B450') || mbText.includes('A520') || mbText.includes('H510') || mbText.includes('B560');
+
+    let isDdr5Mb = explicitDdr5Mb;
+    let isDdr4Mb = explicitDdr4Mb || (!explicitDdr5Mb && !explicitDdr4Mb);
+
+    const isDdr5Ram = ramText.includes('DDR5');
+    const isDdr4Ram = ramText.includes('DDR4') || !isDdr5Ram;
 
     if ((isDdr5Mb && isDdr4Ram) || (isDdr4Mb && isDdr5Ram)) {
       score -= 30;

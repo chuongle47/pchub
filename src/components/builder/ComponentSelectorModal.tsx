@@ -54,8 +54,13 @@ export function getProductAiCompatibilityInfo(
 
   // RAM Gen detection
   let targetRam = '';
-  if (combinedMbText.includes('DDR5') || combinedCpuText.includes('AM5') || combinedMbText.includes('Z790') || combinedMbText.includes('B650') || combinedMbText.includes('X670')) targetRam = 'DDR5';
-  else if (combinedMbText.includes('DDR4') || combinedMbText.includes('B550') || combinedMbText.includes('A520') || combinedMbText.includes('ATHLON') || combinedCpuText.includes('3000G')) targetRam = 'DDR4';
+  if (combinedMbText.includes('DDR5') || combinedMbText.includes(' D5') || combinedCpuText.includes('AM5') || combinedMbText.includes('B650') || combinedMbText.includes('X670') || combinedMbText.includes('A620') || combinedMbText.includes('Z890')) {
+    targetRam = 'DDR5';
+  } else if (combinedMbText.includes('DDR4') || combinedMbText.includes('B550') || combinedMbText.includes('A520') || combinedMbText.includes('B450') || combinedCpuText.includes('AM4') || combinedMbText.includes('H610') || combinedMbText.includes('B760')) {
+    targetRam = 'DDR4';
+  } else if (combinedMbText) {
+    targetRam = 'DDR4';
+  }
 
   const normalizedSlot = slotKey.toLowerCase();
 
