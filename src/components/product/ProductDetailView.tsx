@@ -344,7 +344,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
           maxWidth: '100%',
           boxSizing: 'border-box',
         }}>
-          {/* Header: Product Title & Quick Action Bar (Exact match to screenshot) */}
+          {/* Header: Product Title */}
           <div style={{
             borderBottom: '1px solid #f1f5f9',
             paddingBottom: '16px',
@@ -358,117 +358,11 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               fontWeight: 800,
               color: '#0f172a',
               lineHeight: '1.3',
-              marginBottom: '10px',
+              marginBottom: '0px',
               wordBreak: 'break-word',
             }}>
               {product.name}
             </h1>
-
-            {/* Quick Action Toolbar: Yêu thích | Hỏi đáp | Thông số | So sánh */}
-            <div className="quick-actions-toolbar" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              fontSize: '13.5px',
-              color: '#64748b',
-              flexWrap: 'wrap',
-              maxWidth: '100%',
-            }}>
-              {/* 1. Yêu thích */}
-              <button
-                type="button"
-                onClick={handleToggleWishlist}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: isWishlisted ? '#ef4444' : '#2563eb',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: '13.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'color 0.15s ease',
-                }}
-                title={isWishlisted ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
-              >
-                <Heart size={16} fill={isWishlisted ? '#ef4444' : 'none'} color={isWishlisted ? '#ef4444' : '#2563eb'} />
-                <span>{isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}</span>
-              </button>
-
-              <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
-
-              {/* 2. Hỏi đáp */}
-              <button
-                type="button"
-                onClick={handleScrollToReviews}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: '#2563eb',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: '13.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-                title="Xem đánh giá và hỏi đáp sản phẩm"
-              >
-                <MessageSquare size={16} color="#2563eb" />
-                <span>Hỏi đáp</span>
-              </button>
-
-              <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
-
-              {/* 3. Thông số */}
-              <button
-                type="button"
-                onClick={handleScrollToSpecs}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: '#2563eb',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: '13.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-                title="Xem bảng thông số kỹ thuật chi tiết"
-              >
-                <Cpu size={16} color="#2563eb" />
-                <span>Thông số</span>
-              </button>
-
-              <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
-
-              {/* 4. So sánh */}
-              <button
-                type="button"
-                onClick={handleToggleCompare}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: isCompared ? '#16a34a' : '#2563eb',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: '13.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-                title={isCompared ? 'Đã có trong danh sách so sánh' : 'Thêm vào so sánh cấu hình'}
-              >
-                <PlusCircle size={16} color={isCompared ? '#16a34a' : '#2563eb'} />
-                <span>{isCompared ? 'Đã thêm so sánh' : 'So sánh'}</span>
-              </button>
-            </div>
           </div>
 
           <div className="product-detail-grid">
@@ -749,70 +643,125 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
             </div>
           </div>
 
-          {/* RIGHT: Info, Pricing, Add to Cart & Actions */}
+          {/* RIGHT: Toolbar, Pricing, Meta Info Tags, Add to Cart & Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0, width: '100%', maxWidth: '100%' }}>
             <div>
-              {/* Category & Brand Tags */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px 10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <span style={{
-                  background: '#eff6ff',
-                  color: 'var(--color-primary)',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                }}>
-                  {categoryName}
-                </span>
-                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
-                  Thương hiệu: <strong style={{ color: '#0f172a' }}>{brandName}</strong>
-                </span>
-                {product.sku && (
-                  <span style={{ fontSize: '12px', color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
-                    SKU: {product.sku}
-                  </span>
-                )}
+              {/* 1. Quick Action Toolbar: Yêu thích | Hỏi đáp | Thông số | So sánh (ABOVE PRICE) */}
+              <div className="quick-actions-toolbar" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                fontSize: '13.5px',
+                color: '#64748b',
+                flexWrap: 'wrap',
+                maxWidth: '100%',
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid #f1f5f9',
+              }}>
+                {/* 1. Yêu thích */}
+                <button
+                  type="button"
+                  onClick={handleToggleWishlist}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: isWishlisted ? '#ef4444' : '#2563eb',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'color 0.15s ease',
+                  }}
+                  title={isWishlisted ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                >
+                  <Heart size={16} fill={isWishlisted ? '#ef4444' : 'none'} color={isWishlisted ? '#ef4444' : '#2563eb'} />
+                  <span>{isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}</span>
+                </button>
+
+                <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
+
+                {/* 2. Hỏi đáp */}
+                <button
+                  type="button"
+                  onClick={handleScrollToReviews}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#2563eb',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Xem đánh giá và hỏi đáp sản phẩm"
+                >
+                  <MessageSquare size={16} color="#2563eb" />
+                  <span>Hỏi đáp</span>
+                </button>
+
+                <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
+
+                {/* 3. Thông số */}
+                <button
+                  type="button"
+                  onClick={handleScrollToSpecs}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#2563eb',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Xem bảng thông số kỹ thuật chi tiết"
+                >
+                  <Cpu size={16} color="#2563eb" />
+                  <span>Thông số</span>
+                </button>
+
+                <span className="toolbar-divider" style={{ color: '#cbd5e1' }}>|</span>
+
+                {/* 4. So sánh */}
+                <button
+                  type="button"
+                  onClick={handleToggleCompare}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: isCompared ? '#16a34a' : '#2563eb',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title={isCompared ? 'Đã có trong danh sách so sánh' : 'Thêm vào so sánh cấu hình'}
+                >
+                  <PlusCircle size={16} color={isCompared ? '#16a34a' : '#2563eb'} />
+                  <span>{isCompared ? 'Đã thêm so sánh' : 'So sánh'}</span>
+                </button>
               </div>
 
-              {/* Ratings & Sold Stats */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px 10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#eab308' }}>
-                  <Star size={16} fill="#eab308" />
-                  <Star size={16} fill="#eab308" />
-                  <Star size={16} fill="#eab308" />
-                  <Star size={16} fill="#eab308" />
-                  <Star size={16} fill="#eab308" />
-                </div>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>5.0</span>
-                <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
-                <span style={{ fontSize: '13px', color: '#64748b' }}>Đã bán: 128+</span>
-                <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
-                <span style={{
-                  fontSize: '12px',
-                  color: isOutOfStock ? '#ef4444' : '#16a34a',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}>
-                  <span style={{
-                    width: '7px',
-                    height: '7px',
-                    borderRadius: '50%',
-                    background: isOutOfStock ? '#ef4444' : '#16a34a',
-                    display: 'inline-block',
-                  }} />
-                  {isOutOfStock ? 'Tạm hết hàng' : `Còn hàng (${currentStock} sản phẩm)`}
-                </span>
-              </div>
-
-              {/* Pricing Box */}
+              {/* 2. Pricing Box */}
               <div style={{
                 background: '#f8fafc',
                 border: '1px solid #f1f5f9',
                 borderRadius: '12px',
                 padding: '20px',
-                marginBottom: '20px',
+                marginBottom: '16px',
                 maxWidth: '100%',
                 boxSizing: 'border-box',
               }}>
@@ -848,6 +797,72 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                   flexWrap: 'wrap',
                 }}>
                   <span>⚡ Giá đã bao gồm VAT & Bảo hành chính hãng</span>
+                </div>
+              </div>
+
+              {/* 3. Category, Brand, SKU & Rating Stars, Stock (BELOW PRICE) */}
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #f1f5f9',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}>
+                {/* Category & Brand Tags */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px 10px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    background: '#eff6ff',
+                    color: 'var(--color-primary)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                  }}>
+                    {categoryName}
+                  </span>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
+                    Thương hiệu: <strong style={{ color: '#0f172a' }}>{brandName}</strong>
+                  </span>
+                  {product.sku && (
+                    <span style={{ fontSize: '12px', color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
+                      SKU: {product.sku}
+                    </span>
+                  )}
+                </div>
+
+                {/* Ratings & Sold Stats */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px 10px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#eab308' }}>
+                    <Star size={16} fill="#eab308" />
+                    <Star size={16} fill="#eab308" />
+                    <Star size={16} fill="#eab308" />
+                    <Star size={16} fill="#eab308" />
+                    <Star size={16} fill="#eab308" />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>5.0</span>
+                  <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>Đã bán: 128+</span>
+                  <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
+                  <span style={{
+                    fontSize: '12px',
+                    color: isOutOfStock ? '#ef4444' : '#16a34a',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}>
+                    <span style={{
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: isOutOfStock ? '#ef4444' : '#16a34a',
+                      display: 'inline-block',
+                    }} />
+                    {isOutOfStock ? 'Tạm hết hàng' : `Còn hàng (${currentStock} sản phẩm)`}
+                  </span>
                 </div>
               </div>
 
