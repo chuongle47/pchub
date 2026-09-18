@@ -127,16 +127,61 @@ const CATEGORY_CONFIG: Record<string, CategoryStyleConfig> = {
     bgGradient: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
     borderColor: '#5eead4',
   },
+  keyboard: {
+    icon: Keyboard,
+    badge: 'Keyboard',
+    color: '#2563eb',
+    bgLight: '#eff6ff',
+    bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+    borderColor: '#93c5fd',
+  },
+  mouse: {
+    icon: Keyboard,
+    badge: 'Mouse',
+    color: '#7c3aed',
+    bgLight: '#f5f3ff',
+    bgGradient: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+    borderColor: '#c4b5fd',
+  },
+  laptop: {
+    icon: Tv,
+    badge: 'Laptop',
+    color: '#0891b2',
+    bgLight: '#ecfeff',
+    bgGradient: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)',
+    borderColor: '#67e8f9',
+  },
 };
 
 const DEFAULT_CONFIG: CategoryStyleConfig = {
   icon: Cpu,
-  badge: 'Linh kiện',
+  badge: 'Phần cứng',
   color: '#2563eb',
   bgLight: '#eff6ff',
   bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
   borderColor: '#93c5fd',
 };
+
+function getCategoryConfig(slug: string, name: string): CategoryStyleConfig {
+  const s = (slug || '').toLowerCase();
+  const n = (name || '').toLowerCase();
+
+  if (s === 'cpu' || n.includes('cpu') || n.includes('vi xử lý')) return CATEGORY_CONFIG.cpu;
+  if (s === 'gpu' || s === 'vga' || n.includes('gpu') || n.includes('card màn')) return CATEGORY_CONFIG.gpu;
+  if (s === 'mainboard' || s === 'mb' || n.includes('mainboard') || n.includes('bo mạch')) return CATEGORY_CONFIG.mainboard;
+  if (s === 'ram' || n.includes('ram') || n.includes('bộ nhớ')) return CATEGORY_CONFIG.ram;
+  if (s === 'storage' || s === 'ssd' || s === 'hdd' || n.includes('ssd') || n.includes('ổ cứng')) return CATEGORY_CONFIG.storage;
+  if (s === 'psu' || n.includes('psu') || n.includes('nguồn')) return CATEGORY_CONFIG.psu;
+  if (s === 'case' || n.includes('case') || n.includes('vỏ')) return CATEGORY_CONFIG.case;
+  if (s === 'cooling' || n.includes('tản nhiệt') || n.includes('cooling')) return CATEGORY_CONFIG.cooling;
+  if (s === 'monitor' || n.includes('màn hình') || n.includes('monitor')) return CATEGORY_CONFIG.monitor;
+  if (s === 'keyboard' || s.includes('phim') || n.includes('bàn phím') || n.includes('keyboard')) return CATEGORY_CONFIG.keyboard;
+  if (s === 'mouse' || s.includes('chuot') || n.includes('chuột') || n.includes('mouse') || n.includes('lót')) return CATEGORY_CONFIG.mouse;
+  if (s === 'headset' || s === 'speaker' || s === 'audio' || n.includes('tai nghe') || n.includes('loa') || n.includes('audio')) return CATEGORY_CONFIG.headset;
+  if (s === 'laptop' || n.includes('laptop')) return CATEGORY_CONFIG.laptop;
+
+  return DEFAULT_CONFIG;
+}
 
 interface CategoryItem {
   id: string;

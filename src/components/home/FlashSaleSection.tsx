@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
-import { getProductOriginalPrice } from '@/lib/product-ui';
+import { getProductOriginalPrice, resolveProductOriginalPrice } from '@/lib/product-ui';
 
 interface FlashProduct {
   id: string;
@@ -87,7 +87,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
         if (data.products && data.products.length > 0) {
           const mapped: FlashProduct[] = data.products.map((p: any) => {
             const price = Number(p.price);
-            const originalPrice = getProductOriginalPrice(price, p.slug, true);
+            const originalPrice = resolveProductOriginalPrice(p);
             const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
             return {
               id: p.id,

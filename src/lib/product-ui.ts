@@ -44,17 +44,27 @@ export function getProductOriginalPrice(price: number, slug: string = '', isFlas
   }
   const absHash = Math.abs(hash);
 
-  // If price is <= 500,000 OR isFlashSale is true, calculate discount strictly OVER 60% (61% - 70%)
-  if (isFlashSale || price <= 500000) {
-    const flashRates = [62, 65, 68, 64, 67, 63, 66, 69, 70];
-    const targetRate = flashRates[absHash % flashRates.length];
-    return Math.round((price / (1 - targetRate / 100)) / 10000) * 10000;
-  }
-
-  // Regular catalog products: 15% - 35% discount
-  const rates = [15, 18, 20, 22, 25, 28, 30, 32, 35];
+  // Deterministic original price calculation (15% - 25% discount markup)
+  const rates = [18, 20, 22, 25, 18, 20, 22, 24];
   const rate = rates[absHash % rates.length];
   return Math.round((price / (1 - rate / 100)) / 10000) * 10000;
+}
+
+export function resolveProductOriginalPrice(product: {
+  price?: number;
+  originalPrice?: number;
+  original_price?: number;
+  slug?: string;
+}): number {
+  const p = Number(product.price) || 0;
+  if (!p || p <= 0) return 0;
+
+  const orig = Number(product.originalPrice || product.original_price || 0);
+  if (orig && orig > p) {
+    return orig;
+  }
+
+  return getProductOriginalPrice(p, product.slug || '');
 }
 
 export function getProductImage(product: {
