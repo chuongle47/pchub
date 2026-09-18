@@ -30,7 +30,7 @@ import {
 import { useCartStore, useWishlistStore, useBuilderStore, useCompareStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
 import ProductQASection from './ProductQASection';
-import { getProductOriginalPrice } from '@/lib/product-ui';
+import { getProductOriginalPrice, getProductImage } from '@/lib/product-ui';
 
 export interface ProductDetailProps {
   product: {
@@ -111,7 +111,13 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
     }
   };
 
-  const imageUrl = product.image_url || product.image || '/images/cpu-box.jpg';
+  const imageUrl = getProductImage({
+    name: product.name,
+    category_name: product.category_name,
+    category_slug: product.category_slug,
+    brand_name: product.brand_name,
+    image_url: product.image_url || product.image,
+  });
   const categoryName = product.category_name || 'Linh kiện PC';
   const brandName = product.brand_name || 'Chính hãng';
 

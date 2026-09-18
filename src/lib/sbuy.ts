@@ -1,4 +1,5 @@
 import seed from './seed.json';
+import { getProductImage } from './product-ui';
 
 export const SBUY_CONFIG = {
   baseUrl: process.env.SBUY_BASE_URL || 'https://sbuy.io.vn',
@@ -309,10 +310,23 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
   // Infer Brand
   const brand = inferBrand(raw.name);
 
-  // Images
-  const images = Array.isArray(raw.images) && raw.images.length > 0
-    ? raw.images.map(img => img.src)
-    : ['https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=60'];
+  // Images resolution with intelligent category matching
+  const rawImages = Array.isArray(raw.images) && raw.images.length > 0
+    ? raw.images.map(img => img.src).filter(Boolean)
+    : [];
+
+  const firstImg = rawImages[0] || '';
+  const finalImage = getProductImage({
+    name: raw.name || '',
+    category_name: matchedCat.name,
+    category_slug: matchedCat.slug,
+    brand_name: brand.name,
+    image_url: firstImg,
+  });
+
+  const images = rawImages.length > 0 && !firstImg.includes('1587202372775-e229f172b9d7')
+    ? rawImages
+    : [finalImage];
 
   const specs = inferProductSpecs(raw, matchedCat.slug);
 
@@ -332,7 +346,7 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
     originalPrice: originalPrice,
     stock: stockQuantity,
     specs: specs,
-    image_url: images[0],
+    image_url: finalImage,
     images: images,
     category_name: matchedCat.name,
     category_slug: matchedCat.slug,
@@ -395,7 +409,13 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
   console.warn('Using local seed.json as offline fallback for Sbuy API');
   const fallbackList: AppProduct[] = (seed.products as any[]).map(p => {
     const orig = p.originalPrice || p.original_price || p.price * 1.1;
-    const img = p.image_url || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=60';
+    const img = getProductImage({
+      name: p.name,
+      category_name: p.category_name,
+      category_slug: p.category_slug,
+      brand_name: p.brand_name,
+      image_url: p.image_url,
+    });
     return {
       id: String(p.id),
       name: p.name,

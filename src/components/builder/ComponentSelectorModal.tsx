@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Search, Check, Filter, ArrowUpDown, Tag, Sparkles } from 'lucide-react';
+import { getProductImage } from '@/lib/product-ui';
 
 export interface ComponentSelectorModalProps {
   isOpen: boolean;
@@ -741,7 +742,13 @@ export default function ComponentSelectorModal({
                         position: 'relative',
                       }}>
                         <img
-                          src={p.image_url || p.image || defaultCategoryImg}
+                          src={getProductImage({
+                            name: p.name,
+                            category_name: p.category_name,
+                            category_slug: p.category_slug,
+                            brand_name: p.brand_name,
+                            image_url: p.image_url || p.image,
+                          })}
                           alt={p.name}
                           style={{ maxHeight: '115px', maxWidth: '100%', objectFit: 'contain' }}
                           onError={e => { e.currentTarget.src = defaultCategoryImg; }}

@@ -57,39 +57,76 @@ export function getProductOriginalPrice(price: number, slug: string = '', isFlas
   return Math.round((price / (1 - rate / 100)) / 10000) * 10000;
 }
 
-export function getProductImage(product: { name?: string; category_name?: string; categoryName?: string; category_id?: string; category?: string; brand?: string; brand_name?: string; brandName?: string; image_url?: string; image?: string }): string {
-  const url = product.image_url || product.image;
+export function getProductImage(product: {
+  name?: string;
+  category_name?: string;
+  categoryName?: string;
+  category_slug?: string;
+  category_id?: string;
+  category?: string;
+  brand?: string;
+  brand_name?: string;
+  brandName?: string;
+  image_url?: string;
+  image?: string;
+}): string {
+  const url = product.image_url || product.image || '';
   const name = (product.name || '').toLowerCase();
-  const cat = (product.category_name || product.categoryName || product.category || product.category_id || '').toLowerCase();
+  const cat = (
+    product.category_slug ||
+    product.category_name ||
+    product.categoryName ||
+    product.category ||
+    product.category_id ||
+    ''
+  ).toLowerCase();
+  const brand = (product.brand_name || product.brandName || product.brand || '').toLowerCase();
 
-  // If valid image provided and not misattributed default GPU for CPU
-  if (url && url !== '/images/gpu-strix.jpg' && url !== '/images/cpu-box.jpg') {
+  const hasKeyword = (...keys: string[]) => keys.some(k => name.includes(k) || cat.includes(k) || brand.includes(k));
+
+  let categoryImage = '/images/cpu-box.jpg';
+
+  if (hasKeyword('lót chuột', 'pad chuột', 'goliathus', 'mouse pad', 'mousepad', 'deskpad', 'tấm lót')) {
+    categoryImage = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60';
+  } else if (hasKeyword('chuột', 'mouse', 'm331', 'g102', 'g502', 'viper', 'basilisk', 'orochi', 'deathadder', 'pulsar', 'ninjutso', 'g pro')) {
+    categoryImage = 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60';
+  } else if (hasKeyword('bàn phím', 'keyboard', 'keychron', 'akko', 'phím cơ', 'filco', 'ducky', 'varmilo', 'nuphy', 'leopold')) {
+    categoryImage = 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60';
+  } else if (hasKeyword('tản nhiệt', 'cooling', 'cooler', 'gammaxx', 'cr-1000', 'cr1000', 'aio', 'quạt', 'fan', 'deepcool', 'thermalright', 'noctua', 'se-214', 'liquid', 'tản khí', 'tản nước', 'quạt tản')) {
+    categoryImage = 'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=500&auto=format&fit=crop&q=60';
+  } else if (hasKeyword('tai nghe', 'headset', 'headphone', 'earphone', 'loa', 'speaker', 'audio', 'soundbar', 'g733', 'cloud ii', 'hyperx')) {
+    categoryImage = '/images/cat-headset.jpg';
+  } else if (hasKeyword('màn hình', 'monitor', 'display', '24 inch', '27 inch', '32 inch', '144hz', '165hz', '240hz', 'ips', 'va', 'oled', 'viewsonic', 'lg ultragear', 'samsung odyssey')) {
+    categoryImage = '/images/cat-monitor.jpg';
+  } else if (hasKeyword('mainboard', 'bo mạch', 'z790', 'b760', 'b650', 'x670', 'h610', 'a620', 'b550', 'z690', 'b450', 'tuf gaming b', 'rog strix b', 'mag b')) {
+    categoryImage = '/images/cat-mainboard.jpg';
+  } else if (hasKeyword('ram', 'ddr4', 'ddr5', 'bộ nhớ', 'corsair vengeance', 'g.skill', 'kingston fury', 't-force', 'trident z', 'dominator')) {
+    categoryImage = '/images/ram-rgb.jpg';
+  } else if (hasKeyword('ssd', 'hdd', 'ổ cứng', 'ổ đĩa', 'nvme', 'sata', 'samsung 990', 'kingston nv2', 'lexar', 'wd black', 'crucial')) {
+    categoryImage = '/images/ssd-nvme.jpg';
+  } else if (hasKeyword('psu', 'nguồn', 'power supply', '80 plus', 'corsair rm', 'cv650', 'antec', 'coolermaster mwe', 'cv750', 'deepcool pk')) {
+    categoryImage = '/images/cat-psu.jpg';
+  } else if (hasKeyword('case', 'vỏ máy', 'vỏ ca', 'chassis', 'nzxt h9', 'xigmatek', 'sama', 'montech', 'hyte', 'mik foz', 'mik focal', 'lian li')) {
+    categoryImage = '/images/hero-pc.jpg';
+  } else if (hasKeyword('gpu', 'vga', 'card màn', 'rtx', 'gtx', 'rx ', 'radeon', 'geforce')) {
+    categoryImage = '/images/gpu-strix.jpg';
+  } else if (hasKeyword('cpu', 'vi xử lý', 'intel', 'core i', 'ryzen', 'athlon', 'celeron', 'pentium', '7800x3d', '13700', '14700', '13900', '14900')) {
+    categoryImage = '/images/cpu-box.jpg';
+  } else if (hasKeyword('laptop', 'máy tính xách tay', 'macbook', 'vivobook', 'zenbook', 'thinkpad', 'aspire', 'loq')) {
+    categoryImage = 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&auto=format&fit=crop&q=60';
+  } else if (hasKeyword('pc gaming', 'pc đồ họa', 'pc văn phòng', 'máy tính nguyên bộ', 'trọn bộ pc', 'bộ máy tính')) {
+    categoryImage = '/images/build-neon.jpg';
+  }
+
+  const isGenericTowerImage = url.includes('1587202372775-e229f172b9d7');
+  const isGenericLocalImage = url === '/images/gpu-strix.jpg' || url === '/images/cpu-box.jpg' || url === '/images/hero-pc.jpg';
+
+  if (url && !isGenericTowerImage && !isGenericLocalImage) {
     return url;
   }
 
-  if (cat.includes('cpu') || cat.includes('xử lý') || name.includes('cpu') || name.includes('intel') || name.includes('athlon') || name.includes('celeron') || name.includes('core i') || name.includes('ryzen')) {
-    return '/images/cpu-box.jpg';
-  }
-  if (cat.includes('mainboard') || cat.includes('bo mạch') || name.includes('mainboard') || name.includes('z790') || name.includes('b760') || name.includes('b650') || name.includes('x670')) {
-    return '/images/cat-mainboard.jpg';
-  }
-  if (cat.includes('ram') || cat.includes('bộ nhớ') || name.includes('ram') || name.includes('ddr4') || name.includes('ddr5') || name.includes('g.skill') || name.includes('corsair dominator')) {
-    return '/images/ram-rgb.jpg';
-  }
-  if (cat.includes('ssd') || cat.includes('hdd') || cat.includes('ổ đĩa') || cat.includes('ổ cứng') || name.includes('ssd') || name.includes('nvme') || name.includes('samsung 990')) {
-    return '/images/ssd-nvme.jpg';
-  }
-  if (cat.includes('psu') || cat.includes('nguồn') || name.includes('psu') || name.includes('corsair rm') || name.includes('80 plus')) {
-    return '/images/cat-psu.jpg';
-  }
-  if (cat.includes('case') || cat.includes('vỏ') || name.includes('nzxt h9') || name.includes('tower')) {
-    return '/images/hero-pc.jpg';
-  }
-  if (cat.includes('gpu') || cat.includes('vga') || cat.includes('card màn') || name.includes('rtx') || name.includes('gtx') || name.includes('rx ')) {
-    return '/images/gpu-strix.jpg';
-  }
-
-  return url || '/images/cpu-box.jpg';
+  return categoryImage;
 }
+
 
 
