@@ -136,11 +136,47 @@ const KNOWN_BRANDS = [
   { name: 'Cisco', slug: 'cisco' }
 ];
 
-// Helper to infer brand from product name
-function inferBrand(productName: string): { id: string; name: string; slug: string } {
+// Helper to infer brand from raw Sbuy product data (brands taxonomy, attributes, name, description)
+function inferBrand(raw: SbuyRawProduct): { id: string; name: string; slug: string } {
+  const productName = raw.name || '';
   const nameLower = productName.toLowerCase();
+
+  // 1. Check raw.brands taxonomy array if present from Sbuy/WooCommerce Brands plugin
+  if (Array.isArray((raw as any).brands) && (raw as any).brands.length > 0) {
+    const b = (raw as any).brands[0];
+    const bName = b.name || b.slug || '';
+    if (bName) {
+      const bSlug = (b.slug || bName).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+      return {
+        id: `b-${bSlug}`,
+        name: b.name || bName,
+        slug: bSlug
+      };
+    }
+  }
+
+  // 2. Check raw.attributes for Brand / Thương hiệu / Brands
+  if (Array.isArray(raw.attributes)) {
+    for (const attr of raw.attributes) {
+      const attrName = (attr.name || '').toLowerCase();
+      if (['brand', 'brands', 'thương hiệu', 'hãng sản xuất', 'hãng'].includes(attrName)) {
+        if (attr.options && attr.options.length > 0) {
+          const opt = attr.options[0];
+          const bSlug = opt.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+          return {
+            id: `b-${bSlug}`,
+            name: opt,
+            slug: bSlug
+          };
+        }
+      }
+    }
+  }
+
+  // 3. Check KNOWN_BRANDS against product name AND description AND short_description
+  const fullText = `${productName} ${(raw.short_description || '')} ${(raw.description || '')}`.toLowerCase();
   for (const b of KNOWN_BRANDS) {
-    if (nameLower.includes(b.slug) || nameLower.includes(b.name.toLowerCase())) {
+    if (fullText.includes(b.slug) || fullText.includes(b.name.toLowerCase())) {
       return {
         id: `b-${b.slug}`,
         name: b.name,
@@ -148,6 +184,7 @@ function inferBrand(productName: string): { id: string; name: string; slug: stri
       };
     }
   }
+
   return {
     id: 'b-khac',
     name: 'Khác',
@@ -307,8 +344,8 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
   // Primary Category Matching via inferCategory
   const matchedCat = inferCategory(raw);
 
-  // Infer Brand
-  const brand = inferBrand(raw.name);
+  // Infer Brand from raw product data (brands taxonomy, attributes, name)
+  const brand = inferBrand(raw);
 
   // Images resolution with intelligent category matching
   const rawImages = Array.isArray(raw.images) && raw.images.length > 0
