@@ -520,14 +520,14 @@ export default function CheckoutPage() {
                     <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a', fontWeight: 800 }}>%</div>
                     <div>
                       <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Mã giảm giá</h2>
-                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Nhập voucher để nhận ưu đãi cho đơn hàng</p>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Nhập mã voucher để nhận ưu đãi cho đơn hàng</p>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <input
                       value={voucher}
                       onChange={e => { setVoucher(e.target.value.toUpperCase()); setVoucherMessage(''); setVoucherDiscount(0); }}
-                      placeholder="Nhập mã voucher, ví dụ PCHUB10, SAVE50K"
+                      placeholder="Nhập mã giảm giá..."
                       style={{ ...inputStyle, flex: 1 }}
                     />
                     <button type="button" onClick={() => applyVoucher()} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', padding: '0 18px', fontWeight: 700, cursor: 'pointer' }}>
@@ -535,31 +535,6 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                   {voucherMessage && <p style={{ margin: '8px 0 0', fontSize: '12px', color: voucherDiscount > 0 ? '#16a34a' : '#dc2626' }}>{voucherDiscount > 0 ? '✓ ' : '✕ '}{voucherMessage}</p>}
-                  
-                  {/* Quick voucher suggestion tags */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>Gợi ý mã:</span>
-                    {AVAILABLE_VOUCHERS.slice(0, 4).map((v) => (
-                      <button
-                        key={v.code}
-                        type="button"
-                        onClick={() => applyVoucher(v.code)}
-                        style={{
-                          background: voucher === v.code && voucherDiscount > 0 ? '#ecfdf5' : '#f8fafc',
-                          border: `1px solid ${voucher === v.code && voucherDiscount > 0 ? '#10b981' : '#cbd5e1'}`,
-                          color: voucher === v.code && voucherDiscount > 0 ? '#059669' : '#0f172a',
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {v.code} ({v.name})
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Actions */}
