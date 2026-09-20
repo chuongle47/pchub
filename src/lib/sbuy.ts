@@ -395,39 +395,64 @@ export function mapSbuyProduct(raw: SbuyRawProduct): AppProduct {
   };
 }
 
+const LINH_KIEN_ALLOWED_SLUGS = new Set([
+  'linh-kien-may-tinh',
+  'ban-phim',
+  'case',
+  'chuot',
+  'cpu',
+  'loa-may-tinh',
+  'mainboard',
+  'man-hinh',
+  'man-hinh-may-tinh',
+  'nguon',
+  'o-cung',
+  'ram',
+  'tai-nghe',
+  'tan-nhiet',
+  'vga',
+  'gpu',
+  'laptop',
+  'pc-may-tinh-ban'
+]);
+
+const LINH_KIEN_ALLOWED_NAMES = [
+  'linh kiện máy tính',
+  'bàn phím',
+  'case',
+  'chuột',
+  'cpu',
+  'loa máy tính',
+  'mainboard',
+  'màn hình',
+  'nguồn',
+  'ổ cứng',
+  'ram',
+  'tai nghe',
+  'tản nhiệt',
+  'vga'
+];
+
 function isComputerComponentProduct(p: SbuyRawProduct): boolean {
   if (!p || p.status !== 'publish' || !p.name || !p.name.trim()) return false;
   const nameLower = p.name.toLowerCase().trim();
 
-  // Exclude non-product or test names
+  // Exclude non-product, test entries, or domain registrations
   if (nameLower === 'test' || nameLower.includes('đăng ký tên miền') || nameLower.includes('tên miền')) {
     return false;
   }
 
-  // Check categories
+  // Check product categories against the "Linh kiện máy tính" category tree
   const categories = Array.isArray(p.categories) ? p.categories : [];
-  const categorySlugs = categories.map(c => (c.slug || '').toLowerCase());
-  const categoryNames = categories.map(c => (c.name || '').toLowerCase());
+  if (categories.length === 0) return false;
 
-  // 1. Is explicitly in "Linh kiện máy tính" category or subcategories
-  const isLinhKienCategory = categorySlugs.some(slug => 
-    slug === 'linh-kien-may-tinh' || 
-    slug.includes('linh-kien') || 
-    CATEGORY_MAPPING[slug] !== undefined
-  ) || categoryNames.some(name => name.includes('linh kiện'));
+  const hasLinhKienCategory = categories.some(c => {
+    const slug = (c.slug || '').toLowerCase().trim();
+    const name = (c.name || '').toLowerCase().trim();
+    return LINH_KIEN_ALLOWED_SLUGS.has(slug) || LINH_KIEN_ALLOWED_NAMES.some(kn => name.includes(kn));
+  });
 
-  if (isLinhKienCategory) return true;
-
-  // 2. Check name keywords for computer hardware & peripherals
-  const compKeywords = [
-    'cpu', 'intel', 'ryzen', 'mainboard', 'bo mạch', 'ram', 'vga', 'gpu', 
-    'rtx', 'gtx', 'radeon', 'card màn', 'ssd', 'nvme', 'hdd', 'ổ cứng', 
-    'nguồn', 'psu', 'case', 'vỏ máy', 'vỏ case', 'tản nhiệt', 'cooling', 
-    'màn hình', 'monitor', 'bàn phím', 'keyboard', 'chuột', 'mouse', 
-    'tai nghe', 'headset', 'loa', 'laptop', 'pc '
-  ];
-
-  return compKeywords.some(kw => nameLower.includes(kw));
+  return hasLinhKienCategory;
 }
 
 // Server Cache for Sbuy Products
