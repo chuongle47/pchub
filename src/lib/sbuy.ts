@@ -411,9 +411,7 @@ const LINH_KIEN_ALLOWED_SLUGS = new Set([
   'tai-nghe',
   'tan-nhiet',
   'vga',
-  'gpu',
-  'laptop',
-  'pc-may-tinh-ban'
+  'gpu'
 ]);
 
 const LINH_KIEN_ALLOWED_NAMES = [
@@ -437,8 +435,17 @@ function isComputerComponentProduct(p: SbuyRawProduct): boolean {
   if (!p || p.status !== 'publish' || !p.name || !p.name.trim()) return false;
   const nameLower = p.name.toLowerCase().trim();
 
-  // Exclude non-product, test entries, or domain registrations
-  if (nameLower === 'test' || nameLower.includes('đăng ký tên miền') || nameLower.includes('tên miền')) {
+  // Exclude non-component items, prebuilt PCs, laptops, test entries, domain registrations
+  if (
+    nameLower === 'test' ||
+    nameLower.includes('đăng ký tên miền') ||
+    nameLower.includes('tên miền') ||
+    nameLower.startsWith('laptop') ||
+    nameLower.startsWith('pc workstation') ||
+    nameLower.startsWith('pc gaming') ||
+    nameLower.includes('máy tính xách tay') ||
+    nameLower.includes('macbook')
+  ) {
     return false;
   }
 
@@ -449,6 +456,12 @@ function isComputerComponentProduct(p: SbuyRawProduct): boolean {
   const hasLinhKienCategory = categories.some(c => {
     const slug = (c.slug || '').toLowerCase().trim();
     const name = (c.name || '').toLowerCase().trim();
+
+    // Must not be laptop or prebuilt PC
+    if (slug === 'laptop' || slug === 'pc-may-tinh-ban' || name.includes('laptop') || name.includes('nguyên bộ')) {
+      return false;
+    }
+
     return LINH_KIEN_ALLOWED_SLUGS.has(slug) || LINH_KIEN_ALLOWED_NAMES.some(kn => name.includes(kn));
   });
 
@@ -498,39 +511,47 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
     return sbuyProductsCache.data;
   }
 
-  // Fallback to local seed JSON if external API is down
+  // Fallback to local seed JSON if external API is down (filtering out non-components)
   console.warn('Using local seed.json as offline fallback for Sbuy API');
-  const fallbackList: AppProduct[] = (seed.products as any[]).map(p => {
-    const orig = p.originalPrice || p.original_price || p.price * 1.1;
-    const img = getProductImage({
-      name: p.name,
-      category_name: p.category_name,
-      category_slug: p.category_slug,
-      brand_name: p.brand_name,
-      image_url: p.image_url,
+  const fallbackList: AppProduct[] = (seed.products as any[])
+    .filter(p => {
+      const catSlug = (p.category_slug || '').toLowerCase();
+      const nameLower = (p.name || '').toLowerCase();
+      if (catSlug === 'laptop' || catSlug === 'prebuilt' || catSlug === 'accessory') return false;
+      if (nameLower.startsWith('laptop') || nameLower.startsWith('pc workstation') || nameLower.startsWith('pc gaming')) return false;
+      return true;
+    })
+    .map(p => {
+      const orig = p.originalPrice || p.original_price || p.price * 1.1;
+      const img = getProductImage({
+        name: p.name,
+        category_name: p.category_name,
+        category_slug: p.category_slug,
+        brand_name: p.brand_name,
+        image_url: p.image_url,
+      });
+      return {
+        id: String(p.id),
+        name: p.name,
+        slug: p.slug,
+        category_id: p.category_id,
+        brand_id: p.brand_id,
+        sku: p.sku || `SKU-${p.id}`,
+        price: p.price,
+        original_price: orig,
+        originalPrice: orig,
+        stock: p.stock ?? 10,
+        specs: p.specs || {},
+        image_url: img,
+        images: [img],
+        category_name: p.category_name || 'Linh kiện',
+        category_slug: p.category_slug || 'cpu',
+        brand_name: p.brand_name || 'Chính hãng',
+        brand_slug: p.brand_slug || 'brand',
+        rating: 4.8,
+        reviewCount: 15
+      };
     });
-    return {
-      id: String(p.id),
-      name: p.name,
-      slug: p.slug,
-      category_id: p.category_id,
-      brand_id: p.brand_id,
-      sku: p.sku || `SKU-${p.id}`,
-      price: p.price,
-      original_price: orig,
-      originalPrice: orig,
-      stock: p.stock ?? 10,
-      specs: p.specs || {},
-      image_url: img,
-      images: [img],
-      category_name: p.category_name || 'Linh kiện',
-      category_slug: p.category_slug || 'cpu',
-      brand_name: p.brand_name || 'Chính hãng',
-      brand_slug: p.brand_slug || 'brand',
-      rating: 4.8,
-      reviewCount: 15
-    };
-  });
 
   return fallbackList;
 }
