@@ -11,6 +11,8 @@ import {
 import { useCartStore, useOrderStore } from '@/lib/store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
+import TechCheckoutLoader from '@/components/checkout/TechCheckoutLoader';
+
 type CheckoutStep = 'shipping' | 'payment';
 
 const SHIPPING_OPTIONS = [
@@ -114,6 +116,11 @@ export default function CheckoutPage() {
   const [shippingOption, setShippingOption] = useState('ghn');
   const [payment, setPayment] = useState('vnpay');
   const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(15);
+  const [processingStep, setProcessingStep] = useState<1 | 2 | 3>(1);
+  const [createdOrderId, setCreatedOrderId] = useState<string>('ORD-PCHUB');
+
   const [voucher, setVoucher] = useState('');
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [voucherMessage, setVoucherMessage] = useState('');
@@ -148,12 +155,12 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    if (!items.length) {
+    if (!items.length && !isProcessing) {
       router.push('/gio-hang');
     }
-  }, [items.length, router]);
+  }, [items.length, isProcessing, router]);
 
-  if (!items.length) {
+  if (!items.length && !isProcessing) {
     return null;
   }
 
@@ -165,9 +172,15 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading || isProcessing) return;
+
+    setIsProcessing(true);
     setLoading(true);
+    setProcessingProgress(25);
+    setProcessingStep(1);
 
     const orderId = `ORD-${Date.now()}`;
+    setCreatedOrderId(orderId);
     const selectedPayment = PAYMENT_METHODS.find(m => m.id === payment);
 
     const newOrder = {
@@ -199,6 +212,10 @@ export default function CheckoutPage() {
     };
 
     addOrder(newOrder);
+
+    // Step 2 Progress
+    setProcessingStep(2);
+    setProcessingProgress(60);
 
     // Sync order to Sbuy WooCommerce backend
     try {
@@ -232,9 +249,15 @@ export default function CheckoutPage() {
       console.warn('WooCommerce order push non-fatal warning:', err);
     }
 
-    clearCart();
+    // Step 3 Progress: Complete
+    setProcessingStep(3);
+    setProcessingProgress(100);
 
-    await new Promise(r => setTimeout(r, 1400));
+    // Tech loading display buffer so user feels the smooth progress
+    await new Promise(r => setTimeout(r, 700));
+
+    // Clear cart right before router navigation
+    clearCart();
     router.push(`/dat-hang-thanh-cong?orderId=${orderId}`);
   };
 
@@ -762,6 +785,14 @@ export default function CheckoutPage() {
           </form>
         )}
       </div>
+
+      {isProcessing && (
+        <TechCheckoutLoader
+          progress={processingProgress}
+          step={processingStep}
+          orderId={createdOrderId}
+        />
+      )}
     </div>
   );
 }
