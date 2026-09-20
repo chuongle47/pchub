@@ -11,17 +11,17 @@ export function formatVnd(price: number): string {
   return Number(price || 0).toLocaleString('vi-VN') + '₫';
 }
 
-export function getProductOriginalPrice(price: number, slug: string = '', isFlashSale: boolean = false): number {
+export function getProductOriginalPrice(price: number, slug: string = ''): number {
   if (!price || price <= 0) return 0;
 
-  const s = slug.toLowerCase();
+  const s = (slug || '').toLowerCase();
 
-  // Known flash sale products mapped by both DB slug ID, readable slug, and default IDs
-  const flashSaleMap: Record<string, number> = {
-    'cooling-new-0024': 920000,                           // 350.000 ₫ -> 920.000 ₫ (-62%)
-    'cooling-new-0067': 1230000,                          // 430.000 ₫ -> 1.230.000 ₫ (-65%)
-    'ram-new-0110': 1530000,                              // 490.000 ₫ -> 1.530.000 ₫ (-68%)
-    'cooling-new-0015': 1360000,                          // 490.000 ₫ -> 1.360.000 ₫ (-64%)
+  // Known fixed original price products mapped by slug
+  const fixedMap: Record<string, number> = {
+    'cooling-new-0024': 920000,
+    'cooling-new-0067': 1230000,
+    'ram-new-0110': 1530000,
+    'cooling-new-0015': 1360000,
     'thermalright-tl-d12-pro-rev1': 920000,
     'thermalright-tl-d12-pro-rev2': 1230000,
     'crucial-ct8g4dfs8266-8gb-ddr4-2666mhz-r1': 1530000,
@@ -32,27 +32,18 @@ export function getProductOriginalPrice(price: number, slug: string = '', isFlas
     'samsung-990-pro-2tb-nvme': 13030000,
   };
 
-  if (s && flashSaleMap[s]) {
-    return flashSaleMap[s];
+  if (s && fixedMap[s]) {
+    return fixedMap[s];
   }
 
-  // Deterministic calculation based on slug hash
+  // Deterministic calculation based on slug hash (15% - 24% discount)
   let hash = 0;
   for (let i = 0; i < s.length; i++) {
     hash = (hash << 5) - hash + s.charCodeAt(i);
     hash |= 0;
   }
   const absHash = Math.abs(hash);
-
-  // If price <= 500,000 OR isFlashSale is true, calculate discount strictly OVER 60% (61% - 70%)
-  if (isFlashSale || price <= 500000) {
-    const flashRates = [62, 65, 67, 64, 68, 63, 66, 69];
-    const targetRate = flashRates[absHash % flashRates.length];
-    return Math.round((price / (1 - targetRate / 100)) / 10000) * 10000;
-  }
-
-  // Regular catalog products: 18% - 25% discount
-  const rates = [18, 20, 22, 25, 18, 20, 22, 24];
+  const rates = [18, 20, 22, 15, 18, 20, 22, 24];
   const rate = rates[absHash % rates.length];
   return Math.round((price / (1 - rate / 100)) / 10000) * 10000;
 }
@@ -62,18 +53,18 @@ export function resolveProductOriginalPrice(product: {
   originalPrice?: number;
   original_price?: number;
   slug?: string;
-}, isFlashSale: boolean = false): number {
+}): number {
   const p = Number(product.price) || 0;
   if (!p || p <= 0) return 0;
 
   const orig = Number(product.originalPrice || product.original_price || 0);
 
-  // If price <= 500,000 or isFlashSale, calculate >60% discount original price so it's OVER 60%
-  if (isFlashSale || p <= 500000 || !orig || orig <= p) {
-    return getProductOriginalPrice(p, product.slug || '', true);
+  // If original price is explicitly provided and greater than price, use it
+  if (orig && orig > p) {
+    return orig;
   }
 
-  return orig;
+  return getProductOriginalPrice(p, product.slug || '');
 }
 
 export function getProductImage(product: {

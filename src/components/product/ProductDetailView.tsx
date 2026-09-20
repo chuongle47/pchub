@@ -135,7 +135,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   const [selectedVariantId, setSelectedVariantId] = useState('v-std');
   const activeVariant = variants.find(v => v.id === selectedVariantId) || variants[0];
 
-  const rawOrigPrice = resolveProductOriginalPrice(product, true);
+  const rawOrigPrice = resolveProductOriginalPrice(product);
 
   const currentPrice = Number(product.price) + activeVariant.priceDelta;
   const currentOriginalPrice = rawOrigPrice > Number(product.price)
