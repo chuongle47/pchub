@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const VOUCHER_CODES: Record<string, { type: 'percent' | 'fixed' | 'freeship'; value: number; label: string }> = {
+  'GIAMGIA': { type: 'percent', value: 30, label: 'Giảm 30% WooCommerce' },
   'PCHUB10': { type: 'percent', value: 10, label: 'Giảm 10% tổng đơn' },
   'SAVE50K': { type: 'fixed', value: 50000, label: 'Giảm 50.000₫' },
   'FREESHIP': { type: 'freeship', value: 0, label: 'Miễn phí vận chuyển' },
@@ -19,7 +20,7 @@ export default function CartPage() {
   const router = useRouter();
 
   const [voucherInput, setVoucherInput] = useState('');
-  const [appliedVoucher, setAppliedVoucher] = useState<null | { code: string; type: string; value: number; label: string }>(null);
+  const [appliedVoucher, setAppliedVoucher] = useState<null | { code: string; type: string; value: number; label: string; calculatedDiscount?: number }>(null);
   const [voucherError, setVoucherError] = useState('');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [removedNotice, setRemovedNotice] = useState<string | null>(null);
@@ -30,15 +31,48 @@ export default function CartPage() {
   let discount = 0;
   let shipping = baseShipping;
   if (appliedVoucher) {
-    if (appliedVoucher.type === 'percent') discount = Math.min(Math.round(totalPrice * appliedVoucher.value / 100), 200000);
-    else if (appliedVoucher.type === 'fixed') discount = appliedVoucher.value;
-    else if (appliedVoucher.type === 'freeship') shipping = 0;
+    if (appliedVoucher.calculatedDiscount !== undefined) {
+      discount = appliedVoucher.calculatedDiscount;
+    } else if (appliedVoucher.type === 'percent') {
+      discount = Math.round((totalPrice * appliedVoucher.value) / 100);
+    } else if (appliedVoucher.type === 'fixed') {
+      discount = appliedVoucher.value;
+    } else if (appliedVoucher.type === 'freeship') {
+      shipping = 0;
+    }
   }
-  const finalTotal = totalPrice - discount + shipping;
+  const finalTotal = Math.max(0, totalPrice - discount + shipping);
 
-  const applyVoucher = () => {
+  const applyVoucher = async () => {
     const code = voucherInput.trim().toUpperCase();
     if (!code) { setVoucherError('Vui lòng nhập mã voucher.'); return; }
+
+    try {
+      const res = await fetch('/api/vouchers/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, totalPrice, shippingFee: baseShipping })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAppliedVoucher({
+          code: data.code,
+          type: data.type,
+          value: data.discount,
+          label: data.label,
+          calculatedDiscount: data.discount
+        });
+        setVoucherError('');
+        setVoucherInput('');
+        return;
+      } else if (data.error) {
+        setVoucherError(data.error);
+        return;
+      }
+    } catch (e) {
+      // Fallback
+    }
+
     const found = VOUCHER_CODES[code];
     if (!found) { setVoucherError('Mã không hợp lệ hoặc đã hết hạn.'); return; }
     setAppliedVoucher({ code, ...found });

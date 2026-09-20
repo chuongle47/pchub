@@ -411,7 +411,7 @@ export default function CompareClient() {
   }, [specKeys, products, onlyDiffs]);
 
   const displayProductCount = Math.max(products.length, 1);
-  const showAddSlot = products.length < 4;
+  const showAddSlot = products.length < 3;
   const totalColumnsCount = products.length + (showAddSlot ? 1 : 0);
 
   const tableMinWidth = `${160 + totalColumnsCount * 220}px`;
@@ -492,7 +492,7 @@ export default function CompareClient() {
               </button>
             )}
 
-            {products.length < 4 && (
+            {products.length < 3 && (
               <button
                 type="button"
                 onClick={() => setIsSelectorOpen(true)}
@@ -536,8 +536,7 @@ export default function CompareClient() {
             fontWeight: 600,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={18} color="#d97706" />
-              <span>Bạn đã chọn <strong>{products[0].name}</strong>. Chọn thêm sản phẩm thứ 2 bên dưới hoặc nhấp <strong>"+ Chọn sản phẩm"</strong> để bắt đầu đối chiếu!</span>
+              <span>💡 Bạn đã chọn <strong>{products[0].name}</strong>. Chọn thêm sản phẩm thứ 2 bên dưới hoặc nhấp <strong>"+ Chọn sản phẩm"</strong> để bắt đầu đối chiếu!</span>
             </div>
             <button
               type="button"
@@ -636,7 +635,7 @@ export default function CompareClient() {
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1d4ed8', fontWeight: 800, fontSize: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    <Sparkles size={16} /> ĐÁNH GIÁ & KHUYÊN DÙNG NHANH
+                    ĐÁNH GIÁ & KHUYÊN DÙNG NHANH
                   </div>
                   <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
                     🏆 Lựa chọn giá tốt nhất: <span style={{ color: '#16a34a' }}>{cheapestProduct.name}</span> ({formatVnd(cheapestProduct.price)})

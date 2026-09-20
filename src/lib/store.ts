@@ -388,8 +388,8 @@ export const useCompareStore = create<CompareStore>()(
           };
         }
 
-        // Append to compare list up to 4 items
-        if (currentItems.length < 4) {
+        // Append to compare list up to 3 items
+        if (currentItems.length < 3) {
           const newItems = [...currentItems, slug];
           const newCatName = get().activeCategory || catName;
           const newCatKey = currentActiveKey || incomingKey;
@@ -400,13 +400,13 @@ export const useCompareStore = create<CompareStore>()(
           });
           return {
             success: true,
-            notice: `Đã thêm sản phẩm vào danh sách so sánh (${newItems.length}/4)`,
+            notice: `Đã thêm sản phẩm vào danh sách so sánh (${newItems.length}/3)`,
           };
         }
 
         return {
           success: false,
-          notice: 'Danh sách so sánh đã đạt tối đa 4 sản phẩm',
+          notice: 'Danh sách so sánh đã đạt tối đa 3 sản phẩm',
         };
       },
 

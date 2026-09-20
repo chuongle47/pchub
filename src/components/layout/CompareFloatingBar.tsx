@@ -68,7 +68,7 @@ export default function CompareFloatingBar() {
             fontWeight: 800,
           }}
         >
-          {items.length}/4
+          {items.length}/3
         </span>
       </div>
 

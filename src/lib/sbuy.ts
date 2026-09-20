@@ -713,3 +713,46 @@ export async function createSbuyWooCommerceOrder(orderData: {
     return { success: false, error: err.message };
   }
 }
+
+export interface WooCommerceCoupon {
+  id: number;
+  code: string;
+  amount: string;
+  discount_type: string;
+  description: string;
+  minimum_amount: string;
+  maximum_amount: string;
+  usage_limit: number | null;
+  usage_count: number;
+}
+
+export async function fetchSbuyWooCommerceCoupon(code: string): Promise<WooCommerceCoupon | null> {
+  const normalizedCode = code.trim().toLowerCase();
+  if (!normalizedCode) return null;
+
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/coupons?code=${encodeURIComponent(normalizedCode)}`;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      next: { revalidate: 30 }
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const coupons: WooCommerceCoupon[] = await res.json();
+    if (Array.isArray(coupons) && coupons.length > 0) {
+      return coupons[0];
+    }
+  } catch (err) {
+    console.warn('WooCommerce coupon query error:', err);
+  }
+  return null;
+}

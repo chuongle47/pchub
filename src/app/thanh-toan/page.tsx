@@ -136,13 +136,35 @@ export default function CheckoutPage() {
   const shippingFee = totalPrice >= 500000 ? 0 : (selectedShipping?.price ?? 25000);
   const finalTotal = Math.max(0, totalPrice + shippingFee - voucherDiscount);
 
-  const applyVoucher = (codeToApply?: string) => {
+  const applyVoucher = async (codeToApply?: string) => {
     const code = (codeToApply || voucher).trim().toUpperCase();
     if (!code) {
       setVoucherDiscount(0);
       setVoucherMessage('Vui lòng nhập mã voucher');
       return;
     }
+
+    try {
+      const res = await fetch('/api/vouchers/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, totalPrice, shippingFee })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setVoucher(code);
+        setVoucherDiscount(data.discount);
+        setVoucherMessage(`Áp dụng mã ${code} thành công: giảm ${data.discount.toLocaleString('vi-VN')}₫`);
+        return;
+      } else if (data.error) {
+        setVoucherDiscount(0);
+        setVoucherMessage(data.error);
+        return;
+      }
+    } catch (err) {
+      // Fallback to local calculation
+    }
+
     const result = calculateVoucherDiscount(code, totalPrice, shippingFee);
     if (result.error) {
       setVoucherDiscount(0);

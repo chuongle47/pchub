@@ -44,6 +44,14 @@ export const AVAILABLE_VOUCHERS: Voucher[] = [
     description: 'Giảm 20% tối đa 200K cho đơn từ 1.000.000₫',
   },
   {
+    code: 'GIAMGIA',
+    name: 'Giảm 30%',
+    type: 'percent',
+    value: 30,
+    minOrder: 0,
+    description: 'Giảm 30% tổng đơn hàng (Mã WooCommerce)',
+  },
+  {
     code: 'PCNEW10',
     name: 'Khách mới -10%',
     type: 'percent',
