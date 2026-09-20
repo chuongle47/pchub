@@ -199,6 +199,39 @@ export default function CheckoutPage() {
     };
 
     addOrder(newOrder);
+
+    // Sync order to Sbuy WooCommerce backend
+    try {
+      await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: {
+            name: form.name || 'Khách hàng PCHub',
+            phone: form.phone || '0901234567',
+            email: form.email || 'customer@pchub.vn',
+            address: form.address || 'Địa chỉ nhận hàng',
+            province: form.province || 'Hà Nội',
+            district: form.district || 'Cầu Giấy',
+            ward: form.ward || 'Dịch Vọng Hậu',
+            note: form.note
+          },
+          items: items.map(item => ({
+            id: item.product?.id || item.id,
+            name: item.product?.name || item.name,
+            price: item.product?.price || item.price,
+            quantity: item.quantity
+          })),
+          paymentMethod: payment,
+          paymentMethodLabel: selectedPayment?.label || 'Thanh toán',
+          shippingFee,
+          total: finalTotal
+        })
+      });
+    } catch (err) {
+      console.warn('WooCommerce order push non-fatal warning:', err);
+    }
+
     clearCart();
 
     await new Promise(r => setTimeout(r, 1400));
@@ -279,6 +312,27 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#475569',
+    marginBottom: '5px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.3px',
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: '#f8fafc',
+    border: '1px solid #cbd5e1',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '13px',
+    outline: 'none',
+    color: '#0f172a',
+  };
 
   return (
     <div style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px 0 60px' }}>
@@ -696,16 +750,11 @@ export default function CheckoutPage() {
                         color: '#fff', border: 'none', borderRadius: '12px',
                         padding: '15px', fontSize: '15px', fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                        boxShadow: loading ? 'none' : '0 4px 15px rgba(37,99,235,0.35)',
+                        boxShadow: loading ? 'none' : '0 4px 15px rgba(37,99,235,0.35)'
                       }}
                     >
-                      <Lock size={16} />
-                      {loading ? 'Đang xử lý...' : 'Đặt hàng →'}
+                      {loading ? 'Đang khởi tạo đơn hàng WooCommerce...' : '⚡ Xác Nhận Đặt Hàng →'}
                     </button>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '10px' }}>
-                      <ShieldCheck size={12} color="#16a34a" />
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>Thanh toán bảo mật 100%</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -716,26 +765,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 13px',
-  border: '1.5px solid #e2e8f0',
-  borderRadius: '8px',
-  fontSize: '13px',
-  outline: 'none',
-  color: '#1e293b',
-  background: '#fff',
-  fontFamily: 'inherit',
-  boxSizing: 'border-box',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 700,
-  color: '#475569',
-  marginBottom: '5px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.3px',
-};

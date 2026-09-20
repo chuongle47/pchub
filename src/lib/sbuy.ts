@@ -562,3 +562,154 @@ export async function getSbuyProductBySlugOrId(slugOrId: string): Promise<AppPro
   const found = products.find(p => p.id === slugOrId || p.slug.toLowerCase() === normalized);
   return found || null;
 }
+
+// WooCommerce Categories Sync from Sbuy API
+let sbuyCategoriesCache: { data: AppCategory[]; timestamp: number } | null = null;
+
+export async function fetchSbuyCategoriesLive(): Promise<AppCategory[]> {
+  const now = Date.now();
+  if (sbuyCategoriesCache && (now - sbuyCategoriesCache.timestamp) < CACHE_TTL_MS) {
+    return sbuyCategoriesCache.data;
+  }
+
+  try {
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/categories?consumer_key=${SBUY_CONFIG.consumerKey}&consumer_secret=${SBUY_CONFIG.consumerSecret}&per_page=100`;
+    const res = await fetch(url, { next: { revalidate: 60 } });
+
+    if (res.ok) {
+      const rawCats: any[] = await res.json();
+      if (Array.isArray(rawCats)) {
+        const mapped: AppCategory[] = rawCats
+          .filter(c => {
+            const slug = (c.slug || '').toLowerCase();
+            const name = (c.name || '').toLowerCase();
+            return LINH_KIEN_ALLOWED_SLUGS.has(slug) || LINH_KIEN_ALLOWED_NAMES.some(kn => name.includes(kn));
+          })
+          .map(c => {
+            const mappedCat = CATEGORY_MAPPING[c.slug] || { id: String(c.id), slug: c.slug, name: c.name, icon: 'box' };
+            return {
+              id: String(c.id),
+              name: c.name || mappedCat.name,
+              slug: c.slug || mappedCat.slug,
+              icon: mappedCat.icon,
+              product_count: c.count || 0
+            };
+          });
+
+        if (mapped.length > 0) {
+          sbuyCategoriesCache = { data: mapped, timestamp: now };
+          return mapped;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch live categories from Sbuy WooCommerce API:', err);
+  }
+
+  // Fallback to internal standard categories list
+  const fallbackCategories: AppCategory[] = Object.values(CATEGORY_MAPPING).map(c => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    icon: c.icon,
+    product_count: 4
+  }));
+
+  return fallbackCategories;
+}
+
+// WooCommerce Real Order Creation in Sbuy Backend
+export async function createSbuyWooCommerceOrder(orderData: {
+  customer: {
+    name: string;
+    phone: string;
+    email: string;
+    address: string;
+    province?: string;
+    district?: string;
+    ward?: string;
+    note?: string;
+  };
+  items: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  paymentMethod: string;
+  paymentMethodLabel: string;
+  shippingFee: number;
+  total: number;
+}): Promise<{ success: boolean; wooOrderId?: number; error?: string }> {
+  try {
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders?consumer_key=${SBUY_CONFIG.consumerKey}&consumer_secret=${SBUY_CONFIG.consumerSecret}`;
+
+    const lineItems = orderData.items.map(item => {
+      const numericId = parseInt(item.id, 10);
+      if (!isNaN(numericId) && numericId > 0) {
+        return {
+          product_id: numericId,
+          quantity: item.quantity
+        };
+      }
+      return {
+        name: item.name,
+        total: String(item.price * item.quantity),
+        quantity: item.quantity
+      };
+    });
+
+    const body = {
+      payment_method: orderData.paymentMethod || 'cod',
+      payment_method_title: orderData.paymentMethodLabel || 'Thanh toán khi nhận hàng',
+      set_paid: orderData.paymentMethod === 'vnpay' || orderData.paymentMethod === 'momo',
+      billing: {
+        first_name: orderData.customer.name,
+        last_name: '',
+        address_1: orderData.customer.address,
+        city: orderData.customer.province || 'Hà Nội',
+        state: orderData.customer.district || '',
+        postcode: '100000',
+        country: 'VN',
+        email: orderData.customer.email || 'customer@pchub.vn',
+        phone: orderData.customer.phone || '0901234567'
+      },
+      shipping: {
+        first_name: orderData.customer.name,
+        last_name: '',
+        address_1: orderData.customer.address,
+        city: orderData.customer.province || 'Hà Nội',
+        state: orderData.customer.district || '',
+        postcode: '100000',
+        country: 'VN'
+      },
+      line_items: lineItems,
+      shipping_lines: [
+        {
+          method_id: 'flat_rate',
+          method_title: 'Phí vận chuyển PCHub',
+          total: String(orderData.shippingFee)
+        }
+      ],
+      customer_note: orderData.customer.note || ''
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, wooOrderId: data.id };
+    } else {
+      const errText = await res.text();
+      console.warn('WooCommerce Order Creation response non-OK:', res.status, errText);
+      return { success: false, error: `WooCommerce API HTTP ${res.status}` };
+    }
+  } catch (err: any) {
+    console.error('Failed to create order on Sbuy WooCommerce API:', err);
+    return { success: false, error: err.message };
+  }
+}

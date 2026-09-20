@@ -5,6 +5,7 @@ import seed from './seed.json';
 import { getProductOriginalPrice } from './product-ui';
 import {
   fetchSbuyProductsLive,
+  fetchSbuyCategoriesLive,
   getSbuyProductBySlugOrId,
   AppProduct
 } from './sbuy';
@@ -115,22 +116,8 @@ const STANDARD_CATEGORIES: Category[] = [
 ];
 
 export async function getCategories(): Promise<Category[]> {
-  const products = await fetchSbuyProductsLive();
-  const catCounts: Record<string, number> = {};
-
-  products.forEach(p => {
-    if (p.category_id) {
-      catCounts[p.category_id] = (catCounts[p.category_id] || 0) + 1;
-    }
-    if (p.category_slug) {
-      catCounts[p.category_slug] = (catCounts[p.category_slug] || 0) + 1;
-    }
-  });
-
-  return STANDARD_CATEGORIES.map(c => ({
-    ...c,
-    product_count: catCounts[c.id] || catCounts[c.slug] || 0
-  }));
+  const liveCats = await fetchSbuyCategoriesLive();
+  return liveCats as any;
 }
 
 export async function getBrands(categoryId?: string): Promise<Brand[]> {
