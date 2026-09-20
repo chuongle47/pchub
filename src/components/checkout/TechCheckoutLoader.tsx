@@ -11,9 +11,9 @@ interface TechCheckoutLoaderProps {
 }
 
 const STEP_LOGS = [
-  { id: 1, text: 'Mã hóa thông tin & Bảo mật SSL 256-bit' },
-  { id: 2, text: 'Đồng bộ đơn hàng lên WooCommerce Sbuy API System' },
-  { id: 3, text: 'Xác thực thanh toán thành công & Khởi tạo hóa đơn' },
+  { id: 1, text: 'Xác thực thông tin đơn hàng & Bảo mật SSL 256-bit' },
+  { id: 2, text: 'Khởi tạo thông tin đơn hàng trên hệ thống PCHub' },
+  { id: 3, text: 'Xác nhận thanh toán thành công & Chuyển hướng' },
 ];
 
 export default function TechCheckoutLoader({
@@ -101,7 +101,7 @@ export default function TechCheckoutLoader({
           marginBottom: '28px'
         }}>
           <ShieldCheck size={16} color="#38bdf8" />
-          <span>CYBER CHECKOUT v2.4 • SSL SECURED</span>
+          <span>XỬ LÝ ĐƠN HÀNG AN TOÀN • PCHUB SECURE</span>
         </div>
 
         {/* Animated Central Orbital Ring + CPU icon */}

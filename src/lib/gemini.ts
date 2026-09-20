@@ -63,8 +63,8 @@ HƯỚNG DẪN TRẢ LỜI CHO KHÁCH HÀNG (STRICT FORMATTING RULES):
    - Tuyệt đối KHÔNG trích dẫn nguyên văn mã DB hay các thẻ kỹ thuật thô như [Tồn kho: 50] hay [Chuột Gaming & Văn Phòng].
    - Trình bày giá tiền rõ ràng dạng **329.000 ₫**.
 
-2. ĐỘ CHÍNH XÁC & CHỈ GỢI Ý SẢN PHẨM CÓ TRONG SBUY API:
-   - Dùng đúng tên sản phẩm và giá tiền từ danh sách sản phẩm Sbuy API bên dưới.
+2. ĐỘ CHÍNH XÁC & CHỈ GỢI Ý SẢN PHẨM CÓ TRONG HỆ THỐNG PCHUB:
+   - Dùng đúng tên sản phẩm và giá tiền từ danh sách sản phẩm PCHub bên dưới.
    - Tuyệt đối không lặp lại cùng một sản phẩm nhiều lần.
 
 3. NGUYÊN TẮC TƯƠNG THÍCH PHẦN CỨNG 100% (STRICT HARDWARE COMPATIBILITY RULES):
@@ -72,7 +72,7 @@ HƯỚNG DẪN TRẢ LỜI CHO KHÁCH HÀNG (STRICT FORMATTING RULES):
    - RAM & MAINBOARD: BẮT BUỘC cùng chuẩn DDR4 hoặc DDR5 (Mainboard DDR4 cắm RAM DDR4, Mainboard DDR5 cắm RAM DDR5). TUYỆT ĐỐI KHÔNG chọn Mainboard DDR4 đi với RAM DDR5 hoặc ngược lại!
    - NGUỒN (PSU): Phải đủ công suất cho VGA + CPU (RTX 3060/4060 -> Nguồn >= 550W-650W; RTX 4070/4070 Super -> Nguồn >= 650W-750W).
 
-DANH SÁCH SẢN PHẨM THỰC TẾ (SBUY API):
+DANH SÁCH SẢN PHẨM THỰC TẾ (PCHUB):
 ${catalogContext}
 `;
 
@@ -263,7 +263,7 @@ function getSmartLocalAdvisorReply(message: string, catalogContext: string = '')
   }
 
   return `💡 **PCHub AI Advisor xin hỗ trợ tư vấn:**\n` +
-    `Hiện tại PCHub đang có sẵn đầy đủ các linh kiện Sbuy API bao gồm Màn hình, CPU, Card màn hình, RAM, SSD, Bàn phím & Chuột.\n\n` +
+    `Hiện tại PCHub đang có sẵn đầy đủ các linh kiện máy tính bao gồm Màn hình, CPU, Card màn hình, RAM, SSD, Bàn phím & Chuột.\n\n` +
     `👉 Bạn hãy cho biết cụ thể nhu cầu (ví dụ: chuột không dây, màn hình gaming hay ngân sách build PC) để mình hỗ trợ tốt nhất nhé!`;
 }
 

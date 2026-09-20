@@ -776,7 +776,7 @@ export default function CheckoutPage() {
                         boxShadow: loading ? 'none' : '0 4px 15px rgba(37,99,235,0.35)'
                       }}
                     >
-                      {loading ? 'Đang khởi tạo đơn hàng WooCommerce...' : '⚡ Xác Nhận Đặt Hàng →'}
+                      {loading ? 'Đang xử lý đơn hàng...' : '⚡ Xác Nhận Đặt Hàng →'}
                     </button>
                   </div>
                 </div>
