@@ -193,7 +193,7 @@ export default function CategoryDropdownMenu({ variant = 'dark' }: CategoryDropd
               filteredCategories.map((cat) => (
                 <Link
                   key={cat.slug}
-                  href={`/danh-muc/${cat.slug}`}
+                  href={`/search?category=${encodeURIComponent(cat.slug)}`}
                   onClick={() => setIsOpen(false)}
                   style={{
                     display: 'flex',

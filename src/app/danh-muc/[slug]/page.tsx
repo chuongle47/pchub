@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import CategoryFeatured from '@/components/shop/CategoryFeatured';
 import CategoryDropdownMenu from '@/components/layout/CategoryDropdownMenu';
@@ -33,6 +33,7 @@ const SORT_OPTIONS = [
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  redirect(`/search?category=${encodeURIComponent(slug)}`);
   const query = await searchParams;
   const categories = await getCategories();
   const category = categories.find(item => item.slug === slug);
