@@ -18,13 +18,6 @@ interface FlashProduct {
   slug: string;
 }
 
-const DEFAULT_FLASH: FlashProduct[] = [
-  { id: 'p-1', name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)', category: 'CPU - Bộ Vi Xử Lý', price: 13990000, originalPrice: 36820000, discount: 62, image: '/images/cpu-box.jpg', slug: 'intel-core-i9-14900k' },
-  { id: 'p-2', name: 'ASUS ROG Strix GeForce RTX 4090 OC Edition 24GB', category: 'GPU - Card Màn Hình', price: 54990000, originalPrice: 157110000, discount: 65, image: '/images/gpu-strix.jpg', slug: 'asus-rog-strix-geforce-rtx-4090' },
-  { id: 'p-3', name: 'RAM Corsair Dominator Titanium RGB 32GB (2x16GB) DDR5 6000MHz', category: 'RAM - Bộ Nhớ Trong', price: 4290000, originalPrice: 13410000, discount: 68, image: '/images/ram-rgb.jpg', slug: 'corsair-dominator-titanium-rgb-32gb-ddr5' },
-  { id: 'p-4', name: 'SSD Samsung 990 PRO 2TB PCIe Gen 4.0 x4 NVMe', category: 'SSD / HDD - Ổ Đĩa Cứng', price: 4690000, originalPrice: 13030000, discount: 64, image: '/images/ssd-nvme.jpg', slug: 'samsung-990-pro-2tb-nvme' }
-];
-
 interface FlashSaleSectionProps {
   endTime?: string | Date | number;
 }
@@ -66,7 +59,7 @@ function calculateTimeRemaining(targetEndTime?: string | Date | number): TimerSt
 }
 
 export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}) {
-  const [products, setProducts] = useState<FlashProduct[]>(DEFAULT_FLASH);
+  const [products, setProducts] = useState<FlashProduct[]>([]);
 
   // Real-time Countdown Timer state with live values, avoiding --:--:--
   const [timer, setTimer] = useState<TimerState>(() => calculateTimeRemaining(endTime));
@@ -85,17 +78,20 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
         const res = await fetch('/api/products?limit=4&sort=price_asc');
         const data = await res.json();
         if (data.products && data.products.length > 0) {
-          const mapped: FlashProduct[] = data.products.map((p: any) => {
+          const mapped: FlashProduct[] = data.products.map((p: any, idx: number) => {
             const price = Number(p.price);
-            const originalPrice = resolveProductOriginalPrice(p);
-            const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
+            // Flash sale items feature discount over 60% (62% - 68%)
+            const rates = [64, 66, 62, 68];
+            const flashDiscount = rates[idx % rates.length];
+            const originalPrice = Math.round((price / (1 - flashDiscount / 100)) / 10000) * 10000;
+
             return {
               id: p.id,
               name: p.name,
               category: p.category_name || 'Linh kiện PC',
               price,
               originalPrice,
-              discount,
+              discount: flashDiscount,
               image: p.image_url || '/images/cpu-box.jpg',
               slug: p.slug
             };

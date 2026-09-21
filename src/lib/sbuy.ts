@@ -776,7 +776,7 @@ export interface WooCommerceReview {
 export async function fetchSbuyWooCommerceReviews(productId?: string | number): Promise<WooCommerceReview[]> {
   try {
     const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
-    let url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?order=desc&orderby=date&per_page=50`;
+    let url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=50`;
     if (productId) {
       url += `&product=${encodeURIComponent(String(productId))}`;
     }
@@ -828,7 +828,7 @@ export async function createSbuyWooCommerceReview(data: {
         reviewer: data.reviewer,
         reviewer_email: data.reviewer_email,
         rating: data.rating || 5,
-        status: 'approved',
+        status: 'hold',
         verified: true
       })
     });

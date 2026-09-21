@@ -21,37 +21,8 @@ interface HotProduct {
   slug: string;
 }
 
-const DEFAULT_HOT: HotProduct[] = [
-  {
-    id: 'hot-1',
-    badge: 'HOT',
-    badgeColor: 'red',
-    image: '/images/cpu-box.jpg',
-    category: 'CPU - Bộ Vi Xử Lý',
-    name: 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)',
-    specs: 'LGA1700 · 24 Nhân 32 Luồng · 6.0GHz',
-    price: 13990000,
-    originalPrice: 16490000,
-    discount: 15,
-    slug: 'intel-core-i9-14900k'
-  },
-  {
-    id: 'hot-2',
-    badge: 'BÁN CHẠY',
-    badgeColor: 'blue',
-    image: '/images/gpu-strix.jpg',
-    category: 'GPU - Card Màn Hình',
-    name: 'ASUS ROG Strix GeForce RTX 4090 OC Edition 24GB',
-    specs: '24GB GDDR6X · 384-bit · PCI Express 4.0',
-    price: 54990000,
-    originalPrice: 62990000,
-    discount: 13,
-    slug: 'asus-rog-strix-geforce-rtx-4090'
-  }
-];
-
 export default function MostViewed() {
-  const [products, setProducts] = useState<HotProduct[]>(DEFAULT_HOT);
+  const [products, setProducts] = useState<HotProduct[]>([]);
 
   useEffect(() => {
     async function loadHotProducts() {
