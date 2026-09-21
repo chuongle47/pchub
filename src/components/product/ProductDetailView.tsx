@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -104,6 +104,24 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
         .finally(() => setLoadingReviews(false));
     }
   }, [activeTab, product.id]);
+
+  const ratingCounts = useMemo(() => {
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    if (wooReviews.length > 0) {
+      wooReviews.forEach(r => {
+        const star = Math.min(5, Math.max(1, r.rating || 5));
+        counts[star as 1 | 2 | 3 | 4 | 5] += 1;
+      });
+    } else {
+      counts[5] = 18;
+    }
+    return counts;
+  }, [wooReviews]);
+
+  const totalReviewsCount = wooReviews.length > 0 ? wooReviews.length : 18;
+  const avgRating = wooReviews.length > 0
+    ? (Object.entries(ratingCounts).reduce((acc, [star, count]) => acc + Number(star) * count, 0) / totalReviewsCount).toFixed(1)
+    : '5.0';
 
   const handlePostReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1333,7 +1351,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 flexWrap: 'wrap'
               }}>
                 <div style={{ textAlign: 'center', minWidth: '130px' }}>
-                  <div style={{ fontSize: '46px', fontWeight: 900, color: '#0f172a', lineHeight: '1' }}>5.0</div>
+                  <div style={{ fontSize: '46px', fontWeight: 900, color: '#0f172a', lineHeight: '1' }}>{avgRating}</div>
                   <div style={{ display: 'flex', gap: '3px', color: '#eab308', margin: '8px 0', justifyContent: 'center' }}>
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star key={s} size={18} fill="#eab308" color="#eab308" />
@@ -1345,14 +1363,22 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 </div>
 
                 <div style={{ flex: 1, borderLeft: '1px solid #cbd5e1', paddingLeft: '24px', minWidth: '220px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#334155' }}>
-                    <span style={{ fontWeight: 700 }}>5 sao</span>
-                    <div style={{ flex: 1, height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: '100%', height: '100%', background: '#eab308' }} />
-                    </div>
-                    <span style={{ fontWeight: 700 }}>100%</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = ratingCounts[star as 1 | 2 | 3 | 4 | 5] || 0;
+                      const pct = totalReviewsCount > 0 ? Math.round((count / totalReviewsCount) * 100) : 0;
+                      return (
+                        <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#334155' }}>
+                          <span style={{ fontWeight: 700, minWidth: '38px' }}>{star} sao</span>
+                          <div style={{ flex: 1, height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: '#eab308', transition: 'width 0.3s ease' }} />
+                          </div>
+                          <span style={{ fontWeight: 700, minWidth: '40px', textAlign: 'right' }}>{pct}%</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <p style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, margin: '8px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <p style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, margin: '12px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     ✓ Đánh giá đã được xác thực và sắp xếp theo trình tự thời gian từ mới nhất đến cũ nhất.
                   </p>
                 </div>
