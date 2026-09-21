@@ -756,3 +756,91 @@ export async function fetchSbuyWooCommerceCoupon(code: string): Promise<WooComme
   }
   return null;
 }
+
+export interface WooCommerceReview {
+  id: number;
+  date_created: string;
+  date_created_gmt?: string;
+  product_id: number;
+  status: string;
+  reviewer: string;
+  reviewer_email: string;
+  review: string;
+  rating: number;
+  verified: boolean;
+}
+
+/**
+ * Fetch reviews from WooCommerce REST API sorted chronologically (newest first)
+ */
+export async function fetchSbuyWooCommerceReviews(productId?: string | number): Promise<WooCommerceReview[]> {
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    let url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?order=desc&orderby=date&per_page=50`;
+    if (productId) {
+      url += `&product=${encodeURIComponent(String(productId))}`;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      next: { revalidate: 35 }
+    });
+
+    if (!res.ok) {
+      return [];
+    }
+
+    const reviews: WooCommerceReview[] = await res.json();
+    return Array.isArray(reviews) ? reviews : [];
+  } catch (err) {
+    console.warn('WooCommerce reviews fetch error:', err);
+    return [];
+  }
+}
+
+/**
+ * Create a new product review in WooCommerce REST API
+ */
+export async function createSbuyWooCommerceReview(data: {
+  product_id: number;
+  review: string;
+  reviewer: string;
+  reviewer_email: string;
+  rating?: number;
+}): Promise<{ success: boolean; review?: WooCommerceReview; error?: string }> {
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        product_id: Number(data.product_id),
+        review: data.review,
+        reviewer: data.reviewer,
+        reviewer_email: data.reviewer_email,
+        rating: data.rating || 5
+      })
+    });
+
+    if (res.ok) {
+      const review: WooCommerceReview = await res.json();
+      return { success: true, review };
+    } else {
+      const errText = await res.text();
+      console.warn('WooCommerce review post non-OK:', res.status, errText);
+      return { success: false, error: `WooCommerce API HTTP ${res.status}` };
+    }
+  } catch (err: any) {
+    console.error('Failed to post review to WooCommerce API:', err);
+    return { success: false, error: err.message };
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -79,6 +79,68 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   const toggleCompare = useCompareStore(s => s.toggleCompare);
   const isCompared = compareItems.includes(product.slug) || compareItems.includes(product.id);
   const setSlot = useBuilderStore(s => s.setSlot);
+
+  // WooCommerce Reviews Live Sync state
+  const [wooReviews, setWooReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewerName, setReviewerName] = useState('');
+  const [reviewerEmail, setReviewerEmail] = useState('');
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewNotice, setReviewNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab === 'reviews' && product.id) {
+      setLoadingReviews(true);
+      fetch(`/api/reviews?productId=${product.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.reviews)) {
+            setWooReviews(data.reviews);
+          }
+        })
+        .catch(err => console.warn('Reviews fetch warning:', err))
+        .finally(() => setLoadingReviews(false));
+    }
+  }, [activeTab, product.id]);
+
+  const handlePostReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewerName.trim() || !reviewerEmail.trim() || !reviewText.trim()) {
+      alert('Vui lòng nhập đầy đủ Họ tên, Email và Nội dung đánh giá!');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          reviewer: reviewerName.trim(),
+          reviewerEmail: reviewerEmail.trim(),
+          review: reviewText.trim(),
+          rating: reviewRating
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setReviewNotice('Cảm ơn bạn! Đánh giá đã được gửi thành công và đồng bộ lên WooCommerce.');
+        setReviewText('');
+        if (data.review) {
+          setWooReviews(prev => [data.review, ...prev]);
+        }
+      } else {
+        alert(data.error || 'Lỗi gửi đánh giá. Vui lòng thử lại!');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Không thể kết nối đến hệ thống.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const handleToggleWishlist = () => {
     toggleWishlist(product.id);
@@ -1241,57 +1303,226 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
             </div>
           )}
 
-          {/* Tab 3: Customer Reviews */}
+          {/* Tab 3: Customer Reviews & WooCommerce Sync */}
           {activeTab === 'reviews' && (
             <div>
+              {/* Rating Summary Bar */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '24px',
-                padding: '20px',
+                padding: '24px',
                 background: '#f8fafc',
-                borderRadius: '12px',
-                marginBottom: '24px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                marginBottom: '28px',
+                flexWrap: 'wrap'
               }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '42px', fontWeight: 900, color: '#0f172a', lineHeight: '1' }}>5.0</div>
-                  <div style={{ display: 'flex', gap: '2px', color: '#eab308', margin: '6px 0' }}>
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
+                <div style={{ textAlign: 'center', minWidth: '120px' }}>
+                  <div style={{ fontSize: '46px', fontWeight: 900, color: '#0f172a', lineHeight: '1' }}>5.0</div>
+                  <div style={{ display: 'flex', gap: '3px', color: '#eab308', margin: '8px 0', justifyContent: 'center' }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} size={18} fill="#eab308" color="#eab308" />
+                    ))}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>Dựa trên 18 đánh giá</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                    {wooReviews.length > 0 ? `${wooReviews.length} đánh giá WooCommerce` : 'Chưa có bình luận mới'}
+                  </div>
                 </div>
 
-                <div style={{ flex: 1, borderLeft: '1px solid #e2e8f0', paddingLeft: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
-                    <span>5 sao</span>
+                <div style={{ flex: 1, borderLeft: '1px solid #cbd5e1', paddingLeft: '24px', minWidth: '220px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#334155' }}>
+                    <span style={{ fontWeight: 700 }}>5 sao</span>
                     <div style={{ flex: 1, height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                       <div style={{ width: '100%', height: '100%', background: '#eab308' }} />
                     </div>
-                    <span>100%</span>
+                    <span style={{ fontWeight: 700 }}>100%</span>
                   </div>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '8px 0 0 0' }}>
+                    ✅ Đánh giá được duyệt & sắp xếp theo trình tự thời gian từ mới nhất đến cũ nhất.
+                  </p>
                 </div>
               </div>
 
-              {/* Sample Review Card */}
-              <div style={{ borderBottom: '1px solid #f1f5f9', padding: '16px 0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>Nguyễn Văn Anh</strong>
-                  <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Đã mua hàng</span>
-                </div>
-                <div style={{ display: 'flex', gap: '2px', color: '#eab308', marginBottom: '6px' }}>
-                  <Star size={14} fill="#eab308" />
-                  <Star size={14} fill="#eab308" />
-                  <Star size={14} fill="#eab308" />
-                  <Star size={14} fill="#eab308" />
-                  <Star size={14} fill="#eab308" />
-                </div>
-                <p style={{ fontSize: '14px', color: '#334155', margin: 0 }}>
-                  Sản phẩm chính hãng đóng gói rất chắc chắn, giao hàng hỏa tốc trong 2H tại TP.HCM. Chạy mượt và cực kỳ mát!
-                </p>
+              {/* Form to submit new review */}
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: '24px',
+                marginBottom: '32px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
+              }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+                  ✍️ Viết đánh giá & Bình luận sản phẩm
+                </h3>
+
+                {reviewNotice && (
+                  <div style={{
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#15803d',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    marginBottom: '16px'
+                  }}>
+                    ✓ {reviewNotice}
+                  </div>
+                )}
+
+                <form onSubmit={handlePostReview} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {/* Rating selection */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Đánh giá của bạn:</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setReviewRating(star)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                        >
+                          <Star
+                            size={22}
+                            fill={star <= reviewRating ? '#eab308' : '#e2e8f0'}
+                            color={star <= reviewRating ? '#eab308' : '#cbd5e1'}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <input
+                      type="text"
+                      placeholder="Họ và tên của bạn (*)"
+                      value={reviewerName}
+                      onChange={(e) => setReviewerName(e.target.value)}
+                      required
+                      style={{
+                        padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1',
+                        fontSize: '13px', outline: 'none'
+                      }}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Địa chỉ Email (*)"
+                      value={reviewerEmail}
+                      onChange={(e) => setReviewerEmail(e.target.value)}
+                      required
+                      style={{
+                        padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1',
+                        fontSize: '13px', outline: 'none'
+                      }}
+                    />
+                  </div>
+
+                  <textarea
+                    rows={3}
+                    placeholder="Nhập nội dung đánh giá/bình luận sản phẩm của bạn..."
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    required
+                    style={{
+                      padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1',
+                      fontSize: '13px', outline: 'none', resize: 'vertical'
+                    }}
+                  />
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      style={{
+                        background: submittingReview ? '#94a3b8' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '10px 24px',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        cursor: submittingReview ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+                      }}
+                    >
+                      {submittingReview ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá →'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Reviews List Sorted Chronologically */}
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+                  💬 Các bình luận & Đánh giá đã duyệt (Theo trình tự thời gian)
+                </h3>
+
+                {loadingReviews ? (
+                  <p style={{ color: '#64748b', fontSize: '13px' }}>Đang tải danh sách bình luận từ WooCommerce...</p>
+                ) : wooReviews.length === 0 ? (
+                  <div style={{ borderBottom: '1px solid #f1f5f9', padding: '16px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '14px', color: '#0f172a' }}>Nguyễn Văn Anh</strong>
+                      <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Đã mua hàng</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '2px', color: '#eab308', marginBottom: '6px' }}>
+                      {[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} fill="#eab308" color="#eab308" />)}
+                    </div>
+                    <p style={{ fontSize: '14px', color: '#334155', margin: 0 }}>
+                      Sản phẩm chính hãng đóng gói rất chắc chắn, giao hàng hỏa tốc trong 2H tại TP.HCM. Chạy mượt và cực kỳ mát!
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {wooReviews.map((rev) => {
+                      const cleanReviewText = (rev.review || '').replace(/<[^>]*>/g, '').trim();
+                      const formattedDate = rev.date_created
+                        ? new Date(rev.date_created).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : 'Vừa xong';
+
+                      return (
+                        <div key={rev.id} style={{
+                          borderBottom: '1px solid #f1f5f9',
+                          paddingBottom: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <strong style={{ fontSize: '14px', color: '#0f172a' }}>{rev.reviewer || 'Khách hàng PCHub'}</strong>
+                              {rev.verified && (
+                                <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                  ✓ Đã mua hàng
+                                </span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
+                              {formattedDate}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '2px', color: '#eab308' }}>
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={14}
+                                fill={s <= (rev.rating || 5) ? '#eab308' : '#e2e8f0'}
+                                color={s <= (rev.rating || 5) ? '#eab308' : '#cbd5e1'}
+                              />
+                            ))}
+                          </div>
+
+                          <p style={{ fontSize: '14px', color: '#334155', margin: '4px 0 0 0', lineHeight: '1.5' }}>
+                            {cleanReviewText}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
