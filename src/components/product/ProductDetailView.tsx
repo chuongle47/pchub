@@ -112,13 +112,11 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
         const star = Math.min(5, Math.max(1, r.rating || 5));
         counts[star as 1 | 2 | 3 | 4 | 5] += 1;
       });
-    } else {
-      counts[5] = 18;
     }
     return counts;
   }, [wooReviews]);
 
-  const totalReviewsCount = wooReviews.length > 0 ? wooReviews.length : 18;
+  const totalReviewsCount = wooReviews.length;
   const avgRating = wooReviews.length > 0
     ? (Object.entries(ratingCounts).reduce((acc, [star, count]) => acc + Number(star) * count, 0) / totalReviewsCount).toFixed(1)
     : '5.0';
@@ -1502,18 +1500,9 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 {loadingReviews ? (
                   <p style={{ color: '#64748b', fontSize: '13px' }}>Đang tải danh sách bình luận...</p>
                 ) : wooReviews.length === 0 ? (
-                  <div style={{ borderBottom: '1px solid #f1f5f9', padding: '16px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                      <strong style={{ fontSize: '14px', color: '#0f172a' }}>Nguyễn Văn Anh</strong>
-                      <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Đã mua hàng</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '2px', color: '#eab308', marginBottom: '6px' }}>
-                      {[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} fill="#eab308" color="#eab308" />)}
-                    </div>
-                    <p style={{ fontSize: '14px', color: '#334155', margin: 0 }}>
-                      Sản phẩm chính hãng đóng gói rất chắc chắn, giao hàng hỏa tốc trong 2H tại TP.HCM. Chạy mượt và cực kỳ mát!
-                    </p>
-                  </div>
+                  <p style={{ color: '#64748b', fontSize: '14px', fontStyle: 'italic', padding: '16px 0', margin: 0 }}>
+                    Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên đánh giá!
+                  </p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {wooReviews.map((rev) => {
