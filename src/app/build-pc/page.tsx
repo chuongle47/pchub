@@ -476,7 +476,7 @@ export default function BuildPcPage() {
     }
   };
 
-  const getSelectedBuildItems = () => {
+  const getSelectedBuildItems = (multiplier: number = 1) => {
     return components
       .filter(s => s.selected !== null)
       .map(s => ({
@@ -486,7 +486,7 @@ export default function BuildPcPage() {
         image: s.selected!.image,
         category: s.category,
         slug: s.selected!.slug || s.selected!.id,
-        quantity: s.quantity,
+        quantity: (s.quantity || 1) * multiplier,
       }));
   };
 
@@ -498,16 +498,7 @@ export default function BuildPcPage() {
       return;
     }
 
-    const currentCart = useCartStore.getState().items;
-    if (currentCart.length > 0) {
-      setShowCartChoiceModal(true);
-    } else {
-      clearCart();
-      addMultipleItems(itemsToAdd);
-      setCartOpen(true);
-      setNotice(`Đã thêm ${itemsToAdd.length} linh kiện vào giỏ hàng thành công!`);
-      setTimeout(() => setNotice(null), 3000);
-    }
+    setShowCartChoiceModal(true);
   };
 
   const handleDirectCheckout = () => {
@@ -518,47 +509,42 @@ export default function BuildPcPage() {
       return;
     }
 
-    const currentCart = useCartStore.getState().items;
-    if (currentCart.length > 0) {
-      setShowCartChoiceModal(true);
-    } else {
-      clearCart();
-      addMultipleItems(itemsToAdd);
-      router.push('/thanh-toan');
-    }
+    setShowCartChoiceModal(true);
   };
 
-  const handleCheckoutBuildOnly = () => {
-    const itemsToAdd = getSelectedBuildItems();
+  const handleCheckoutBuildOnly = (pcQuantity: number = 1) => {
+    const itemsToAdd = getSelectedBuildItems(pcQuantity);
     clearCart();
     addMultipleItems(itemsToAdd);
     setShowCartChoiceModal(false);
     router.push('/thanh-toan');
   };
 
-  const handleAddToCartBuildOnly = () => {
-    const itemsToAdd = getSelectedBuildItems();
+  const handleAddToCartBuildOnly = (pcQuantity: number = 1) => {
+    const itemsToAdd = getSelectedBuildItems(pcQuantity);
     clearCart();
     addMultipleItems(itemsToAdd);
     setShowCartChoiceModal(false);
     setCartOpen(true);
-    setNotice(`Đã cập nhật giỏ hàng: Chỉ giữ ${itemsToAdd.length} linh kiện PC vừa build!`);
+    const totalAddedCount = itemsToAdd.reduce((sum, i) => sum + i.quantity, 0);
+    setNotice(`Đã cập nhật giỏ hàng: ${pcQuantity > 1 ? `${pcQuantity} bộ PC (` : ''}${totalAddedCount} linh kiện${pcQuantity > 1 ? ')' : ''} vừa build!`);
     setTimeout(() => setNotice(null), 3500);
   };
 
-  const handleCheckoutAll = () => {
-    const itemsToAdd = getSelectedBuildItems();
+  const handleCheckoutAll = (pcQuantity: number = 1) => {
+    const itemsToAdd = getSelectedBuildItems(pcQuantity);
     addMultipleItems(itemsToAdd);
     setShowCartChoiceModal(false);
     router.push('/thanh-toan');
   };
 
-  const handleAddToCartAll = () => {
-    const itemsToAdd = getSelectedBuildItems();
+  const handleAddToCartAll = (pcQuantity: number = 1) => {
+    const itemsToAdd = getSelectedBuildItems(pcQuantity);
     addMultipleItems(itemsToAdd);
     setShowCartChoiceModal(false);
     setCartOpen(true);
-    setNotice(`Đã gộp ${itemsToAdd.length} linh kiện PC vào giỏ hàng thành công!`);
+    const totalAddedCount = itemsToAdd.reduce((sum, i) => sum + i.quantity, 0);
+    setNotice(`Đã gộp ${pcQuantity > 1 ? `${pcQuantity} bộ PC (` : ''}${totalAddedCount} linh kiện${pcQuantity > 1 ? ')' : ''} vào giỏ hàng thành công!`);
     setTimeout(() => setNotice(null), 3500);
   };
 
@@ -1791,7 +1777,7 @@ export default function BuildPcPage() {
       <CartChoiceModal
         isOpen={showCartChoiceModal}
         onClose={() => setShowCartChoiceModal(false)}
-        buildItemsCount={getSelectedBuildItems().length}
+        buildItemsCount={getSelectedBuildItems(1).reduce((sum, i) => sum + i.quantity, 0)}
         buildTotal={totalPrice}
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         cartTotal={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
