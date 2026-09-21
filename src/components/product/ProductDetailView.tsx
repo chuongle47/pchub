@@ -1179,69 +1179,83 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
         {/* Tabbed Content: Specs, Description, Reviews */}
         <div id="product-tabs" style={{
           background: '#ffffff',
-          borderRadius: '16px',
+          borderRadius: '20px',
           border: '1px solid #e2e8f0',
-          padding: '24px',
+          padding: '28px',
           marginBottom: '40px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
           scrollMarginTop: '100px',
         }}>
           
-          {/* Tab Headers */}
+          {/* Modern Pill Tab Headers */}
           <div style={{
-            display: 'flex',
-            borderBottom: '2px solid #f1f5f9',
-            marginBottom: '24px',
-            gap: '8px',
+            display: 'inline-flex',
+            background: '#f1f5f9',
+            padding: '4px',
+            borderRadius: '14px',
+            marginBottom: '28px',
+            gap: '4px',
+            maxWidth: '100%',
+            overflowX: 'auto'
           }}>
             <button
+              type="button"
               onClick={() => setActiveTab('specs')}
               style={{
-                background: 'transparent',
+                background: activeTab === 'specs' ? '#ffffff' : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === 'specs' ? '3px solid var(--color-primary)' : '3px solid transparent',
-                color: activeTab === 'specs' ? 'var(--color-primary)' : '#64748b',
-                fontWeight: 800,
-                fontSize: '15px',
-                padding: '12px 20px',
+                color: activeTab === 'specs' ? '#2563eb' : '#64748b',
+                fontWeight: activeTab === 'specs' ? 800 : 600,
+                fontSize: '14px',
+                padding: '10px 20px',
+                borderRadius: '10px',
                 cursor: 'pointer',
-                marginBottom: '-2px',
+                boxShadow: activeTab === 'specs' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap'
               }}
             >
               📋 Thông số kỹ thuật
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('desc')}
               style={{
-                background: 'transparent',
+                background: activeTab === 'desc' ? '#ffffff' : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === 'desc' ? '3px solid var(--color-primary)' : '3px solid transparent',
-                color: activeTab === 'desc' ? 'var(--color-primary)' : '#64748b',
-                fontWeight: 800,
-                fontSize: '15px',
-                padding: '12px 20px',
+                color: activeTab === 'desc' ? '#2563eb' : '#64748b',
+                fontWeight: activeTab === 'desc' ? 800 : 600,
+                fontSize: '14px',
+                padding: '10px 20px',
+                borderRadius: '10px',
                 cursor: 'pointer',
-                marginBottom: '-2px',
+                boxShadow: activeTab === 'desc' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap'
               }}
             >
               📝 Mô tả chi tiết
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('reviews')}
               style={{
-                background: 'transparent',
+                background: activeTab === 'reviews' ? '#ffffff' : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === 'reviews' ? '3px solid var(--color-primary)' : '3px solid transparent',
-                color: activeTab === 'reviews' ? 'var(--color-primary)' : '#64748b',
-                fontWeight: 800,
-                fontSize: '15px',
-                padding: '12px 20px',
+                color: activeTab === 'reviews' ? '#2563eb' : '#64748b',
+                fontWeight: activeTab === 'reviews' ? 800 : 600,
+                fontSize: '14px',
+                padding: '10px 20px',
+                borderRadius: '10px',
                 cursor: 'pointer',
-                marginBottom: '-2px',
+                boxShadow: activeTab === 'reviews' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap'
               }}
             >
-              ⭐ Đánh giá từ khách hàng
+              ⭐ Đánh giá & Bình luận
             </button>
           </div>
 
@@ -1249,26 +1263,26 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
           {activeTab === 'specs' && (
             <div>
               {specsEntries.length > 0 ? (
-                <div style={{ border: '1px solid #f1f5f9', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ border: '1px solid #e2e8f0', borderRadius: '14px', overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                     <tbody>
                       <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0f172a', width: '30%' }}>Danh mục</td>
-                        <td style={{ padding: '14px 20px', color: '#334155' }}>{categoryName}</td>
+                        <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0f172a', width: '28%' }}>Danh mục sản phẩm</td>
+                        <td style={{ padding: '14px 20px', color: '#2563eb', fontWeight: 700 }}>{categoryName}</td>
                       </tr>
                       <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0f172a' }}>Thương hiệu</td>
-                        <td style={{ padding: '14px 20px', color: '#334155' }}>{brandName}</td>
+                        <td style={{ padding: '14px 20px', color: '#0f172a', fontWeight: 700 }}>{brandName}</td>
                       </tr>
                       {specsEntries.map(([key, val], idx) => (
                         <tr key={key} style={{
                           background: idx % 2 === 0 ? '#f8fafc' : '#ffffff',
                           borderBottom: '1px solid #f1f5f9'
                         }}>
-                          <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0f172a', textTransform: 'capitalize' }}>
+                          <td style={{ padding: '14px 20px', fontWeight: 700, color: '#475569', textTransform: 'capitalize' }}>
                             {key.replace(/_/g, ' ')}
                           </td>
-                          <td style={{ padding: '14px 20px', color: '#334155' }}>
+                          <td style={{ padding: '14px 20px', color: '#1e293b', fontWeight: 500 }}>
                             {Array.isArray(val) ? val.join(', ') : typeof val === 'object' ? JSON.stringify(val) : String(val)}
                           </td>
                         </tr>
@@ -1277,7 +1291,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                   </table>
                 </div>
               ) : (
-                <p style={{ color: '#64748b' }}>Chưa có thông số kỹ thuật chi tiết cho sản phẩm này.</p>
+                <p style={{ color: '#64748b', fontSize: '14px' }}>Chưa có thông số kỹ thuật chi tiết cho sản phẩm này.</p>
               )}
             </div>
           )}
@@ -1312,13 +1326,13 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 alignItems: 'center',
                 gap: '24px',
                 padding: '24px',
-                background: '#f8fafc',
+                background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
                 border: '1px solid #e2e8f0',
                 borderRadius: '16px',
                 marginBottom: '28px',
                 flexWrap: 'wrap'
               }}>
-                <div style={{ textAlign: 'center', minWidth: '120px' }}>
+                <div style={{ textAlign: 'center', minWidth: '130px' }}>
                   <div style={{ fontSize: '46px', fontWeight: 900, color: '#0f172a', lineHeight: '1' }}>5.0</div>
                   <div style={{ display: 'flex', gap: '3px', color: '#eab308', margin: '8px 0', justifyContent: 'center' }}>
                     {[1, 2, 3, 4, 5].map((s) => (
@@ -1326,7 +1340,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                     ))}
                   </div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
-                    {wooReviews.length > 0 ? `${wooReviews.length} đánh giá WooCommerce` : 'Chưa có bình luận mới'}
+                    {wooReviews.length > 0 ? `${wooReviews.length} đánh giá đã duyệt` : 'Chưa có bình luận mới'}
                   </div>
                 </div>
 
@@ -1338,8 +1352,8 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                     </div>
                     <span style={{ fontWeight: 700 }}>100%</span>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '8px 0 0 0' }}>
-                    ✅ Đánh giá được duyệt & sắp xếp theo trình tự thời gian từ mới nhất đến cũ nhất.
+                  <p style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, margin: '8px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ✓ Đánh giá đã được xác thực và sắp xếp theo trình tự thời gian từ mới nhất đến cũ nhất.
                   </p>
                 </div>
               </div>
@@ -1351,7 +1365,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 borderRadius: '16px',
                 padding: '24px',
                 marginBottom: '32px',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
+                boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
               }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
                   ✍️ Viết đánh giá & Bình luận sản phẩm
@@ -1460,7 +1474,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 </h3>
 
                 {loadingReviews ? (
-                  <p style={{ color: '#64748b', fontSize: '13px' }}>Đang tải danh sách bình luận từ WooCommerce...</p>
+                  <p style={{ color: '#64748b', fontSize: '13px' }}>Đang tải danh sách bình luận...</p>
                 ) : wooReviews.length === 0 ? (
                   <div style={{ borderBottom: '1px solid #f1f5f9', padding: '16px 0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
