@@ -228,8 +228,8 @@ export default function CartPage() {
 
                 return (
                   <div key={prodId} className="cart-item-row">
-                    {/* Product */}
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {/* Col 1: Product */}
+                    <div className="cart-col-product">
                       <div style={{
                         width: '72px', height: '72px', flexShrink: 0,
                         background: '#f8fafc', borderRadius: '10px',
@@ -263,9 +263,8 @@ export default function CartPage() {
                       </div>
                     </div>
 
-                    {/* Controls & Subtotal wrap container */}
-                    <div className="cart-item-mobile-actions">
-                      {/* Quantity Selector */}
+                    {/* Col 2: Quantity Selector */}
+                    <div className="cart-col-qty">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
                         <button
                           type="button"
@@ -295,13 +294,15 @@ export default function CartPage() {
                           <Plus size={12} />
                         </button>
                       </div>
+                    </div>
 
-                      {/* Subtotal */}
-                      <div style={{ textAlign: 'right', fontSize: '14px', fontWeight: 900, color: 'var(--color-primary)', fontVariantNumeric: 'tabular-nums' }}>
-                        {(prodPrice * quantity).toLocaleString('vi-VN')}₫
-                      </div>
+                    {/* Col 3: Subtotal */}
+                    <div className="cart-col-total">
+                      {(prodPrice * quantity).toLocaleString('vi-VN')}₫
+                    </div>
 
-                      {/* Delete */}
+                    {/* Col 4: Delete */}
+                    <div className="cart-col-action">
                       <button
                         onClick={() => handleRemoveItem(prodId, prodName)}
                         style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}
@@ -409,14 +410,6 @@ export default function CartPage() {
                       </button>
                     </div>
                     {voucherError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '5px', fontWeight: 600 }}>{voucherError}</p>}
-                    <div style={{ marginTop: '6px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                      {Object.keys(VOUCHER_CODES).map(code => (
-                        <button key={code} onClick={() => { setVoucherInput(code); setVoucherError(''); }}
-                          style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '4px', border: '1px dashed #bfdbfe', background: '#eff6ff', color: 'var(--color-primary)', cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}>
-                          {code}
-                        </button>
-                      ))}
-                    </div>
                   </>
                 )}
               </div>
@@ -449,7 +442,7 @@ export default function CartPage() {
                   textAlign: 'center', cursor: 'pointer', width: '100%',
                 }}
               >
-                Tiến hành thanh toán →
+                Tiến hành thanh toán
               </button>
 
               {/* Payment logos */}

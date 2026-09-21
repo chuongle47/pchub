@@ -2455,26 +2455,54 @@ a:hover {
 }
 
 /* Cart Item Row Responsive Layout */
-.cart-item-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 40px;
-  gap: 12px;
-  padding: 16px 20px;
-  align-items: center;
-  border-bottom: 1px solid #f8fafc;
-}
-
 .cart-header-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 40px;
-  gap: 12px;
-  padding: 10px 20px;
+  grid-template-columns: 2.2fr 1fr 1.2fr 44px;
+  gap: 16px;
+  padding: 12px 20px;
   font-size: 11px;
   font-weight: 700;
   color: #94a3b8;
   text-transform: uppercase;
-  border-bottom: 1px solid #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
   background: #fafafa;
+  align-items: center;
+}
+
+.cart-item-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1.2fr 44px;
+  gap: 16px;
+  padding: 16px 20px;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cart-col-product {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.cart-col-qty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-col-total {
+  text-align: right;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-col-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 640px) {
@@ -2483,18 +2511,26 @@ a:hover {
   }
   .cart-item-row {
     display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 14px !important;
     gap: 12px !important;
   }
-  .cart-item-mobile-actions {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
+  .cart-col-product {
     width: 100% !important;
-    border-top: 1px dashed #f1f5f9 !important;
-    padding-top: 10px !important;
+  }
+  .cart-col-qty {
+    order: 2 !important;
+    justify-content: flex-start !important;
+  }
+  .cart-col-total {
+    order: 3 !important;
+    margin-left: auto !important;
+    padding-right: 8px !important;
+  }
+  .cart-col-action {
+    order: 4 !important;
   }
 }
 
