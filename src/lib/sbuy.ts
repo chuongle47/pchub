@@ -827,7 +827,9 @@ export async function createSbuyWooCommerceReview(data: {
         review: data.review,
         reviewer: data.reviewer,
         reviewer_email: data.reviewer_email,
-        rating: data.rating || 5
+        rating: data.rating || 5,
+        status: 'approved',
+        verified: true
       })
     });
 

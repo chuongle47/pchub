@@ -1379,7 +1379,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                     })}
                   </div>
                   <p style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, margin: '12px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    ✓ Đánh giá đã được xác thực và sắp xếp theo trình tự thời gian từ mới nhất đến cũ nhất.
+                    ✓ Đánh giá đã được xác thực từ khách hàng.
                   </p>
                 </div>
               </div>
@@ -1487,7 +1487,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                         boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
                       }}
                     >
-                      {submittingReview ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá →'}
+                      {submittingReview ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá'}
                     </button>
                   </div>
                 </form>
@@ -1496,7 +1496,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               {/* Reviews List Sorted Chronologically */}
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
-                  💬 Các bình luận & Đánh giá đã duyệt (Theo trình tự thời gian)
+                  💬 Các bình luận & Đánh giá
                 </h3>
 
                 {loadingReviews ? (
