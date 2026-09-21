@@ -75,15 +75,29 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
   useEffect(() => {
     async function loadFlashProducts() {
       try {
-        const res = await fetch('/api/products?limit=4&sort=price_asc');
+        const res = await fetch('/api/products?limit=50');
         const data = await res.json();
         if (data.products && data.products.length > 0) {
-          const mapped: FlashProduct[] = data.products.map((p: any, idx: number) => {
+          // Lọc các sản phẩm trong API có giảm giá (badge 'sale' hoặc có giá gốc cao hơn giá bán)
+          const onSaleProducts = data.products.filter((p: any) => 
+            p.badge === 'sale' || 
+            (p.original_price && Number(p.original_price) > Number(p.price)) ||
+            (p.originalPrice && Number(p.originalPrice) > Number(p.price))
+          );
+
+          // Ưu tiên chọn các sản phẩm giảm giá từ API trước, nếu chưa đủ 4 sản phẩm thì bổ sung các sản phẩm khác
+          const otherProducts = data.products.filter((p: any) => !onSaleProducts.some((s: any) => s.id === p.id));
+          const selected = [...onSaleProducts, ...otherProducts].slice(0, 4);
+
+          const mapped: FlashProduct[] = selected.map((p: any, idx: number) => {
             const price = Number(p.price);
-            // Flash sale items feature discount over 60% (62% - 68%)
-            const rates = [64, 66, 62, 68];
-            const flashDiscount = rates[idx % rates.length];
-            const originalPrice = Math.round((price / (1 - flashDiscount / 100)) / 10000) * 10000;
+            const orig = Number(p.original_price || p.originalPrice || 0);
+
+            // Tính toán mức giảm giá: nếu API đã có mức giảm >= 60% thì giữ nguyên, ngược lại áp dụng mức giảm Flash Sale > 60% (62% - 68%)
+            const currentDiscount = orig > price ? Math.round(((orig - price) / orig) * 100) : 0;
+            const rates = [65, 68, 62, 66];
+            const flashDiscount = currentDiscount >= 60 ? currentDiscount : rates[idx % rates.length];
+            const originalPrice = currentDiscount >= 60 ? orig : Math.round((price / (1 - flashDiscount / 100)) / 10000) * 10000;
 
             return {
               id: p.id,
