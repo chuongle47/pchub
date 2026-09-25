@@ -3,16 +3,18 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Bot, CheckCircle2 } from 'lucide-react';
+import { useUIStore } from '@/lib/store';
 
 export default function HeroSlider() {
+  const setChatOpen = useUIStore((s) => s.setChatOpen);
+
   return (
     <section className="home-hero" style={{
       background: 'linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%)',
       color: '#fff',
-      padding: '48px 0',
+      padding: '48px 0 0',
       position: 'relative',
       overflow: 'hidden',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
     }}>
       {/* Background glow effects */}
       <div style={{
@@ -51,7 +53,7 @@ export default function HeroSlider() {
               WebkitTextFillColor: 'transparent',
               display: 'block',
             }}>
-              AI tư vấn tương thích
+              Tư vấn AI tương thích 24/7
             </span>
           </h1>
 
@@ -62,7 +64,7 @@ export default function HeroSlider() {
             marginBottom: '28px',
             maxWidth: '520px',
           }}>
-            Kiểm tra tương thích linh kiện nhờ AI. Chatbot AI tư vấn tận tình, chuẩn xác theo ngân sách và nhu cầu của bạn.
+            Lựa chọn linh kiện PC chuẩn cấu hình cùng trợ lý Tư vấn AI. Đảm bảo 100% tương thích socket, nguồn và kích thước.
           </p>
 
           {/* Action Buttons */}
@@ -86,12 +88,13 @@ export default function HeroSlider() {
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-hover)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-primary)'; e.currentTarget.style.transform = 'none'; }}
             >
-              Xây dựng PC ngay
+              Build PC ngay
               <ArrowRight size={16} />
             </Link>
 
-            <Link
-              href="/build-pc"
+            <button
+              type="button"
+              onClick={() => setChatOpen(true)}
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
                 color: '#e2e8f0',
@@ -100,7 +103,7 @@ export default function HeroSlider() {
                 borderRadius: '8px',
                 fontWeight: 600,
                 fontSize: '14px',
-                textDecoration: 'none',
+                cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -110,8 +113,8 @@ export default function HeroSlider() {
               onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'; }}
             >
               <Bot size={16} style={{ color: '#38bdf8' }} />
-              Xây dựng PC AI
-            </Link>
+              Tư vấn AI
+            </button>
           </div>
         </div>
 
@@ -135,7 +138,7 @@ export default function HeroSlider() {
           }}>
             <img
               src="/images/hero-pc.jpg"
-              alt="Linh kiện PC chính hãng PCHub"
+              alt="Linh kiện PC chính hãng tại PCHub"
               style={{
                 width: '100%',
                 height: '100%',
@@ -155,6 +158,15 @@ export default function HeroSlider() {
           </div>
         </div>
       </div>
+
+      {/* Gradient bridge → smooth fade from dark hero to section below */}
+      <div style={{
+        height: '40px',
+        background: 'linear-gradient(to bottom, transparent 0%, #ffffff 100%)',
+        marginTop: '16px',
+        position: 'relative',
+        zIndex: 2,
+      }} />
     </section>
   );
 }

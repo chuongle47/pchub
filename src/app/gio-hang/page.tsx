@@ -131,10 +131,10 @@ export default function CartPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>
             <Link href="/" style={{ color: '#94a3b8', textDecoration: 'none' }}>Trang chủ</Link>
             <ChevronRight size={12} />
-            <span style={{ color: '#1e293b', fontWeight: 600 }}>Thanh toán an toàn</span>
+            <span style={{ color: '#1e293b', fontWeight: 600 }}>Giỏ hàng</span>
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            🛒 Thanh toán an toàn
+            🛒 Giỏ hàng của bạn
           </h1>
         </div>
 

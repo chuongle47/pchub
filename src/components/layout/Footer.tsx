@@ -16,7 +16,7 @@ export default function Footer() {
           <div>
             <div style={{ marginBottom: '16px' }}>
               <span style={{ fontSize: '22px', fontWeight: 900, color: '#fff' }}>PCHub</span>
-              <p style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>Linh kiện chính hãng</p>
+              <p style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>Linh kiện PC chính hãng</p>
             </div>
             <p style={{
               fontSize: '13px',
@@ -24,15 +24,15 @@ export default function Footer() {
               lineHeight: '1.7',
               marginBottom: '20px',
             }}>
-              Chuyên cung cấp linh kiện máy tính chính hãng.
-              AI tư vấn tương thích 24/7. Bảo hành 36 tháng.
+              Chuyên cung cấp linh kiện máy tính chính hãng 100%.
+              Tư vấn AI tương thích 24/7. Bảo hành 36 tháng.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { icon: MapPin, text: '123 Nguyễn Trãi, Q.1, TP.HCM' },
-                { icon: Phone, text: '1900-6789 (8:00–22:00)' },
+                { icon: MapPin, text: '123 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh' },
+                { icon: Phone, text: '1900-6789 (8:00 – 22:00 hàng ngày)' },
                 { icon: Mail, text: 'support@pchub.vn' },
-                { icon: Clock, text: 'Mở cửa 7 ngày | 8:00–20:00' },
+                { icon: Clock, text: 'Mở cửa: 8:00 – 20:00 (Thứ 2 – Chủ nhật)' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px' }}>
                   <Icon size={13} style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }} />
@@ -47,8 +47,8 @@ export default function Footer() {
             <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '14px' }}>Cửa hàng PCHub</h3>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                'TP.HCM — 123 Nguyễn Trãi, Q.1',
-                'TP.HCM — 456 Lê Văn Việt, Q.9',
+                'TP. Hồ Chí Minh — 123 Nguyễn Trãi, Quận 1',
+                'TP. Hồ Chí Minh — 456 Lê Văn Việt, Quận 9',
                 'Hà Nội — 789 Cầu Giấy',
                 'Đà Nẵng — 321 Nguyễn Văn Linh',
                 'Cần Thơ — 654 Trần Hưng Đạo',
@@ -66,8 +66,8 @@ export default function Footer() {
                 </li>
               ))}
               <li>
-                <Link href="/support" style={{ color: '#3b82f6', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  Xem tất cả <ArrowRight size={12} />
+                <Link href="/support" aria-label="Xem tất cả địa chỉ cửa hàng PCHub" style={{ color: '#3b82f6', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  Xem tất cả cửa hàng <ArrowRight size={12} />
                 </Link>
               </li>
             </ul>
@@ -75,11 +75,11 @@ export default function Footer() {
 
           {/* COL 3 — Information */}
           <div>
-            <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '14px' }}>Thông tin</h3>
+            <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '14px' }}>Thông tin & Hỗ trợ</h3>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
                 { label: 'Về PCHub', href: '/support#ve-pchub' },
-                { label: 'Liên hệ', href: '/support#lien-he' },
+                { label: 'Liên hệ hỗ trợ', href: '/support#lien-he' },
                 { label: 'Chính sách bảo hành', href: '/support#chinh-sach-bao-hanh' },
                 { label: 'Chính sách đổi trả', href: '/support#chinh-sach-doi-tra' },
                 { label: 'Hướng dẫn mua hàng', href: '/support#huong-dan-mua-hang' },
@@ -103,14 +103,14 @@ export default function Footer() {
             <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '14px' }}>Danh mục sản phẩm</h3>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { label: 'CPU — Bộ xử lý', href: '/search?category=cpu' },
-                { label: 'GPU — Card đồ họa', href: '/search?category=gpu' },
-                { label: 'RAM — Bộ nhớ', href: '/search?category=ram' },
-                { label: 'SSD & Storage', href: '/search?category=ssd' },
-                { label: 'Mainboard', href: '/search?category=mainboard' },
-                { label: 'PSU — Nguồn', href: '/search?category=psu' },
-                { label: '🖥️ PC Builder', href: '/build-pc' },
-                { label: '👥 Cộng đồng', href: '/community' },
+                { label: 'CPU – Bộ vi xử lý', href: '/search?category=cpu' },
+                { label: 'GPU – Card đồ họa', href: '/search?category=gpu' },
+                { label: 'RAM – Bộ nhớ trong', href: '/search?category=ram' },
+                { label: 'SSD & Ổ cứng', href: '/search?category=ssd' },
+                { label: 'Mainboard – Bo mạch chủ', href: '/search?category=mainboard' },
+                { label: 'PSU – Nguồn máy tính', href: '/search?category=psu' },
+                { label: '🖥️ Build PC', href: '/build-pc' },
+                { label: '👥 Cộng đồng PC', href: '/community' },
               ].map(link => (
                 <li key={link.href}>
                   <Link href={link.href} style={{
@@ -139,13 +139,14 @@ export default function Footer() {
           flexWrap: 'wrap',
         }}>
           <div>
-            <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '14px', marginBottom: '3px' }}>Đăng ký nhận tin</h3>
-            <p style={{ fontSize: '12px', color: '#64748b' }}>Giảm ngay 10% đơn đầu tiên + tin tức công nghệ mỗi tuần</p>
+            <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '14px', marginBottom: '3px' }}>Đăng ký nhận thông tin ưu đãi</h3>
+            <p style={{ fontSize: '12px', color: '#64748b' }}>Nhận voucher giảm 10% cho đơn hàng đầu tiên và tin tức công nghệ</p>
           </div>
           <form style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '380px' }} onSubmit={e => e.preventDefault()}>
             <input
               type="email"
-              placeholder="Email của bạn..."
+              placeholder="Nhập email của bạn..."
+              aria-label="Địa chỉ email nhận tin"
               style={{
                 flex: 1,
                 minWidth: 0,
@@ -209,7 +210,7 @@ export default function Footer() {
           </div>
 
           <p style={{ fontSize: '11px', color: '#475569' }}>
-            PCHub © 2026. All Rights Reserved. Hệ thống phân phối linh kiện PC chính hãng & AI Builder.
+            © 2026 PCHub. Bản quyền thuộc về PCHub. Hệ thống phân phối linh kiện PC chính hãng & Build PC bằng AI.
           </p>
 
           {/* Social icons */}

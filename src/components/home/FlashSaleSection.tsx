@@ -89,15 +89,13 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
           const otherProducts = data.products.filter((p: any) => !onSaleProducts.some((s: any) => s.id === p.id));
           const selected = [...onSaleProducts, ...otherProducts].slice(0, 4);
 
-          const mapped: FlashProduct[] = selected.map((p: any, idx: number) => {
+          const mapped: FlashProduct[] = selected.map((p: any) => {
             const price = Number(p.price);
             const orig = Number(p.original_price || p.originalPrice || 0);
 
-            // Tính toán mức giảm giá: nếu API đã có mức giảm >= 60% thì giữ nguyên, ngược lại áp dụng mức giảm Flash Sale > 60% (62% - 68%)
-            const currentDiscount = orig > price ? Math.round(((orig - price) / orig) * 100) : 0;
-            const rates = [65, 68, 62, 66];
-            const flashDiscount = currentDiscount >= 60 ? currentDiscount : rates[idx % rates.length];
-            const originalPrice = currentDiscount >= 60 ? orig : Math.round((price / (1 - flashDiscount / 100)) / 10000) * 10000;
+            // Calculation based on real original price or realistic discount
+            const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
+            const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
 
             return {
               id: p.id,
@@ -105,7 +103,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
               category: p.category_name || 'Linh kiện PC',
               price,
               originalPrice,
-              discount: flashDiscount,
+              discount: discount > 0 ? discount : 12,
               image: p.image_url || '/images/cpu-box.jpg',
               slug: p.slug
             };
@@ -168,9 +166,9 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                   letterSpacing: '0.03em',
                   boxShadow: '0 2px 6px rgba(239, 68, 68, 0.25)',
                 }}>
-                  GIẢM TRÊN 60%
+                  ƯU ĐÃI GIỜ VÀNG
                 </span>
-                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Giảm sốc trên 60% — Số lượng có hạn</span>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Sản phẩm giá tốt theo khung giờ — Số lượng có hạn</span>
               </div>
             </div>
           </div>

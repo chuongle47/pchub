@@ -53,7 +53,7 @@ export default function AIBuilderPreview() {
               marginBottom: '12px',
             }}>
               <Bot size={14} />
-              AI Consultation
+              Tư vấn AI
             </div>
 
             <h2 style={{

@@ -15,7 +15,7 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
-  { label: 'Xây dựng PC', href: '/build-pc', highlight: true },
+  { label: 'Build PC', href: '/build-pc', highlight: true },
   { label: 'Cộng đồng', href: '/community' },
   { label: 'Khuyến mãi', href: '/search?sale=true' },
 ];
@@ -78,6 +78,8 @@ export default function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 200,
+        /* Honor iPhone notch — falls back to 0px on non-notched devices */
+        paddingTop: 'env(safe-area-inset-top, 0px)',
       }}>
         <div className="container" style={{
           display: 'flex',
@@ -117,7 +119,7 @@ export default function Navbar() {
             }}>
               <input
                 type="text"
-                placeholder="Tìm kiếm linh kiện, cấu hình..."
+                placeholder="Tìm kiếm linh kiện, cấu hình PC..."
                 value={searchVal}
                 onChange={(e) => setSearchVal(e.target.value)}
                 style={{
@@ -182,7 +184,7 @@ export default function Navbar() {
                 whiteSpace: 'nowrap',
               }}
             >
-              Xây dựng PC
+              Build PC
             </Link>
 
             {/* Category Dropdown Menu Button (☰ Danh mục sản phẩm) */}
@@ -253,7 +255,7 @@ export default function Navbar() {
             </Link>
 
             {/* AI Advisor */}
-            <button type="button" onClick={() => setChatOpen(true)} aria-label="Mở AI Advisor" title="AI Advisor tư vấn PC" className="nav-ai-btn" style={{
+            <button type="button" onClick={() => setChatOpen(true)} aria-label="Mở Tư vấn AI" title="Tư vấn AI linh kiện PC" className="nav-ai-btn" style={{
               background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
               color: '#fff',
               display: 'flex',
@@ -268,7 +270,7 @@ export default function Navbar() {
               boxShadow: '0 2px 10px rgba(37, 99, 235, 0.3)',
             }}>
               <Bot size={15} />
-              <span className="nav-ai-text">✨ AI Advisor</span>
+              <span className="nav-ai-text">✨ Tư vấn AI</span>
             </button>
 
             {/* Cart button */}

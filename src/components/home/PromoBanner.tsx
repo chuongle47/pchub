@@ -78,7 +78,7 @@ export default function PromoBanner() {
                 fontSize: '13px',
                 padding: '10px 20px',
               }}>
-                🖥️ Thử PC Builder ngay <ArrowRight size={14} />
+                🖥️ Build PC ngay <ArrowRight size={14} />
               </Link>
 
               <Link href="/community" style={{
