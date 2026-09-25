@@ -33,7 +33,6 @@ export default function HeroSlider() {
         margin: '0 auto',
         padding: '0 24px',
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
         gap: '40px',
         alignItems: 'center',
       }}>

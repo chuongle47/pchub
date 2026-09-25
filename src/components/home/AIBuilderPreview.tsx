@@ -33,7 +33,6 @@ export default function AIBuilderPreview() {
           padding: '32px 40px',
           color: '#ffffff',
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
           gap: '32px',
           alignItems: 'center',
           boxShadow: '0 12px 32px rgba(37, 99, 235, 0.25)',

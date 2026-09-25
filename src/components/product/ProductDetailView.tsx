@@ -1432,7 +1432,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '12px' }}>
                     <input
                       type="text"
                       placeholder="Họ và tên của bạn (*)"
@@ -1441,7 +1441,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                       required
                       style={{
                         padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1',
-                        fontSize: '13px', outline: 'none'
+                        fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box'
                       }}
                     />
                     <input
@@ -1452,7 +1452,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                       required
                       style={{
                         padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1',
-                        fontSize: '13px', outline: 'none'
+                        fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box'
                       }}
                     />
                   </div>

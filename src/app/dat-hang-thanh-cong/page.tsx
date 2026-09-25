@@ -184,7 +184,7 @@ export default function OrderSuccessPage() {
             )}
 
             {/* Timeline info */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '12px', marginBottom: '24px' }}>
               {[
                 {
                   icon: <Clock size={17} color="#2563eb" />,
@@ -267,7 +267,7 @@ export default function OrderSuccessPage() {
                 <ChevronRight size={16} />
               </Link>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '12px' }}>
                 <Link href="/" style={{
                   display: 'flex',
                   alignItems: 'center',

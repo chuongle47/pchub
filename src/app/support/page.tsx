@@ -276,7 +276,7 @@ export default function SupportPage() {
         </section>
 
         {/* 4 & 5. WARRANTY & RETURN POLICIES WITH STICKY SIDEBAR */}
-        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '36px', alignItems: 'flex-start', marginBottom: '48px' }}>
+        <div className="support-layout-grid">
           
           {/* Table of Contents */}
           <aside style={{
