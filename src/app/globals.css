@@ -2629,5 +2629,25 @@ header {
   header {
     z-index: 200 !important;
   }
+
+  /* Floating AI Advisor Button Mobile Optimization */
+  .ai-chat-floating-btn {
+    right: 14px !important;
+    bottom: 14px !important;
+    width: 48px !important;
+    height: 48px !important;
+    box-shadow: 0 4px 16px rgba(0, 85, 212, 0.35) !important;
+  }
+
+  /* Product Card Mobile Tight Fit */
+  .pchub-product-card {
+    padding: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .pchub-product-card button {
+    font-size: 11px !important;
+    padding: 7px 6px !important;
+  }
 }
 

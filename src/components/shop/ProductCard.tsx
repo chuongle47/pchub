@@ -77,10 +77,47 @@ export default function ProductCard({
       ? externalIsCompared
       : (compareItems.includes(slug) || (id ? compareItems.includes(id) : false));
 
-  const displayBrand = brand || brandName || category || 'PCHub';
+  // Infer clean brand name from product name, category, or brand prop
+  const resolveCleanBrand = (nameStr: string, catStr?: string, b1?: string, b2?: string) => {
+    const b = b1 || b2;
+    if (b && b !== 'PCHub' && b !== catStr && !b.includes(' - ') && !b.includes(' (')) {
+      return b;
+    }
+    const n = (nameStr || '').toLowerCase();
+    if (n.includes('intel')) return 'Intel';
+    if (n.includes('amd') || n.includes('ryzen')) return 'AMD';
+    if (n.includes('asus') || n.includes('rog') || n.includes('tuf')) return 'ASUS';
+    if (n.includes('msi')) return 'MSI';
+    if (n.includes('gigabyte') || n.includes('aorus')) return 'Gigabyte';
+    if (n.includes('asrock')) return 'ASRock';
+    if (n.includes('corsair')) return 'Corsair';
+    if (n.includes('g.skill') || n.includes('gskill')) return 'G.Skill';
+    if (n.includes('kingston') || n.includes('fury')) return 'Kingston';
+    if (n.includes('deepcool')) return 'Deepcool';
+    if (n.includes('cooler master') || n.includes('coolermaster')) return 'Cooler Master';
+    if (n.includes('logitech')) return 'Logitech';
+    if (n.includes('razer')) return 'Razer';
+    if (n.includes('samsung')) return 'Samsung';
+    if (n.includes('western digital') || n.includes('wd')) return 'Western Digital';
+    if (n.includes('lexar')) return 'Lexar';
+    if (n.includes('crucial')) return 'Crucial';
+    if (n.includes('seagate')) return 'Seagate';
+    if (n.includes('nzxt')) return 'NZXT';
+    if (n.includes('lian li')) return 'Lian Li';
+    if (n.includes('thermalright')) return 'Thermalright';
+    if (n.includes('noctua')) return 'Noctua';
+    if (n.includes('e-dra') || n.includes('edra')) return 'E-Dra';
+
+    if (catStr) {
+      return catStr.split(' - ')[0].split(' & ')[0].split(' (')[0];
+    }
+    return 'PCHub';
+  };
+
+  const displayBrand = resolveCleanBrand(name, category, brand, brandName);
   const displayImage = imgError
-    ? getProductImage({ name, category, brand })
-    : getProductImage({ name, category, brand, image_url: image || images?.[0] });
+    ? getProductImage({ name, category, brand: displayBrand })
+    : getProductImage({ name, category, brand: displayBrand, image_url: image || images?.[0] });
 
   const effectiveOldPrice =
     originalPrice && originalPrice > price
@@ -462,10 +499,11 @@ export default function ProductCard({
               gap: '6px',
               transition: 'all 0.15s ease',
               boxSizing: 'border-box',
+              whiteSpace: 'nowrap',
             }}
           >
             {isAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
-            {isAdded ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+            <span>{isAdded ? 'Đã thêm' : 'Thêm giỏ hàng'}</span>
           </button>
 
           {/* Row 2: Mua ngay */}

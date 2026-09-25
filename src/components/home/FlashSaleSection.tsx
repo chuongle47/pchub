@@ -11,6 +11,7 @@ interface FlashProduct {
   id: string;
   name: string;
   category: string;
+  brand?: string;
   price: number;
   originalPrice: number;
   discount: number;
@@ -101,6 +102,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
               id: p.id,
               name: p.name,
               category: p.category_name || 'Linh kiện PC',
+              brand: p.brand_name || p.brand || undefined,
               price,
               originalPrice,
               discount: discount > 0 ? discount : 12,
@@ -280,7 +282,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
               slug={p.slug}
               image={p.image}
               category={p.category}
-              brand={p.category.split(' - ')[0] || p.category}
+              brand={p.brand}
               price={p.price}
               originalPrice={p.originalPrice}
               discount={p.discount}
