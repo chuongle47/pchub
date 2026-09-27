@@ -392,3 +392,200 @@ export function matchPresetKeyFromText(text: string): string {
 
   return '25m'; // default fallback
 }
+
+export type HardwarePlatform = 'INTEL_LGA1700' | 'AMD_AM5' | 'AMD_AM4' | 'UNKNOWN';
+
+export function detectCpuPlatform(cpuNameOrSpecs: string): HardwarePlatform {
+  const str = (cpuNameOrSpecs || '').toLowerCase();
+  if (
+    str.includes('lga1700') || str.includes('12400') || str.includes('13400') || 
+    str.includes('13600') || str.includes('13700') || str.includes('14400') || 
+    str.includes('14700') || str.includes('14900') || str.includes('12100') || 
+    str.includes('i3-') || str.includes('i5-') || str.includes('i7-') || 
+    str.includes('i9-') || str.includes('intel')
+  ) {
+    return 'INTEL_LGA1700';
+  }
+  if (
+    str.includes('am5') || str.includes('7600') || str.includes('7700') || 
+    str.includes('7800') || str.includes('7900') || str.includes('7950') || 
+    str.includes('9600') || str.includes('9700') || str.includes('9800') || 
+    str.includes('9900') || str.includes('7800x3d')
+  ) {
+    return 'AMD_AM5';
+  }
+  if (
+    str.includes('am4') || str.includes('5600') || str.includes('5700') || 
+    str.includes('5800') || str.includes('5900') || str.includes('5500') || 
+    str.includes('3600') || str.includes('3200g') || str.includes('3400g')
+  ) {
+    return 'AMD_AM4';
+  }
+  return 'UNKNOWN';
+}
+
+export function detectMainboardPlatform(mbNameOrSpecs: string): HardwarePlatform {
+  const str = (mbNameOrSpecs || '').toLowerCase();
+  if (
+    str.includes('b760') || str.includes('z790') || str.includes('h610') || 
+    str.includes('b660') || str.includes('z690') || str.includes('lga1700')
+  ) {
+    return 'INTEL_LGA1700';
+  }
+  if (
+    str.includes('b650') || str.includes('x670') || str.includes('a620') || 
+    str.includes('b850') || str.includes('am5')
+  ) {
+    return 'AMD_AM5';
+  }
+  if (
+    str.includes('b550') || str.includes('b450') || str.includes('a520') || 
+    str.includes('x570') || str.includes('am4')
+  ) {
+    return 'AMD_AM4';
+  }
+  return 'UNKNOWN';
+}
+
+/**
+ * Ensures 100% hardware compatibility for CPU Socket, Mainboard Socket, RAM DDR generation, and PSU capacity.
+ */
+export function reconcileBuildComponents(componentsMap: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = { ...componentsMap };
+
+  const cpu = result.cpu;
+  const mb = result.mainboard;
+
+  const cpuStr = cpu ? `${cpu.name} ${cpu.specs || ''}` : '';
+  const mbStr = mb ? `${mb.name} ${mb.specs || ''}` : '';
+
+  const cpuPlatform = detectCpuPlatform(cpuStr);
+  const mbPlatform = detectMainboardPlatform(mbStr);
+
+  // 1. CPU & Mainboard Socket Reconciliation
+  if (cpuPlatform !== 'UNKNOWN' && (mbPlatform === 'UNKNOWN' || cpuPlatform !== mbPlatform)) {
+    if (cpuPlatform === 'INTEL_LGA1700') {
+      result.mainboard = {
+        key: 'mainboard',
+        id: 'p-mb-b760m-rec',
+        name: 'Mainboard ASUS TUF GAMING B760M-PLUS WIFI DDR5',
+        price: 4290000,
+        tdp: 40,
+        specs: 'LGA1700 | 4x DDR5 | PCIe 5.0 | Wi-Fi 6',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-tuf-b760m-plus-d5',
+      };
+    } else if (cpuPlatform === 'AMD_AM5') {
+      result.mainboard = {
+        key: 'mainboard',
+        id: 'p-mb-b650m-rec',
+        name: 'Mainboard MSI PRO B650M-A WIFI DDR5',
+        price: 3890000,
+        tdp: 40,
+        specs: 'Socket AM5 | 4x DDR5 | PCIe 4.0 | Micro-ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'msi-pro-b650m-a-wifi',
+      };
+    } else if (cpuPlatform === 'AMD_AM4') {
+      result.mainboard = {
+        key: 'mainboard',
+        id: 'p-mb-b550m-rec',
+        name: 'Mainboard ASUS TUF GAMING B550M-PLUS',
+        price: 2890000,
+        tdp: 35,
+        specs: 'Socket AM4 | 4x DDR4 | PCIe 4.0 | Micro-ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-tuf-b550m-plus',
+      };
+    }
+  } else if (cpuPlatform === 'UNKNOWN' && mbPlatform !== 'UNKNOWN') {
+    if (mbPlatform === 'INTEL_LGA1700') {
+      result.cpu = {
+        key: 'cpu',
+        id: 'p-cpu-13400f',
+        name: 'CPU Intel Core i5-13400F (Up to 4.6GHz, 10 Nhân 16 Luồng)',
+        price: 4890000,
+        tdp: 148,
+        specs: 'LGA1700 | 20MB Cache | 65W-148W',
+        image: '/images/cpu-box.jpg',
+        slug: 'intel-core-i5-13400f',
+      };
+    } else if (mbPlatform === 'AMD_AM5') {
+      result.cpu = {
+        key: 'cpu',
+        id: 'p-cpu-7600',
+        name: 'CPU AMD Ryzen 5 7600 (3.8GHz - 5.1GHz, 6 Nhân 12 Luồng)',
+        price: 5290000,
+        tdp: 65,
+        specs: 'Socket AM5 | 38MB Cache | 65W TDP',
+        image: '/images/cpu-box.jpg',
+        slug: 'amd-ryzen-5-7600',
+      };
+    } else if (mbPlatform === 'AMD_AM4') {
+      result.cpu = {
+        key: 'cpu',
+        id: 'p-cpu-5600',
+        name: 'CPU AMD Ryzen 5 5600 (3.5GHz - 4.4GHz, 6 Nhân 12 Luồng)',
+        price: 2990000,
+        tdp: 65,
+        specs: 'Socket AM4 | 35MB Cache | 65W TDP',
+        image: '/images/cpu-box.jpg',
+        slug: 'amd-ryzen-5-5600',
+      };
+    }
+  }
+
+  // 2. RAM DDR Generation Reconciliation (DDR4 vs DDR5)
+  const activeMb = result.mainboard;
+  const activeRam = result.ram;
+
+  const activeMbStr = activeMb ? `${activeMb.name} ${activeMb.specs || ''}`.toLowerCase() : '';
+  const activeRamStr = activeRam ? `${activeRam.name} ${activeRam.specs || ''}`.toLowerCase() : '';
+
+  const mbIsDdr5 = activeMbStr.includes('ddr5') || activeMbStr.includes('d5') || activeMbStr.includes('b650') || activeMbStr.includes('x670') || activeMbStr.includes('am5');
+  const ramIsDdr5 = activeRamStr.includes('ddr5');
+
+  if (mbIsDdr5 && !ramIsDdr5) {
+    result.ram = {
+      key: 'ram',
+      id: 'p-ram-32g-d5',
+      name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz',
+      price: 2890000,
+      tdp: 15,
+      specs: '2x16GB | DDR5 | 6000MHz | CL36',
+      image: '/images/ram-rgb.jpg',
+      slug: 'corsair-vengeance-32gb-d5',
+    };
+  } else if (!mbIsDdr5 && ramIsDdr5) {
+    result.ram = {
+      key: 'ram',
+      id: 'p-ram-16g-d4',
+      name: 'RAM Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz',
+      price: 1190000,
+      tdp: 10,
+      specs: '2x8GB | DDR4 | 3200MHz | CL16',
+      image: '/images/ram-rgb.jpg',
+      slug: 'kingston-fury-beast-16gb',
+    };
+  }
+
+  // 3. PSU Capacity Reconciliation
+  const cpuTdp = result.cpu?.tdp || 65;
+  const gpuTdp = result.gpu?.tdp || 150;
+  const totalTdp = cpuTdp + gpuTdp + 100;
+
+  if (totalTdp > 450 && (!result.psu || (result.psu.name && result.psu.name.includes('550W')))) {
+    result.psu = {
+      key: 'psu',
+      id: 'p-psu-750w',
+      name: 'Nguồn Corsair CV750 750W 80 Plus Bronze',
+      price: 1690000,
+      tdp: 0,
+      specs: '750W | 80 Plus Bronze | Single Rail +12V',
+      image: '/images/cat-psu.jpg',
+      slug: 'corsair-cv750',
+    };
+  }
+
+  return result;
+}

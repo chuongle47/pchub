@@ -15,7 +15,7 @@ import ComponentSelectorModal, { getProductAiCompatibilityInfo } from '@/compone
 import CompatibilityReportModal from '@/components/builder/CompatibilityReportModal';
 import CartChoiceModal from '@/components/builder/CartChoiceModal';
 import { CompatibilityReport } from '@/lib/gemini';
-import seed from '@/lib/seed.json';
+import { reconcileBuildComponents } from '@/lib/buildPresets';
 
 const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
   cpu: '/images/cpu-box.jpg',
@@ -210,8 +210,9 @@ export default function BuildPcPage() {
   useEffect(() => {
     const applyAiPreset = (preset: any) => {
       if (!preset || !preset.components) return;
+      const reconciledMap = reconcileBuildComponents(preset.components);
       setComponents(prev => prev.map(slot => {
-        const item = preset.components[slot.key];
+        const item = reconciledMap[slot.key];
         if (item) {
           return {
             ...slot,
