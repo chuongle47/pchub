@@ -16,6 +16,7 @@ import CompatibilityReportModal from '@/components/builder/CompatibilityReportMo
 import CartChoiceModal from '@/components/builder/CartChoiceModal';
 import { CompatibilityReport } from '@/lib/gemini';
 import { reconcileBuildComponents } from '@/lib/buildPresets';
+import seed from '@/lib/seed.json';
 
 const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
   cpu: '/images/cpu-box.jpg',
