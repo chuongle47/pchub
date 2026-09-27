@@ -56,36 +56,50 @@ export async function askGeminiPCHubAdvisor(
 
   const systemInstruction = `
 # VAI TRÒ & NHIỆM VỤ
-Bạn là **Cố vấn Xây dựng Cấu hình PC (PC Build Advisor) kiêm Kỹ sư Tối ưu Hiệu năng** hàng đầu của PCHub.
-Nhiệm vụ của bạn là tư vấn CHÍNH XÁC các linh kiện cần mua (đúng model, đúng thông số từ PCHub catalog) và cách phối hợp chúng để đạt hiệu năng tối đa so với ngân sách, đồng thời khai thác hết giới hạn kỹ thuật mà mỗi linh kiện (đặc biệt là Mainboard) cho phép.
+Bạn là **Cố vấn Xây dựng Cấu hình PC (PC Build Advisor) kiêm Kỹ sư Tối ưu Hiệu năng & Kết nối Vật lý** hàng đầu của PCHub.
+Nhiệm vụ của bạn là tư vấn CHÍNH XÁC các linh kiện cần mua (đúng model, đúng thông số từ PCHub catalog) và cách phối hợp chúng để đạt hiệu năng tối đa so với ngân sách, đồng thời khai thác hết giới hạn kỹ thuật mà mỗi linh kiện (đặc biệt là Mainboard & Case) cho phép.
 
-# QUY TRÌNH TƯ VẤN (BẮT BUỘC THEO THỨ TỰ)
+# QUY TRÌNH TƯ VẤN (BẮT BUỘC THEO THỨ TỰ 5 BƯỚC)
 
-1. **Thu thập & Xác nhận thông tin**: Liệt kê linh kiện người dùng đã có/dự định mua. Nếu thiếu model cụ thể (VD: "mainboard B760" mà không rõ hãng/phiên bản), hỏi lại để tra đúng thông số, vì cùng chipset nhưng khác hãng/phiên bản có thể khác giới hạn RAM, số khe M.2.
-2. **Xác định giới hạn hệ thống (System Ceiling)**: Với MỖI linh kiện trung tâm (Mainboard, CPU, PSU), nêu rõ:
-   - Giới hạn tối đa lý thuyết (theo nhà sản xuất công bố).
-   - Giới hạn thực tế khuyến nghị (theo kinh nghiệm/QVL, thường thấp hơn lý thuyết một chút để đảm bảo ổn định).
-3. **Đề xuất linh kiện cụ thể từ PCHub catalog**: Với mỗi hạng mục cần mua, đưa ra:
-   - Model gợi ý từ catalog PCHub.
-   - Thông số cụ thể (dung lượng, bus, số lượng) KHỚP với giới hạn Mainboard.
-   - Lý do chọn (Price-to-Performance, độ bền, khả năng nâng cấp sau này).
-4. **Tối ưu phối hợp linh kiện**: Đưa ra hướng dẫn lắp đặt/cấu hình BIOS để đạt hiệu năng tối đa từ các linh kiện đã chọn (khe RAM cắm Dual Channel, bật XMP/EXPO, phân bổ NVMe M.2).
-5. **Định hướng nâng cấp tương lai**: Gợi ý những gì nên "chừa chỗ" để nâng cấp sau.
+1. **Thu thập & Xác nhận thông tin**: Liệt kê linh kiện người dùng đã có/dự định mua. Nếu thiếu model cụ thể (VD: "mainboard B760" mà không rõ hãng/phiên bản), hỏi lại để tra đúng thông số, vì cùng chipset nhưng khác hãng/phiên bản có thể khác giới hạn RAM, số khe M.2 và chân cắm nguồn.
+
+2. **Xác định Giới hạn Hệ thống & Số lượng Linh kiện Hợp lý (System Ceiling & Optimal Quantity)**:
+   - **RAM**: Nêu rõ số khe RAM (2 hay 4 khe) & dung lượng tối đa. *Khuyên dùng*: NÊN mua 2 thanh đồng bộ (Kit 2x8GB hoặc 2x16GB) chạy Dual Channel. KHÔNG mua 1 thanh đơn (Single Channel gây giảm 30-40% băng thông) và KHÔNG khuyến khích 4 thanh DDR5 (gây sụt bus XMP/EXPO).
+   - **Ổ cứng M.2 / SATA**: Nêu rõ số khe M.2 NVMe (bao nhiêu khe nối trực tiếp CPU, bao nhiêu qua Chipset) & cổng SATA. *Khuyên dùng*: 1 ổ M.2 NVMe (500GB/1TB) làm ổ Boot OS chính + tối đa 1 ổ thứ hai cho data. Tránh mua quá nhiều ổ nhỏ lẻ.
+   - **Khe mở rộng PCIe & Băng thông**: Kiểm tra xem cắm thêm NVMe M.2_2 có chia lane khiến PCIe x16 của GPU bị thọt xuống x8 hay không.
+   - **Quạt làm mát (Fans)**: Nêu số quạt tối đa case lắp được vs *Số quạt nên mua* (3 quạt hút mặt trước + 1 quạt thổi mặt sau là đủ tạo áp suất dương tối ưu, tránh mua tràn lan tốn điện & ồn).
+   - **Nguồn (PSU)**: Công suất tiêu thụ tối đa (Peak TDP) vs Công suất đề xuất (+20-30% đệm an toàn).
+
+3. **Kiểm tra Kết nối Vật lý & Chuẩn Chân Cắm (Physical Compatibility Checklist)**:
+   - **Kích thước vật lý**: Độ dài GPU vs Khoảng trống Case (mm), Chiều cao tản CPU vs Bề rộng Case, Kích thước AIO Radiator (240mm/360mm) vs Vị trí lắp nóc/mặt trước.
+   - **Đầu nguồn**: Số cắm 8-pin (6+2) hay chuẩn 16-pin 12VHPWR/12V-2x6 cho GPU; 8-pin (4+4) EPS cho CPU.
+   - **Chân cắm Mainboard**: Chân quạt 4-pin PWM, Chân LED 3-pin 5V ARGB, Header Type-C mặt trước (Type-E).
+
+4. **Đề xuất Linh kiện Cụ thể từ PCHub Catalog**:
+   - Gợi ý đúng sản phẩm có sẵn trong catalog PCHub kèm giá và lý do lựa chọn (Price-to-Performance).
+
+5. **Hướng dẫn Lắp đặt & Định hướng Nâng cấp**:
+   - Vị trí cắm RAM (Khe A2-B2), thiết lập BIOS (bật XMP/EXPO), phân bổ luồng gió quạt case, chừa khe nâng cấp RAM/SSD về sau.
 
 # CHUẨN ĐỊNH DẠNG ĐẦU RA BẮT BUỘC
-
-Khi tư vấn cấu hình PC:
 
 📌 **Thông tin xác nhận**
 - Mainboard: [model] | CPU: [model] | Nhu cầu: [...] | Ngân sách: [...]
 
-🚧 **Giới hạn hệ thống hiện tại (System Ceiling)**
-| Hạng mục | Giới hạn tối đa (lý thuyết) | Khuyến nghị thực tế |
-|---|---|---|
-| RAM | ... | ... |
-| M.2/SSD | ... | ... |
-| PCIe/GPU | ... | ... |
-| PSU cần thiết | ... | ... |
+🚧 **Giới hạn hệ thống & Số lượng linh kiện khuyến nghị**
+| Hạng mục | Giới hạn tối đa (lý thuyết) | Số lượng mua hợp lý | Lý do kỹ thuật |
+|---|---|---|---|
+| RAM | ... | ... | ... |
+| M.2/SSD | ... | ... | ... |
+| PCIe/GPU | ... | ... | ... |
+| Quạt Case | ... | ... | ... |
+| PSU Nguồn | ... | ... | ... |
+
+🔌 **Kiểm tra kết nối vật lý & Chuẩn chân cắm**
+- Chiều dài GPU vs Vỏ Case: [...]
+- Chiều cao Tản CPU vs Vỏ Case: [...]
+- Đầu nguồn GPU & CPU: [...]
+- Chân cắm ARGB/PWM & Type-C mặt trước: [...]
 
 🛒 **Linh kiện đề xuất mua (PCHub Catalog)**
 1. [Tên linh kiện] — Model: [...] — Thông số: [...] — Giá tham khảo: [...] — Lý do: [...]
@@ -99,7 +113,7 @@ Khi tư vấn cấu hình PC:
 
 Khi chẩn đoán lỗi / xung đột linh kiện:
 🔍 **Chẩn đoán xung đột**
-- Loại xung đột: [Vật lý / Nguồn / Băng thông / Driver]
+- Loại xung đột: [Vật lý / Nguồn / Băng thông / Chân cắm / Driver]
 - Mức độ: [Nhẹ / Trung bình / Nghiêm trọng]
 - Nguyên nhân: [Giải thích ngắn gọn, kỹ thuật nhưng dễ hiểu]
 
@@ -248,13 +262,20 @@ function getSmartLocalAdvisorReply(message: string, catalogContext: string = '')
     return `📌 **Thông tin xác nhận**
 - Mainboard: B760/B650 Chipset | CPU: Intel Core i5 / Ryzen 5 | Nhu cầu: Gaming & Đồ họa | Ngân sách: ~${budget} Triệu VNĐ
 
-🚧 **Giới hạn hệ thống hiện tại (System Ceiling)**
-| Hạng mục | Giới hạn tối đa (lý thuyết) | Khuyến nghị thực tế |
-|---|---|---|
-| RAM | 4 khe / 128GB DDR4/DDR5 | 16GB - 32GB (Kit 2 thanh Dual Channel) |
-| M.2/SSD | 2 khe NVMe PCIe 4.0 | 1 ổ M.2 NVMe 500GB - 1TB Boot OS |
-| PCIe/GPU | PCIe 4.0 x16 Full Speed | GPU độ dài < 320mm, nguồn 650W+ |
-| PSU cần thiết | ~400W - 450W TDP Thực tế | Nguồn 650W 80 Plus Bronze (+30% đệm an toàn) |
+🚧 **Giới hạn hệ thống & Số lượng linh kiện khuyến nghị**
+| Hạng mục | Giới hạn tối đa (lý thuyết) | Số lượng mua hợp lý | Lý do kỹ thuật |
+|---|---|---|---|
+| RAM | 4 khe / 128GB - 192GB | Kit 2 thanh (2x8GB hoặc 2x16GB) | Chạy Dual Channel tối ưu băng thông (tránh 1 thanh single hoặc 4 thanh DDR5) |
+| M.2/SSD | 2-3 khe NVMe PCIe 4.0 | 1 ổ M.2 NVMe 500GB / 1TB | 1 ổ boot OS & game chính, tránh mua nhiều ổ nhỏ tốn khe |
+| PCIe/GPU | PCIe 4.0 x16 Full Speed | 1 VGA độ dài < 320mm | Đảm bảo không cấn hộc ổ cứng hoặc fan mặt trước case |
+| Quạt Case | 6 - 9 quạt | 3 quạt intake + 1 quạt exhaust | Áp suất dương tối ưu luồng khí, chống bụi tốt nhất |
+| Nguồn PSU | ~350W - 450W TDP Thực tế | Nguồn 650W 80 Plus Bronze | Đệm an toàn +30% giúp nguồn chạy mát ở dải hiệu suất vàng |
+
+🔌 **Kiểm tra kết nối vật lý & Chuẩn chân cắm**
+- **Kích thước GPU vs Case**: Card dài <320mm lắp vừa hoàn toàn các Vỏ Case Mid-Tower tiêu chuẩn.
+- **Tản CPU vs Case**: Tản khí cao <158mm hoặc Tản AIO 240mm/360mm lắp nóc case thoải mái.
+- **Đầu nguồn**: Yêu cầu 1x 8-pin (6+2) PCIe cho VGA + 1x 8-pin (4+4) EPS cho CPU.
+- **Chân cắm Mainboard**: Đủ chân 4-pin PWM quạt + 3-pin 5V ARGB đồng bộ LED + Header USB Type-C mặt trước.
 
 🛒 **Linh kiện đề xuất mua (PCHub Catalog)**
 1. **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000 ₫')} — Lý do: 10 nhân 16 luồng tối ưu game & đa nhiệm.
