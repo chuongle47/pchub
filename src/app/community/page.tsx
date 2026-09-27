@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Heart, Search, Plus, Sparkles, MessageSquare, 
   Cpu, Layers, Eye, Share2, ThumbsUp 
 } from 'lucide-react';
 
 export default function CommunityPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'builds' | 'news'>('builds');
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,6 +65,24 @@ export default function CommunityPage() {
       performance: '🎮 Cấu hình quốc dân tối ưu ngân sách, chiến tốt toàn bộ game eSports & AAA ở độ phân giải Full HD High/Ultra Settings (60 - 144+ FPS).',
     }
   ];
+
+  const handleLoadCommunityBuild = (b: typeof builds[0]) => {
+    const preset = {
+      title: b.title,
+      budgetLabel: b.price,
+      components: {
+        cpu: b.cpu,
+        gpu: b.gpu,
+        ram: b.ram,
+      }
+    };
+    try {
+      localStorage.setItem('pchub_pending_ai_preset', JSON.stringify(preset));
+    } catch (e) {
+      console.error('Failed to save pending community preset:', e);
+    }
+    router.push('/build-pc');
+  };
 
   return (
     <div style={{ background: '#f8fafc', color: '#1e293b', minHeight: '100vh', padding: '40px 0 80px' }}>
@@ -340,20 +360,26 @@ export default function CommunityPage() {
                     {b.price}
                   </span>
 
-                  <Link 
-                    href="/build-pc"
+                  <button 
+                    type="button"
+                    onClick={() => handleLoadCommunityBuild(b)}
                     style={{
-                      background: '#f1f5f9',
-                      color: '#0f172a',
-                      padding: '7px 14px',
-                      borderRadius: '6px',
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
                       fontSize: '12.5px',
                       fontWeight: 700,
-                      textDecoration: 'none'
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    Xem chi tiết
-                  </Link>
+                    Xem chi tiết build →
+                  </button>
                 </div>
 
               </div>
