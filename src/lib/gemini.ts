@@ -245,12 +245,30 @@ function getSmartLocalAdvisorReply(message: string, catalogContext: string = '')
       return `**${fallbackName}** — **${fallbackPrice}**`;
     };
 
-    return `💻 **Cấu hình PC gợi ý theo ngân sách ~${budget} Triệu VNĐ:**\n\n` +
-      `• **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000 ₫')}\n` +
-      `• **VGA**: ${getFormattedItem(gpus, 'NVIDIA GeForce RTX 4060 8GB', '8.490.000 ₫')}\n` +
-      `• **RAM**: ${getFormattedItem(rams, 'Kingston FURY Beast 16GB DDR4', '990.000 ₫')}\n` +
-      `• **SSD**: ${getFormattedItem(ssds, 'SSD NVMe PCIe 500GB', '990.000 ₫')}\n\n` +
-      `🎯 **Đánh giá hiệu năng**: Cân mượt các tựa game Hot (Valorant, CS2, GTA V, Naraka), xử lý đồ họa & công việc cực kỳ ổn định!`;
+    return `📌 **Thông tin xác nhận**
+- Mainboard: B760/B650 Chipset | CPU: Intel Core i5 / Ryzen 5 | Nhu cầu: Gaming & Đồ họa | Ngân sách: ~${budget} Triệu VNĐ
+
+🚧 **Giới hạn hệ thống hiện tại (System Ceiling)**
+| Hạng mục | Giới hạn tối đa (lý thuyết) | Khuyến nghị thực tế |
+|---|---|---|
+| RAM | 4 khe / 128GB DDR4/DDR5 | 16GB - 32GB (Kit 2 thanh Dual Channel) |
+| M.2/SSD | 2 khe NVMe PCIe 4.0 | 1 ổ M.2 NVMe 500GB - 1TB Boot OS |
+| PCIe/GPU | PCIe 4.0 x16 Full Speed | GPU độ dài < 320mm, nguồn 650W+ |
+| PSU cần thiết | ~400W - 450W TDP Thực tế | Nguồn 650W 80 Plus Bronze (+30% đệm an toàn) |
+
+🛒 **Linh kiện đề xuất mua (PCHub Catalog)**
+1. **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000 ₫')} — Lý do: 10 nhân 16 luồng tối ưu game & đa nhiệm.
+2. **VGA**: ${getFormattedItem(gpus, 'NVIDIA GeForce RTX 4060 8GB', '8.490.000 ₫')} — Lý do: Cân mượt các tựa game AAA ở độ phân giải Full HD/2K.
+3. **RAM**: ${getFormattedItem(rams, 'Kingston FURY Beast 16GB (2x8GB) DDR4/DDR5', '990.000 ₫')} — Lý do: Chạy Dual Channel kích hoạt tối đa băng thông.
+4. **SSD**: ${getFormattedItem(ssds, 'SSD NVMe PCIe 500GB', '990.000 ₫')} — Lý do: Tốc độ đọc/ghi >3000MB/s giúp nạp game cực nhanh.
+
+⚙️ **Hướng dẫn lắp đặt & tối ưu**
+- Lắp 2 thanh RAM vào khe 2 và khe 4 (A2-B2) để kích hoạt chuẩn Dual-Channel.
+- Bật tính năng XMP/EXPO trong BIOS để RAM chạy đúng Bus thiết kế.
+
+🔮 **Định hướng nâng cấp sau này**
+- Bo mạch chủ dư 2 khe RAM để nâng cấp thêm lên 32GB/64GB khi cần.
+- Nguồn công suất 650W đủ đệm tải nâng cấp VGA RTX 4070/4070 Super về sau.`;
   }
 
   if (catalogLines.length > 0) {
