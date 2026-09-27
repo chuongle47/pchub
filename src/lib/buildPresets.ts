@@ -393,19 +393,55 @@ export function matchPresetKeyFromText(text: string): string {
   return '25m'; // default fallback
 }
 
-export type HardwarePlatform = 'INTEL_LGA1700' | 'AMD_AM5' | 'AMD_AM4' | 'UNKNOWN';
+export type HardwarePlatform = 'INTEL_LGA1851' | 'INTEL_LGA1700' | 'INTEL_LGA1200' | 'INTEL_LGA1151' | 'AMD_AM5' | 'AMD_AM4' | 'UNKNOWN';
 
 export function detectCpuPlatform(cpuNameOrSpecs: string): HardwarePlatform {
   const str = (cpuNameOrSpecs || '').toLowerCase();
+  
+  // 1. LGA1851 (Intel Core Ultra Series 2 / Arrow Lake)
   if (
-    str.includes('lga1700') || str.includes('12400') || str.includes('13400') || 
-    str.includes('13600') || str.includes('13700') || str.includes('14400') || 
-    str.includes('14700') || str.includes('14900') || str.includes('12100') || 
-    str.includes('i3-') || str.includes('i5-') || str.includes('i7-') || 
-    str.includes('i9-') || str.includes('intel')
+    str.includes('lga1851') || str.includes('lga 1851') || str.includes('ultra 9') || 
+    str.includes('ultra 7') || str.includes('ultra 5') || str.includes('285k') || 
+    str.includes('265k') || str.includes('245k')
+  ) {
+    return 'INTEL_LGA1851';
+  }
+
+  // 2. LGA1200 (Intel Gen 10 & 11: 10100, 10400, 10700, 10900, 11400, 11700, 11900)
+  if (
+    str.includes('lga1200') || str.includes('lga 1200') || str.includes('10100') || 
+    str.includes('10400') || str.includes('10500') || str.includes('10600') || 
+    str.includes('10700') || str.includes('10900') || str.includes('11400') || 
+    str.includes('11500') || str.includes('11600') || str.includes('11700') || 
+    str.includes('11900')
+  ) {
+    return 'INTEL_LGA1200';
+  }
+
+  // 3. LGA1151 (Intel Gen 8 & 9: 8100, 8400, 8700, 9100, 9400, 9700, 9900)
+  if (
+    str.includes('lga1151') || str.includes('lga 1151') || str.includes('8100') || 
+    str.includes('8400') || str.includes('8700') || str.includes('9100') || 
+    str.includes('9400') || str.includes('9600') || str.includes('9700') || 
+    str.includes('9900')
+  ) {
+    return 'INTEL_LGA1151';
+  }
+
+  // 4. LGA1700 (Intel Gen 12, 13 & 14: 12100, 12400, 12600, 12700, 12900, 13100, 13400, 13500, 13600, 13700, 13900, 14100, 14400, 14500, 14600, 14700, 14900)
+  if (
+    str.includes('lga1700') || str.includes('lga 1700') || str.includes('12100') || 
+    str.includes('12400') || str.includes('12600') || str.includes('12700') || 
+    str.includes('12900') || str.includes('13100') || str.includes('13400') || 
+    str.includes('13500') || str.includes('13600') || str.includes('13700') || 
+    str.includes('13900') || str.includes('14100') || str.includes('14400') || 
+    str.includes('14500') || str.includes('14600') || str.includes('14700') || 
+    str.includes('14900')
   ) {
     return 'INTEL_LGA1700';
   }
+
+  // 5. AMD AM5 (Ryzen 7000, 8000, 9000, 7800X3D, Zen 4, Zen 5)
   if (
     str.includes('am5') || str.includes('7600') || str.includes('7700') || 
     str.includes('7800') || str.includes('7900') || str.includes('7950') || 
@@ -414,6 +450,8 @@ export function detectCpuPlatform(cpuNameOrSpecs: string): HardwarePlatform {
   ) {
     return 'AMD_AM5';
   }
+
+  // 6. AMD AM4 (Ryzen 1000-5000: 5600, 5700, 5800, 5900, 5950, 3600, 5500, 2600, 1600)
   if (
     str.includes('am4') || str.includes('5600') || str.includes('5700') || 
     str.includes('5800') || str.includes('5900') || str.includes('5500') || 
@@ -421,20 +459,41 @@ export function detectCpuPlatform(cpuNameOrSpecs: string): HardwarePlatform {
   ) {
     return 'AMD_AM4';
   }
+
+  // Generic Intel fallback
+  if (str.includes('intel') || str.includes('i3') || str.includes('i5') || str.includes('i7') || str.includes('i9')) {
+    return 'INTEL_LGA1700';
+  }
+
   return 'UNKNOWN';
 }
 
 export function detectMainboardPlatform(mbNameOrSpecs: string): HardwarePlatform {
   const str = (mbNameOrSpecs || '').toLowerCase();
+  if (str.includes('z890') || str.includes('b860') || str.includes('lga1851') || str.includes('lga 1851')) {
+    return 'INTEL_LGA1851';
+  }
   if (
     str.includes('b760') || str.includes('z790') || str.includes('h610') || 
-    str.includes('b660') || str.includes('z690') || str.includes('lga1700')
+    str.includes('b660') || str.includes('z690') || str.includes('lga1700') || str.includes('lga 1700')
   ) {
     return 'INTEL_LGA1700';
   }
   if (
+    str.includes('h510') || str.includes('b560') || str.includes('z590') || 
+    str.includes('h410') || str.includes('b460') || str.includes('z490') || str.includes('lga1200') || str.includes('lga 1200')
+  ) {
+    return 'INTEL_LGA1200';
+  }
+  if (
+    str.includes('h310') || str.includes('b360') || str.includes('b365') || 
+    str.includes('z370') || str.includes('z390') || str.includes('lga1151') || str.includes('lga 1151')
+  ) {
+    return 'INTEL_LGA1151';
+  }
+  if (
     str.includes('b650') || str.includes('x670') || str.includes('a620') || 
-    str.includes('b850') || str.includes('am5')
+    str.includes('b850') || str.includes('x870') || str.includes('am5')
   ) {
     return 'AMD_AM5';
   }
@@ -449,8 +508,12 @@ export function detectMainboardPlatform(mbNameOrSpecs: string): HardwarePlatform
 
 /**
  * Ensures 100% hardware compatibility for CPU Socket, Mainboard Socket, RAM DDR generation, and PSU capacity.
+ * Selects real products from Sbuy API / database catalog where available.
  */
-export function reconcileBuildComponents(componentsMap: Record<string, any>): Record<string, any> {
+export function reconcileBuildComponents(
+  componentsMap: Record<string, any>,
+  catalogProducts?: any[]
+): Record<string, any> {
   const result: Record<string, any> = { ...componentsMap };
 
   const cpu = result.cpu;
@@ -462,10 +525,37 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
   const cpuPlatform = detectCpuPlatform(cpuStr);
   const mbPlatform = detectMainboardPlatform(mbStr);
 
+  // Helper to find real product from catalog
+  const findRealProduct = (categoryKeywords: string[], filterFn?: (p: any) => boolean) => {
+    if (!catalogProducts || catalogProducts.length === 0) return null;
+    return catalogProducts.find((p: any) => {
+      const pName = (p.name || '').toLowerCase();
+      const pCat = (p.category_name || p.category_slug || '').toLowerCase();
+      const matchesCat = categoryKeywords.some(kw => pCat.includes(kw) || pName.includes(kw));
+      if (!matchesCat) return false;
+      if (filterFn) return filterFn(p);
+      return true;
+    });
+  };
+
   // 1. CPU & Mainboard Socket Reconciliation
   if (cpuPlatform !== 'UNKNOWN' && (mbPlatform === 'UNKNOWN' || cpuPlatform !== mbPlatform)) {
     if (cpuPlatform === 'INTEL_LGA1700') {
-      result.mainboard = {
+      const realMb = findRealProduct(['mainboard', 'bo mạch'], p => {
+        const pStr = `${p.name} ${JSON.stringify(p.specs || {})}`.toLowerCase();
+        return pStr.includes('b760') || pStr.includes('z790') || pStr.includes('h610') || pStr.includes('lga1700');
+      });
+
+      result.mainboard = realMb ? {
+        key: 'mainboard',
+        id: realMb.id,
+        name: realMb.name,
+        price: Number(realMb.price) || 4290000,
+        tdp: 40,
+        specs: realMb.specs?.socket ? `Socket ${realMb.specs.socket} | ${realMb.specs.ram_type || 'DDR5'}` : 'LGA1700 | 4x DDR5 | PCIe 5.0 | Wi-Fi 6',
+        image: realMb.image_url || '/images/cat-mainboard.jpg',
+        slug: realMb.slug,
+      } : {
         key: 'mainboard',
         id: 'p-mb-b760m-rec',
         name: 'Mainboard ASUS TUF GAMING B760M-PLUS WIFI DDR5',
@@ -475,8 +565,47 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
         image: '/images/cat-mainboard.jpg',
         slug: 'asus-tuf-b760m-plus-d5',
       };
+    } else if (cpuPlatform === 'INTEL_LGA1200') {
+      const realMb = findRealProduct(['mainboard', 'bo mạch'], p => {
+        const pStr = `${p.name} ${JSON.stringify(p.specs || {})}`.toLowerCase();
+        return pStr.includes('h510') || pStr.includes('b560') || pStr.includes('z590') || pStr.includes('h410') || pStr.includes('b460') || pStr.includes('lga1200');
+      });
+
+      result.mainboard = realMb ? {
+        key: 'mainboard',
+        id: realMb.id,
+        name: realMb.name,
+        price: Number(realMb.price) || 1690000,
+        tdp: 35,
+        specs: realMb.specs?.socket ? `Socket ${realMb.specs.socket} | ${realMb.specs.ram_type || 'DDR4'}` : 'Socket LGA1200 | 2x DDR4 | Micro-ATX',
+        image: realMb.image_url || '/images/cat-mainboard.jpg',
+        slug: realMb.slug,
+      } : {
+        key: 'mainboard',
+        id: 'p-mb-h510m-rec',
+        name: 'Mainboard ASUS PRIME H510M-K DDR4',
+        price: 1590000,
+        tdp: 35,
+        specs: 'Socket LGA1200 | 2x DDR4 | Micro-ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-prime-h510m-k',
+      };
     } else if (cpuPlatform === 'AMD_AM5') {
-      result.mainboard = {
+      const realMb = findRealProduct(['mainboard', 'bo mạch'], p => {
+        const pStr = `${p.name} ${JSON.stringify(p.specs || {})}`.toLowerCase();
+        return pStr.includes('b650') || pStr.includes('x670') || pStr.includes('a620') || pStr.includes('am5');
+      });
+
+      result.mainboard = realMb ? {
+        key: 'mainboard',
+        id: realMb.id,
+        name: realMb.name,
+        price: Number(realMb.price) || 3890000,
+        tdp: 40,
+        specs: realMb.specs?.socket ? `Socket ${realMb.specs.socket} | ${realMb.specs.ram_type || 'DDR5'}` : 'Socket AM5 | 4x DDR5 | PCIe 4.0 | Micro-ATX',
+        image: realMb.image_url || '/images/cat-mainboard.jpg',
+        slug: realMb.slug,
+      } : {
         key: 'mainboard',
         id: 'p-mb-b650m-rec',
         name: 'Mainboard MSI PRO B650M-A WIFI DDR5',
@@ -487,7 +616,21 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
         slug: 'msi-pro-b650m-a-wifi',
       };
     } else if (cpuPlatform === 'AMD_AM4') {
-      result.mainboard = {
+      const realMb = findRealProduct(['mainboard', 'bo mạch'], p => {
+        const pStr = `${p.name} ${JSON.stringify(p.specs || {})}`.toLowerCase();
+        return pStr.includes('b550') || pStr.includes('b450') || pStr.includes('a520') || pStr.includes('am4');
+      });
+
+      result.mainboard = realMb ? {
+        key: 'mainboard',
+        id: realMb.id,
+        name: realMb.name,
+        price: Number(realMb.price) || 2890000,
+        tdp: 35,
+        specs: realMb.specs?.socket ? `Socket ${realMb.specs.socket} | ${realMb.specs.ram_type || 'DDR4'}` : 'Socket AM4 | 4x DDR4 | PCIe 4.0 | Micro-ATX',
+        image: realMb.image_url || '/images/cat-mainboard.jpg',
+        slug: realMb.slug,
+      } : {
         key: 'mainboard',
         id: 'p-mb-b550m-rec',
         name: 'Mainboard ASUS TUF GAMING B550M-PLUS',
@@ -509,6 +652,17 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
         specs: 'LGA1700 | 20MB Cache | 65W-148W',
         image: '/images/cpu-box.jpg',
         slug: 'intel-core-i5-13400f',
+      };
+    } else if (mbPlatform === 'INTEL_LGA1200') {
+      result.cpu = {
+        key: 'cpu',
+        id: 'p-cpu-10400f',
+        name: 'CPU Intel Core i5-10400F (Up to 4.3GHz, 6 Nhân 12 Luồng)',
+        price: 2690000,
+        tdp: 65,
+        specs: 'Socket LGA1200 | 12MB Cache | 65W TDP',
+        image: '/images/cpu-box.jpg',
+        slug: 'intel-core-i5-10400f',
       };
     } else if (mbPlatform === 'AMD_AM5') {
       result.cpu = {
@@ -546,7 +700,17 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
   const ramIsDdr5 = activeRamStr.includes('ddr5');
 
   if (mbIsDdr5 && !ramIsDdr5) {
-    result.ram = {
+    const realDdr5Ram = findRealProduct(['ram'], p => (p.name || '').toLowerCase().includes('ddr5'));
+    result.ram = realDdr5Ram ? {
+      key: 'ram',
+      id: realDdr5Ram.id,
+      name: realDdr5Ram.name,
+      price: Number(realDdr5Ram.price) || 2890000,
+      tdp: 15,
+      specs: 'DDR5 | High Speed RGB Kit',
+      image: realDdr5Ram.image_url || '/images/ram-rgb.jpg',
+      slug: realDdr5Ram.slug,
+    } : {
       key: 'ram',
       id: 'p-ram-32g-d5',
       name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz',
@@ -557,7 +721,17 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
       slug: 'corsair-vengeance-32gb-d5',
     };
   } else if (!mbIsDdr5 && ramIsDdr5) {
-    result.ram = {
+    const realDdr4Ram = findRealProduct(['ram'], p => (p.name || '').toLowerCase().includes('ddr4'));
+    result.ram = realDdr4Ram ? {
+      key: 'ram',
+      id: realDdr4Ram.id,
+      name: realDdr4Ram.name,
+      price: Number(realDdr4Ram.price) || 1190000,
+      tdp: 10,
+      specs: 'DDR4 | Dual Channel Kit',
+      image: realDdr4Ram.image_url || '/images/ram-rgb.jpg',
+      slug: realDdr4Ram.slug,
+    } : {
       key: 'ram',
       id: 'p-ram-16g-d4',
       name: 'RAM Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz',
@@ -575,7 +749,21 @@ export function reconcileBuildComponents(componentsMap: Record<string, any>): Re
   const totalTdp = cpuTdp + gpuTdp + 100;
 
   if (totalTdp > 450 && (!result.psu || (result.psu.name && result.psu.name.includes('550W')))) {
-    result.psu = {
+    const realPsu = findRealProduct(['psu', 'nguồn'], p => {
+      const pStr = (p.name || '').toLowerCase();
+      return pStr.includes('750w') || pStr.includes('850w') || pStr.includes('700w');
+    });
+
+    result.psu = realPsu ? {
+      key: 'psu',
+      id: realPsu.id,
+      name: realPsu.name,
+      price: Number(realPsu.price) || 1690000,
+      tdp: 0,
+      specs: '750W | 80 Plus Bronze',
+      image: realPsu.image_url || '/images/cat-psu.jpg',
+      slug: realPsu.slug,
+    } : {
       key: 'psu',
       id: 'p-psu-750w',
       name: 'Nguồn Corsair CV750 750W 80 Plus Bronze',

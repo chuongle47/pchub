@@ -211,7 +211,7 @@ export default function BuildPcPage() {
   useEffect(() => {
     const applyAiPreset = (preset: any) => {
       if (!preset || !preset.components) return;
-      const reconciledMap = reconcileBuildComponents(preset.components);
+      const reconciledMap = reconcileBuildComponents(preset.components, liveSbuyProducts);
       setComponents(prev => prev.map(slot => {
         const item = reconciledMap[slot.key];
         if (item) {
