@@ -2649,5 +2649,23 @@ header {
     font-size: 11px !important;
     padding: 7px 6px !important;
   }
+
+  /* Mobile Input Auto-Zoom Prevention */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 14px !important;
+  }
+
+  /* Touch Scroll Tables */
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
 }
 
