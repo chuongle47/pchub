@@ -4,6 +4,7 @@ export const VIETNAM_PROVINCES = [
   'Đà Nẵng',
   'Hải Phòng',
   'Cần Thơ',
+  'TP. Thừa Thiên Huế',
   'An Giang',
   'Bà Rịa - Vũng Tàu',
   'Bắc Giang',
@@ -55,7 +56,6 @@ export const VIETNAM_PROVINCES = [
   'Thái Bình',
   'Thái Nguyên',
   'Thanh Hóa',
-  'Thừa Thiên Huế',
   'Tiền Giang',
   'Trà Vinh',
   'Tuyên Quang',
@@ -64,7 +64,7 @@ export const VIETNAM_PROVINCES = [
   'Yên Bái',
 ];
 
-// Cập nhật mới nhất theo Nghị quyết sáp nhập và điều chỉnh đơn vị hành chính
+// Cập nhật mới nhất tính đến thời điểm 2026 (Nghị quyết của Quốc hội & UBTVQH về sắp xếp đơn vị hành chính)
 export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   'TP. Hồ Chí Minh': [
     'TP. Thủ Đức', 'Quận 1', 'Quận 3', 'Quận 4', 'Quận 5', 'Quận 6', 'Quận 7', 'Quận 8', 'Quận 10', 'Quận 11', 'Quận 12',
@@ -90,6 +90,14 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   'Cần Thơ': [
     'Quận Ninh Kiều', 'Quận Bình Thủy', 'Quận Cái Răng', 'Quận Ô Môn', 'Quận Thốt Nốt',
     'Huyện Phong Điền', 'Huyện Cờ Đỏ', 'Huyện Vĩnh Thạnh', 'Huyện Thới Lai'
+  ],
+  'TP. Thừa Thiên Huế': [
+    'Quận Phú Xuân', 'Quận Thuận Hóa', 'Thị xã Phong Điền', 'Thị xã Hương Thủy', 'Thị xã Hương Trà',
+    'Huyện A Lưới', 'Huyện Nam Đông', 'Huyện Phú Lộc', 'Huyện Phú Vàng', 'Huyện Quảng Điền'
+  ],
+  'Thừa Thiên Huế': [
+    'Quận Phú Xuân', 'Quận Thuận Hóa', 'Thị xã Phong Điền', 'Thị xã Hương Thủy', 'Thị xã Hương Trà',
+    'Huyện A Lưới', 'Huyện Nam Đông', 'Huyện Phú Lộc', 'Huyện Phú Vàng', 'Huyện Quảng Điền'
   ],
   'An Giang': [
     'TP. Long Xuyên', 'TP. Châu Đốc', 'Thị xã Tân Châu', 'Thị xã Tịnh Biên',
@@ -248,9 +256,6 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   'Thanh Hóa': [
     'TP. Thanh Hóa', 'TP. Sầm Sơn', 'Thị xã Bỉm Sơn', 'Thị xã Nghi Sơn', 'Huyện Bá Thước', 'Huyện Cẩm Thủy', 'Huyện Hà Trung', 'Huyện Hậu Lộc', 'Huyện Hoằng Hóa', 'Huyện Lang Chánh', 'Huyện Mường Lát', 'Huyện Nga Sơn', 'Huyện Ngọc Lặc', 'Huyện Như Thanh', 'Huyện Như Xuân', 'Huyện Nông Cống', 'Huyện Quan Hóa', 'Huyện Quan Sơn', 'Huyện Quảng Xương', 'Huyện Thạch Thành', 'Huyện Thiệu Hóa', 'Huyện Thọ Xuân', 'Huyện Thường Xuân', 'Huyện Triệu Sơn', 'Huyện Vĩnh Lộc', 'Huyện Yên Định'
   ],
-  'Thừa Thiên Huế': [
-    'TP. Huế', 'Thị xã Hương Thủy', 'Thị xã Hương Trà', 'Thị xã Phong Điền', 'Huyện A Lưới', 'Huyện Nam Đông', 'Huyện Phú Lộc', 'Huyện Phú Vàng', 'Huyện Quảng Điền'
-  ],
   'Tiền Giang': [
     'TP. Mỹ Tho', 'TP. Gò Công', 'Thị xã Cai Lậy', 'Huyện Cái Bè', 'Huyện Châu Thành', 'Huyện Chợ Gạo', 'Huyện Gò Công Đông', 'Huyện Gò Công Tây', 'Huyện Tân Phú Đông', 'Huyện Tân Phước'
   ],
@@ -279,5 +284,13 @@ export const DEFAULT_DISTRICTS = [
 
 export function getDistrictsForProvince(provinceName: string): string[] {
   if (!provinceName) return [];
-  return DISTRICTS_BY_PROVINCE[provinceName] || DEFAULT_DISTRICTS;
+  if (DISTRICTS_BY_PROVINCE[provinceName]) return DISTRICTS_BY_PROVINCE[provinceName];
+
+  // Hỗ trợ tìm kiếm theo tên không có hoặc có tiền tố "TP."
+  const normalized = provinceName.replace(/^TP\.\s*/i, '').trim();
+  const matchedKey = Object.keys(DISTRICTS_BY_PROVINCE).find(
+    k => k.replace(/^TP\.\s*/i, '').trim() === normalized
+  );
+
+  return matchedKey ? DISTRICTS_BY_PROVINCE[matchedKey] : DEFAULT_DISTRICTS;
 }
