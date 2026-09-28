@@ -10,9 +10,9 @@ export default function HeroSlider() {
 
   return (
     <section className="home-hero" style={{
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #1d4ed8 100%)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)',
       color: '#fff',
-      padding: '48px 0 0',
+      padding: '52px 0 56px',
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -20,11 +20,11 @@ export default function HeroSlider() {
       <div style={{
         position: 'absolute',
         top: '-10%',
-        right: '20%',
+        right: '15%',
         width: '500px',
         height: '500px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(37, 99, 235, 0.2) 50%, rgba(0, 0, 0, 0) 75%)',
+        background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(37, 99, 235, 0.15) 50%, rgba(0, 0, 0, 0) 75%)',
         pointerEvents: 'none',
       }} />
 
@@ -47,7 +47,7 @@ export default function HeroSlider() {
           }}>
             <span style={{ color: '#ffffff', display: 'block' }}>Linh kiện chính hãng</span>
             <span style={{
-              background: 'linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #60a5fa 100%)',
+              background: 'linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               display: 'block',
@@ -57,7 +57,7 @@ export default function HeroSlider() {
           </h1>
 
           <p style={{
-            color: '#94a3b8',
+            color: '#cbd5e1',
             fontSize: '15px',
             lineHeight: '1.6',
             marginBottom: '28px',
@@ -71,7 +71,7 @@ export default function HeroSlider() {
             <Link
               href="/build-pc"
               style={{
-                background: 'var(--color-primary)',
+                background: '#2563eb',
                 color: '#ffffff',
                 padding: '12px 24px',
                 borderRadius: '8px',
@@ -81,11 +81,11 @@ export default function HeroSlider() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 4px 14px rgba(0, 85, 212, 0.35)',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
                 transition: 'all 0.2s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-hover)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-primary)'; e.currentTarget.style.transform = 'none'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'none'; }}
             >
               Build PC ngay
               <ArrowRight size={16} />
@@ -95,9 +95,9 @@ export default function HeroSlider() {
               type="button"
               onClick={() => setChatOpen(true)}
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: '#e2e8f0',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
                 padding: '12px 20px',
                 borderRadius: '8px',
                 fontWeight: 600,
@@ -108,8 +108,8 @@ export default function HeroSlider() {
                 gap: '8px',
                 transition: 'all 0.2s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)'; }}
             >
               <Bot size={16} style={{ color: '#38bdf8' }} />
               Tư vấn AI
@@ -128,12 +128,12 @@ export default function HeroSlider() {
             position: 'relative',
             width: '100%',
             maxWidth: '520px',
-            height: '280px',
+            height: '285px',
             borderRadius: '16px',
             overflow: 'hidden',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(37, 99, 235, 0.2)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            background: '#090d16',
+            boxShadow: '0 12px 30px rgba(15, 23, 42, 0.3), 0 0 25px rgba(56, 189, 248, 0.2)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            background: '#0f172a',
           }}>
             <img
               src="/images/hero-pc.jpg"
@@ -148,24 +148,9 @@ export default function HeroSlider() {
                 e.currentTarget.src = '/images/gpu-strix.jpg';
               }}
             />
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(to top, rgba(11, 15, 25, 0.6) 0%, transparent 60%)',
-              pointerEvents: 'none',
-            }} />
           </div>
         </div>
       </div>
-
-      {/* Gradient bridge → smooth fade from dark hero to section below */}
-      <div style={{
-        height: '40px',
-        background: 'linear-gradient(to bottom, transparent 0%, #ffffff 100%)',
-        marginTop: '16px',
-        position: 'relative',
-        zIndex: 2,
-      }} />
     </section>
   );
 }
