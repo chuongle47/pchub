@@ -27,7 +27,7 @@ export default function BottomNav() {
       right: 0,
       bottom: 0,
       zIndex: 400,
-      background: '#0f172a',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
       borderTop: '1px solid rgba(255,255,255,0.1)',
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       boxShadow: '0 -4px 20px rgba(0,0,0,0.25)',

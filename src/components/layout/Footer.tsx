@@ -6,7 +6,7 @@ import { MapPin, Phone, Mail, Clock, ArrowRight } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer style={{ background: '#0f172a', color: '#94a3b8' }}>
+    <footer style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)', color: '#94a3b8' }}>
 
       {/* MAIN FOOTER — 4 columns */}
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 24px' }}>

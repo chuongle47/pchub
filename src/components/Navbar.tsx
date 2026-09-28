@@ -72,9 +72,9 @@ export default function Navbar() {
       </div>
 
       <header style={{
-        background: '#0b0f19',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)',
         color: '#fff',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid rgba(255,255,255,0.15)',
         position: 'sticky',
         top: 0,
         zIndex: 200,

@@ -10,7 +10,7 @@ export default function HeroSlider() {
 
   return (
     <section className="home-hero" style={{
-      background: 'linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #1d4ed8 100%)',
       color: '#fff',
       padding: '48px 0 0',
       position: 'relative',
@@ -20,11 +20,11 @@ export default function HeroSlider() {
       <div style={{
         position: 'absolute',
         top: '-10%',
-        right: '25%',
-        width: '400px',
-        height: '400px',
+        right: '20%',
+        width: '500px',
+        height: '500px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(0, 0, 0, 0) 70%)',
+        background: 'radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(37, 99, 235, 0.2) 50%, rgba(0, 0, 0, 0) 75%)',
         pointerEvents: 'none',
       }} />
 
