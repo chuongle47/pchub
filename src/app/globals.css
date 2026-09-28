@@ -2669,3 +2669,21 @@ header {
   }
 }
 
+/* Mobile Bottom Navigation Bar & Layout Safety */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .mobile-bottom-nav {
+    display: block !important;
+  }
+  .mobile-builder-sticky-bar {
+    display: flex !important;
+  }
+  .ai-chat-floating-btn {
+    bottom: calc(115px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 14px !important;
+  }
+}
+
+

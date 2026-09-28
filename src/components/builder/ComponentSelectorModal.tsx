@@ -611,6 +611,23 @@ export default function ComponentSelectorModal({
             }
           }}
         >
+          {/* Special RAM Slot & Dual-Channel Advice Banner */}
+          {(slotKey.toLowerCase() === 'ram' || slotKey.toLowerCase() === 'memory') && (
+            <div style={{
+              padding: '12px 18px',
+              marginBottom: '20px',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              border: '1px solid #bfdbfe',
+              borderRadius: '14px',
+              fontSize: '12.5px',
+              color: '#1e40af',
+              lineHeight: '1.5',
+            }}>
+              <strong>💡 Tư vấn mua RAM PCHub:</strong> Bo mạch chủ thông thường hỗ trợ <strong>2 đến 4 khe RAM (Max 64GB - 192GB)</strong>. 
+              Bạn nên mua <strong>2 thanh đồng bộ (Kit 2x8GB hoặc Kit 2x16GB)</strong> hoặc tăng số lượng = 2 tại danh sách ngoài để chạy <strong>Dual Channel (kênh đôi)</strong> giúp nhân đôi băng thông truyền tải (+35% FPS khi chơi game & đồ họa)!
+            </div>
+          )}
+
           {/* AI Auto-Match Notification Banner */}
           {currentBuildState && currentBuildState.some(s => s.selected !== null) && (
             <div style={{

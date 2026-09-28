@@ -986,6 +986,14 @@ export default function BuildPcPage() {
     const isSelected = slot.selected !== null;
     const slotAiSuggestion = aiCategoryRecommendations.find(cat => cat.categoryKey === slot.key);
 
+    // Mainboard & RAM Slots Limit Calculation
+    const mbSelectedObj = components.find(s => s.key === 'mainboard')?.selected;
+    const mbTextFull = mbSelectedObj ? `${mbSelectedObj.name} ${mbSelectedObj.specs || ''}`.toUpperCase() : '';
+    const isItxOrH610Board = mbTextFull.includes('ITX') || mbTextFull.includes('H610') || mbTextFull.includes('A520') || mbTextFull.includes('2 SLOT') || mbTextFull.includes('2 KHE');
+    const isDdr5Board = mbTextFull.includes('DDR5') || mbTextFull.includes(' D5') || mbTextFull.includes('B650') || mbTextFull.includes('X670') || mbTextFull.includes('Z890');
+    const mbRamSlots = mbSelectedObj ? (isItxOrH610Board ? 2 : 4) : 4;
+    const mbMaxRamCapacity = mbSelectedObj ? (isDdr5Board ? (isItxOrH610Board ? 96 : 192) : (isItxOrH610Board ? 64 : 128)) : 128;
+
     return (
       <div key={slot.key} className="builder-slot-card" style={{
         background: '#ffffff',
@@ -993,185 +1001,283 @@ export default function BuildPcPage() {
         borderRadius: '14px',
         padding: '16px 20px',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '16px',
-        flexWrap: 'wrap',
+        flexDirection: 'column',
+        gap: '12px',
       }}>
-        <div style={{ flex: 1, minWidth: '240px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '10px',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            overflow: 'hidden',
-            padding: isSelected ? '2px' : '0',
-          }}>
-            {isSelected ? (
-              <img
-                src={slot.selected!.image}
-                alt={slot.selected!.name}
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
-            ) : (
-              <div style={{ color: '#2563eb' }}>
-                <Icon size={22} />
-              </div>
-            )}
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-              {slot.category} {slot.required && <span style={{ color: '#ef4444' }}>*</span>}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          flexWrap: 'wrap',
+          width: '100%',
+        }}>
+          <div style={{ flex: 1, minWidth: '240px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              overflow: 'hidden',
+              padding: isSelected ? '2px' : '0',
+            }}>
+              {isSelected ? (
+                <img
+                  src={slot.selected!.image}
+                  alt={slot.selected!.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              ) : (
+                <div style={{ color: '#2563eb' }}>
+                  <Icon size={22} />
+                </div>
+              )}
             </div>
-            {isSelected ? (
-              <div>
-                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '3px 0 4px', lineHeight: '1.4' }}>
-                  {slot.selected!.name}
-                </h4>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>
-                  {slot.selected!.specs}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div style={{ fontSize: '13.5px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
-                  Vui lòng chọn linh kiện
-                </div>
-                {slotAiSuggestion && (
-                  <div style={{
-                    marginTop: '5px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    color: '#2563eb',
-                    background: '#eff6ff',
-                    border: '1px solid #bfdbfe',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                  }}>
-                    AI gợi ý: {slotAiSuggestion.badge}
-                  </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>{slot.category} {slot.required && <span style={{ color: '#ef4444' }}>*</span>}</span>
+                {slot.key === 'mainboard' && mbSelectedObj && (
+                  <span style={{ fontSize: '10px', fontWeight: 800, background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '1px 6px', borderRadius: '4px', textTransform: 'none' }}>
+                    {mbRamSlots} khe RAM · Max {mbMaxRamCapacity}GB
+                  </span>
                 )}
               </div>
+              {isSelected ? (
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '3px 0 4px', lineHeight: '1.4' }}>
+                    {slot.selected!.name}
+                  </h4>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    {slot.selected!.specs}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: '13.5px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
+                    Vui lòng chọn linh kiện
+                  </div>
+                  {slot.key === 'ram' && mbSelectedObj && (
+                    <div style={{ marginTop: '4px', fontSize: '11.5px', color: '#2563eb', fontWeight: 700 }}>
+                      💡 Bo mạch chủ {mbSelectedObj.name} hỗ trợ tối đa {mbRamSlots} khe RAM ({mbMaxRamCapacity}GB Max). Khuyên dùng 2 thanh để bật Dual Channel!
+                    </div>
+                  )}
+                  {slotAiSuggestion && slot.key !== 'ram' && (
+                    <div style={{
+                      marginTop: '5px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      color: '#2563eb',
+                      background: '#eff6ff',
+                      border: '1px solid #bfdbfe',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                    }}>
+                      AI gợi ý: {slotAiSuggestion.badge}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions & Quantity Adjuster */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {isSelected ? (
+              <>
+                {/* Quantity Control Buttons [- Qty +] */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  background: '#f8fafc',
+                  overflow: 'hidden',
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => handleQtyChange(slot.key, -1)}
+                    style={{
+                      padding: '6px 10px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: '#475569',
+                    }}
+                  >
+                    <Minus size={13} />
+                  </button>
+                  <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 8px', color: '#0f172a' }}>
+                    {slot.quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleQtyChange(slot.key, 1)}
+                    style={{
+                      padding: '6px 10px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: '#475569',
+                    }}
+                  >
+                    <Plus size={13} />
+                  </button>
+                </div>
+
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', minWidth: '100px', textAlign: 'right' }}>
+                  {((slot.selected?.price || 0) * slot.quantity).toLocaleString('vi-VN')} ₫
+                </div>
+
+                <button
+                  onClick={() => setActiveModalSlotKey(slot.key)}
+                  style={{
+                    background: '#eff6ff',
+                    color: '#2563eb',
+                    border: '1.5px solid #bfdbfe',
+                    borderRadius: '8px',
+                    padding: '7px 12px',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <RefreshCw size={13} />
+                  Đổi
+                </button>
+
+                <button
+                  onClick={() => handleRemove(slot.key)}
+                  style={{
+                    background: '#fef2f2',
+                    color: '#ef4444',
+                    border: '1px solid #fecdd3',
+                    borderRadius: '8px',
+                    padding: '7px',
+                    cursor: 'pointer'
+                  }}
+                  title="Xóa linh kiện"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => setActiveModalSlotKey(slot.key)}
+                style={{
+                  background: '#2563eb',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
+                }}
+              >
+                <Plus size={14} />
+                Chọn linh kiện
+              </button>
             )}
           </div>
         </div>
 
-        {/* Actions & Quantity Adjuster */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {isSelected ? (
-            <>
-              {/* Quantity Control Buttons [- Qty +] */}
+        {/* Dedicated RAM Slot Limit & Dual-Channel Interactive Advice Banner */}
+        {slot.key === 'ram' && isSelected && (
+          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: '2px' }}>
+            {slot.quantity === 1 ? (
               <div style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '10px',
+                padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
-                border: '1px solid #cbd5e1',
-                borderRadius: '8px',
-                background: '#f8fafc',
-                overflow: 'hidden',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap',
+                fontSize: '12.5px',
               }}>
+                <div style={{ color: '#1e40af', flex: 1, minWidth: '240px', lineHeight: '1.45' }}>
+                  <strong>💡 Gợi ý Kênh Đôi (Dual-Channel):</strong> Bạn đang chọn <strong>1 thanh RAM</strong> (Single Channel). 
+                  {mbSelectedObj ? ` Bo mạch chủ ${mbSelectedObj.name} có ${mbRamSlots} khe RAM (Hỗ trợ tối đa ${mbMaxRamCapacity}GB RAM).` : ''} Hãy tăng số lượng lên <strong>2 thanh</strong> (cắm khe 2 và 4) để nhân đôi băng thông truyền tải (+35% FPS game)!
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleQtyChange(slot.key, -1)}
+                  onClick={() => setComponents(prev => prev.map(s => s.key === 'ram' ? { ...s, quantity: 2 } : s))}
                   style={{
-                    padding: '6px 10px',
+                    background: '#2563eb',
+                    color: '#ffffff',
                     border: 'none',
-                    background: 'transparent',
+                    borderRadius: '8px',
+                    padding: '7px 14px',
+                    fontSize: '12px',
+                    fontWeight: 800,
                     cursor: 'pointer',
-                    color: '#475569',
+                    boxShadow: '0 3px 10px rgba(37,99,235,0.3)',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <Minus size={13} />
-                </button>
-                <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 8px', color: '#0f172a' }}>
-                  {slot.quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleQtyChange(slot.key, 1)}
-                  style={{
-                    padding: '6px 10px',
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    color: '#475569',
-                  }}
-                >
-                  <Plus size={13} />
+                  ⚡ Đổi sang 2 thanh RAM (Dual-Channel)
                 </button>
               </div>
-
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', minWidth: '100px', textAlign: 'right' }}>
-                {((slot.selected?.price || 0) * slot.quantity).toLocaleString('vi-VN')} ₫
-              </div>
-
-              <button
-                onClick={() => setActiveModalSlotKey(slot.key)}
-                style={{
-                  background: '#eff6ff',
-                  color: '#2563eb',
-                  border: '1.5px solid #bfdbfe',
-                  borderRadius: '8px',
-                  padding: '7px 12px',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}
-              >
-                <RefreshCw size={13} />
-                Đổi
-              </button>
-
-              <button
-                onClick={() => handleRemove(slot.key)}
-                style={{
-                  background: '#fef2f2',
-                  color: '#ef4444',
-                  border: '1px solid #fecdd3',
-                  borderRadius: '8px',
-                  padding: '7px',
-                  cursor: 'pointer'
-                }}
-                title="Xóa linh kiện"
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={() => setActiveModalSlotKey(slot.key)}
-              style={{
-                background: '#2563eb',
-                color: '#fff',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 700,
-                display: 'inline-flex',
+            ) : slot.quantity === 2 ? (
+              <div style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                fontSize: '12.5px',
+                color: '#166534',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
-              }}
-            >
-              <Plus size={14} />
-              Chọn linh kiện
-            </button>
-          )}
-        </div>
+                gap: '8px',
+              }}>
+                <span style={{ fontWeight: 800 }}>✅ Cấu Hình 2 Thanh RAM Chuẩn Dual-Channel:</span> 
+                Tối ưu 100% băng thông bộ nhớ. {mbSelectedObj ? `Bo mạch chủ hỗ trợ ${mbRamSlots} khe RAM (Max ${mbMaxRamCapacity}GB), còn trống ${mbRamSlots - 2} khe cắm nâng cấp sau này.` : 'Dàn máy đạt hiệu năng đọc/ghi RAM lý tưởng!'}
+              </div>
+            ) : slot.quantity === 4 ? (
+              <div style={{
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                fontSize: '12.5px',
+                color: '#92400e',
+              }}>
+                <span style={{ fontWeight: 800 }}>⚠️ Lưu Ý Cắm 4 Khe RAM:</span> Đã dùng kín {mbRamSlots}/{mbRamSlots} khe RAM {mbSelectedObj ? `(Tối đa ${mbMaxRamCapacity}GB)` : ''}. 
+                {isDdr5Board ? ' Lưu ý: Cắm 4 thanh RAM DDR5 có thể làm giảm xung XMP/EXPO xuống 4800MHz do giới hạn bộ điều khiển RAM IMC của CPU. Nên chọn 2 thanh dung lượng cao hơn nếu muốn duy trì Bus XMP cao.' : ' Khai thác tối đa số khe cắm RAM của Bo mạch chủ.'}
+              </div>
+            ) : (
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                fontSize: '12.5px',
+                color: '#475569',
+              }}>
+                Đã chọn {slot.quantity} thanh RAM. {mbSelectedObj ? `Bo mạch chủ hỗ trợ tối đa ${mbRamSlots} khe RAM (Max ${mbMaxRamCapacity}GB).` : ''}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -1788,6 +1894,76 @@ export default function BuildPcPage() {
         onCheckoutAll={handleCheckoutAll}
         onAddToCartAll={handleAddToCartAll}
       />
+
+      {/* Mobile Sticky Summary & Floating Action Bar for PC Builder */}
+      <div className="mobile-builder-sticky-bar" style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 'calc(58px + env(safe-area-inset-bottom, 0px))',
+        zIndex: 350,
+        background: '#ffffff',
+        borderTop: '1px solid #e2e8f0',
+        padding: '10px 16px',
+        boxShadow: '0 -6px 20px rgba(0,0,0,0.12)',
+        display: 'none', // Shown on <= 768px via CSS
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+      }}>
+        <div>
+          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TỔNG CẤU HÌNH</div>
+          <div style={{ fontSize: '16px', fontWeight: 900, color: '#2563eb', lineHeight: 1.1 }}>
+            {totalPrice.toLocaleString('vi-VN')} ₫
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (aiReport) {
+                setShowFullReportModal(true);
+              } else {
+                handleRunAiAnalysis().then(() => setShowFullReportModal(true));
+              }
+            }}
+            disabled={isAiAnalyzing}
+            style={{
+              background: '#eff6ff',
+              color: '#2563eb',
+              border: '1px solid #bfdbfe',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ✨ AI Kiểm tra
+          </button>
+
+          <button
+            type="button"
+            onClick={handleAddAllToCart}
+            style={{
+              background: '#2563eb',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(37, 99, 235, 0.3)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🛒 Giỏ hàng
+          </button>
+        </div>
+      </div>
 
     </div>
   );

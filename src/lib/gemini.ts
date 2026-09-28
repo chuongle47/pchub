@@ -647,6 +647,42 @@ function generateLocalFallbackReport(components: ComponentItem[]): Compatibility
         detail: 'Chuẩn RAM và Bo mạch chủ tương thích hoàn toàn, hỗ trợ profile XMP/EXPO tăng tốc hiệu quả.'
       });
     }
+
+    // 2b. RAM Quantity & Dual-Channel Check
+    const ramQuantity = (ram as any).quantity || 1;
+    const isItxOrH610 = mbText.includes('ITX') || mbText.includes('H610') || mbText.includes('A520') || mbText.includes('2 SLOT') || mbText.includes('2 KHE');
+    const maxSlots = isItxOrH610 ? 2 : 4;
+    const maxRamCapacityGb = isDdr5Mb ? (isItxOrH610 ? 96 : 192) : (isItxOrH610 ? 64 : 128);
+
+    if (ramQuantity === 1) {
+      score -= 5;
+      if (status === 'COMPATIBLE') status = 'WARNING';
+      checklist.push({
+        category: 'RAM & Bo Mạch Chủ (Số Thanh & Kênh Đôi)',
+        status: 'WARN',
+        detail: `Đang chọn 1 thanh RAM (Single Channel). Bo mạch chủ hỗ trợ ${maxSlots} khe RAM (Tối đa ${maxRamCapacityGb}GB). Khuyên dùng mua 2 thanh đồng bộ cắm khe A2-B2 để kích hoạt Dual-Channel tăng 35% băng thông!`
+      });
+    } else if (ramQuantity === 2) {
+      checklist.push({
+        category: 'RAM & Bo Mạch Chủ (Số Thanh & Kênh Đôi)',
+        status: 'PASS',
+        detail: `Đã chọn 2 thanh RAM chạy Dual-Channel tối ưu. Bo mạch chủ có ${maxSlots} khe (Max ${maxRamCapacityGb}GB), còn trống ${maxSlots - 2} khe cho nhu cầu nâng cấp sau này.`
+      });
+    } else if (ramQuantity === 4) {
+      if (isDdr5Mb) {
+        checklist.push({
+          category: 'RAM & Bo Mạch Chủ (Số Thanh & Kênh Đôi)',
+          status: 'WARN',
+          detail: `Cắm kín 4/4 khe RAM DDR5 (Max ${maxRamCapacityGb}GB). Lưu ý: Việc cắm 4 thanh DDR5 có thể làm giảm xung XMP/EXPO xuống ~4800MHz do giới hạn bộ điều khiển RAM IMC của CPU.`
+        });
+      } else {
+        checklist.push({
+          category: 'RAM & Bo Mạch Chủ (Số Thanh & Kênh Đôi)',
+          status: 'PASS',
+          detail: `Cắm 4/4 khe RAM DDR4 (Max ${maxRamCapacityGb}GB) khai thác tối đa khả năng lưu trữ bộ nhớ của Bo mạch chủ.`
+        });
+      }
+    }
   }
 
   // 3. Wattage calculation
