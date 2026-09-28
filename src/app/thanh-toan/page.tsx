@@ -12,7 +12,7 @@ import { useCartStore, useOrderStore } from '@/lib/store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
 import TechCheckoutLoader from '@/components/checkout/TechCheckoutLoader';
-import { VIETNAM_PROVINCES, getDistrictsForProvince } from '@/data/vietnam-locations';
+import { VIETNAM_PROVINCES, getDistrictsForProvince, getWardsForDistrict } from '@/data/vietnam-locations';
 
 type CheckoutStep = 'shipping' | 'payment';
 
@@ -435,7 +435,7 @@ export default function CheckoutPage() {
 
                     <div>
                       <label style={labelStyle}>Tỉnh / Thành phố <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select required value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value, district: '' }))} style={inputStyle}>
+                      <select required value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value, district: '', ward: '' }))} style={inputStyle}>
                         <option value="">Chọn tỉnh/thành phố</option>
                         {VIETNAM_PROVINCES.map(p => (
                           <option key={p} value={p}>{p}</option>
@@ -444,11 +444,21 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <label style={labelStyle}>Quận / Huyện <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select required value={form.district} onChange={e => setForm(p => ({ ...p, district: e.target.value }))} style={inputStyle}>
-                        <option value="">Chọn quận/huyện</option>
+                      <label style={labelStyle}>Thành phố / Huyện <span style={{ color: '#ef4444' }}>*</span></label>
+                      <select required value={form.district} onChange={e => setForm(p => ({ ...p, district: e.target.value, ward: '' }))} style={inputStyle}>
+                        <option value="">Chọn thành phố/huyện</option>
                         {getDistrictsForProvince(form.province).map(d => (
                           <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Phường / Xã <span style={{ color: '#ef4444' }}>*</span></label>
+                      <select required value={form.ward} onChange={e => setForm(p => ({ ...p, ward: e.target.value }))} style={inputStyle}>
+                        <option value="">Chọn phường/xã</option>
+                        {getWardsForDistrict(form.district).map(w => (
+                          <option key={w} value={w}>{w}</option>
                         ))}
                       </select>
                     </div>
