@@ -5,6 +5,7 @@ export const VIETNAM_PROVINCES = [
   'Hải Phòng',
   'Cần Thơ',
   'TP. Thừa Thiên Huế',
+  'TP. Bình Dương',
   'An Giang',
   'Bà Rịa - Vũng Tàu',
   'Bắc Giang',
@@ -13,7 +14,6 @@ export const VIETNAM_PROVINCES = [
   'Bắc Ninh',
   'Bến Tre',
   'Bình Định',
-  'Bình Dương',
   'Bình Phước',
   'Bình Thuận',
   'Cà Mau',
@@ -99,6 +99,14 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
     'Quận Phú Xuân', 'Quận Thuận Hóa', 'Thị xã Phong Điền', 'Thị xã Hương Thủy', 'Thị xã Hương Trà',
     'Huyện A Lưới', 'Huyện Nam Đông', 'Huyện Phú Lộc', 'Huyện Phú Vàng', 'Huyện Quảng Điền'
   ],
+  'TP. Bình Dương': [
+    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
+    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
+  ],
+  'Bình Dương': [
+    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
+    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
+  ],
   'An Giang': [
     'TP. Long Xuyên', 'TP. Châu Đốc', 'Thị xã Tân Châu', 'Thị xã Tịnh Biên',
     'Huyện An Phú', 'Huyện Châu Phú', 'Huyện Châu Thành', 'Huyện Chợ Mới', 'Huyện Phú Tân', 'Huyện Thoại Sơn', 'Huyện Tri Tôn'
@@ -123,10 +131,6 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   ],
   'Bình Định': [
     'TP. Quy Nhơn', 'Thị xã An Nhơn', 'Thị xã Hoài Nhơn', 'Huyện An Lão', 'Huyện Hoài Ân', 'Huyện Phù Cát', 'Huyện Phù Mỹ', 'Huyện Tây Sơn', 'Huyện Vân Canh', 'Huyện Vĩnh Thạnh'
-  ],
-  'Bình Dương': [
-    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
-    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
   ],
   'Bình Phước': [
     'TP. Đồng Xoài', 'Thị xã Bình Long', 'Thị xã Phước Long', 'Thị xã Chơn Thành', 'Huyện Bù Đăng', 'Huyện Bù Đốp', 'Huyện Bù Gia Mập', 'Huyện Đồng Phú', 'Huyện Hớn Quản', 'Huyện Lộc Ninh', 'Huyện Phú Riềng'
