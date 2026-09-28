@@ -1,13 +1,13 @@
+// Danh sách 34 đơn vị hành chính cấp tỉnh trực thuộc Trung ương của Việt Nam
+// (Sau khi sắp xếp, sáp nhập theo Nghị quyết của Quốc hội)
 export const VIETNAM_PROVINCES = [
   'TP. Hồ Chí Minh',
-  'Hà Nội',
-  'Đà Nẵng',
-  'Hải Phòng',
-  'Cần Thơ',
+  'TP. Hà Nội',
+  'TP. Hải Phòng',
+  'TP. Đà Nẵng',
+  'TP. Cần Thơ',
   'TP. Thừa Thiên Huế',
-  'TP. Bình Dương',
   'An Giang',
-  'Bà Rịa - Vũng Tàu',
   'Bắc Giang',
   'Bắc Kạn',
   'Bạc Liêu',
@@ -25,12 +25,7 @@ export const VIETNAM_PROVINCES = [
   'Đồng Tháp',
   'Gia Lai',
   'Hà Giang',
-  'Hà Nam',
   'Hà Tĩnh',
-  'Hải Dương',
-  'Hậu Giang',
-  'Hòa Bình',
-  'Hưng Yên',
   'Khánh Hòa',
   'Kiên Giang',
   'Kon Tum',
@@ -40,6 +35,18 @@ export const VIETNAM_PROVINCES = [
   'Lào Cai',
   'Long An',
   'Nam Định',
+];
+
+// Danh sách tra cứu mở rộng cho các tỉnh/thành phố trước sáp nhập
+export const VIETNAM_63_PROVINCES = [
+  ...VIETNAM_PROVINCES,
+  'Bà Rịa - Vũng Tàu',
+  'Bình Dương',
+  'Hà Nam',
+  'Hải Dương',
+  'Hậu Giang',
+  'Hòa Bình',
+  'Hưng Yên',
   'Nghệ An',
   'Ninh Bình',
   'Ninh Thuận',
@@ -64,12 +71,20 @@ export const VIETNAM_PROVINCES = [
   'Yên Bái',
 ];
 
-// Cập nhật mới nhất tính đến thời điểm 2026 (Nghị quyết của Quốc hội & UBTVQH về sắp xếp đơn vị hành chính)
+// Cập nhật mới nhất danh sách Quận / Huyện / Thành phố trực thuộc
 export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   'TP. Hồ Chí Minh': [
     'TP. Thủ Đức', 'Quận 1', 'Quận 3', 'Quận 4', 'Quận 5', 'Quận 6', 'Quận 7', 'Quận 8', 'Quận 10', 'Quận 11', 'Quận 12',
     'Quận Bình Thạnh', 'Quận Gò Vấp', 'Quận Phú Nhuận', 'Quận Tân Bình', 'Quận Tân Phú', 'Quận Bình Tân',
+    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Vũng Tàu', 'TP. Phú Mỹ', 'TP. Bà Rịa',
     'Huyện Bình Chánh', 'Huyện Cần Giờ', 'Huyện Củ Chi', 'Huyện Hóc Môn', 'Huyện Nhà Bè'
+  ],
+  'TP. Hà Nội': [
+    'Quận Ba Đình', 'Quận Hoàn Kiếm', 'Quận Tây Hồ', 'Quận Long Biên', 'Quận Cầu Giấy', 'Quận Đống Đa',
+    'Quận Hai Bà Trưng', 'Quận Hoàng Mai', 'Quận Thanh Xuân', 'Quận Hà Đông', 'Quận Bắc Từ Liêm', 'Quận Nam Từ Liêm',
+    'Thị xã Sơn Tây', 'TP. Phủ Lý', 'Huyện Ba Vì', 'Huyện Chương Mỹ', 'Huyện Đan Phượng', 'Huyện Đông Anh', 'Huyện Gia Lâm',
+    'Huyện Hoài Đức', 'Huyện Mê Linh', 'Huyện Mỹ Đức', 'Huyện Phú Xuyên', 'Huyện Phúc Thọ', 'Huyện Quốc Oai',
+    'Huyện Sóc Sơn', 'Huyện Thạch Thất', 'Huyện Thanh Oai', 'Huyện Thanh Trì', 'Huyện Thường Tín', 'Huyện Ứng Hòa'
   ],
   'Hà Nội': [
     'Quận Ba Đình', 'Quận Hoàn Kiếm', 'Quận Tây Hồ', 'Quận Long Biên', 'Quận Cầu Giấy', 'Quận Đống Đa',
@@ -78,14 +93,27 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
     'Huyện Hoài Đức', 'Huyện Mê Linh', 'Huyện Mỹ Đức', 'Huyện Phú Xuyên', 'Huyện Phúc Thọ', 'Huyện Quốc Oai',
     'Huyện Sóc Sơn', 'Huyện Thạch Thất', 'Huyện Thanh Oai', 'Huyện Thanh Trì', 'Huyện Thường Tín', 'Huyện Ứng Hòa'
   ],
-  'Đà Nẵng': [
-    'Quận Hải Châu', 'Quận Thanh Khê', 'Quận Sơn Trà', 'Quận Ngũ Hành Sơn', 'Quận Liên Chiểu', 'Quận Cẩm Lệ',
-    'Huyện Hòa Vang', 'Huyện Hoàng Sa'
+  'TP. Hải Phòng': [
+    'TP. Thủy Nguyên', 'Quận An Dương', 'Quận Hồng Bàng', 'Quận Ngô Quyền', 'Quận Lê Chân', 'Quận Hải An', 'Quận Kiến An',
+    'Quận Đồ Sơn', 'Quận Dương Kinh', 'TP. Hải Dương', 'TP. Chí Linh', 'TP. Hưng Yên', 'Huyện An Lão', 'Huyện Kiến Thụy', 'Huyện Tiên Lãng', 'Huyện Vĩnh Bảo',
+    'Huyện Cát Hải', 'Huyện Bạch Long Vĩ'
   ],
   'Hải Phòng': [
     'TP. Thủy Nguyên', 'Quận An Dương', 'Quận Hồng Bàng', 'Quận Ngô Quyền', 'Quận Lê Chân', 'Quận Hải An', 'Quận Kiến An',
     'Quận Đồ Sơn', 'Quận Dương Kinh', 'Huyện An Lão', 'Huyện Kiến Thụy', 'Huyện Tiên Lãng', 'Huyện Vĩnh Bảo',
     'Huyện Cát Hải', 'Huyện Bạch Long Vĩ'
+  ],
+  'TP. Đà Nẵng': [
+    'Quận Hải Châu', 'Quận Thanh Khê', 'Quận Sơn Trà', 'Quận Ngũ Hành Sơn', 'Quận Liên Chiểu', 'Quận Cẩm Lệ',
+    'TP. Tam Kỳ', 'TP. Hội An', 'Huyện Hòa Vang', 'Huyện Hoàng Sa'
+  ],
+  'Đà Nẵng': [
+    'Quận Hải Châu', 'Quận Thanh Khê', 'Quận Sơn Trà', 'Quận Ngũ Hành Sơn', 'Quận Liên Chiểu', 'Quận Cẩm Lệ',
+    'Huyện Hòa Vang', 'Huyện Hoàng Sa'
+  ],
+  'TP. Cần Thơ': [
+    'Quận Ninh Kiều', 'Quận Bình Thủy', 'Quận Cái Răng', 'Quận Ô Môn', 'Quận Thốt Nốt',
+    'TP. Vị Thanh', 'TP. Ngã Bảy', 'TP. Sóc Trăng', 'Huyện Phong Điền', 'Huyện Cờ Đỏ', 'Huyện Vĩnh Thạnh', 'Huyện Thới Lai'
   ],
   'Cần Thơ': [
     'Quận Ninh Kiều', 'Quận Bình Thủy', 'Quận Cái Răng', 'Quận Ô Môn', 'Quận Thốt Nốt',
@@ -99,23 +127,12 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
     'Quận Phú Xuân', 'Quận Thuận Hóa', 'Thị xã Phong Điền', 'Thị xã Hương Thủy', 'Thị xã Hương Trà',
     'Huyện A Lưới', 'Huyện Nam Đông', 'Huyện Phú Lộc', 'Huyện Phú Vàng', 'Huyện Quảng Điền'
   ],
-  'TP. Bình Dương': [
-    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
-    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
-  ],
-  'Bình Dương': [
-    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
-    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
-  ],
   'An Giang': [
     'TP. Long Xuyên', 'TP. Châu Đốc', 'Thị xã Tân Châu', 'Thị xã Tịnh Biên',
     'Huyện An Phú', 'Huyện Châu Phú', 'Huyện Châu Thành', 'Huyện Chợ Mới', 'Huyện Phú Tân', 'Huyện Thoại Sơn', 'Huyện Tri Tôn'
   ],
-  'Bà Rịa - Vũng Tàu': [
-    'TP. Vũng Tàu', 'TP. Bà Rịa', 'TP. Phú Mỹ', 'Huyện Long Đất', 'Huyện Châu Đức', 'Huyện Xuyên Mộc', 'Huyện Côn Đảo'
-  ],
   'Bắc Giang': [
-    'TP. Bắc Giang', 'Thị xã Việt Yên', 'Huyện Hiệp Hòa', 'Huyện Lạng Giang', 'Huyện Luc Nam', 'Huyện Lục Ngạn', 'Huyện Sơn Động', 'Huyện Tân Yên', 'Huyện Yên Dũng', 'Huyện Yên Thế'
+    'TP. Bắc Giang', 'Thị xã Việt Yên', 'Huyện Hiệp Hòa', 'Huyện Lạng Giang', 'Huyện Lục Nam', 'Huyện Lục Ngạn', 'Huyện Sơn Động', 'Huyện Tân Yên', 'Huyện Yên Dũng', 'Huyện Yên Thế'
   ],
   'Bắc Kạn': [
     'TP. Bắc Kạn', 'Huyện Ba Bể', 'Huyện Bạch Thông', 'Huyện Chợ Đồn', 'Huyện Chợ Mới', 'Huyện Na Rì', 'Huyện Ngân Sơn', 'Huyện Pác Nặm'
@@ -166,23 +183,8 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   'Hà Giang': [
     'TP. Hà Giang', 'Huyện Bắc Quang', 'Huyện Bắc Mê', 'Huyện Hoàng Su Phì', 'Huyện Đồng Văn', 'Huyện Mèo Vạc', 'Huyện Quản Bạ', 'Huyện Quang Bình', 'Huyện Vị Xuyên', 'Huyện Xín Mần', 'Huyện Yên Minh'
   ],
-  'Hà Nam': [
-    'TP. Phủ Lý', 'Thị xã Duy Tiên', 'Thị xã Kim Bảng', 'Huyện Bình Lục', 'Huyện Lý Nhân', 'Huyện Thanh Liêm'
-  ],
   'Hà Tĩnh': [
     'TP. Hà Tĩnh', 'Thị xã Hồng Lĩnh', 'Thị xã Kỳ Anh', 'Huyện Cẩm Xuyên', 'Huyện Can Lộc', 'Huyện Đức Thọ', 'Huyện Hương Khê', 'Huyện Hương Sơn', 'Huyện Kỳ Anh', 'Huyện Lộc Hà', 'Huyện Nghi Xuân', 'Huyện Thạch Hà', 'Huyện Vũ Quang'
-  ],
-  'Hải Dương': [
-    'TP. Hải Dương', 'TP. Chí Linh', 'Thị xã Kinh Môn', 'Huyện Bình Giang', 'Huyện Cẩm Giàng', 'Huyện Gia Lộc', 'Huyện Kim Thành', 'Huyện Nam Sách', 'Huyện Ninh Giang', 'Huyện Thanh Hà', 'Huyện Thanh Miện', 'Huyện Tứ Kỳ'
-  ],
-  'Hậu Giang': [
-    'TP. Vị Thanh', 'TP. Ngã Bảy', 'Thị xã Long Mỹ', 'Huyện Châu Thành', 'Huyện Châu Thành A', 'Huyện Phụng Hiệp', 'Huyện Vị Thủy'
-  ],
-  'Hòa Bình': [
-    'TP. Hòa Bình', 'Huyện Cao Phong', 'Huyện Đà Bắc', 'Huyện Kim Bôi', 'Huyện Lạc Sơn', 'Huyện Lạc Thủy', 'Huyện Lương Sơn', 'Huyện Mai Châu', 'Huyện Tân Lạc', 'Huyện Yên Thủy'
-  ],
-  'Hưng Yên': [
-    'TP. Hưng Yên', 'Thị xã Mỹ Hào', 'Huyện Ân Thi', 'Huyện Khoái Châu', 'Huyện Kim Động', 'Huyện Phù Cừ', 'Huyện Tiên Lữ', 'Huyện Văn Giang', 'Huyện Văn Lâm', 'Huyện Yên Mỹ'
   ],
   'Khánh Hòa': [
     'TP. Nha Trang', 'TP. Cam Ranh', 'Thị xã Ninh Hòa', 'Huyện Cam Lâm', 'Huyện Diên Khánh', 'Huyện Khánh Sơn', 'Huyện Khánh Vĩnh', 'Huyện Trường Sa', 'Huyện Vạn Ninh'
@@ -210,6 +212,28 @@ export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
   ],
   'Nam Định': [
     'TP. Nam Định', 'Huyện Giao Thủy', 'Huyện Hải Hậu', 'Huyện Nam Trực', 'Huyện Nghĩa Hưng', 'Huyện Trực Ninh', 'Huyện Vụ Bản', 'Huyện Xuân Trường', 'Huyện Ý Yên'
+  ],
+  'Bà Rịa - Vũng Tàu': [
+    'TP. Vũng Tàu', 'TP. Bà Rịa', 'TP. Phú Mỹ', 'Huyện Long Đất', 'Huyện Châu Đức', 'Huyện Xuyên Mộc', 'Huyện Côn Đảo'
+  ],
+  'Bình Dương': [
+    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
+    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
+  ],
+  'Hà Nam': [
+    'TP. Phủ Lý', 'Thị xã Duy Tiên', 'Thị xã Kim Bảng', 'Huyện Bình Lục', 'Huyện Lý Nhân', 'Huyện Thanh Liêm'
+  ],
+  'Hải Dương': [
+    'TP. Hải Dương', 'TP. Chí Linh', 'Thị xã Kinh Môn', 'Huyện Bình Giang', 'Huyện Cẩm Giàng', 'Huyện Gia Lộc', 'Huyện Kim Thành', 'Huyện Nam Sách', 'Huyện Ninh Giang', 'Huyện Thanh Hà', 'Huyện Thanh Miện', 'Huyện Tứ Kỳ'
+  ],
+  'Hậu Giang': [
+    'TP. Vị Thanh', 'TP. Ngã Bảy', 'Thị xã Long Mỹ', 'Huyện Châu Thành', 'Huyện Châu Thành A', 'Huyện Phụng Hiệp', 'Huyện Vị Thủy'
+  ],
+  'Hòa Bình': [
+    'TP. Hòa Bình', 'Huyện Cao Phong', 'Huyện Đà Bắc', 'Huyện Kim Bôi', 'Huyện Lạc Sơn', 'Huyện Lạc Thủy', 'Huyện Lương Sơn', 'Huyện Mai Châu', 'Huyện Tân Lạc', 'Huyện Yên Thủy'
+  ],
+  'Hưng Yên': [
+    'TP. Hưng Yên', 'Thị xã Mỹ Hào', 'Huyện Ân Thi', 'Huyện Khoái Châu', 'Huyện Kim Động', 'Huyện Phù Cừ', 'Huyện Tiên Lữ', 'Huyện Văn Giang', 'Huyện Văn Lâm', 'Huyện Yên Mỹ'
   ],
   'Nghệ An': [
     'TP. Vinh', 'Thị xã Thái Hòa', 'Thị xã Hoàng Mai', 'Huyện Anh Sơn', 'Huyện Con Cuông', 'Huyện Diễn Châu', 'Huyện Đô Lương', 'Huyện Hưng Nguyên', 'Huyện Kỳ Sơn', 'Huyện Nam Đàn', 'Huyện Nghi Lộc', 'Huyện Nghĩa Đàn', 'Huyện Quỳ Châu', 'Huyện Quỳ Hợp', 'Huyện Quỳnh Lưu', 'Huyện Tân Kỳ', 'Huyện Thanh Chương', 'Huyện Tương Dương', 'Huyện Yên Thành'
@@ -290,7 +314,7 @@ export function getDistrictsForProvince(provinceName: string): string[] {
   if (!provinceName) return [];
   if (DISTRICTS_BY_PROVINCE[provinceName]) return DISTRICTS_BY_PROVINCE[provinceName];
 
-  // Hỗ trợ tìm kiếm theo tên không có hoặc có tiền tố "TP."
+  // Tra cứu thông minh hỗ trợ các biến thể có/không có tiền tố "TP."
   const normalized = provinceName.replace(/^TP\.\s*/i, '').trim();
   const matchedKey = Object.keys(DISTRICTS_BY_PROVINCE).find(
     k => k.replace(/^TP\.\s*/i, '').trim() === normalized
