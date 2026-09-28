@@ -157,16 +157,18 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                   margin: 0,
                   letterSpacing: '-0.02em',
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
                 }}>FLASH SALE</h2>
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 800,
                   background: '#ef4444',
                   color: '#ffffff',
-                  padding: '2px 8px',
+                  padding: '3px 8px',
                   borderRadius: '6px',
                   letterSpacing: '0.03em',
                   boxShadow: '0 2px 6px rgba(239, 68, 68, 0.25)',
+                  whiteSpace: 'nowrap',
                 }}>
                   ƯU ĐÃI GIỜ VÀNG
                 </span>
@@ -176,7 +178,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
           </div>
 
           {/* Countdown Timer */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#334155', flexShrink: 0, flexWrap: 'nowrap' }}>
             {!timer.isEnded ? (
               <span style={{
                 display: 'inline-flex',
@@ -190,6 +192,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 borderRadius: '20px',
                 border: '1px solid #fecaca',
                 letterSpacing: '0.02em',
+                whiteSpace: 'nowrap',
               }}>
                 <span style={{
                   width: '7px',
@@ -198,6 +201,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                   background: '#ef4444',
                   display: 'inline-block',
                   boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.35)',
+                  flexShrink: 0,
                 }} />
                 ĐANG DIỄN RA
               </span>
@@ -214,12 +218,13 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 borderRadius: '20px',
                 border: '1px solid #cbd5e1',
                 letterSpacing: '0.02em',
+                whiteSpace: 'nowrap',
               }}>
                 ĐÃ KẾT THÚC
               </span>
             )}
 
-            <span style={{ fontSize: '12.5px', color: '#64748b' }}>
+            <span style={{ fontSize: '12.5px', color: '#64748b', whiteSpace: 'nowrap' }}>
               {timer.isEnded ? 'Phiên ưu đãi đã kết thúc:' : 'Kết thúc trong:'}
             </span>
 
