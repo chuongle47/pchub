@@ -12,6 +12,7 @@ import { useCartStore, useOrderStore } from '@/lib/store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
 import TechCheckoutLoader from '@/components/checkout/TechCheckoutLoader';
+import { VIETNAM_PROVINCES, getDistrictsForProvince } from '@/data/vietnam-locations';
 
 type CheckoutStep = 'shipping' | 'payment';
 
@@ -434,10 +435,10 @@ export default function CheckoutPage() {
 
                     <div>
                       <label style={labelStyle}>Tỉnh / Thành phố <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select required value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))} style={inputStyle}>
+                      <select required value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value, district: '' }))} style={inputStyle}>
                         <option value="">Chọn tỉnh/thành phố</option>
-                        {['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Bình Dương', 'Đồng Nai', 'Hải Phòng', 'Vũng Tàu'].map(p => (
-                          <option key={p}>{p}</option>
+                        {VIETNAM_PROVINCES.map(p => (
+                          <option key={p} value={p}>{p}</option>
                         ))}
                       </select>
                     </div>
@@ -446,8 +447,8 @@ export default function CheckoutPage() {
                       <label style={labelStyle}>Quận / Huyện <span style={{ color: '#ef4444' }}>*</span></label>
                       <select required value={form.district} onChange={e => setForm(p => ({ ...p, district: e.target.value }))} style={inputStyle}>
                         <option value="">Chọn quận/huyện</option>
-                        {['Quận 1', 'Quận 2', 'Quận 3', 'Quận 7', 'Bình Thạnh', 'Thủ Đức'].map(d => (
-                          <option key={d}>{d}</option>
+                        {getDistrictsForProvince(form.province).map(d => (
+                          <option key={d} value={d}>{d}</option>
                         ))}
                       </select>
                     </div>
