@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { 
-  Cpu, Layers, Sliders, HardDrive, Zap, Box, 
-  Fan, Sparkles, Check, Trash2, Plus, ShoppingCart, 
+import {
+  Cpu, Layers, Sliders, HardDrive, Zap, Box,
+  Fan, Sparkles, Check, Trash2, Plus, ShoppingCart,
   Download, RotateCcw, ChevronRight, Bot, RefreshCw, AlertCircle,
   Printer, FileSpreadsheet, FileText, ChevronDown, Tv, Headphones,
   Save, FolderOpen, Minus, X, Share2, Copy, Link as LinkIcon, QrCode, ExternalLink
@@ -424,7 +424,7 @@ export default function BuildPcPage() {
     const slotLower = targetSlotKey.toLowerCase();
     const targetCatId = CATEGORY_ID_MAP[slotLower];
     const catalogSource = liveSbuyProducts.length > 0 ? liveSbuyProducts : seed.products;
-    
+
     // Find products matching category/slot strictly
     const matchingProducts = catalogSource.filter(p => {
       const catId = (p.category_id || '').toLowerCase();
@@ -432,13 +432,13 @@ export default function BuildPcPage() {
       return (targetCatId && catId === targetCatId) || catSlug === slotLower;
     });
 
-    const candidates = matchingProducts.length > 0 
-      ? matchingProducts 
+    const candidates = matchingProducts.length > 0
+      ? matchingProducts
       : catalogSource.filter(p => {
-          const catId = (p.category_id || '').toLowerCase();
-          const catSlug = (p.category_slug || '').toLowerCase();
-          return (targetCatId && catId === targetCatId) || catSlug === slotLower;
-        });
+        const catId = (p.category_id || '').toLowerCase();
+        const catSlug = (p.category_slug || '').toLowerCase();
+        return (targetCatId && catId === targetCatId) || catSlug === slotLower;
+      });
 
     // Sort by AI compatibility score (highest compatible product first)
     const sortedCompat = [...candidates].sort((a, b) => {
@@ -842,7 +842,7 @@ export default function BuildPcPage() {
   const isAmd = cpuSelected?.name.toLowerCase().includes('amd') || cpuSelected?.name.toLowerCase().includes('ryzen');
   const isLga1700Cpu = cpuSelected?.specs?.includes('LGA1700') || cpuSelected?.name?.includes('14') || cpuSelected?.name?.includes('13') || cpuSelected?.name?.includes('12');
   const isAm5Cpu = cpuSelected?.specs?.includes('AM5') || cpuSelected?.name?.includes('7000') || cpuSelected?.name?.includes('9000');
-  
+
   const isLga1700Mb = mainboardSelected?.specs?.includes('LGA1700') || mainboardSelected?.name?.includes('Z790') || mainboardSelected?.name?.includes('B760') || mainboardSelected?.name?.includes('Z690');
   const isAm5Mb = mainboardSelected?.specs?.includes('AM5') || mainboardSelected?.name?.includes('X670') || mainboardSelected?.name?.includes('B650');
 
@@ -946,8 +946,8 @@ export default function BuildPcPage() {
       const candidates = compatibleItems.length > 0
         ? compatibleItems
         : items.length > 0
-        ? items
-        : catalogSource.filter(p => {
+          ? items
+          : catalogSource.filter(p => {
             const catId = (p.category_id || '').toLowerCase();
             const catSlug = (p.category_slug || '').toLowerCase();
             return (targetCatId && catId === targetCatId) || catSlug === slotKey;
@@ -1262,7 +1262,7 @@ export default function BuildPcPage() {
                 </button>
               </>
             ) : (
-              <button 
+              <button
                 onClick={() => setActiveModalSlotKey(slot.key)}
                 style={{
                   background: '#2563eb',
@@ -1303,7 +1303,7 @@ export default function BuildPcPage() {
                 fontSize: '12.5px',
               }}>
                 <div style={{ color: '#1e40af', flex: 1, minWidth: '240px', lineHeight: '1.45' }}>
-                  <strong>💡 Gợi ý Kênh Đôi (Dual-Channel):</strong> Bạn đang chọn <strong>1 thanh RAM</strong> (Single Channel). 
+                  <strong>💡 Gợi ý Kênh Đôi (Dual-Channel):</strong> Bạn đang chọn <strong>1 thanh RAM</strong> (Single Channel).
                   {mbSelectedObj ? ` Bo mạch chủ ${mbSelectedObj.name} có ${mbRamSlots} khe RAM (Hỗ trợ tối đa ${mbMaxRamCapacity}GB RAM).` : ''} Hãy tăng số lượng lên <strong>2 thanh</strong> (cắm khe 2 và 4) để nhân đôi băng thông truyền tải (+35% FPS game)!
                 </div>
                 <button
@@ -1337,7 +1337,7 @@ export default function BuildPcPage() {
                 alignItems: 'center',
                 gap: '8px',
               }}>
-                <span style={{ fontWeight: 800 }}>✅ Cấu Hình 2 Thanh RAM Chuẩn Dual-Channel:</span> 
+                <span style={{ fontWeight: 800 }}>✅ Cấu Hình 2 Thanh RAM Chuẩn Dual-Channel:</span>
                 Tối ưu 100% băng thông bộ nhớ. {mbSelectedObj ? `Bo mạch chủ hỗ trợ ${mbRamSlots} khe RAM (Max ${mbMaxRamCapacity}GB), còn trống ${mbRamSlots - 2} khe cắm nâng cấp sau này.` : 'Dàn máy đạt hiệu năng đọc/ghi RAM lý tưởng!'}
               </div>
             ) : slot.quantity === 4 ? (
@@ -1349,7 +1349,7 @@ export default function BuildPcPage() {
                 fontSize: '12.5px',
                 color: '#92400e',
               }}>
-                <span style={{ fontWeight: 800 }}>⚠️ Lưu Ý Cắm 4 Khe RAM:</span> Đã dùng kín {mbRamSlots}/{mbRamSlots} khe RAM {mbSelectedObj ? `(Tối đa ${mbMaxRamCapacity}GB)` : ''}. 
+                <span style={{ fontWeight: 800 }}>⚠️ Lưu Ý Cắm 4 Khe RAM:</span> Đã dùng kín {mbRamSlots}/{mbRamSlots} khe RAM {mbSelectedObj ? `(Tối đa ${mbMaxRamCapacity}GB)` : ''}.
                 {isDdr5Board ? ' Lưu ý: Cắm 4 thanh RAM DDR5 có thể làm giảm xung XMP/EXPO xuống 4800MHz do giới hạn bộ điều khiển RAM IMC của CPU. Nên chọn 2 thanh dung lượng cao hơn nếu muốn duy trì Bus XMP cao.' : ' Khai thác tối đa số khe cắm RAM của Bo mạch chủ.'}
               </div>
             ) : (
@@ -1373,7 +1373,7 @@ export default function BuildPcPage() {
   return (
     <div style={{ background: '#f8fafc', color: '#1e293b', minHeight: '100vh', padding: '24px 0 60px' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
-        
+
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>
           <Link href="/" style={{ textDecoration: 'none', color: '#64748b' }}>Trang chủ</Link>
@@ -1541,7 +1541,7 @@ export default function BuildPcPage() {
 
         {/* 2-Columns Main Layout */}
         <div className="builder-layout-grid" style={{ alignItems: 'flex-start' }}>
-          
+
           {/* Left Column: Component Slots List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
@@ -1621,7 +1621,7 @@ export default function BuildPcPage() {
                 <span style={{ color: '#475569', fontWeight: 600 }}>Công suất ước tính (TDP):</span>
                 <span style={{ color: '#ea580c', fontWeight: 800 }}>{totalTdp} W</span>
               </div>
-              
+
               <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
                 <div style={{ width: `${Math.min(100, (totalTdp / 1000) * 100)}%`, height: '100%', background: '#22c55e' }} />
               </div>
@@ -2344,7 +2344,7 @@ export default function BuildPcPage() {
               whiteSpace: 'nowrap',
             }}
           >
-            ✨ AI Kiểm tra
+            AI Kiểm tra
           </button>
 
           <button
