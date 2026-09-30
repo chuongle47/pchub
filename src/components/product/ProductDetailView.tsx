@@ -91,7 +91,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   const [reviewNotice, setReviewNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeTab === 'reviews' && product.id) {
+    if (product.id) {
       setLoadingReviews(true);
       fetch(`/api/reviews?productId=${product.id}`)
         .then(res => res.json())
@@ -103,7 +103,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
         .catch(err => console.warn('Reviews fetch warning:', err))
         .finally(() => setLoadingReviews(false));
     }
-  }, [activeTab, product.id]);
+  }, [product.id]);
 
   const ratingCounts = useMemo(() => {
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -916,14 +916,32 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
 
                 {/* Ratings & Sold Stats */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px 10px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#eab308' }}>
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
-                    <Star size={16} fill="#eab308" />
+                  <div 
+                    onClick={handleScrollToReviews}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                    title="Xem tất cả đánh giá"
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#eab308' }}>
+                      {[1, 2, 3, 4, 5].map((starIndex) => {
+                        const numRating = parseFloat(avgRating);
+                        const isFilled = starIndex <= Math.round(numRating);
+                        return (
+                          <Star
+                            key={starIndex}
+                            size={16}
+                            fill={isFilled ? "#eab308" : "none"}
+                            color={isFilled ? "#eab308" : "#cbd5e1"}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{avgRating}</span>
+                    {totalReviewsCount > 0 && (
+                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                        ({totalReviewsCount} đánh giá)
+                      </span>
+                    )}
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>5.0</span>
                   <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
                   <span style={{ fontSize: '13px', color: '#64748b' }}>Đã bán: 128+</span>
                   <span className="toolbar-divider" style={{ fontSize: '13px', color: '#94a3b8' }}>|</span>
@@ -1351,9 +1369,18 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                 <div style={{ textAlign: 'center', minWidth: '130px' }}>
                   <div style={{ fontSize: '46px', fontWeight: 900, color: '#0f172a', lineHeight: '1' }}>{avgRating}</div>
                   <div style={{ display: 'flex', gap: '3px', color: '#eab308', margin: '8px 0', justifyContent: 'center' }}>
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={18} fill="#eab308" color="#eab308" />
-                    ))}
+                    {[1, 2, 3, 4, 5].map((s) => {
+                      const numRating = parseFloat(avgRating);
+                      const isFilled = s <= Math.round(numRating);
+                      return (
+                        <Star
+                          key={s}
+                          size={18}
+                          fill={isFilled ? "#eab308" : "none"}
+                          color={isFilled ? "#eab308" : "#cbd5e1"}
+                        />
+                      );
+                    })}
                   </div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
                     {wooReviews.length > 0 ? `${wooReviews.length} đánh giá đã duyệt` : 'Chưa có bình luận mới'}

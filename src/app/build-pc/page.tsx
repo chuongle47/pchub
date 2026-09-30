@@ -7,7 +7,7 @@ import {
   Fan, Sparkles, Check, Trash2, Plus, ShoppingCart, 
   Download, RotateCcw, ChevronRight, Bot, RefreshCw, AlertCircle,
   Printer, FileSpreadsheet, FileText, ChevronDown, Tv, Headphones,
-  Save, FolderOpen, Minus, X
+  Save, FolderOpen, Minus, X, Share2, Copy, Link as LinkIcon, QrCode, ExternalLink
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store';
@@ -162,9 +162,14 @@ export default function BuildPcPage() {
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const [showFullReportModal, setShowFullReportModal] = useState(false);
 
-  // Save / Load Build Modals
+  // Save / Load / Share Build Modals
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
+  const [showShareCodeModal, setShowShareCodeModal] = useState(false);
+  const [showImportCodeModal, setShowImportCodeModal] = useState(false);
+  const [importCodeInput, setImportCodeInput] = useState('');
+  const [copiedCodeToast, setCopiedCodeToast] = useState(false);
+  const [copiedUrlToast, setCopiedUrlToast] = useState(false);
   const [buildTitleInput, setBuildTitleInput] = useState('');
   const [savedBuildsList, setSavedBuildsList] = useState<SavedBuild[]>([]);
 
@@ -605,6 +610,89 @@ export default function BuildPcPage() {
       localStorage.setItem('pchub_saved_builds', JSON.stringify(updated));
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  // ── Share Build Code Logic ──────────────────────────────────────────────
+  const generateBuildCode = (): string => {
+    const selectedSlots = components
+      .filter(s => s.selected !== null)
+      .map(s => ({
+        k: s.key,
+        id: s.selected!.id,
+        n: s.selected!.name,
+        p: s.selected!.price,
+        t: s.selected!.tdp,
+        sp: s.selected!.specs,
+        img: s.selected!.image,
+        sl: s.selected!.slug || '',
+        q: s.quantity,
+      }));
+    if (selectedSlots.length === 0) return '';
+    const payload = JSON.stringify({ v: 1, ts: Date.now(), slots: selectedSlots });
+    try {
+      return btoa(unescape(encodeURIComponent(payload)));
+    } catch {
+      return btoa(payload);
+    }
+  };
+
+  const importBuildFromCode = (code: string): boolean => {
+    try {
+      const decoded = decodeURIComponent(escape(atob(code.trim())));
+      const parsed = JSON.parse(decoded);
+      if (!parsed || !Array.isArray(parsed.slots)) return false;
+      setComponents(prev => prev.map(slot => {
+        const found = parsed.slots.find((s: any) => s.k === slot.key);
+        if (found) {
+          return {
+            ...slot,
+            selected: {
+              id: found.id,
+              name: found.n,
+              price: found.p,
+              tdp: found.t,
+              specs: found.sp,
+              image: found.img,
+              slug: found.sl,
+            },
+            quantity: found.q || 1,
+          };
+        }
+        return { ...slot, selected: null, quantity: 1 };
+      }));
+      setAiReport(null);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleShareCode = () => {
+    const selected = components.filter(s => s.selected !== null);
+    if (selected.length === 0) {
+      setNotice('Vui lòng chọn ít nhất 1 linh kiện trước khi tạo mã chia sẻ!');
+      setTimeout(() => setNotice(null), 2500);
+      return;
+    }
+    setShowShareCodeModal(true);
+  };
+
+  const handleImportCode = () => {
+    if (!importCodeInput.trim()) {
+      setNotice('Vui lòng nhập mã cấu hình!');
+      setTimeout(() => setNotice(null), 2000);
+      return;
+    }
+    const ok = importBuildFromCode(importCodeInput);
+    if (ok) {
+      setShowImportCodeModal(false);
+      setImportCodeInput('');
+      setNotice('✅ Đã nhập cấu hình từ mã thành công!');
+      setTimeout(() => setNotice(null), 3000);
+    } else {
+      setNotice('❌ Mã cấu hình không hợp lệ hoặc bị lỗi. Vui lòng kiểm tra lại!');
+      setTimeout(() => setNotice(null), 3000);
     }
   };
 
@@ -1403,6 +1491,51 @@ export default function BuildPcPage() {
               <RotateCcw size={15} />
               Làm mới
             </button>
+
+            <button
+              type="button"
+              onClick={handleShareCode}
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(139, 92, 246, 0.5)',
+                borderRadius: '9px',
+                padding: '8px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 3px 12px rgba(124, 58, 237, 0.35)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Share2 size={15} />
+              Chia sẻ mã
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowImportCodeModal(true)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: '#e2e8f0',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '9px',
+                padding: '8px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <LinkIcon size={15} />
+              Nhập mã
+            </button>
           </div>
         </div>
 
@@ -1879,6 +2012,276 @@ export default function BuildPcPage() {
           onReanalyze={handleRunAiAnalysis}
           isAnalyzing={isAiAnalyzing}
         />
+      )}
+
+      {/* ─── Share Build Code Modal ─────────────────────────────────────────────── */}
+      {showShareCodeModal && (() => {
+        const code = generateBuildCode();
+        const selectedItems = components.filter(s => s.selected !== null);
+        return (
+          <div
+            style={{
+              position: 'fixed', inset: 0, zIndex: 600,
+              background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '24px',
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowShareCodeModal(false); }}
+          >
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '32px',
+              width: '100%',
+              maxWidth: '580px',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Share2 size={20} color="#fff" />
+                    </div>
+                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#0f172a' }}>Chia Sẻ Cấu Hình PC</h2>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Sao chép mã bên dưới và gửi cho người khác để họ nhập lại cấu hình</p>
+                </div>
+                <button type="button" onClick={() => setShowShareCodeModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}>
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* Summary of selected components */}
+              <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Cấu hình ({selectedItems.length} linh kiện)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {selectedItems.map(s => (
+                    <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                        <img src={s.selected!.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={e => { e.currentTarget.style.display = 'none'; }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.selected!.name}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{s.category} · SL: {s.quantity}</div>
+                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#2563eb', flexShrink: 0 }}>{(s.selected!.price * s.quantity).toLocaleString('vi-VN')} ₫</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '12px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>Tổng chi phí:</span>
+                  <span style={{ fontSize: '16px', fontWeight: 900, color: '#2563eb' }}>{totalPrice.toLocaleString('vi-VN')} ₫</span>
+                </div>
+              </div>
+
+              {/* Build Code Display */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>Mã cấu hình (Build Code):</div>
+                <div style={{ position: 'relative' }}>
+                  <textarea
+                    readOnly
+                    value={code}
+                    style={{
+                      width: '100%',
+                      height: '100px',
+                      borderRadius: '10px',
+                      border: '1.5px solid #c7d2fe',
+                      background: '#eef2ff',
+                      padding: '12px 44px 12px 14px',
+                      fontSize: '11px',
+                      fontFamily: 'monospace',
+                      color: '#3730a3',
+                      resize: 'none',
+                      lineHeight: '1.6',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      wordBreak: 'break-all',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(code).then(() => {
+                        setCopiedCodeToast(true);
+                        setTimeout(() => setCopiedCodeToast(false), 2000);
+                      });
+                    }}
+                    title="Sao chép mã"
+                    style={{
+                      position: 'absolute', top: '10px', right: '10px',
+                      background: copiedCodeToast ? '#10b981' : '#6366f1',
+                      color: '#fff', border: 'none', borderRadius: '7px',
+                      padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                      fontSize: '11px', fontWeight: 700,
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    {copiedCodeToast ? <Check size={13} /> : <Copy size={13} />}
+                    {copiedCodeToast ? 'Đã chép!' : 'Sao chép'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(code).then(() => {
+                      setCopiedCodeToast(true);
+                      setTimeout(() => setCopiedCodeToast(false), 2500);
+                    });
+                  }}
+                  style={{
+                    flex: 1, minWidth: '140px',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    color: '#fff', border: 'none', borderRadius: '10px',
+                    padding: '12px 20px', fontSize: '13.5px', fontWeight: 800,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                    boxShadow: '0 4px 14px rgba(109,40,217,0.35)',
+                  }}
+                >
+                  <Copy size={16} />
+                  {copiedCodeToast ? '✅ Đã sao chép!' : 'Sao chép mã'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowShareCodeModal(false)}
+                  style={{
+                    flex: 1, minWidth: '100px',
+                    background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0',
+                    borderRadius: '10px', padding: '12px 20px',
+                    fontSize: '13.5px', fontWeight: 700, cursor: 'pointer',
+                  }}
+                >
+                  Đóng
+                </button>
+              </div>
+
+              {/* Instruction note */}
+              <div style={{ marginTop: '16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#92400e', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '16px', lineHeight: 1 }}>💡</span>
+                <span>Người nhận mã có thể truy cập <strong>Build PC → Nhập mã</strong> để tải lại toàn bộ cấu hình này (linh kiện, số lượng) ngay lập tức.</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ─── Import Build Code Modal ─────────────────────────────────────────────── */}
+      {showImportCodeModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 600,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowImportCodeModal(false); setImportCodeInput(''); } }}
+        >
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            padding: '32px',
+            width: '100%',
+            maxWidth: '500px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+            position: 'relative',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <LinkIcon size={20} color="#fff" />
+                  </div>
+                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#0f172a' }}>Nhập Mã Cấu Hình</h2>
+                </div>
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Dán mã cấu hình được chia sẻ để tải ngay toàn bộ linh kiện</p>
+              </div>
+              <button type="button" onClick={() => { setShowImportCodeModal(false); setImportCodeInput(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}>
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Code Input */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>Mã cấu hình:</label>
+              <textarea
+                value={importCodeInput}
+                onChange={e => setImportCodeInput(e.target.value)}
+                placeholder="Dán mã Build Code vào đây..."
+                autoFocus
+                style={{
+                  width: '100%',
+                  height: '120px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #e2e8f0',
+                  background: '#f8fafc',
+                  padding: '12px 14px',
+                  fontSize: '11.5px',
+                  fontFamily: 'monospace',
+                  color: '#1e293b',
+                  resize: 'vertical',
+                  lineHeight: '1.6',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                  wordBreak: 'break-all',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#0ea5e9'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
+              />
+            </div>
+
+            {/* Info note */}
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', color: '#075985', marginBottom: '20px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '15px', lineHeight: 1 }}>ℹ️</span>
+              <span>Toàn bộ linh kiện hiện tại sẽ <strong>bị thay thế</strong> bằng cấu hình trong mã. Hãy lưu cấu hình hiện tại trước nếu cần!</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleImportCode}
+                disabled={!importCodeInput.trim()}
+                style={{
+                  flex: 1,
+                  background: importCodeInput.trim() ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' : '#e2e8f0',
+                  color: importCodeInput.trim() ? '#fff' : '#94a3b8',
+                  border: 'none', borderRadius: '10px',
+                  padding: '12px 20px', fontSize: '14px', fontWeight: 800,
+                  cursor: importCodeInput.trim() ? 'pointer' : 'not-allowed',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                  boxShadow: importCodeInput.trim() ? '0 4px 14px rgba(14,165,233,0.35)' : 'none',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <LinkIcon size={16} />
+                Tải cấu hình
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowImportCodeModal(false); setImportCodeInput(''); }}
+                style={{
+                  flex: 1,
+                  background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0',
+                  borderRadius: '10px', padding: '12px 20px',
+                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal Hỏi Lựa Chọn Thanh Toán */}
