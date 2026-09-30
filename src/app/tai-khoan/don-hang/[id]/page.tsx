@@ -147,16 +147,26 @@ export default function OrderDetailPage({ params }: Props) {
 
       {/* Info Boxes Grid */}
       <div className="grid md:grid-cols-2 gap-5">
-        {/* Shipping address & payment */}
+        {/* Buyer, Shipping address & payment */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
           <div>
             <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm mb-3">
-              <MapPin size={16} className="text-blue-600" /> Thông tin giao nhận
+              <MapPin size={16} className="text-blue-600" /> Thông tin đơn hàng
             </div>
-            <div className="space-y-2 text-xs leading-relaxed">
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Người nhận:</span> <strong className="text-slate-800 font-bold">{order.shippingAddress?.name || 'Khách hàng'}</strong></div>
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Số điện thoại:</span> <span className="text-slate-800 font-semibold tabular-nums">{order.shippingAddress?.phone || 'Chưa có'}</span></div>
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Email:</span> <span className="text-slate-800 font-medium">{order.shippingAddress?.email || 'Chưa có'}</span></div>
+            
+            {/* Buyer */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200/80 mb-3 space-y-1.5 text-xs">
+              <div className="text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">👤 Người mua (Tài khoản)</div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Họ tên:</span> <strong className="text-slate-800 font-bold">{order.buyer?.name || order.shippingAddress?.name || 'Khách hàng'}</strong></div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Số điện thoại:</span> <span className="text-slate-800 font-semibold tabular-nums">{order.buyer?.phone || order.shippingAddress?.phone || 'Chưa có'}</span></div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Email:</span> <span className="text-slate-800 font-medium">{order.buyer?.email || order.shippingAddress?.email || 'Chưa có'}</span></div>
+            </div>
+
+            {/* Recipient */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-1.5 text-xs">
+              <div className="text-[11px] font-extrabold text-emerald-600 uppercase tracking-wider">📦 Người nhận hàng</div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Người nhận:</span> <strong className="text-slate-800 font-bold">{order.shippingAddress?.name || order.buyer?.name || 'Khách hàng'}</strong></div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">SĐT nhận:</span> <span className="text-slate-800 font-semibold tabular-nums">{order.shippingAddress?.phone || 'Chưa có'}</span></div>
               <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Địa chỉ:</span> <span className="text-slate-800 font-medium">{order.shippingAddress?.address || ''}, {order.shippingAddress?.ward || ''}, {order.shippingAddress?.district || ''}, {order.shippingAddress?.province || ''}</span></div>
               {order.shippingAddress?.note && (
                 <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Ghi chú:</span> <span className="text-amber-700 font-medium italic">{order.shippingAddress.note}</span></div>

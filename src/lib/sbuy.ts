@@ -620,10 +620,15 @@ export async function fetchSbuyCategoriesLive(): Promise<AppCategory[]> {
 
 // WooCommerce Real Order Creation in Sbuy Backend
 export async function createSbuyWooCommerceOrder(orderData: {
-  customer: {
+  buyer?: {
     name: string;
     phone: string;
     email: string;
+  };
+  customer: {
+    name: string;
+    phone: string;
+    email?: string;
     address: string;
     province?: string;
     district?: string;
@@ -659,20 +664,24 @@ export async function createSbuyWooCommerceOrder(orderData: {
       };
     });
 
+    const buyerName = orderData.buyer?.name || orderData.customer.name;
+    const buyerEmail = orderData.buyer?.email || orderData.customer.email || 'customer@pchub.vn';
+    const buyerPhone = orderData.buyer?.phone || orderData.customer.phone || '0901234567';
+
     const body = {
       payment_method: orderData.paymentMethod || 'cod',
       payment_method_title: orderData.paymentMethodLabel || 'Thanh toán khi nhận hàng',
       set_paid: orderData.paymentMethod === 'vnpay' || orderData.paymentMethod === 'momo',
       billing: {
-        first_name: orderData.customer.name,
+        first_name: buyerName,
         last_name: '',
         address_1: orderData.customer.address,
         city: orderData.customer.province || 'Hà Nội',
         state: orderData.customer.district || '',
         postcode: '100000',
         country: 'VN',
-        email: orderData.customer.email || 'customer@pchub.vn',
-        phone: orderData.customer.phone || '0901234567'
+        email: buyerEmail,
+        phone: buyerPhone
       },
       shipping: {
         first_name: orderData.customer.name,
@@ -681,7 +690,8 @@ export async function createSbuyWooCommerceOrder(orderData: {
         city: orderData.customer.province || 'Hà Nội',
         state: orderData.customer.district || '',
         postcode: '100000',
-        country: 'VN'
+        country: 'VN',
+        phone: orderData.customer.phone || buyerPhone
       },
       line_items: lineItems,
       shipping_lines: [

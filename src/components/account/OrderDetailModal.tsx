@@ -236,7 +236,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
             gap: '20px',
           }}>
             
-            {/* Shipping Address */}
+            {/* Buyer & Recipient Address */}
             <div style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
@@ -248,30 +248,48 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a', fontWeight: 800, fontSize: '13px' }}>
                 <MapPin size={16} color="#2563eb" />
-                <span>Thông tin giao hàng</span>
+                <span>Thông tin người mua & người nhận</span>
               </div>
-              <div style={{ fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '14px', margin: 0 }}>
-                  {shipping.name || 'Khách hàng'}
+
+              {/* Buyer info */}
+              <div style={{ background: '#ffffff', padding: '10px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12.5px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.4px' }}>👤 Người mua (Tài khoản)</span>
+                <p style={{ fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  {order.buyer?.name || shipping.name || 'Khách hàng'}
+                </p>
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', color: '#475569', fontSize: '12px' }}>
+                  {(order.buyer?.phone || shipping.phone) && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Phone size={12} color="#64748b" /> {order.buyer?.phone || shipping.phone}
+                    </span>
+                  )}
+                  {(order.buyer?.email || shipping.email) && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Mail size={12} color="#64748b" /> {order.buyer?.email || shipping.email}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Recipient info */}
+              <div style={{ background: '#ffffff', padding: '10px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12.5px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.4px' }}>📦 Người nhận hàng</span>
+                <p style={{ fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  {shipping.name || order.buyer?.name || 'Khách hàng'}
                 </p>
                 {shipping.phone && (
-                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontVariantNumeric: 'tabular-nums', margin: 0 }}>
-                    <Phone size={13} color="#64748b" /> {shipping.phone}
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', margin: 0 }}>
+                    <Phone size={12} color="#64748b" /> {shipping.phone}
                   </p>
                 )}
-                {shipping.email && (
-                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', margin: 0 }}>
-                    <Mail size={13} color="#64748b" /> {shipping.email}
-                  </p>
-                )}
-                <p style={{ color: '#475569', lineHeight: '1.5', margin: '4px 0 0 0', paddingTop: '6px', borderTop: '1px solid #e2e8f0' }}>
+                <p style={{ color: '#475569', lineHeight: '1.4', margin: '4px 0 0 0', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
                   📍 {shipping.address || 'Địa chỉ nhận hàng'}
                   {shipping.ward ? `, ${shipping.ward}` : ''}
                   {shipping.district ? `, ${shipping.district}` : ''}
                   {shipping.province ? `, ${shipping.province}` : ''}
                 </p>
                 {shipping.note && (
-                  <p style={{ color: '#b45309', fontStyle: 'italic', background: '#fffbeb', padding: '8px 12px', borderRadius: '8px', border: '1px solid #fef3c7', margin: '6px 0 0 0', fontSize: '12px' }}>
+                  <p style={{ color: '#b45309', fontStyle: 'italic', background: '#fffbeb', padding: '6px 10px', borderRadius: '6px', border: '1px solid #fef3c7', margin: '4px 0 0 0', fontSize: '11.5px' }}>
                     📝 Ghi chú: {shipping.note}
                   </p>
                 )}

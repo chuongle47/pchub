@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ChevronRight, ChevronLeft, Truck, CreditCard, ShieldCheck,
-  CheckCircle, Smartphone, Banknote, Building2, Wallet, Package, Lock
+  CheckCircle, Smartphone, Banknote, Building2, Wallet, Package, Lock, User
 } from 'lucide-react';
 import { useCartStore, useOrderStore, useAuthStore } from '@/lib/store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
@@ -131,27 +131,53 @@ export default function CheckoutPage() {
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [voucherMessage, setVoucherMessage] = useState('');
 
-  // Shipping form state
+  // Buyer information (lấy tự động từ API user/auth store)
+  const [buyerForm, setBuyerForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+  });
+
+  // Shipping / Recipient form state (thông tin người nhận)
+  const [sameAsBuyer, setSameAsBuyer] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '',
     province: '', district: '', ward: '', address: '', note: '',
   });
 
-  // Auto-fill form từ thông tin user khi trang load
+  // Auto-fill buyer & recipient form từ thông tin user khi trang load
   useEffect(() => {
     if (nksUser) {
       const fullName = nksUser.name ||
         [nksUser.firstname, nksUser.lastname].filter(Boolean).join(' ') || '';
       const phone = nksUser.phone || '';
       const email = nksUser.email || '';
+      
+      setBuyerForm({
+        name: fullName,
+        phone: phone,
+        email: email,
+      });
+
+      // Mặc định nếu người nhận chưa nhập gì thì gợi ý hoặc để người dùng nhập thông tin người nhận
       setForm(prev => ({
         ...prev,
-        name: prev.name || fullName,
-        phone: prev.phone || phone,
         email: prev.email || email,
       }));
     }
-  }, [nksUser?.email]);
+  }, [nksUser?.email, nksUser?.phone, nksUser?.name]);
+
+  const handleToggleSameAsBuyer = (checked: boolean) => {
+    setSameAsBuyer(checked);
+    if (checked) {
+      setForm(prev => ({
+        ...prev,
+        name: buyerForm.name,
+        phone: buyerForm.phone,
+        email: buyerForm.email,
+      }));
+    }
+  };
 
   const totalPrice = total();
   const selectedShipping = SHIPPING_OPTIONS.find(s => s.id === shippingOption);
@@ -227,12 +253,24 @@ export default function CheckoutPage() {
     setCreatedOrderId(orderId);
     const selectedPayment = PAYMENT_METHODS.find(m => m.id === payment);
 
+    const bName = buyerForm.name.trim() || form.name || 'Khách hàng PCHub';
+    const bPhone = buyerForm.phone.trim() || form.phone || '0901234567';
+    const bEmail = buyerForm.email.trim() || form.email || 'customer@pchub.vn';
+
+    const rName = form.name.trim() || bName;
+    const rPhone = form.phone.trim() || bPhone;
+
     const newOrder = {
       id: orderId,
       date: new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
       status: 'pending' as const,
       statusLabel: 'Chờ xác nhận',
       total: finalTotal,
+      buyer: {
+        name: bName,
+        phone: bPhone,
+        email: bEmail,
+      },
       products: items.map(item => ({
         id: item.product?.id || item.id,
         name: item.product?.name || item.name,
@@ -241,9 +279,9 @@ export default function CheckoutPage() {
         quantity: item.quantity
       })),
       shippingAddress: {
-        name: form.name || 'Khách hàng PCHub',
-        phone: form.phone || '0901234567',
-        email: form.email || 'customer@pchub.vn',
+        name: rName,
+        phone: rPhone,
+        email: bEmail,
         address: form.address || 'Địa chỉ nhận hàng',
         province: form.province || 'Hà Nội',
         district: form.district || 'Cầu Giấy',
@@ -261,16 +299,21 @@ export default function CheckoutPage() {
     setProcessingStep(2);
     setProcessingProgress(60);
 
-    // Sync order to Sbuy WooCommerce backend
+    // Sync order to Sbuy WooCommerce backend (separate buyer & recipient)
     try {
       const wooRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          buyer: {
+            name: bName,
+            phone: bPhone,
+            email: bEmail,
+          },
           customer: {
-            name: form.name || 'Khách hàng PCHub',
-            phone: form.phone || '0901234567',
-            email: form.email || 'customer@pchub.vn',
+            name: rName,
+            phone: rPhone,
+            email: bEmail,
             address: form.address || 'Địa chỉ nhận hàng',
             province: form.province || 'Hà Nội',
             district: form.district || 'Cầu Giấy',
@@ -430,44 +473,140 @@ export default function CheckoutPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                {/* Shipping info card */}
+                {/* 1. Buyer Info Card (Tự động lấy từ API user / Tài khoản) */}
                 <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Truck size={16} color="#2563eb" />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={16} color="#2563eb" />
+                      </div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>1. Thông tin người mua</h2>
+                        <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Thông tin tài khoản đăng nhập đặt đơn hàng</p>
+                      </div>
                     </div>
-                    <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Thông tin giao hàng</h2>
                     {nksUser && (
                       <span style={{
                         fontSize: '11px', fontWeight: 700,
                         background: '#dcfce7', color: '#15803d',
-                        padding: '3px 8px', borderRadius: '12px',
+                        padding: '4px 10px', borderRadius: '12px',
                         display: 'inline-flex', alignItems: 'center', gap: '4px',
                       }}>
-                        ✓ Tự động điền từ tài khoản
+                        ✓ Lấy từ tài khoản đăng nhập
                       </span>
                     )}
                   </div>
 
                   <div className="home-grid-2" style={{ gap: '14px' }}>
-                    {[
-                      { key: 'name', label: 'Người nhận', placeholder: 'Họ và tên', col: '1/-1', required: true },
-                      { key: 'phone', label: 'SĐT nhận hàng', placeholder: '0912 345 678', required: true },
-                      { key: 'email', label: 'Email', placeholder: 'email@example.com' },
-                    ].map(f => (
-                      <div key={f.key} style={{ gridColumn: f.col }}>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                          {f.label}{f.required && <span style={{ color: '#ef4444' }}> *</span>}
-                        </label>
-                        <input
-                          required={f.required}
-                          placeholder={f.placeholder}
-                          value={(form as any)[f.key]}
-                          onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                          style={inputStyle}
-                        />
+                    <div style={{ gridColumn: '1/-1' }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Họ và tên người mua <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        required
+                        placeholder="Họ và tên người mua"
+                        value={buyerForm.name}
+                        onChange={e => setBuyerForm(p => ({ ...p, name: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Số điện thoại người mua <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        required
+                        placeholder="0912 345 678"
+                        value={buyerForm.phone}
+                        onChange={e => setBuyerForm(p => ({ ...p, phone: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Email người mua <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        required
+                        type="email"
+                        placeholder="email@example.com"
+                        value={buyerForm.email}
+                        onChange={e => setBuyerForm(p => ({ ...p, email: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Recipient / Shipping Info Card */}
+                <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Truck size={16} color="#2563eb" />
                       </div>
-                    ))}
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>2. Thông tin người nhận hàng</h2>
+                        <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Địa chỉ và thông tin người trực tiếp nhận kiện hàng</p>
+                      </div>
+                    </div>
+
+                    <label style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      color: '#2563eb',
+                      background: '#eff6ff',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={sameAsBuyer}
+                        onChange={e => handleToggleSameAsBuyer(e.target.checked)}
+                        style={{ accentColor: '#2563eb', width: '15px', height: '15px', cursor: 'pointer' }}
+                      />
+                      Người nhận là người mua (dùng thông tin trên)
+                    </label>
+                  </div>
+
+                  <div className="home-grid-2" style={{ gap: '14px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Họ tên người nhận <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        required
+                        placeholder="Họ tên người nhận hàng"
+                        value={form.name}
+                        onChange={e => {
+                          setForm(p => ({ ...p, name: e.target.value }));
+                          if (sameAsBuyer) setSameAsBuyer(false);
+                        }}
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Số điện thoại nhận hàng <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        required
+                        placeholder="0912 345 678"
+                        value={form.phone}
+                        onChange={e => {
+                          setForm(p => ({ ...p, phone: e.target.value }));
+                          if (sameAsBuyer) setSameAsBuyer(false);
+                        }}
+                        style={inputStyle}
+                      />
+                    </div>
 
                     <div>
                       <label style={labelStyle}>Tỉnh / Thành phố <span style={{ color: '#ef4444' }}>*</span></label>
