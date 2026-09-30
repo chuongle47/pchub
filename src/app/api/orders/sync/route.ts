@@ -26,19 +26,16 @@ function mapWooStatus(wooStatus: string): { status: string; statusLabel: string 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get('email');
-
-    if (!email) {
-      return NextResponse.json({ success: false, error: 'Missing email' }, { status: 400 });
-    }
+    // email param kept for compatibility but not used for filtering
+    // WooCommerce billing email may differ from user login email
 
     const authHeader = 'Basic ' + Buffer.from(
       `${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`
     ).toString('base64');
 
-    // Fetch orders from WooCommerce by customer email
+    // Fetch ALL recent orders (no email filter - billing email often differs from login email)
     const res = await fetch(
-      `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders?email=${encodeURIComponent(email)}&per_page=50&orderby=date&order=desc`,
+      `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders?per_page=100&orderby=date&order=desc`,
       {
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         cache: 'no-store'
@@ -56,14 +53,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, orders: [] });
     }
 
-    // Return simplified orders with ID, total, status info for matching
+    // Return simplified orders with all product names for accurate matching
     const orders = wooOrders.map(o => ({
       wooOrderId: o.id,
       total: Math.round(parseFloat(o.total || '0')),
       wooStatus: o.status,
       ...mapWooStatus(o.status),
       dateCreated: o.date_created,
-      // First product name for matching
+      billingEmail: o.billing?.email || '',
+      // ALL product names (joined) for matching
+      productNames: (o.line_items || []).map((li: any) => (li.name || '').toLowerCase().trim()),
       firstProductName: o.line_items?.[0]?.name || '',
     }));
 

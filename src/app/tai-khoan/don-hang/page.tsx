@@ -29,22 +29,34 @@ export default function OrdersPage() {
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.orders)) {
-          // Match local orders with WooCommerce orders by total amount
           orders.forEach(localOrder => {
             const localTotal = Math.round(localOrder.total || 0);
-            // Find a matching WooCommerce order by amount
+            // First product name from local order (lowercase for comparison)
+            const localFirstProduct = (
+              localOrder.products?.[0]?.name || ''
+            ).toLowerCase().trim();
+
+            // Find a matching WooCommerce order
             const wooMatch = data.orders.find((w: any) => {
-              // If we already have wooOrderId saved, match directly
+              // Priority 1: match by saved wooOrderId
               if (localOrder.wooOrderId && localOrder.wooOrderId === w.wooOrderId) return true;
-              // Otherwise match by total amount
-              return Math.abs(w.total - localTotal) < 1000; // allow ±1000 difference
+              // Priority 2: match by total amount + first product name
+              const totalMatch = Math.abs(w.total - localTotal) < 1000;
+              if (!totalMatch) return false;
+              // If product names available, verify product match
+              if (localFirstProduct && w.productNames?.length > 0) {
+                return w.productNames.some((pn: string) =>
+                  pn.includes(localFirstProduct.substring(0, 15)) ||
+                  localFirstProduct.includes(pn.substring(0, 15))
+                );
+              }
+              return totalMatch;
             });
+
             if (wooMatch) {
-              // Save wooOrderId if not yet saved
               if (!localOrder.wooOrderId) {
                 updateOrderWooId(localOrder.id, wooMatch.wooOrderId);
               }
-              // Update status if WooCommerce has different/newer status
               if (localOrder.status !== wooMatch.status) {
                 updateOrderStatus(localOrder.id, wooMatch.status, wooMatch.statusLabel);
               }
