@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore, useOrderStore } from '@/lib/store';
 import { Package, Clock, Truck, CheckCircle2, XCircle, ChevronRight, User } from 'lucide-react';
@@ -9,7 +9,10 @@ import OrderDetailModal from '@/components/account/OrderDetailModal';
 export default function OrdersPage() {
   const user = useAuthStore(state => state.user);
   const orders = useOrderStore(state => state.orders);
+  const updateOrderStatus = useOrderStore(s => s.updateOrderStatus);
+  const updateOrderWooId = useOrderStore(s => s.updateOrderWooId);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [syncing, setSyncing] = useState(false);
   
   // Extract NKS user data if available
   const nksUser = (user as any)?.user || user;
@@ -17,6 +20,41 @@ export default function OrdersPage() {
   const userName = nksUser?.name || user?.name || 'Khách hàng';
   const userEmail = nksUser?.email || user?.email || '';
   const userPhone = nksUser?.phone || user?.phone || '';
+
+  // Sync order statuses from WooCommerce when page loads
+  useEffect(() => {
+    if (!userEmail || orders.length === 0) return;
+    setSyncing(true);
+    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.orders)) {
+          // Match local orders with WooCommerce orders by total amount
+          orders.forEach(localOrder => {
+            const localTotal = Math.round(localOrder.total || 0);
+            // Find a matching WooCommerce order by amount
+            const wooMatch = data.orders.find((w: any) => {
+              // If we already have wooOrderId saved, match directly
+              if (localOrder.wooOrderId && localOrder.wooOrderId === w.wooOrderId) return true;
+              // Otherwise match by total amount
+              return Math.abs(w.total - localTotal) < 1000; // allow ±1000 difference
+            });
+            if (wooMatch) {
+              // Save wooOrderId if not yet saved
+              if (!localOrder.wooOrderId) {
+                updateOrderWooId(localOrder.id, wooMatch.wooOrderId);
+              }
+              // Update status if WooCommerce has different/newer status
+              if (localOrder.status !== wooMatch.status) {
+                updateOrderStatus(localOrder.id, wooMatch.status, wooMatch.statusLabel);
+              }
+            }
+          });
+        }
+      })
+      .catch(err => console.warn('Order sync warning:', err))
+      .finally(() => setSyncing(false));
+  }, [userEmail]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -27,17 +65,29 @@ export default function OrdersPage() {
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Đơn hàng của tôi</h1>
           <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Quản lý và theo dõi danh sách các đơn hàng đã đặt</p>
         </div>
-        <span style={{
-          fontSize: '12px',
-          fontWeight: 800,
-          color: '#2563eb',
-          background: '#eff6ff',
-          border: '1px solid #bfdbfe',
-          padding: '4px 14px',
-          borderRadius: '20px',
-        }}>
-          {orders.length} đơn hàng
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {syncing && (
+            <span style={{
+              fontSize: '11px', fontWeight: 700, color: '#0284c7',
+              background: '#e0f2fe', padding: '4px 10px', borderRadius: '20px',
+              display: 'inline-flex', alignItems: 'center', gap: '5px',
+            }}>
+              <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', fontSize: '12px' }}>⟳</span>
+              Đang đồng bộ WooCommerce...
+            </span>
+          )}
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 800,
+            color: '#2563eb',
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            padding: '4px 14px',
+            borderRadius: '20px',
+          }}>
+            {orders.length} đơn hàng
+          </span>
+        </div>
       </div>
       
       {/* Recipient info card */}
