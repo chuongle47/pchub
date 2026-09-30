@@ -762,6 +762,7 @@ export interface WooCommerceReview {
   date_created: string;
   date_created_gmt?: string;
   product_id: number;
+  product_name?: string;
   status: string;
   reviewer: string;
   reviewer_email: string;
@@ -772,30 +773,77 @@ export interface WooCommerceReview {
 
 /**
  * Fetch reviews from WooCommerce REST API sorted chronologically (newest first)
+ * Handles duplicate products by fetching all reviews if the specific product has none
  */
 export async function fetchSbuyWooCommerceReviews(productId?: string | number): Promise<WooCommerceReview[]> {
   try {
     const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
-    let url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=50`;
-    if (productId) {
-      url += `&product=${encodeURIComponent(String(productId))}`;
+
+    // Helper to fetch reviews for a specific product ID
+    const fetchForProduct = async (pid: string | number): Promise<WooCommerceReview[]> => {
+      const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=50&product=${encodeURIComponent(String(pid))}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    };
+
+    if (!productId) {
+      // No product filter - fetch recent reviews
+      const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=50`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     }
 
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store'
-    });
-
-    if (!res.ok) {
-      return [];
+    // First try with the given product ID
+    const reviews = await fetchForProduct(productId);
+    if (reviews.length > 0) {
+      return reviews;
     }
 
-    const reviews: WooCommerceReview[] = await res.json();
-    return Array.isArray(reviews) ? reviews : [];
+    // If no reviews, this product might be a duplicate in WooCommerce.
+    // Try to find sibling products with same name by fetching all approved reviews
+    // and also check by fetching the product's name then searching reviews of all products
+    try {
+      const productRes = await fetch(
+        `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/${productId}`,
+        { headers: { 'Authorization': authHeader }, cache: 'no-store' }
+      );
+      if (productRes.ok) {
+        const productData = await productRes.json();
+        const productName = (productData.name || '').toLowerCase().trim();
+        if (productName) {
+          // Search all approved reviews, return those whose product_name matches
+          const allUrl = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=100`;
+          const allRes = await fetch(allUrl, {
+            headers: { 'Authorization': authHeader }, cache: 'no-store'
+          });
+          if (allRes.ok) {
+            const allReviews: WooCommerceReview[] = await allRes.json();
+            if (Array.isArray(allReviews)) {
+              const matched = allReviews.filter(r =>
+                (r.product_name || '').toLowerCase().trim() === productName
+              );
+              if (matched.length > 0) return matched;
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore fallback errors
+    }
+
+    return reviews; // empty array
   } catch (err) {
     console.warn('WooCommerce reviews fetch error:', err);
     return [];
