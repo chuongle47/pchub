@@ -773,47 +773,51 @@ export interface WooCommerceReview {
 
 /**
  * Fetch reviews from WooCommerce REST API sorted chronologically (newest first)
- * Handles duplicate products by fetching all reviews if the specific product has none
+ * Always merges reviews from all WooCommerce products with the same name
+ * to handle duplicate products created in WooCommerce
  */
 export async function fetchSbuyWooCommerceReviews(productId?: string | number): Promise<WooCommerceReview[]> {
   try {
     const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
 
-    // Helper to fetch reviews for a specific product ID
-    const fetchForProduct = async (pid: string | number): Promise<WooCommerceReview[]> => {
-      const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=50&product=${encodeURIComponent(String(pid))}`;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-        cache: 'no-store'
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    };
+    // Fetch all approved reviews (up to 100)
+    const allUrl = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=100`;
+    const allRes = await fetch(allUrl, {
+      method: 'GET',
+      headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+      cache: 'no-store'
+    });
 
+    if (!allRes.ok) return [];
+
+    const allReviews: WooCommerceReview[] = await allRes.json();
+    if (!Array.isArray(allReviews)) return [];
+
+    // No product filter - return all
     if (!productId) {
-      // No product filter - fetch recent reviews
-      const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=50`;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-        cache: 'no-store'
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      return allReviews;
     }
 
-    // First try with the given product ID
-    const reviews = await fetchForProduct(productId);
-    if (reviews.length > 0) {
-      return reviews;
+    // Filter reviews matching this specific product ID first
+    const directMatch = allReviews.filter(r => String(r.product_id) === String(productId));
+    if (directMatch.length > 0) {
+      // Also check if there are sibling products with the same name that have more reviews
+      // Get the product_name from existing match
+      const productName = (directMatch[0].product_name || '').toLowerCase().trim();
+      if (productName) {
+        const nameMatch = allReviews.filter(r =>
+          (r.product_name || '').toLowerCase().trim() === productName
+        );
+        if (nameMatch.length > directMatch.length) {
+          // Deduplicate by review ID
+          const seen = new Set<number>();
+          return nameMatch.filter(r => seen.has(r.id) ? false : seen.add(r.id) || true);
+        }
+      }
+      return directMatch;
     }
 
-    // If no reviews, this product might be a duplicate in WooCommerce.
-    // Try to find sibling products with same name by fetching all approved reviews
-    // and also check by fetching the product's name then searching reviews of all products
+    // No direct match - try to look up product name from WooCommerce API
     try {
       const productRes = await fetch(
         `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/${productId}`,
@@ -823,27 +827,17 @@ export async function fetchSbuyWooCommerceReviews(productId?: string | number): 
         const productData = await productRes.json();
         const productName = (productData.name || '').toLowerCase().trim();
         if (productName) {
-          // Search all approved reviews, return those whose product_name matches
-          const allUrl = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=100`;
-          const allRes = await fetch(allUrl, {
-            headers: { 'Authorization': authHeader }, cache: 'no-store'
-          });
-          if (allRes.ok) {
-            const allReviews: WooCommerceReview[] = await allRes.json();
-            if (Array.isArray(allReviews)) {
-              const matched = allReviews.filter(r =>
-                (r.product_name || '').toLowerCase().trim() === productName
-              );
-              if (matched.length > 0) return matched;
-            }
-          }
+          const nameMatch = allReviews.filter(r =>
+            (r.product_name || '').toLowerCase().trim() === productName
+          );
+          if (nameMatch.length > 0) return nameMatch;
         }
       }
     } catch {
       // Ignore fallback errors
     }
 
-    return reviews; // empty array
+    return [];
   } catch (err) {
     console.warn('WooCommerce reviews fetch error:', err);
     return [];
