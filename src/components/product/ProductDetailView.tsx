@@ -142,7 +142,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setReviewNotice('Cảm ơn bạn! Đánh giá đã được gửi thành công và đồng bộ lên WooCommerce.');
+        setReviewNotice('Cảm ơn bạn! Đánh giá đã được gửi thành công.');
         setReviewText('');
         if (data.review) {
           setWooReviews(prev => [data.review, ...prev]);
