@@ -287,7 +287,7 @@ export default function CheckoutPage() {
           paymentMethodLabel: selectedPayment?.label || 'Thanh toán',
           shippingFee,
           total: finalTotal
-        }))
+        })
       });
       const wooData = await wooRes.json();
       // Lưu WooCommerce Order ID để sync status sau này
