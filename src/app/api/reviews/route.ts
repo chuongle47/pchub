@@ -7,8 +7,9 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get('productId');
+    const productName = searchParams.get('productName') || undefined;
 
-    const reviews = await fetchSbuyWooCommerceReviews(productId || undefined);
+    const reviews = await fetchSbuyWooCommerceReviews(productId || undefined, productName);
     return NextResponse.json({ success: true, reviews }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',

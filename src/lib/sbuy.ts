@@ -773,14 +773,16 @@ export interface WooCommerceReview {
 
 /**
  * Fetch reviews from WooCommerce REST API sorted chronologically (newest first)
- * Always merges reviews from all WooCommerce products with the same name
- * to handle duplicate products created in WooCommerce
+ * Accepts optional productName to match reviews across duplicate WooCommerce products
  */
-export async function fetchSbuyWooCommerceReviews(productId?: string | number): Promise<WooCommerceReview[]> {
+export async function fetchSbuyWooCommerceReviews(
+  productId?: string | number,
+  productName?: string
+): Promise<WooCommerceReview[]> {
   try {
     const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
 
-    // Fetch all approved reviews (up to 100)
+    // Fetch all approved reviews (one single request, no extra calls needed)
     const allUrl = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/reviews?status=approved&order=desc&orderby=date&per_page=100`;
     const allRes = await fetch(allUrl, {
       method: 'GET',
@@ -793,48 +795,23 @@ export async function fetchSbuyWooCommerceReviews(productId?: string | number): 
     const allReviews: WooCommerceReview[] = await allRes.json();
     if (!Array.isArray(allReviews)) return [];
 
-    // No product filter - return all
-    if (!productId) {
+    // No filter - return all
+    if (!productId && !productName) {
       return allReviews;
     }
 
-    // Filter reviews matching this specific product ID first
-    const directMatch = allReviews.filter(r => String(r.product_id) === String(productId));
-    if (directMatch.length > 0) {
-      // Also check if there are sibling products with the same name that have more reviews
-      // Get the product_name from existing match
-      const productName = (directMatch[0].product_name || '').toLowerCase().trim();
-      if (productName) {
-        const nameMatch = allReviews.filter(r =>
-          (r.product_name || '').toLowerCase().trim() === productName
-        );
-        if (nameMatch.length > directMatch.length) {
-          // Deduplicate by review ID
-          const seen = new Set<number>();
-          return nameMatch.filter(r => seen.has(r.id) ? false : seen.add(r.id) || true);
-        }
-      }
-      return directMatch;
+    // Filter by product name first (handles duplicate WooCommerce products)
+    const searchName = (productName || '').toLowerCase().trim();
+    if (searchName) {
+      const byName = allReviews.filter(r =>
+        (r.product_name || '').toLowerCase().trim() === searchName
+      );
+      if (byName.length > 0) return byName;
     }
 
-    // No direct match - try to look up product name from WooCommerce API
-    try {
-      const productRes = await fetch(
-        `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/${productId}`,
-        { headers: { 'Authorization': authHeader }, cache: 'no-store' }
-      );
-      if (productRes.ok) {
-        const productData = await productRes.json();
-        const productName = (productData.name || '').toLowerCase().trim();
-        if (productName) {
-          const nameMatch = allReviews.filter(r =>
-            (r.product_name || '').toLowerCase().trim() === productName
-          );
-          if (nameMatch.length > 0) return nameMatch;
-        }
-      }
-    } catch {
-      // Ignore fallback errors
+    // Fallback: filter by exact product ID
+    if (productId) {
+      return allReviews.filter(r => String(r.product_id) === String(productId));
     }
 
     return [];

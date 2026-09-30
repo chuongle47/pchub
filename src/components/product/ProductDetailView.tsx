@@ -93,7 +93,8 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   useEffect(() => {
     if (product.id) {
       setLoadingReviews(true);
-      fetch(`/api/reviews?productId=${product.id}`)
+      const encodedName = encodeURIComponent(product.name || '');
+      fetch(`/api/reviews?productId=${product.id}&productName=${encodedName}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && Array.isArray(data.reviews)) {
