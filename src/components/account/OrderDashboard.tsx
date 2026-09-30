@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { useOrderStore } from '@/lib/store';
+import { useOrderStore, useAuthStore } from '@/lib/store';
 import OrderDetailModal from './OrderDetailModal';
 
 const filters = [
@@ -16,14 +16,38 @@ const filters = [
 
 export default function OrderDashboard() {
   const storeOrders = useOrderStore(state => state.orders);
-  const [activeFilter, setActiveFilter] = useState<typeof filters[number]['key']>('shipping');
+  const syncWooOrders = useOrderStore(state => state.syncWooOrders);
+  const user = useAuthStore(s => s.user);
+  const [activeFilter, setActiveFilter] = useState<typeof filters[number]['key']>('all');
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  // Sync order statuses from WooCommerce
+  const nksUser = (user as any)?.user || user;
+  const userEmail = nksUser?.email || '';
+
+  const doSync = () => {
+    setSyncing(true);
+    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail || 'any')}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.orders)) {
+          syncWooOrders(data.orders);
+        }
+      })
+      .catch(err => console.warn('Sync error:', err))
+      .finally(() => setSyncing(false));
+  };
+
+  useEffect(() => {
+    doSync();
+  }, [userEmail]);
 
   const visibleOrders = activeFilter === 'all' 
     ? storeOrders 
     : storeOrders.filter(order => order.status === activeFilter);
     
-  const featured = storeOrders.find(order => order.status === 'shipping') || storeOrders[0];
+  const featured = storeOrders.find(order => order.status === 'shipping') || storeOrders.find(order => order.status === 'delivered') || storeOrders[0];
 
   return <>
     <div className="account-tabs">

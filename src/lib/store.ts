@@ -301,6 +301,7 @@ interface OrderStore {
   addOrder: (order: any) => void;
   updateOrderStatus: (orderId: string, status: string, statusLabel: string) => void;
   updateOrderWooId: (orderId: string, wooOrderId: number) => void;
+  syncWooOrders: (wooOrders: any[]) => void;
 }
 
 export const useOrderStore = create<OrderStore>()(
@@ -320,6 +321,62 @@ export const useOrderStore = create<OrderStore>()(
             o.id === orderId ? { ...o, wooOrderId } : o
           )
         }),
+      syncWooOrders: (wooOrders: any[]) => {
+        if (!Array.isArray(wooOrders) || wooOrders.length === 0) return;
+        const currentOrders = get().orders;
+        const matchedWooIds = new Set<number>();
+
+        // 1. Update existing local orders with fresh WooCommerce status
+        const updatedOrders = currentOrders.map(localOrder => {
+          const localTotal = Math.round(Number(localOrder.total) || 0);
+          const localFirstProduct = (localOrder.products?.[0]?.name || '').toLowerCase().trim();
+
+          const match = wooOrders.find(w => {
+            if (localOrder.wooOrderId && localOrder.wooOrderId === w.wooOrderId) return true;
+            if (localOrder.id === w.id || localOrder.id === `ORD-${w.wooOrderId}`) return true;
+            if (Math.abs(w.total - localTotal) < 1000) {
+              if (localFirstProduct && w.productNames?.length > 0) {
+                return w.productNames.some((pn: string) =>
+                  pn.includes(localFirstProduct.substring(0, 10)) ||
+                  localFirstProduct.includes(pn.substring(0, 10))
+                );
+              }
+              return true;
+            }
+            return false;
+          });
+
+          if (match) {
+            matchedWooIds.add(match.wooOrderId);
+            return {
+              ...localOrder,
+              status: match.status,
+              statusLabel: match.statusLabel,
+              wooOrderId: match.wooOrderId,
+              paymentMethodLabel: match.paymentMethodLabel || localOrder.paymentMethodLabel
+            };
+          }
+          return localOrder;
+        });
+
+        // 2. Also append WooCommerce orders that aren't in local store
+        const newWooOrders = wooOrders
+          .filter(w => !matchedWooIds.has(w.wooOrderId) && !updatedOrders.some(o => o.wooOrderId === w.wooOrderId || o.id === w.id || o.id === `ORD-${w.wooOrderId}`))
+          .map(w => ({
+            id: w.id || `ORD-${w.wooOrderId}`,
+            wooOrderId: w.wooOrderId,
+            date: w.date,
+            status: w.status,
+            statusLabel: w.statusLabel,
+            total: w.total,
+            shippingFee: w.shippingFee || 0,
+            paymentMethodLabel: w.paymentMethodLabel,
+            shippingAddress: w.shippingAddress,
+            products: w.products
+          }));
+
+        set({ orders: [...newWooOrders, ...updatedOrders] });
+      },
     }),
     { name: 'pchub-orders' }
   )

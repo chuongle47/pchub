@@ -9,8 +9,7 @@ import OrderDetailModal from '@/components/account/OrderDetailModal';
 export default function OrdersPage() {
   const user = useAuthStore(state => state.user);
   const orders = useOrderStore(state => state.orders);
-  const updateOrderStatus = useOrderStore(s => s.updateOrderStatus);
-  const updateOrderWooId = useOrderStore(s => s.updateOrderWooId);
+  const syncWooOrders = useOrderStore(state => state.syncWooOrders);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [syncing, setSyncing] = useState(false);
   
@@ -21,51 +20,22 @@ export default function OrdersPage() {
   const userEmail = nksUser?.email || user?.email || '';
   const userPhone = nksUser?.phone || user?.phone || '';
 
-  // Sync order statuses from WooCommerce when page loads
-  useEffect(() => {
-    if (!userEmail || orders.length === 0) return;
+  const doSync = () => {
     setSyncing(true);
-    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail)}`)
+    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail || 'any')}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.orders)) {
-          orders.forEach(localOrder => {
-            const localTotal = Math.round(localOrder.total || 0);
-            // First product name from local order (lowercase for comparison)
-            const localFirstProduct = (
-              localOrder.products?.[0]?.name || ''
-            ).toLowerCase().trim();
-
-            // Find a matching WooCommerce order
-            const wooMatch = data.orders.find((w: any) => {
-              // Priority 1: match by saved wooOrderId
-              if (localOrder.wooOrderId && localOrder.wooOrderId === w.wooOrderId) return true;
-              // Priority 2: match by total amount + first product name
-              const totalMatch = Math.abs(w.total - localTotal) < 1000;
-              if (!totalMatch) return false;
-              // If product names available, verify product match
-              if (localFirstProduct && w.productNames?.length > 0) {
-                return w.productNames.some((pn: string) =>
-                  pn.includes(localFirstProduct.substring(0, 15)) ||
-                  localFirstProduct.includes(pn.substring(0, 15))
-                );
-              }
-              return totalMatch;
-            });
-
-            if (wooMatch) {
-              if (!localOrder.wooOrderId) {
-                updateOrderWooId(localOrder.id, wooMatch.wooOrderId);
-              }
-              if (localOrder.status !== wooMatch.status) {
-                updateOrderStatus(localOrder.id, wooMatch.status, wooMatch.statusLabel);
-              }
-            }
-          });
+          syncWooOrders(data.orders);
         }
       })
       .catch(err => console.warn('Order sync warning:', err))
       .finally(() => setSyncing(false));
+  };
+
+  // Sync order statuses from WooCommerce when page loads
+  useEffect(() => {
+    doSync();
   }, [userEmail]);
 
   return (
@@ -78,23 +48,35 @@ export default function OrdersPage() {
           <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Quản lý và theo dõi danh sách các đơn hàng đã đặt</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {syncing && (
-            <span style={{
-              fontSize: '11px', fontWeight: 700, color: '#0284c7',
-              background: '#e0f2fe', padding: '4px 10px', borderRadius: '20px',
-              display: 'inline-flex', alignItems: 'center', gap: '5px',
-            }}>
-              <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', fontSize: '12px' }}>⟳</span>
-              Đang đồng bộ WooCommerce...
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={doSync}
+            disabled={syncing}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: syncing ? '#f1f5f9' : '#eff6ff',
+              color: syncing ? '#64748b' : '#2563eb',
+              border: '1px solid #bfdbfe',
+              borderRadius: '20px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: syncing ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ display: 'inline-block', animation: syncing ? 'spin 1s linear infinite' : 'none', fontSize: '13px' }}>⟳</span>
+            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ WooCommerce'}
+          </button>
           <span style={{
             fontSize: '12px',
             fontWeight: 800,
             color: '#2563eb',
             background: '#eff6ff',
             border: '1px solid #bfdbfe',
-            padding: '4px 14px',
+            padding: '6px 14px',
             borderRadius: '20px',
           }}>
             {orders.length} đơn hàng
