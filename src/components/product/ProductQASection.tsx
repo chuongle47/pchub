@@ -46,53 +46,7 @@ export default function ProductQASection({
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [likedIds, setLikedIds] = useState<string[]>([]);
 
-  // Default seed questions tailored to the product
-  const defaultQuestions: QAItem[] = [
-    {
-      id: `qa-seed-1-${productId}`,
-      authorName: 'Trần Hoàng Long',
-      question: `Sản phẩm ${productName} này có được bảo hành chính hãng tại Việt Nam không và thời gian bao lâu vậy shop?`,
-      createdAt: '2 ngày trước',
-      category: 'warranty',
-      likes: 14,
-      answer: {
-        staffName: 'Lê Minh Tuấn',
-        staffRole: 'Chuyên viên Kỹ thuật PCHub',
-        content: `Chào bạn Long, sản phẩm ${productName} được bảo hành chính hãng 36 tháng 1 đổi 1 trong 30 ngày đầu nếu phát sinh lỗi từ nhà sản xuất. Bạn có thể mang đến bất kỳ showroom nào của PCHub hoặc gửi về trung tâm bảo hành hãng trên toàn quốc nhé!`,
-        answeredAt: '1 ngày trước',
-      },
-    },
-    {
-      id: `qa-seed-2-${productId}`,
-      authorName: 'Đặng Minh Quân',
-      question: `Dàn máy của mình đang dùng nguồn 650W chuẩn 80 Plus Bronze thì có lắp và vận hành ổn định được ${productName} không shop?`,
-      createdAt: '3 ngày trước',
-      category: 'compatibility',
-      likes: 9,
-      answer: {
-        staffName: 'Nguyễn Quốc Bảo',
-        staffRole: 'Kỹ sư Hệ thống PCHub',
-        content: `Chào bạn Quân, bộ nguồn 650W hoàn toàn đủ công suất để vận hành sản phẩm này cùng cấu hình phổ thông. Tuy nhiên nếu bạn có ép xung (OC) hoặc dùng kèm nhiều ổ cứng, bạn có thể cân nhắc lên nguồn 750W để đạt dải hiệu suất mát nhất nhé!`,
-        answeredAt: '2 ngày trước',
-      },
-    },
-    {
-      id: `qa-seed-3-${productId}`,
-      authorName: 'Vũ Thanh Hằng',
-      question: `PCHub có dịch vụ giao hàng hỏa tốc trong 2 giờ và hỗ trợ kỹ thuật viên đến tận nhà lắp ráp không ạ?`,
-      createdAt: '5 ngày trước',
-      category: 'shipping',
-      likes: 7,
-      answer: {
-        staffName: 'Trần Thảo Vy',
-        staffRole: 'Trưởng nhóm CSKH PCHub',
-        content: `Chào bạn Hằng, PCHub hỗ trợ Giao hàng Hỏa tốc trong 2H tại nội thành Hà Nội và TP.HCM. Đội ngũ kỹ thuật viên của PCHub cũng sẵn sàng hỗ trợ lắp đặt, đi dây gọn gàng và test tương thích tận nơi cho khách hàng ạ!`,
-        answeredAt: '4 ngày trước',
-      },
-    },
-  ];
-
-  const [questions, setQuestions] = useState<QAItem[]>(defaultQuestions);
+  const [questions, setQuestions] = useState<QAItem[]>([]);
 
   // Load persisted user questions from localStorage on mount
   useEffect(() => {
@@ -100,7 +54,11 @@ export default function ProductQASection({
       const stored = localStorage.getItem(`pchub-qa-${productId}`);
       if (stored) {
         const parsed: QAItem[] = JSON.parse(stored);
-        setQuestions([...parsed, ...defaultQuestions]);
+        // Lọc bỏ các câu hỏi seed cũ còn lưu trong localStorage
+        const userOnly = parsed.filter(q => !q.id.startsWith('qa-seed'));
+        setQuestions(userOnly);
+        // Cập nhật lại localStorage đã sạch seed
+        localStorage.setItem(`pchub-qa-${productId}`, JSON.stringify(userOnly));
       }
     } catch (e) {
       console.error('Error loading QA from localStorage:', e);
