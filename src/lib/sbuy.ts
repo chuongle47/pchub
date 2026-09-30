@@ -647,20 +647,51 @@ export async function createSbuyWooCommerceOrder(orderData: {
   total: number;
 }): Promise<{ success: boolean; wooOrderId?: number; error?: string }> {
   try {
-    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders?consumer_key=${SBUY_CONFIG.consumerKey}&consumer_secret=${SBUY_CONFIG.consumerSecret}`;
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders`;
+
+    // Fetch products from WooCommerce to resolve real product IDs
+    let wooProducts: any[] = [];
+    try {
+      const prodRes = await fetch(`${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products?per_page=100`, {
+        headers: { 'Authorization': authHeader },
+        cache: 'no-store'
+      });
+      if (prodRes.ok) {
+        wooProducts = await prodRes.json();
+      }
+    } catch (e) {
+      console.warn('Failed to fetch WooCommerce products for order resolution:', e);
+    }
+
+    const fallbackProductId = wooProducts?.[0]?.id || 311;
 
     const lineItems = orderData.items.map(item => {
       const numericId = parseInt(item.id, 10);
-      if (!isNaN(numericId) && numericId > 0) {
-        return {
-          product_id: numericId,
-          quantity: item.quantity
-        };
+      let targetProductId = (!isNaN(numericId) && numericId > 0) ? numericId : null;
+
+      if (!targetProductId && wooProducts.length > 0) {
+        const itemClean = (item.name || '').toLowerCase().trim();
+        const matched = wooProducts.find(p => {
+          const pName = (p.name || '').toLowerCase().trim();
+          return pName.includes(itemClean.substring(0, 15)) || itemClean.includes(pName.substring(0, 15));
+        });
+        if (matched) {
+          targetProductId = matched.id;
+        }
       }
+
+      const finalProductId = targetProductId || fallbackProductId;
+
       return {
-        name: item.name,
+        product_id: finalProductId,
+        quantity: item.quantity,
         total: String(item.price * item.quantity),
-        quantity: item.quantity
+        subtotal: String(item.price * item.quantity),
+        meta_data: [
+          { key: 'Sản phẩm PCHub', value: item.name },
+          { key: 'Đơn giá', value: `${item.price.toLocaleString('vi-VN')}₫` }
+        ]
       };
     });
 
@@ -701,12 +732,15 @@ export async function createSbuyWooCommerceOrder(orderData: {
           total: String(orderData.shippingFee)
         }
       ],
-      customer_note: orderData.customer.note || ''
+      customer_note: orderData.customer.note || 'Đặt hàng qua web PCHub'
     };
 
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body)
     });
 
@@ -716,7 +750,7 @@ export async function createSbuyWooCommerceOrder(orderData: {
     } else {
       const errText = await res.text();
       console.warn('WooCommerce Order Creation response non-OK:', res.status, errText);
-      return { success: false, error: `WooCommerce API HTTP ${res.status}` };
+      return { success: false, error: `WooCommerce API HTTP ${res.status}: ${errText}` };
     }
   } catch (err: any) {
     console.error('Failed to create order on Sbuy WooCommerce API:', err);
