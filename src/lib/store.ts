@@ -299,6 +299,8 @@ export const useWishlistStore = create<WishlistStore>()(
 interface OrderStore {
   orders: any[];
   addOrder: (order: any) => void;
+  updateOrderStatus: (orderId: string, status: string, statusLabel: string) => void;
+  updateOrderWooId: (orderId: string, wooOrderId: number) => void;
 }
 
 export const useOrderStore = create<OrderStore>()(
@@ -306,6 +308,18 @@ export const useOrderStore = create<OrderStore>()(
     (set, get) => ({
       orders: [],
       addOrder: (order) => set({ orders: [order, ...get().orders] }),
+      updateOrderStatus: (orderId, status, statusLabel) =>
+        set({
+          orders: get().orders.map(o =>
+            o.id === orderId ? { ...o, status, statusLabel } : o
+          )
+        }),
+      updateOrderWooId: (orderId, wooOrderId) =>
+        set({
+          orders: get().orders.map(o =>
+            o.id === orderId ? { ...o, wooOrderId } : o
+          )
+        }),
     }),
     { name: 'pchub-orders' }
   )

@@ -112,6 +112,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, clearCart } = useCartStore();
   const addOrder = useOrderStore(s => s.addOrder);
+  const updateOrderWooId = useOrderStore(s => s.updateOrderWooId);
 
   const [step, setStep] = useState<CheckoutStep>('shipping');
   const [shippingOption, setShippingOption] = useState('ghn');
@@ -242,7 +243,7 @@ export default function CheckoutPage() {
 
     // Sync order to Sbuy WooCommerce backend
     try {
-      await fetch('/api/orders/create', {
+      const wooRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -266,8 +267,13 @@ export default function CheckoutPage() {
           paymentMethodLabel: selectedPayment?.label || 'Thanh toán',
           shippingFee,
           total: finalTotal
-        })
+        }))
       });
+      const wooData = await wooRes.json();
+      // Lưu WooCommerce Order ID để sync status sau này
+      if (wooData?.success && wooData?.wooOrderId) {
+        updateOrderWooId(orderId, wooData.wooOrderId);
+      }
     } catch (err) {
       console.warn('WooCommerce order push non-fatal warning:', err);
     }
