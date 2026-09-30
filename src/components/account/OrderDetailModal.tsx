@@ -1,30 +1,55 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { X, MapPin, CreditCard, Clock, Package, ExternalLink, Phone, Mail } from 'lucide-react';
+import { X, MapPin, CreditCard, Clock, Package, ExternalLink, Phone, Mail, AlertTriangle, Trash2, CheckCircle2 } from 'lucide-react';
+import { useOrderStore } from '@/lib/store';
 
 export interface OrderDetailModalProps {
   order: any | null;
   onClose: () => void;
 }
 
+const CANCEL_REASONS = [
+  'Muốn thay đổi sản phẩm / số lượng',
+  'Thay đổi địa chỉ hoặc số điện thoại nhận hàng',
+  'Tìm thấy giá tốt hơn ở nơi khác',
+  'Muốn đổi phương thức thanh toán',
+  'Đặt nhầm sản phẩm',
+  'Khác'
+];
+
 export default function OrderDetailModal({ order, onClose }: OrderDetailModalProps) {
+  const updateOrderStatus = useOrderStore(state => state.updateOrderStatus);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
+  const [customReason, setCustomReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showCancelModal) {
+          setShowCancelModal(false);
+        } else {
+          onClose();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, showCancelModal]);
 
   if (!order) return null;
 
   const isDelivered = order.status === 'delivered';
   const isCancelled = order.status === 'cancelled';
   const isShipping = order.status === 'shipping';
-  const isPending = order.status === 'pending';
+  const isPending = order.status === 'pending' || order.status === 'on-hold';
+
+  const canCancel = isPending;
 
   const products = order.products || [];
   const shipping = order.shippingAddress || {};
@@ -35,6 +60,37 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
     { label: 'Đang giao hàng', done: isShipping || isDelivered },
     { label: 'Hoàn thành', done: isDelivered }
   ];
+
+  const handleConfirmCancel = async () => {
+    setIsCancelling(true);
+    setCancelMessage(null);
+    try {
+      const finalReason = cancelReason === 'Khác' ? customReason : cancelReason;
+      const res = await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          wooOrderId: order.wooOrderId,
+          reason: finalReason
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        updateOrderStatus(order.id, 'cancelled', 'Đã hủy');
+        order.status = 'cancelled';
+        order.statusLabel = 'Đã hủy';
+        setShowCancelModal(false);
+        setCancelMessage('Đã hủy đơn hàng thành công trên hệ thống PCHub & WooCommerce!');
+      } else {
+        alert(data.error || 'Có lỗi khi hủy đơn');
+      }
+    } catch (err: any) {
+      alert('Lỗi kết nối: ' + err.message);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   return (
     <div style={{
@@ -114,50 +170,73 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                   {isPending ? 'Chờ xác nhận' : isShipping ? 'Đang giao hàng' : isDelivered ? 'Đã giao thành công' : 'Đã hủy'}
                 </span>
               </div>
-              <p style={{ fontSize: '12.5px', color: '#94a3b8', margin: '3px 0 0 0' }}>Ngày đặt hàng: {order.date}</p>
+              <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>
+                Ngày đặt: <strong style={{ color: '#e2e8f0' }}>{order.date}</strong>
+                {order.wooOrderId && <span style={{ marginLeft: '10px', color: '#38bdf8' }}>• WooCommerce #{order.wooOrderId}</span>}
+              </p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Đóng popup"
+            aria-label="Đóng"
             style={{
               width: '36px',
               height: '36px',
-              borderRadius: '50%',
-              background: '#1e293b',
+              borderRadius: '10px',
+              background: 'rgba(255, 255, 255, 0.1)',
               border: 'none',
-              color: '#cbd5e1',
+              color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              transition: 'background 0.15s ease',
             }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = '#334155';
-              e.currentTarget.style.color = '#ffffff';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = '#1e293b';
-              e.currentTarget.style.color = '#cbd5e1';
-            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div 
-          className="modal-body-responsive"
-          style={{ padding: '24px 28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px', flex: 1 }}
-        >
+        {/* Success Alert Banner */}
+        {cancelMessage && (
+          <div style={{
+            background: '#ecfdf5',
+            borderBottom: '1px solid #a7f3d0',
+            padding: '12px 28px',
+            color: '#065f46',
+            fontSize: '13px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <CheckCircle2 size={16} color="#10b981" />
+            {cancelMessage}
+          </div>
+        )}
+
+        {/* Scrollable Content Body */}
+        <div style={{
+          padding: '24px 28px',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          flex: 1,
+        }}>
           
-          {/* Top Info Cards (Recipient + Timeline) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '16px' }}>
+          {/* Top Info Grid: Shipping + Timeline */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
+          }}>
             
-            {/* Recipient info */}
+            {/* Shipping Address */}
             <div style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
@@ -165,7 +244,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
               padding: '18px 20px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '12px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a', fontWeight: 800, fontSize: '13px' }}>
                 <MapPin size={16} color="#2563eb" />
@@ -222,7 +301,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                         width: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        background: s.done ? '#16a34a' : '#e2e8f0',
+                        background: s.done ? (isCancelled && idx > 0 ? '#ef4444' : '#16a34a') : '#e2e8f0',
                         color: s.done ? '#ffffff' : '#64748b',
                         display: 'flex',
                         alignItems: 'center',
@@ -231,10 +310,10 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                         fontWeight: 800,
                         flexShrink: 0,
                       }}>
-                        {s.done ? '✓' : idx + 1}
+                        {isCancelled && idx === 1 ? '✕' : s.done ? '✓' : idx + 1}
                       </div>
                       <span style={{ fontWeight: s.done ? 700 : 500, color: s.done ? '#0f172a' : '#94a3b8' }}>
-                        {s.label}
+                        {isCancelled && idx === 1 ? 'Đã hủy' : s.label}
                       </span>
                     </div>
                   ))}
@@ -252,7 +331,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                 fontWeight: 600,
               }}>
                 <CreditCard size={15} color="#16a34a" />
-                <span>Phương thức thanh toán: <strong>{order.paymentMethodLabel || 'Thanh toán khi nhận hàng (COD)'}</strong></span>
+                <span>Phương thức: <strong>{order.paymentMethodLabel || 'Thanh toán khi nhận hàng (COD)'}</strong></span>
               </div>
             </div>
 
@@ -378,7 +457,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
 
         </div>
 
-        {/* Footer */}
+        {/* Footer with Actions */}
         <div style={{
           padding: '16px 28px',
           background: '#f8fafc',
@@ -386,23 +465,52 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap',
           flexShrink: 0,
         }}>
-          <Link
-            href={`/tai-khoan/don-hang/${order.id}`}
-            onClick={onClose}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '13px',
-              fontWeight: 700,
-              color: '#2563eb',
-              textDecoration: 'none',
-            }}
-          >
-            <ExternalLink size={15} /> Mở trang chi tiết riêng →
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link
+              href={`/tai-khoan/don-hang/${order.id}`}
+              onClick={onClose}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#2563eb',
+                textDecoration: 'none',
+              }}
+            >
+              <ExternalLink size={15} /> Mở trang riêng →
+            </Link>
+
+            {canCancel && (
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#fee2e2',
+                  color: '#b91c1c',
+                  border: '1px solid #fecaca',
+                  borderRadius: '10px',
+                  padding: '8px 14px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#fecaca'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#fee2e2'; }}
+              >
+                <Trash2 size={14} /> Hủy đơn hàng
+              </button>
+            )}
+          </div>
 
           <button
             type="button"
@@ -425,6 +533,149 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
             Đóng
           </button>
         </div>
+
+        {/* Cancellation Confirmation Dialog Overlay */}
+        {showCancelModal && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            zIndex: 100,
+          }}>
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '28px',
+              width: 'min(480px, 92vw)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Xác nhận hủy đơn hàng
+                  </h4>
+                  <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Đơn hàng {order.id} sẽ được hủy trên hệ thống PCHub và WooCommerce.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                  Vui lòng chọn lý do hủy đơn:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {CANCEL_REASONS.map(reason => (
+                    <label 
+                      key={reason} 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        fontSize: '13px', 
+                        color: '#1e293b', 
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        background: cancelReason === reason ? '#eff6ff' : 'transparent',
+                        border: cancelReason === reason ? '1px solid #bfdbfe' : '1px solid transparent'
+                      }}
+                    >
+                      <input 
+                        type="radio" 
+                        name="cancelReason" 
+                        value={reason} 
+                        checked={cancelReason === reason} 
+                        onChange={() => setCancelReason(reason)} 
+                      />
+                      {reason}
+                    </label>
+                  ))}
+                </div>
+
+                {cancelReason === 'Khác' && (
+                  <textarea
+                    rows={2}
+                    placeholder="Nhập lý do chi tiết..."
+                    value={customReason}
+                    onChange={e => setCustomReason(e.target.value)}
+                    style={{
+                      width: '100%',
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      fontSize: '12.5px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      outline: 'none',
+                    }}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(false)}
+                  disabled={isCancelling}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#475569',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Không hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmCancel}
+                  disabled={isCancelling}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#dc2626',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: isCancelling ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {isCancelling ? 'Đang hủy...' : 'Đồng ý hủy đơn'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

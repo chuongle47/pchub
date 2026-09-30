@@ -714,6 +714,44 @@ export async function createSbuyWooCommerceOrder(orderData: {
   }
 }
 
+/**
+ * Cancel an existing order in WooCommerce REST API
+ */
+export async function cancelSbuyWooCommerceOrder(
+  wooOrderId: number,
+  reason?: string
+): Promise<{ success: boolean; order?: any; error?: string }> {
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders/${wooOrderId}`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        status: 'cancelled',
+        customer_note: reason ? `[Hủy bởi khách hàng]: ${reason}` : '[Khách hàng hủy đơn qua web]'
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, order: data };
+    } else {
+      const errText = await res.text();
+      console.warn('WooCommerce Order Cancel response non-OK:', res.status, errText);
+      return { success: false, error: `WooCommerce API HTTP ${res.status}` };
+    }
+  } catch (err: any) {
+    console.error('Failed to cancel order on WooCommerce API:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+
 export interface WooCommerceCoupon {
   id: number;
   code: string;

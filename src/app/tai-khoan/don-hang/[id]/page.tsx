@@ -1,9 +1,9 @@
 'use client';
 
-import React, { use } from 'react';
+import React, { use, useState } from 'react';
 import Link from 'next/link';
 import { useOrderStore } from '@/lib/store';
-import { ArrowLeft, MapPin, CreditCard, Clock, CheckCircle2, Truck, Package, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, CreditCard, Clock, CheckCircle2, Truck, Package, ShieldCheck, Trash2, AlertTriangle } from 'lucide-react';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -15,10 +15,26 @@ interface OrderItem {
   image?: string;
 }
 
+const CANCEL_REASONS = [
+  'Muốn thay đổi sản phẩm / số lượng',
+  'Thay đổi địa chỉ hoặc số điện thoại nhận hàng',
+  'Tìm thấy giá tốt hơn ở nơi khác',
+  'Muốn đổi phương thức thanh toán',
+  'Đặt nhầm sản phẩm',
+  'Khác'
+];
+
 export default function OrderDetailPage({ params }: Props) {
   const { id } = use(params);
   const orders = useOrderStore(state => state.orders);
-  const order = orders.find(o => o.id === id);
+  const updateOrderStatus = useOrderStore(state => state.updateOrderStatus);
+  const order = orders.find(o => o.id === id || o.id === `ORD-${id}` || String(o.wooOrderId) === id);
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
+  const [customReason, setCustomReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null);
 
   if (!order) {
     return (
@@ -37,6 +53,9 @@ export default function OrderDetailPage({ params }: Props) {
   const isDelivered = order.status === 'delivered';
   const isCancelled = order.status === 'cancelled';
   const isShipping = order.status === 'shipping';
+  const isPending = order.status === 'pending' || order.status === 'on-hold';
+
+  const canCancel = isPending;
 
   const steps = [
     { label: 'Đã đặt hàng', done: true },
@@ -45,23 +64,73 @@ export default function OrderDetailPage({ params }: Props) {
     { label: 'Giao hàng thành công', done: isDelivered }
   ];
 
+  const handleConfirmCancel = async () => {
+    setIsCancelling(true);
+    setCancelMessage(null);
+    try {
+      const finalReason = cancelReason === 'Khác' ? customReason : cancelReason;
+      const res = await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          wooOrderId: order.wooOrderId,
+          reason: finalReason
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        updateOrderStatus(order.id, 'cancelled', 'Đã hủy');
+        order.status = 'cancelled';
+        order.statusLabel = 'Đã hủy';
+        setShowCancelModal(false);
+        setCancelMessage('Đã hủy đơn hàng thành công trên hệ thống PCHub & WooCommerce!');
+      } else {
+        alert(data.error || 'Có lỗi khi hủy đơn');
+      }
+    } catch (err: any) {
+      alert('Lỗi kết nối: ' + err.message);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
-      {/* Back button */}
-      <div>
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 relative">
+      {/* Back button & Actions */}
+      <div className="flex items-center justify-between">
         <Link 
           href="/tai-khoan/don-hang" 
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors"
         >
           <ArrowLeft size={14} /> Quay lại danh sách đơn hàng
         </Link>
+
+        {canCancel && (
+          <button
+            type="button"
+            onClick={() => setShowCancelModal(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-1.5 rounded-xl hover:bg-rose-100 transition-colors"
+          >
+            <Trash2 size={13} /> Hủy đơn hàng này
+          </button>
+        )}
       </div>
+
+      {cancelMessage && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          {cancelMessage}
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Chi tiết đơn hàng</h1>
-          <p className="tabular-nums text-blue-600 mt-1 text-sm font-bold">{order.id}</p>
+          <p className="tabular-nums text-blue-600 mt-1 text-sm font-bold">
+            {order.id} {order.wooOrderId ? `(WooCommerce #${order.wooOrderId})` : ''}
+          </p>
         </div>
         <span className={`self-start sm:self-center px-3.5 py-1.5 rounded-full text-xs font-bold border ${
           isDelivered ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
@@ -69,14 +138,14 @@ export default function OrderDetailPage({ params }: Props) {
           isShipping ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
           'bg-amber-50 text-amber-700 border-amber-200'
         }`}>
-          {order.status === 'pending' ? 'Chờ xác nhận' :
+          {order.status === 'pending' || order.status === 'on-hold' ? 'Chờ xác nhận' :
            order.status === 'shipping' ? 'Đang giao hàng' :
            order.status === 'delivered' ? 'Đã giao thành công' :
            'Đã hủy'}
         </span>
       </div>
 
-      {/* Info Boxes Grid (High Contrast Light Backgrounds) */}
+      {/* Info Boxes Grid */}
       <div className="grid md:grid-cols-2 gap-5">
         {/* Shipping address & payment */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
@@ -85,11 +154,11 @@ export default function OrderDetailPage({ params }: Props) {
               <MapPin size={16} className="text-blue-600" /> Thông tin giao nhận
             </div>
             <div className="space-y-2 text-xs leading-relaxed">
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Người nhận:</span> <strong className="text-slate-800 font-bold">{order.shippingAddress.name}</strong></div>
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Số điện thoại:</span> <span className="text-slate-800 font-semibold tabular-nums">{order.shippingAddress.phone}</span></div>
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Email:</span> <span className="text-slate-800 font-medium">{order.shippingAddress.email}</span></div>
-              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Địa chỉ:</span> <span className="text-slate-800 font-medium">{order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}</span></div>
-              {order.shippingAddress.note && (
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Người nhận:</span> <strong className="text-slate-800 font-bold">{order.shippingAddress?.name || 'Khách hàng'}</strong></div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Số điện thoại:</span> <span className="text-slate-800 font-semibold tabular-nums">{order.shippingAddress?.phone || 'Chưa có'}</span></div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Email:</span> <span className="text-slate-800 font-medium">{order.shippingAddress?.email || 'Chưa có'}</span></div>
+              <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Địa chỉ:</span> <span className="text-slate-800 font-medium">{order.shippingAddress?.address || ''}, {order.shippingAddress?.ward || ''}, {order.shippingAddress?.district || ''}, {order.shippingAddress?.province || ''}</span></div>
+              {order.shippingAddress?.note && (
                 <div className="flex"><span className="w-24 text-slate-400 font-medium shrink-0">Ghi chú:</span> <span className="text-amber-700 font-medium italic">{order.shippingAddress.note}</span></div>
               )}
             </div>
@@ -99,7 +168,7 @@ export default function OrderDetailPage({ params }: Props) {
             <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm mb-1.5">
               <CreditCard size={16} className="text-emerald-600" /> Phương thức thanh toán
             </div>
-            <p className="text-xs text-slate-700 font-semibold">{order.paymentMethodLabel}</p>
+            <p className="text-xs text-slate-700 font-semibold">{order.paymentMethodLabel || 'Thanh toán online / COD'}</p>
           </div>
         </div>
 
@@ -113,12 +182,12 @@ export default function OrderDetailPage({ params }: Props) {
             {steps.map((step, idx) => (
               <div key={step.label} className="flex items-center gap-3">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
-                  step.done ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-200 text-slate-400'
+                  step.done ? (isCancelled && idx > 0 ? 'bg-rose-500 text-white' : 'bg-emerald-600 text-white shadow-sm') : 'bg-slate-200 text-slate-400'
                 }`}>
-                  {step.done ? '✓' : idx + 1}
+                  {isCancelled && idx === 1 ? '✕' : step.done ? '✓' : idx + 1}
                 </div>
                 <span className={`text-xs font-bold ${step.done ? 'text-slate-900' : 'text-slate-400'}`}>
-                  {step.label}
+                  {isCancelled && idx === 1 ? 'Đã hủy' : step.label}
                 </span>
               </div>
             ))}
@@ -137,8 +206,8 @@ export default function OrderDetailPage({ params }: Props) {
         </h3>
 
         <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white">
-          {products.map((item) => (
-            <div key={item.id} className="p-4 flex gap-4 items-center hover:bg-slate-50/50 transition-colors">
+          {products.map((item, idx) => (
+            <div key={item.id || idx} className="p-4 flex gap-4 items-center hover:bg-slate-50/50 transition-colors">
               <div className="w-14 h-14 bg-slate-50 rounded-xl p-1.5 flex items-center justify-center border border-slate-100 shrink-0">
                 <img 
                   src={item.image || '/images/cpu-box.jpg'} 
@@ -176,6 +245,72 @@ export default function OrderDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Modal Dialog */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Xác nhận hủy đơn hàng</h3>
+                <p className="text-xs text-slate-500">Đơn hàng {order.id} sẽ được hủy trên PCHub và WooCommerce.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">Lý do bạn muốn hủy đơn:</label>
+              <div className="space-y-1.5">
+                {CANCEL_REASONS.map(reason => (
+                  <label key={reason} className={`flex items-center gap-2 p-2 rounded-lg text-xs cursor-pointer border transition-colors ${
+                    cancelReason === reason ? 'bg-blue-50 border-blue-200 font-bold text-blue-900' : 'border-transparent text-slate-700 hover:bg-slate-50'
+                  }`}>
+                    <input 
+                      type="radio" 
+                      name="cancelReason" 
+                      value={reason} 
+                      checked={cancelReason === reason} 
+                      onChange={() => setCancelReason(reason)} 
+                    />
+                    {reason}
+                  </label>
+                ))}
+              </div>
+
+              {cancelReason === 'Khác' && (
+                <textarea
+                  rows={2}
+                  placeholder="Nhập lý do chi tiết..."
+                  value={customReason}
+                  onChange={e => setCustomReason(e.target.value)}
+                  className="w-full text-xs p-2.5 border border-slate-300 rounded-lg outline-none focus:border-blue-500"
+                />
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                disabled={isCancelling}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+              >
+                Không hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={isCancelling}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {isCancelling ? 'Đang hủy...' : 'Đồng ý hủy đơn'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
