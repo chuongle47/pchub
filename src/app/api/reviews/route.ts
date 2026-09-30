@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { fetchSbuyWooCommerceReviews, createSbuyWooCommerceReview } from '@/lib/sbuy';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get('productId');
 
     const reviews = await fetchSbuyWooCommerceReviews(productId || undefined);
-    return NextResponse.json({ success: true, reviews });
+    return NextResponse.json({ success: true, reviews }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      }
+    });
   } catch (error: any) {
     console.error('Error fetching reviews API:', error);
     return NextResponse.json({ success: false, reviews: [], error: error.message }, { status: 500 });

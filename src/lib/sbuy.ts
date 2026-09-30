@@ -787,7 +787,7 @@ export async function fetchSbuyWooCommerceReviews(productId?: string | number): 
         'Authorization': authHeader,
         'Content-Type': 'application/json'
       },
-      next: { revalidate: 35 }
+      cache: 'no-store'
     });
 
     if (!res.ok) {
