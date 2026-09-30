@@ -144,9 +144,24 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
       if (res.ok && data.success) {
         setReviewNotice('Cảm ơn bạn! Đánh giá đã được gửi thành công.');
         setReviewText('');
-        if (data.review) {
-          setWooReviews(prev => [data.review, ...prev]);
-        }
+        setReviewerName('');
+        setReviewerEmail('');
+        setReviewRating(5);
+        // Re-fetch reviews từ WooCommerce để cập nhật rating ngay
+        setTimeout(() => {
+          fetch(`/api/reviews?productId=${product.id}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.success && Array.isArray(d.reviews)) {
+                setWooReviews(d.reviews);
+              } else if (data.review) {
+                setWooReviews(prev => [data.review, ...prev]);
+              }
+            })
+            .catch(() => {
+              if (data.review) setWooReviews(prev => [data.review, ...prev]);
+            });
+        }, 1500);
       } else {
         alert(data.error || 'Lỗi gửi đánh giá. Vui lòng thử lại!');
       }
