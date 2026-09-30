@@ -8,7 +8,7 @@ import {
   ChevronRight, ChevronLeft, Truck, CreditCard, ShieldCheck,
   CheckCircle, Smartphone, Banknote, Building2, Wallet, Package, Lock
 } from 'lucide-react';
-import { useCartStore, useOrderStore } from '@/lib/store';
+import { useCartStore, useOrderStore, useAuthStore } from '@/lib/store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
 import TechCheckoutLoader from '@/components/checkout/TechCheckoutLoader';
@@ -113,6 +113,10 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const addOrder = useOrderStore(s => s.addOrder);
   const updateOrderWooId = useOrderStore(s => s.updateOrderWooId);
+  const user = useAuthStore(s => s.user);
+
+  // Auto-fill form từ thông tin user đăng nhập
+  const nksUser = (user as any)?.user || user;
 
   const [step, setStep] = useState<CheckoutStep>('shipping');
   const [shippingOption, setShippingOption] = useState('ghn');
@@ -132,6 +136,22 @@ export default function CheckoutPage() {
     name: '', phone: '', email: '',
     province: '', district: '', ward: '', address: '', note: '',
   });
+
+  // Auto-fill form từ thông tin user khi trang load
+  useEffect(() => {
+    if (nksUser) {
+      const fullName = nksUser.name ||
+        [nksUser.firstname, nksUser.lastname].filter(Boolean).join(' ') || '';
+      const phone = nksUser.phone || '';
+      const email = nksUser.email || '';
+      setForm(prev => ({
+        ...prev,
+        name: prev.name || fullName,
+        phone: prev.phone || phone,
+        email: prev.email || email,
+      }));
+    }
+  }, [nksUser?.email]);
 
   const totalPrice = total();
   const selectedShipping = SHIPPING_OPTIONS.find(s => s.id === shippingOption);
@@ -417,6 +437,16 @@ export default function CheckoutPage() {
                       <Truck size={16} color="#2563eb" />
                     </div>
                     <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Thông tin giao hàng</h2>
+                    {nksUser && (
+                      <span style={{
+                        fontSize: '11px', fontWeight: 700,
+                        background: '#dcfce7', color: '#15803d',
+                        padding: '3px 8px', borderRadius: '12px',
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      }}>
+                        ✓ Tự động điền từ tài khoản
+                      </span>
+                    )}
                   </div>
 
                   <div className="home-grid-2" style={{ gap: '14px' }}>
