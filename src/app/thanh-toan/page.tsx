@@ -485,16 +485,6 @@ export default function CheckoutPage() {
                         <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Thông tin tài khoản đăng nhập đặt đơn hàng</p>
                       </div>
                     </div>
-                    {nksUser && (
-                      <span style={{
-                        fontSize: '11px', fontWeight: 700,
-                        background: '#dcfce7', color: '#15803d',
-                        padding: '4px 10px', borderRadius: '12px',
-                        display: 'inline-flex', alignItems: 'center', gap: '4px',
-                      }}>
-                        ✓ Lấy từ tài khoản đăng nhập
-                      </span>
-                    )}
                   </div>
 
                   <div className="home-grid-2" style={{ gap: '14px' }}>
