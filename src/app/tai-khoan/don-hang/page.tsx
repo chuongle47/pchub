@@ -17,16 +17,17 @@ export default function OrdersPage() {
   const nksUser = (user as any)?.user || user;
   const avatarUrl = nksUser?.avatar || null;
   const userName = nksUser?.name || user?.name || 'Khách hàng';
-  const userEmail = nksUser?.email || user?.email || '';
-  const userPhone = nksUser?.phone || user?.phone || '';
+  const userEmail = (nksUser?.email || user?.email || '').toLowerCase().trim();
+  const userPhone = (nksUser?.phone || user?.phone || '').trim();
 
   const doSync = () => {
+    if (!userEmail && !userPhone) return;
     setSyncing(true);
-    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail || 'any')}`)
+    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail)}&phone=${encodeURIComponent(userPhone)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.orders)) {
-          syncWooOrders(data.orders);
+          syncWooOrders(data.orders, userEmail, userPhone);
         }
       })
       .catch(err => console.warn('Order sync warning:', err))
@@ -36,7 +37,20 @@ export default function OrdersPage() {
   // Sync order statuses from WooCommerce when page loads
   useEffect(() => {
     doSync();
-  }, [userEmail]);
+  }, [userEmail, userPhone]);
+
+  // Filter orders strictly belonging to current user (matching buyer email or phone)
+  const userOrders = orders.filter(order => {
+    if (!userEmail && !userPhone) return true;
+    const bEmail = (order.buyer?.email || order.shippingAddress?.email || '').toLowerCase().trim();
+    const bPhone = (order.buyer?.phone || order.shippingAddress?.phone || '').replace(/\D/g, '');
+    const normPhone = userPhone.replace(/\D/g, '');
+
+    if (userEmail && (bEmail === userEmail || bEmail.includes(userEmail))) return true;
+    if (normPhone && normPhone.length >= 8 && (bPhone.includes(normPhone) || normPhone.includes(bPhone))) return true;
+    if (!bEmail && !bPhone) return true;
+    return false;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -79,7 +93,7 @@ export default function OrdersPage() {
             padding: '6px 14px',
             borderRadius: '20px',
           }}>
-            {orders.length} đơn hàng
+            {userOrders.length} đơn hàng
           </span>
         </div>
       </div>
@@ -121,7 +135,7 @@ export default function OrdersPage() {
             )}
           </div>
           <div>
-            <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>Thông tin người nhận</span>
+            <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>Thông tin tài khoản</span>
             <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '2px 0 0 0' }}>
               {userName} <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '13px' }}>· {userEmail}</span>
             </h3>
@@ -151,8 +165,8 @@ export default function OrdersPage() {
 
       {/* Orders List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {orders.length ? (
-          orders.map(order => {
+        {userOrders.length ? (
+          userOrders.map(order => {
             const isDelivered = order.status === 'delivered';
             const isCancelled = order.status === 'cancelled';
             const isShipping = order.status === 'shipping';

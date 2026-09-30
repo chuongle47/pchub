@@ -301,7 +301,7 @@ interface OrderStore {
   addOrder: (order: any) => void;
   updateOrderStatus: (orderId: string, status: string, statusLabel: string) => void;
   updateOrderWooId: (orderId: string, wooOrderId: number) => void;
-  syncWooOrders: (wooOrders: any[]) => void;
+  syncWooOrders: (wooOrders: any[], currentUserEmail?: string, currentUserPhone?: string) => void;
 }
 
 export const useOrderStore = create<OrderStore>()(
@@ -321,13 +321,33 @@ export const useOrderStore = create<OrderStore>()(
             o.id === orderId ? { ...o, wooOrderId } : o
           )
         }),
-      syncWooOrders: (wooOrders: any[]) => {
-        if (!Array.isArray(wooOrders) || wooOrders.length === 0) return;
+      syncWooOrders: (wooOrders: any[], currentUserEmail?: string, currentUserPhone?: string) => {
         const currentOrders = get().orders;
+        const normEmail = (currentUserEmail || '').toLowerCase().trim();
+        const normPhone = (currentUserPhone || '').replace(/\D/g, '');
+
+        // 1. Purge foreign orders that explicitly belong to other users
+        const validLocalOrders = (normEmail || normPhone)
+          ? currentOrders.filter(o => {
+              const bEmail = (o.buyer?.email || o.shippingAddress?.email || '').toLowerCase().trim();
+              const bPhone = (o.buyer?.phone || o.shippingAddress?.phone || '').replace(/\D/g, '');
+              
+              if (normEmail && (bEmail === normEmail || bEmail.includes(normEmail))) return true;
+              if (normPhone && normPhone.length >= 8 && (bPhone.includes(normPhone) || normPhone.includes(bPhone))) return true;
+              if (!bEmail && !bPhone) return true; // Anonymous / local order
+              return false;
+            })
+          : currentOrders;
+
+        if (!Array.isArray(wooOrders) || wooOrders.length === 0) {
+          set({ orders: validLocalOrders });
+          return;
+        }
+
         const matchedWooIds = new Set<number>();
 
-        // 1. Update existing local orders with fresh WooCommerce status
-        const updatedOrders = currentOrders.map(localOrder => {
+        // 2. Update existing local orders with fresh WooCommerce status
+        const updatedOrders = validLocalOrders.map(localOrder => {
           const localTotal = Math.round(Number(localOrder.total) || 0);
           const localFirstProduct = (localOrder.products?.[0]?.name || '').toLowerCase().trim();
 
@@ -353,13 +373,15 @@ export const useOrderStore = create<OrderStore>()(
               status: match.status,
               statusLabel: match.statusLabel,
               wooOrderId: match.wooOrderId,
-              paymentMethodLabel: match.paymentMethodLabel || localOrder.paymentMethodLabel
+              paymentMethodLabel: match.paymentMethodLabel || localOrder.paymentMethodLabel,
+              buyer: localOrder.buyer || match.buyer,
+              shippingAddress: localOrder.shippingAddress || match.shippingAddress
             };
           }
           return localOrder;
         });
 
-        // 2. Also append WooCommerce orders that aren't in local store
+        // 3. Append WooCommerce orders belonging to this user that aren't yet in local store
         const newWooOrders = wooOrders
           .filter(w => !matchedWooIds.has(w.wooOrderId) && !updatedOrders.some(o => o.wooOrderId === w.wooOrderId || o.id === w.id || o.id === `ORD-${w.wooOrderId}`))
           .map(w => ({
@@ -371,6 +393,11 @@ export const useOrderStore = create<OrderStore>()(
             total: w.total,
             shippingFee: w.shippingFee || 0,
             paymentMethodLabel: w.paymentMethodLabel,
+            buyer: w.buyer || {
+              name: w.shippingAddress?.name || 'Khách hàng',
+              phone: w.shippingAddress?.phone || '',
+              email: w.shippingAddress?.email || normEmail,
+            },
             shippingAddress: w.shippingAddress,
             products: w.products
           }));

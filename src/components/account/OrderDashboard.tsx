@@ -22,17 +22,19 @@ export default function OrderDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [syncing, setSyncing] = useState(false);
 
-  // Sync order statuses from WooCommerce
+  // User credentials
   const nksUser = (user as any)?.user || user;
-  const userEmail = nksUser?.email || '';
+  const userEmail = (nksUser?.email || user?.email || '').toLowerCase().trim();
+  const userPhone = (nksUser?.phone || user?.phone || '').trim();
 
   const doSync = () => {
+    if (!userEmail && !userPhone) return;
     setSyncing(true);
-    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail || 'any')}`)
+    fetch(`/api/orders/sync?email=${encodeURIComponent(userEmail)}&phone=${encodeURIComponent(userPhone)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.orders)) {
-          syncWooOrders(data.orders);
+          syncWooOrders(data.orders, userEmail, userPhone);
         }
       })
       .catch(err => console.warn('Sync error:', err))
@@ -41,18 +43,31 @@ export default function OrderDashboard() {
 
   useEffect(() => {
     doSync();
-  }, [userEmail]);
+  }, [userEmail, userPhone]);
+
+  // Filter orders strictly belonging to current user (matching buyer email or phone)
+  const userOrders = storeOrders.filter(order => {
+    if (!userEmail && !userPhone) return true;
+    const bEmail = (order.buyer?.email || order.shippingAddress?.email || '').toLowerCase().trim();
+    const bPhone = (order.buyer?.phone || order.shippingAddress?.phone || '').replace(/\D/g, '');
+    const normPhone = userPhone.replace(/\D/g, '');
+
+    if (userEmail && (bEmail === userEmail || bEmail.includes(userEmail))) return true;
+    if (normPhone && normPhone.length >= 8 && (bPhone.includes(normPhone) || normPhone.includes(bPhone))) return true;
+    if (!bEmail && !bPhone) return true;
+    return false;
+  });
 
   const visibleOrders = activeFilter === 'all' 
-    ? storeOrders 
-    : storeOrders.filter(order => order.status === activeFilter);
+    ? userOrders 
+    : userOrders.filter(order => order.status === activeFilter);
     
-  const featured = storeOrders.find(order => order.status === 'shipping') || storeOrders.find(order => order.status === 'delivered') || storeOrders[0];
+  const featured = userOrders.find(order => order.status === 'shipping') || userOrders.find(order => order.status === 'delivered') || userOrders[0];
 
   return <>
     <div className="account-tabs">
       {filters.map(filter => {
-        const count = filter.key === 'all' ? storeOrders.length : storeOrders.filter(order => order.status === filter.key).length;
+        const count = filter.key === 'all' ? userOrders.length : userOrders.filter(order => order.status === filter.key).length;
         return <button key={filter.key} type="button" className={activeFilter === filter.key ? 'active-blue' : ''} onClick={() => setActiveFilter(filter.key)}>{filter.label} ({count})</button>;
       })}
     </div>

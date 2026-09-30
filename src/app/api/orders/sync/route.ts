@@ -26,14 +26,19 @@ function mapWooStatus(wooStatus: string): { status: string; statusLabel: string 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    // email param kept for compatibility but not used for filtering
-    // WooCommerce billing email may differ from user login email
+    const email = (searchParams.get('email') || '').toLowerCase().trim();
+    const phone = (searchParams.get('phone') || '').replace(/\D/g, '');
+
+    // Require valid email or phone for sync
+    if (!email && !phone) {
+      return NextResponse.json({ success: true, orders: [] });
+    }
 
     const authHeader = 'Basic ' + Buffer.from(
       `${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`
     ).toString('base64');
 
-    // Fetch ALL recent orders (no email filter - billing email often differs from login email)
+    // Fetch recent orders from WooCommerce
     const res = await fetch(
       `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/orders?per_page=100&orderby=date&order=desc`,
       {
@@ -53,16 +58,37 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, orders: [] });
     }
 
+    // Filter strictly to only orders belonging to this user (matching billing/shipping email or phone)
+    const userWooOrders = wooOrders.filter(o => {
+      const bEmail = (o.billing?.email || '').toLowerCase().trim();
+      const sEmail = (o.shipping?.email || '').toLowerCase().trim();
+      const bPhone = (o.billing?.phone || '').replace(/\D/g, '');
+      const sPhone = (o.shipping?.phone || '').replace(/\D/g, '');
+
+      // 1. Email match (if email provided and not 'any')
+      if (email && email !== 'any') {
+        if (bEmail === email || sEmail === email) return true;
+      }
+
+      // 2. Phone match (if at least 8 digits)
+      if (phone && phone.length >= 8) {
+        if (bPhone.includes(phone) || sPhone.includes(phone) || phone.includes(bPhone) || (sPhone && phone.includes(sPhone))) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
     // Return rich orders with all fields for client sync and display
-    const orders = wooOrders.map(o => {
+    const orders = userWooOrders.map(o => {
       const mapped = mapWooStatus(o.status);
-      const fullName = `${o.billing?.first_name || ''} ${o.billing?.last_name || ''}`.trim() ||
-                       `${o.shipping?.first_name || ''} ${o.shipping?.last_name || ''}`.trim() ||
-                       'Khách hàng';
-      const address = o.billing?.address_1 || o.shipping?.address_1 || 'Địa chỉ nhận hàng';
-      const province = o.billing?.city || o.shipping?.city || 'Hà Nội';
-      const district = o.billing?.state || o.shipping?.state || '';
-      const ward = o.billing?.address_2 || o.shipping?.address_2 || '';
+      const buyerName = `${o.billing?.first_name || ''} ${o.billing?.last_name || ''}`.trim() || 'Khách hàng';
+      const recipientName = `${o.shipping?.first_name || ''} ${o.shipping?.last_name || ''}`.trim() || buyerName;
+      const address = o.shipping?.address_1 || o.billing?.address_1 || 'Địa chỉ nhận hàng';
+      const province = o.shipping?.city || o.billing?.city || 'Hà Nội';
+      const district = o.shipping?.state || o.billing?.state || '';
+      const ward = o.shipping?.address_2 || o.billing?.address_2 || '';
       const dateFormatted = o.date_created
         ? new Date(o.date_created).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
         : new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -85,10 +111,15 @@ export async function GET(req: NextRequest) {
         status: mapped.status,
         statusLabel: mapped.statusLabel,
         paymentMethodLabel: o.payment_method_title || 'Thanh toán online',
+        buyer: {
+          name: buyerName,
+          phone: o.billing?.phone || '',
+          email: o.billing?.email || email || '',
+        },
         shippingAddress: {
-          name: fullName,
-          phone: o.billing?.phone || o.shipping?.phone || '',
-          email: o.billing?.email || '',
+          name: recipientName,
+          phone: o.shipping?.phone || o.billing?.phone || '',
+          email: o.billing?.email || email || '',
           address,
           province,
           district,
