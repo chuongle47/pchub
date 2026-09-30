@@ -81,7 +81,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
         order.status = 'cancelled';
         order.statusLabel = 'Đã hủy';
         setShowCancelModal(false);
-        setCancelMessage('Đã hủy đơn hàng thành công trên hệ thống PCHub & WooCommerce!');
+        setCancelMessage('Đã hủy đơn hàng thành công!');
       } else {
         alert(data.error || 'Có lỗi khi hủy đơn');
       }
@@ -172,7 +172,6 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
               </div>
               <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>
                 Ngày đặt: <strong style={{ color: '#e2e8f0' }}>{order.date}</strong>
-                {order.wooOrderId && <span style={{ marginLeft: '10px', color: '#38bdf8' }}>• WooCommerce #{order.wooOrderId}</span>}
               </p>
             </div>
           </div>
@@ -592,7 +591,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                     Xác nhận hủy đơn hàng
                   </h4>
                   <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
-                    Đơn hàng {order.id} sẽ được hủy trên hệ thống PCHub và WooCommerce.
+                    Đơn hàng {order.id} sẽ được hủy.
                   </p>
                 </div>
               </div>

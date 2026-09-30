@@ -82,7 +82,7 @@ export default function OrdersPage() {
             }}
           >
             <span style={{ display: 'inline-block', animation: syncing ? 'spin 1s linear infinite' : 'none', fontSize: '13px' }}>⟳</span>
-            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ WooCommerce'}
+            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ đơn hàng'}
           </button>
           <span style={{
             fontSize: '12px',

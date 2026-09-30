@@ -84,7 +84,7 @@ export default function OrderDetailPage({ params }: Props) {
         order.status = 'cancelled';
         order.statusLabel = 'Đã hủy';
         setShowCancelModal(false);
-        setCancelMessage('Đã hủy đơn hàng thành công trên hệ thống PCHub & WooCommerce!');
+        setCancelMessage('Đã hủy đơn hàng thành công!');
       } else {
         alert(data.error || 'Có lỗi khi hủy đơn');
       }
@@ -129,7 +129,7 @@ export default function OrderDetailPage({ params }: Props) {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Chi tiết đơn hàng</h1>
           <p className="tabular-nums text-blue-600 mt-1 text-sm font-bold">
-            {order.id} {order.wooOrderId ? `(WooCommerce #${order.wooOrderId})` : ''}
+            {order.id}
           </p>
         </div>
         <span className={`self-start sm:self-center px-3.5 py-1.5 rounded-full text-xs font-bold border ${
@@ -266,7 +266,7 @@ export default function OrderDetailPage({ params }: Props) {
               </div>
               <div>
                 <h3 className="text-base font-extrabold text-slate-900">Xác nhận hủy đơn hàng</h3>
-                <p className="text-xs text-slate-500">Đơn hàng {order.id} sẽ được hủy trên PCHub và WooCommerce.</p>
+                <p className="text-xs text-slate-500">Đơn hàng {order.id} sẽ được hủy.</p>
               </div>
             </div>
 
