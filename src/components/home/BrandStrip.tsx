@@ -77,18 +77,54 @@ export default function BrandStrip() {
   if (brands.length === 0) return null;
 
   return (
-    <section className="home-brands" style={{ background: '#ffffff', padding: '32px 0 36px' }}>
+    <section className="home-brands" style={{ background: '#ffffff', padding: '28px 0 32px' }}>
       <style>{`
         .brand-strip-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
+          gap: 8px;
           max-width: 1240px;
           margin: 0 auto;
         }
-        @media (min-width: 768px) {
+        .brand-card-item {
+          text-decoration: none;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 8px 8px;
+          height: 54px;
+          text-align: center;
+          transition: all 0.25s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+        .brand-card-item:hover {
+          border-color: #2563eb;
+          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+          transform: translateY(-2px);
+        }
+        .brand-logo-img {
+          max-height: 22px;
+          max-width: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          display: block;
+        }
+        @media (min-width: 640px) {
           .brand-strip-grid {
-            gap: 14px;
+            gap: 12px;
+          }
+          .brand-card-item {
+            padding: 10px 12px;
+            height: 60px;
+          }
+          .brand-logo-img {
+            max-height: 26px;
           }
         }
         @media (min-width: 1024px) {
@@ -96,15 +132,22 @@ export default function BrandStrip() {
             grid-template-columns: repeat(8, 1fr);
             gap: 14px;
           }
+          .brand-card-item {
+            padding: 12px 14px;
+            height: 64px;
+          }
+          .brand-logo-img {
+            max-height: 28px;
+          }
         }
       `}</style>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px' }}>
         <h2 style={{
           textAlign: 'center',
-          fontSize: '20px',
+          fontSize: '18px',
           fontWeight: 800,
           color: '#0f172a',
-          marginBottom: '22px',
+          marginBottom: '18px',
           letterSpacing: '-0.02em',
         }}>
           Thương hiệu đối tác
@@ -121,47 +164,14 @@ export default function BrandStrip() {
                 key={brand.id}
                 href={`/search?search=${encodeURIComponent(brand.name)}`}
                 title={brand.name}
-                style={{
-                  textDecoration: 'none',
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  height: '64px',
-                  textAlign: 'center',
-                  transition: 'all 0.25s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                  overflow: 'hidden',
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  e.currentTarget.style.borderColor = '#2563eb';
-                  e.currentTarget.style.background = '#ffffff';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(37, 99, 235, 0.12)';
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.background = '#ffffff';
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)';
-                  e.currentTarget.style.transform = 'none';
-                }}
+                className="brand-card-item"
               >
                 {logoSrc ? (
                   <>
                     <img 
                       src={logoSrc} 
                       alt={brand.name} 
-                      style={{
-                        maxHeight: '28px',
-                        maxWidth: '95px',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                        display: 'block',
-                      }}
+                      className="brand-logo-img"
                       onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                         e.currentTarget.style.display = 'none';
                         const fallbackSpan = e.currentTarget.parentElement?.querySelector('.brand-fallback-text') as HTMLElement;
@@ -172,7 +182,7 @@ export default function BrandStrip() {
                       className="brand-fallback-text"
                       style={{
                         display: 'none',
-                        fontSize: '13px',
+                        fontSize: '11px',
                         fontWeight: 800,
                         color: '#1e293b',
                         letterSpacing: '0.05em',
@@ -185,7 +195,7 @@ export default function BrandStrip() {
                   <span 
                     className="brand-fallback-text"
                     style={{
-                      fontSize: '13px',
+                      fontSize: '11px',
                       fontWeight: 800,
                       color: '#1e293b',
                       letterSpacing: '0.05em',

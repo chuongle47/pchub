@@ -12,7 +12,7 @@ export default function HeroSlider() {
     <section className="home-hero" style={{
       background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)',
       color: '#fff',
-      padding: '52px 0 56px',
+      padding: 'clamp(32px, 5vw, 52px) 0 clamp(36px, 5vw, 56px)',
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -31,18 +31,18 @@ export default function HeroSlider() {
       <div className="home-hero-grid" style={{
         maxWidth: '1280px',
         margin: '0 auto',
-        padding: '0 24px',
+        padding: '0 16px',
         display: 'grid',
-        gap: '40px',
+        gap: '24px',
         alignItems: 'center',
       }}>
         {/* Left Column: Content */}
         <div>
           <h1 style={{
-            fontSize: '38px',
+            fontSize: 'clamp(24px, 4.8vw, 38px)',
             fontWeight: 900,
-            lineHeight: 1.2,
-            marginBottom: '16px',
+            lineHeight: 1.25,
+            marginBottom: '14px',
             letterSpacing: '-0.5px',
           }}>
             <span style={{ color: '#ffffff', display: 'block' }}>Linh kiện chính hãng</span>

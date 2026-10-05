@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/tai-khoan', '/thanh-toan', '/dat-hang-thanh-cong', '/cart', '/checkout'];
+const protectedRoutes = ['/tai-khoan'];
 const authRoutes = ['/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'];
 
 export function middleware(request: NextRequest) {
@@ -24,5 +24,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/tai-khoan/:path*', '/thanh-toan', '/dat-hang-thanh-cong', '/cart', '/checkout', '/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'],
+  matcher: ['/tai-khoan/:path*', '/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'],
 };

@@ -120,22 +120,56 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
   }, []);
 
   return (
-    <section className="home-flash-sale" style={{ background: '#ffffff', padding: '24px 0' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+    <section className="home-flash-sale" style={{ background: '#ffffff', padding: '24px 0', scrollMarginTop: '100px' }}>
+      <style>{`
+        .flash-sale-banner-box {
+          background: #fef2f2;
+          border: 1px solid #fecdd3;
+          border-radius: 14px;
+          padding: 14px 20px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .flash-sale-subtext {
+          font-size: 12px;
+          color: #64748b;
+          display: block;
+          margin-top: 2px;
+        }
+        .flash-sale-timer-wrap {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 700;
+          color: #334155;
+          flex-shrink: 0;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 640px) {
+          .flash-sale-banner-box {
+            padding: 12px 14px;
+            gap: 10px;
+          }
+          .flash-sale-subtext {
+            font-size: 11px;
+          }
+          .flash-sale-timer-wrap {
+            width: 100%;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 1px dashed #fecdd3;
+          }
+        }
+      `}</style>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px' }}>
         
         {/* Pink/Red Banner Box Header */}
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecdd3',
-          borderRadius: '14px',
-          padding: '14px 20px',
-          marginBottom: '20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}>
+        <div className="flash-sale-banner-box">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
               background: '#ef4444',
@@ -147,11 +181,12 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '16px',
+              flexShrink: 0,
             }}>⚡</div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h2 style={{
-                  fontSize: '22px',
+                  fontSize: '20px',
                   fontWeight: 800,
                   color: '#ef4444',
                   margin: 0,
@@ -172,13 +207,15 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 }}>
                   ƯU ĐÃI GIỜ VÀNG
                 </span>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Sản phẩm giá tốt theo khung giờ — Số lượng có hạn</span>
               </div>
+              <span className="flash-sale-subtext">
+                Sản phẩm giá tốt theo khung giờ — Số lượng có hạn
+              </span>
             </div>
           </div>
 
           {/* Countdown Timer */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#334155', flexShrink: 0, flexWrap: 'nowrap' }}>
+          <div className="flash-sale-timer-wrap">
             {!timer.isEnded ? (
               <span style={{
                 display: 'inline-flex',
@@ -224,8 +261,8 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
               </span>
             )}
 
-            <span style={{ fontSize: '12.5px', color: '#64748b', whiteSpace: 'nowrap' }}>
-              {timer.isEnded ? 'Phiên ưu đãi đã kết thúc:' : 'Kết thúc trong:'}
+            <span style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap' }}>
+              {timer.isEnded ? 'Đã kết thúc:' : 'Kết thúc trong:'}
             </span>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
