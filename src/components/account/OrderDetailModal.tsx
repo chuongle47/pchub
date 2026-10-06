@@ -300,7 +300,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                   </p>
                 )}
                 <p style={{ color: '#475569', lineHeight: '1.4', margin: '4px 0 0 0', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
-                  📍 {[shipping.address, shipping.ward, shipping.district && shipping.district !== shipping.ward && shipping.district !== shipping.province ? shipping.district : null, shipping.province].filter(p => p && p.trim()).join(', ') || 'Địa chỉ nhận hàng'}
+                  📍 {[shipping.address, shipping.ward, shipping.province].filter(p => p && p.trim()).join(', ') || 'Địa chỉ nhận hàng'}
                 </p>
                 {shipping.note && (
                   <p style={{ color: '#b45309', fontStyle: 'italic', background: '#fffbeb', padding: '6px 10px', borderRadius: '6px', border: '1px solid #fef3c7', margin: '4px 0 0 0', fontSize: '11.5px' }}>
@@ -363,7 +363,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                 fontWeight: 600,
               }}>
                 <CreditCard size={15} color="#16a34a" />
-                <span>Phương thức: <strong>{order.paymentMethodLabel || 'Thanh toán khi nhận hàng (COD)'}</strong></span>
+                <span>Phương thức: <strong>{(order.paymentMethodLabel || 'Thanh toán khi nhận hàng (COD)').replace(/\s*\(NKS.*?\)/gi, '').replace(/NKS\s*/gi, '').replace(/\s*\(PCHub.*?\)/gi, '').trim()}</strong></span>
               </div>
             </div>
 
