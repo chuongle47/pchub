@@ -13,7 +13,7 @@ import { useWalletStore } from '@/lib/wallet-store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
 import TechCheckoutLoader from '@/components/checkout/TechCheckoutLoader';
-import { VIETNAM_PROVINCES, getDistrictsForProvince, getWardsForDistrict } from '@/data/vietnam-locations';
+import { VIETNAM_PROVINCES, getWardsForProvince } from '@/data/vietnam-locations';
 
 type CheckoutStep = 'shipping' | 'payment';
 
@@ -342,9 +342,9 @@ export default function CheckoutPage() {
         phone: rPhone,
         email: bEmail,
         address: form.address || 'Địa chỉ nhận hàng',
-        province: form.province || 'Hà Nội',
-        district: form.district || 'Cầu Giấy',
-        ward: form.ward || 'Dịch Vọng Hậu',
+        province: form.province || 'TP. Hồ Chí Minh',
+        district: form.ward || form.province || '',
+        ward: form.ward || '',
         note: form.note
       },
       shippingFee,
@@ -374,9 +374,9 @@ export default function CheckoutPage() {
             phone: rPhone,
             email: bEmail,
             address: form.address || 'Địa chỉ nhận hàng',
-            province: form.province || 'Hà Nội',
-            district: form.district || 'Cầu Giấy',
-            ward: form.ward || 'Dịch Vọng Hậu',
+            province: form.province || 'TP. Hồ Chí Minh',
+            district: form.ward || form.province || '',
+            ward: form.ward || '',
             note: form.note
           },
           items: items.map(item => ({
@@ -659,8 +659,13 @@ export default function CheckoutPage() {
 
                     <div>
                       <label style={labelStyle}>Tỉnh / Thành phố <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select required value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value, district: '', ward: '' }))} style={inputStyle}>
-                        <option value="">Chọn tỉnh/thành phố</option>
+                      <select
+                        required
+                        value={form.province}
+                        onChange={e => setForm(p => ({ ...p, province: e.target.value, district: '', ward: '' }))}
+                        style={inputStyle}
+                      >
+                        <option value="">-- Chọn Tỉnh / Thành phố --</option>
                         {VIETNAM_PROVINCES.map(p => (
                           <option key={p} value={p}>{p}</option>
                         ))}
@@ -668,30 +673,34 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <label style={labelStyle}>Thành phố / Huyện <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select required value={form.district} onChange={e => setForm(p => ({ ...p, district: e.target.value, ward: '' }))} style={inputStyle}>
-                        <option value="">Chọn thành phố/huyện</option>
-                        {getDistrictsForProvince(form.province).map(d => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Phường / Xã <span style={{ color: '#ef4444' }}>*</span></label>
-                      <select required value={form.ward} onChange={e => setForm(p => ({ ...p, ward: e.target.value }))} style={inputStyle}>
-                        <option value="">Chọn phường/xã</option>
-                        {getWardsForDistrict(form.district).map(w => (
-                          <option key={w} value={w}>{w}</option>
-                        ))}
-                      </select>
+                      <label style={labelStyle}>Phường / Xã / Thị trấn <span style={{ color: '#ef4444' }}>*</span></label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          required
+                          list="ward-list"
+                          placeholder={form.province ? "Chọn hoặc gõ tìm Phường / Xã..." : "Vui lòng chọn Tỉnh/TP trước"}
+                          value={form.ward}
+                          onChange={e => setForm(p => ({ ...p, ward: e.target.value }))}
+                          disabled={!form.province}
+                          style={{
+                            ...inputStyle,
+                            background: !form.province ? '#f8fafc' : '#ffffff',
+                            cursor: !form.province ? 'not-allowed' : 'text'
+                          }}
+                        />
+                        <datalist id="ward-list">
+                          {getWardsForProvince(form.province).map(w => (
+                            <option key={w} value={w} />
+                          ))}
+                        </datalist>
+                      </div>
                     </div>
 
                     <div style={{ gridColumn: '1/-1' }}>
-                      <label style={labelStyle}>Địa chỉ nhận hàng <span style={{ color: '#ef4444' }}>*</span></label>
+                      <label style={labelStyle}>Địa chỉ nhận hàng (Số nhà, tên đường...) <span style={{ color: '#ef4444' }}>*</span></label>
                       <input
                         required
-                        placeholder="Số nhà, tên đường, phường/xã..."
+                        placeholder="Số nhà, tên đường, tòa nhà / thôn xóm..."
                         value={form.address}
                         onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
                         style={inputStyle}

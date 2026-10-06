@@ -65,127 +65,233 @@ export const VIETNAM_PROVINCES = [
   'Yên Bái',
 ];
 
-// Danh sách Thành phố trực thuộc / Huyện / Thị xã theo Tỉnh / Thành phố (Không còn đơn vị Quận)
-export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {
+// Danh sách Phường / Xã / Thị trấn trực tiếp theo từng Tỉnh / Thành phố (Đã tinh gọn 2 cấp: Tỉnh/TP ➔ Phường/Xã, không còn Quận/Huyện)
+export const WARDS_BY_PROVINCE: Record<string, string[]> = {
   'TP. Hồ Chí Minh': [
-    'TP. Thủ Đức', 'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
-    'TP. Vũng Tàu', 'TP. Phú Mỹ', 'TP. Bà Rịa',
-    'Huyện Bình Chánh', 'Huyện Cần Giờ', 'Huyện Củ Chi', 'Huyện Hóc Môn', 'Huyện Nhà Bè'
+    'Phường Bến Nghé', 'Phường Bến Thành', 'Phường Cầu Kho', 'Phường Cầu Ông Lãnh', 'Phường Cô Giang', 'Phường Đa Kao', 'Phường Nguyễn Cư Trinh', 'Phường Nguyễn Thái Bình', 'Phường Phạm Ngũ Lão', 'Phường Tân Định',
+    'Phường Thảo Điền', 'Phường An Phú', 'Phường An Khánh', 'Phường Thủ Thiêm', 'Phường Hiệp Bình Chánh', 'Phường Hiệp Bình Phước', 'Phường Linh Trung', 'Phường Linh Đông', 'Phường Linh Chiểu', 'Phường Bình Chiểu', 'Phường Trường Thọ', 'Phường Tăng Nhơn Phú A', 'Phường Tăng Nhơn Phú B', 'Phường Long Thạnh Mỹ',
+    'Phường 1 (Quận 3)', 'Phường 2 (Quận 3)', 'Phường 3 (Quận 3)', 'Phường Võ Thị Sáu (Quận 3)',
+    'Phường 1 (Quận 4)', 'Phường 4 (Quận 4)', 'Phường 6 (Quận 4)', 'Phường 9 (Quận 4)', 'Phường 13 (Quận 4)', 'Phường 18 (Quận 4)',
+    'Phường 1 (Quận 5)', 'Phường 5 (Quận 5)', 'Phường 8 (Quận 5)', 'Phường 11 (Quận 5)', 'Phường 14 (Quận 5)',
+    'Phường 1 (Quận 6)', 'Phường 6 (Quận 6)', 'Phường 10 (Quận 6)', 'Phường 12 (Quận 6)',
+    'Phường Tân Phong (Quận 7)', 'Phường Tân Phú (Quận 7)', 'Phường Tân Quy (Quận 7)', 'Phường Phú Mỹ (Quận 7)', 'Phường Tân Thuận Đông', 'Phường Tân Thuận Tây',
+    'Phường 1 (Quận 8)', 'Phường 4 (Quận 8)', 'Phường 5 (Quận 8)', 'Phường 8 (Quận 8)', 'Phường 16 (Quận 8)',
+    'Phường 1 (Quận 10)', 'Phường 5 (Quận 10)', 'Phường 10 (Quận 10)', 'Phường 12 (Quận 10)', 'Phường 14 (Quận 10)',
+    'Phường 1 (Quận 11)', 'Phường 5 (Quận 11)', 'Phường 9 (Quận 11)', 'Phường 15 (Quận 11)',
+    'Phường 1 (Quận Tân Bình)', 'Phường 2 (Quận Tân Bình)', 'Phường 4 (Quận Tân Bình)', 'Phường 13 (Quận Tân Bình)', 'Phường 15 (Quận Tân Bình)',
+    'Phường 1 (Quận Bình Thạnh)', 'Phường 2 (Quận Bình Thạnh)', 'Phường 19 (Quận Bình Thạnh)', 'Phường 25 (Quận Bình Thạnh)', 'Phường 26 (Quận Bình Thạnh)',
+    'Phường 1 (Quận Gò Vấp)', 'Phường 5 (Quận Gò Vấp)', 'Phường 8 (Quận Gò Vấp)', 'Phường 10 (Quận Gò Vấp)', 'Phường 17 (Quận Gò Vấp)',
+    'Phường 1 (Quận Phú Nhuận)', 'Phường 2 (Quận Phú Nhuận)', 'Phường 7 (Quận Phú Nhuận)', 'Phường 9 (Quận Phú Nhuận)',
+    'Phường Tây Thạnh (Quận Tân Phú)', 'Phường Sơn Kỳ (Quận Tân Phú)', 'Phường Tân Sơn Nhì', 'Phường Phú Thạnh',
+    'Phường Bình Hưng Hòa (Bình Tân)', 'Phường Bình Trị Đông (Bình Tân)', 'Phường Tân Tạo (Bình Tân)', 'Phường An Lạc (Bình Tân)',
+    'Thị trấn Tân Túc (Bình Chánh)', 'Xã Bình Hưng (Bình Chánh)', 'Xã Phong Phú (Bình Chánh)', 'Xã Vĩnh Lộc A (Bình Chánh)', 'Xã Vĩnh Lộc B (Bình Chánh)',
+    'Thị trấn Củ Chi', 'Xã Tân An Hội (Củ Chi)', 'Xã Bình Mỹ (Củ Chi)', 'Xã Tân Thạnh Đông (Củ Chi)',
+    'Thị trấn Hóc Môn', 'Xã Bà Điểm (Hóc Môn)', 'Xã Xuân Thới Thượng (Hóc Môn)', 'Xã Đông Thạnh (Hóc Môn)',
+    'Thị trấn Nhà Bè', 'Xã Phước Kiển (Nhà Bè)', 'Xã Hiệp Phước (Nhà Bè)', 'Xã Long Thới (Nhà Bè)',
+    'Thị trấn Cần Thạnh (Cần Giờ)', 'Xã Bình Khánh (Cần Giờ)', 'Xã Long Hòa (Cần Giờ)'
   ],
+
   'Hà Nội': [
-    'Thị xã Sơn Tây', 'TP. Phủ Lý', 'Huyện Ba Vì', 'Huyện Chương Mỹ', 'Huyện Đan Phượng', 'Huyện Đông Anh', 'Huyện Gia Lâm',
-    'Huyện Hoài Đức', 'Huyện Mê Linh', 'Huyện Mỹ Đức', 'Huyện Phú Xuyên', 'Huyện Phúc Thọ', 'Huyện Quốc Oai',
-    'Huyện Sóc Sơn', 'Huyện Thạch Thất', 'Huyện Thanh Oai', 'Huyện Thanh Trì', 'Huyện Thường Tín', 'Huyện Ứng Hòa'
+    'Phường Hàng Bạc (Hoàn Kiếm)', 'Phường Hàng Đào (Hoàn Kiếm)', 'Phường Hàng Gai (Hoàn Kiếm)', 'Phường Tràng Tiền (Hoàn Kiếm)', 'Phường Cửa Đông (Hoàn Kiếm)', 'Phường Lý Thái Tổ (Hoàn Kiếm)',
+    'Phường Trúc Bạch (Ba Đình)', 'Phường Điện Biên (Ba Đình)', 'Phường Kim Mã (Ba Đình)', 'Phường Giảng Võ (Ba Đình)', 'Phường Đội Cấn (Ba Đình)', 'Phường Liễu Giai (Ba Đình)',
+    'Phường Văn Miếu (Đống Đa)', 'Phường Quốc Tử Giám (Đống Đa)', 'Phường Láng Hạ (Đống Đa)', 'Phường Láng Thượng (Đống Đa)', 'Phường Ô Chợ Dừa (Đống Đa)', 'Phường Khâm Thiên (Đống Đa)',
+    'Phường Dịch Vọng (Cầu Giấy)', 'Phường Dịch Vọng Hậu (Cầu Giấy)', 'Phường Quan Hoa (Cầu Giấy)', 'Phường Yên Hòa (Cầu Giấy)', 'Phường Trung Hòa (Cầu Giấy)', 'Phường Mai Dịch (Cầu Giấy)', 'Phường Nghĩa Đô (Cầu Giấy)', 'Phường Nghĩa Tân (Cầu Giấy)',
+    'Phường Bách Khoa (Hai Bà Trưng)', 'Phường Bạch Đằng (Hai Bà Trưng)', 'Phường Đồng Tâm (Hai Bà Trưng)', 'Phường Lê Đại Hành (Hai Bà Trưng)', 'Phường Minh Khai (Hai Bà Trưng)',
+    'Phường Khương Mai (Thanh Xuân)', 'Phường Khương Trung (Thanh Xuân)', 'Phường Nhân Chính (Thanh Xuân)', 'Phường Thanh Xuân Bắc', 'Phường Thanh Xuân Nam',
+    'Phường Bưởi (Tây Hồ)', 'Phường Thụy Khuê (Tây Hồ)', 'Phường Yên Phụ (Tây Hồ)', 'Phường Quảng An (Tây Hồ)', 'Phường Nhật Tân (Tây Hồ)',
+    'Phường Ngọc Thụy (Long Biên)', 'Phường Bồ Đề (Long Biên)', 'Phường Gia Thụy (Long Biên)', 'Phường Thạch Bàn (Long Biên)', 'Phường Việt Hưng (Long Biên)',
+    'Phường Hoàng Liệt (Hoàng Mai)', 'Phường Định Công (Hoàng Mai)', 'Phường Đại Kim (Hoàng Mai)', 'Phường Giáp Bát (Hoàng Mai)', 'Phường Tân Mai (Hoàng Mai)',
+    'Phường Mỹ Đình 1 (Nam Từ Liêm)', 'Phường Mỹ Đình 2 (Nam Từ Liêm)', 'Phường Cầu Diễn (Nam Từ Liêm)', 'Phường Mễ Trì (Nam Từ Liêm)', 'Phường Trung Văn (Nam Từ Liêm)',
+    'Phường Xuân Đỉnh (Bắc Từ Liêm)', 'Phường Cổ Nhuế 1 (Bắc Từ Liêm)', 'Phường Cổ Nhuế 2 (Bắc Từ Liêm)', 'Phường Minh Khai (Bắc Từ Liêm)',
+    'Phường Quang Trung (Hà Đông)', 'Phường Yết Kiêu (Hà Đông)', 'Phường Mộ Lao (Hà Đông)', 'Phường Văn Quán (Hà Đông)', 'Phường La Khê (Hà Đông)', 'Phường Vạn Phúc (Hà Đông)',
+    'Phường Lê Lợi (Sơn Tây)', 'Phường Quang Trung (Sơn Tây)', 'Phường Ngô Quyền (Sơn Tây)',
+    'Thị trấn Đông Anh', 'Xã Vĩnh Ngọc (Đông Anh)', 'Xã Hải Bối (Đông Anh)', 'Xã Kim Chung (Đông Anh)',
+    'Thị trấn Trâu Quỳ (Gia Lâm)', 'Xã Bát Tràng (Gia Lâm)', 'Xã Đa Tốn (Gia Lâm)', 'Xã Ninh Hiệp (Gia Lâm)',
+    'Thị trấn Văn Điển (Thanh Trì)', 'Xã Tân Triều (Thanh Trì)', 'Xã Thanh Liệt (Thanh Trì)',
+    'Thị trấn Trạm Trôi (Hoài Đức)', 'Xã An Khánh (Hoài Đức)', 'Xã Song Phương (Hoài Đức)'
   ],
+
   'Đà Nẵng': [
-    'TP. Tam Kỳ', 'TP. Hội An', 'Huyện Hòa Vang', 'Huyện Hoàng Sa'
+    'Phường Hải Châu 1', 'Phường Hải Châu 2', 'Phường Thạch Thang', 'Phường Thanh Bình', 'Phường Thuận Phước', 'Phường Hòa Cường Bắc', 'Phường Hòa Cường Nam',
+    'Phường An Hải Bắc', 'Phường An Hải Tây', 'Phường An Hải Đông', 'Phường Phước Mỹ', 'Phường Mân Thái', 'Phường Thọ Quang',
+    'Phường Mỹ An', 'Phường Khuê Mỹ', 'Phường Hòa Quý', 'Phường Hòa Hải',
+    'Phường Tam Thuận', 'Phường Thanh Khê Đông', 'Phường Thanh Khê Tây', 'Phường Xuân Hà', 'Phường Chính Gián', 'Phường Vĩnh Trung',
+    'Phường Hòa Minh', 'Phường Hòa Khánh Bắc', 'Phường Hòa Khánh Nam', 'Phường Hòa Hiệp Bắc',
+    'Phường Khuê Trung', 'Phường Hòa Thọ Đông', 'Phường Hòa Thọ Tây', 'Phường Hòa Phát', 'Phường Hòa An',
+    'Xã Hòa Châu', 'Xã Hòa Tiến', 'Xã Hòa Phước', 'Xã Hòa Phong', 'Xã Hòa Nhơn', 'Xã Hòa Ninh'
   ],
+
   'Hải Phòng': [
-    'TP. Thủy Nguyên', 'TP. Hải Dương', 'TP. Chí Linh', 'Huyện An Lão', 'Huyện Kiến Thụy', 'Huyện Tiên Lãng', 'Huyện Vĩnh Bảo',
-    'Huyện Cát Hải', 'Huyện Bạch Long Vĩ'
+    'Phường Hoàng Văn Thụ', 'Phường Minh Khai', 'Phường Phan Bội Châu', 'Phường Hạ Lý', 'Phường Sở Dầu', 'Phường Hùng Vương',
+    'Phường Cầu Đất', 'Phường Lạch Tray', 'Phường Lê Lợi', 'Phường Đồng Quốc Bình', 'Phường Đằng Giang',
+    'Phường Cát Dài', 'Phường An Biên', 'Phường Niệm Nghĩa', 'Phường Dư Hàng', 'Phường Hồ Nam', 'Phường Kênh Dương',
+    'Phường Đông Hải 1', 'Phường Đông Hải 2', 'Phường Đằng Lâm', 'Phường Nam Hải', 'Phường Tràng Cát',
+    'Phường Quán Trữ', 'Phường Lãm Hà', 'Phường Trần Thành Ngọ', 'Phường Phù Liễn',
+    'Phường Đồ Sơn', 'Phường Vạn Hương', 'Phường Ngọc Xuyên', 'Phường Bàng La',
+    'Thị trấn Núi Đèo (Thủy Nguyên)', 'Xã An Lư (Thủy Nguyên)', 'Xã Hoàng Động (Thủy Nguyên)', 'Xã Tân Dương (Thủy Nguyên)',
+    'Thị trấn An Dương', 'Xã An Đồng (An Dương)', 'Xã Hồng Thái (An Dương)',
+    'Thị trấn Cát Bà (Cát Hải)', 'Xã Phù Long (Cát Hải)'
   ],
+
   'Cần Thơ': [
-    'TP. Vị Thanh', 'TP. Ngã Bảy', 'TP. Sóc Trăng', 'Huyện Phong Điền', 'Huyện Cờ Đỏ', 'Huyện Vĩnh Thạnh', 'Huyện Thới Lai'
+    'Phường Tân An', 'Phường An Cư', 'Phường An Phú', 'Phường An Nghiệp', 'Phường Xuân Khánh', 'Phường Hưng Lợi', 'Phường Cái Khế', 'Phường An Hòa',
+    'Phường Bình Thủy', 'Phường Trà An', 'Phường Trà Nóc', 'Phường Long Hòa', 'Phường Long Tuyền',
+    'Phường Lê Bình', 'Phường Hưng Phú', 'Phường Hưng Thạnh', 'Phường Ba Láng', 'Phường Tân Phú',
+    'Phường Thốt Nốt', 'Phường Thới Thuận', 'Phường Thuận An', 'Phường Tân Lộc',
+    'Phường Châu Văn Liêm', 'Phường Thới Hòa', 'Phường Phước Thới', 'Phường Trường Lạc',
+    'Thị trấn Phong Điền', 'Xã Mỹ Khánh (Phong Điền)', 'Xã Nhơn Ái (Phong Điền)',
+    'Thị trấn Cờ Đỏ', 'Thị trấn Thới Lai', 'Thị trấn Vĩnh Thạnh'
   ],
-  'Thừa Thiên Huế': [
-    'Thị xã Phong Điền', 'Thị xã Hương Thủy', 'Thị xã Hương Trà',
-    'Huyện A Lưới', 'Huyện Nam Đông', 'Huyện Phú Lộc', 'Huyện Phú Vàng', 'Huyện Quảng Điền'
-  ],
+
   'Bình Dương': [
-    'TP. Thủ Dầu Một', 'TP. Dĩ An', 'TP. Thuận An', 'TP. Tân Uyên', 'TP. Bến Cát',
-    'Huyện Bàu Bàng', 'Huyện Dầu Tiếng', 'Huyện Phú Giáo', 'Huyện Bắc Tân Uyên'
+    'Phường Phú Cường (Thủ Dầu Một)', 'Phường Hiệp Thành (Thủ Dầu Một)', 'Phường Chánh Nghĩa (Thủ Dầu Một)', 'Phường Phú Hòa (Thủ Dầu Một)', 'Phường Phú Lợi (Thủ Dầu Một)', 'Phường Hòa Phú (Thủ Dầu Một)',
+    'Phường Dĩ An', 'Phường An Bình (Dĩ An)', 'Phường Đông Hòa (Dĩ An)', 'Phường Tân Bình (Dĩ An)', 'Phường Tân Đông Hiệp (Dĩ An)',
+    'Phường Lái Thiêu (Thuận An)', 'Phường An Phú (Thuận An)', 'Phường Bình Hòa (Thuận An)', 'Phường Thuận Giao (Thuận An)', 'Phường Vĩnh Phú (Thuận An)',
+    'Phường Uyên Hưng (Tân Uyên)', 'Phường Tân Phước Khánh (Tân Uyên)', 'Phường Thái Hòa (Tân Uyên)', 'Phường Khánh Bình (Tân Uyên)',
+    'Phường Mỹ Phước (Bến Cát)', 'Phường Thới Hòa (Bến Cát)', 'Phường Tân Định (Bến Cát)', 'Phường Hòa Lợi (Bến Cát)',
+    'Thị trấn Lai Uyên (Bàu Bàng)', 'Thị trấn Dầu Tiếng', 'Thị trấn Phước Vĩnh (Phú Giáo)', 'Thị trấn Tân Thành (Bắc Tân Uyên)'
   ],
+
   'Đồng Nai': [
-    'TP. Biên Hòa', 'TP. Long Khánh', 'Huyện Cẩm Mỹ', 'Huyện Định Quán', 'Huyện Long Thành',
-    'Huyện Nhơn Trạch', 'Huyện Tân Phú', 'Huyện Thống Nhất', 'Huyện Trảng Bom', 'Huyện Vĩnh Cửu', 'Huyện Xuân Lộc'
+    'Phường Trung Dũng (Biên Hòa)', 'Phường Quyết Thắng (Biên Hòa)', 'Phường Quang Vinh (Biên Hòa)', 'Phường Tân Mai (Biên Hòa)', 'Phường Tân Hiệp (Biên Hòa)', 'Phường Long Bình (Biên Hòa)', 'Phường Trảng Dài (Biên Hòa)', 'Phường Hố Nai (Biên Hòa)', 'Phường An Bình (Biên Hòa)',
+    'Phường Xuân An (Long Khánh)', 'Phường Xuân Trung (Long Khánh)', 'Phường Xuân Hòa (Long Khánh)', 'Phường Suối Tre (Long Khánh)',
+    'Thị trấn Long Thành', 'Xã An Phước (Long Thành)', 'Xã Lộc An (Long Thành)', 'Xã Bình Sơn (Long Thành)',
+    'Thị trấn Hiệp Phước (Nhơn Trạch)', 'Xã Phú Hội (Nhơn Trạch)', 'Xã Phước Thiền (Nhơn Trạch)', 'Xã Đại Phước (Nhơn Trạch)',
+    'Thị trấn Trảng Bom', 'Xã Hố Nai 3 (Trảng Bom)', 'Xã Bắc Sơn (Trảng Bom)', 'Xã Quảng Tiến (Trảng Bom)',
+    'Thị trấn Vĩnh An (Vĩnh Cửu)', 'Thị trấn Dầu Giây (Thống Nhất)', 'Thị trấn Gia Ray (Xuân Lộc)', 'Thị trấn Tân Phú', 'Thị trấn Định Quán'
   ],
+
   'Bà Rịa - Vũng Tàu': [
-    'TP. Vũng Tàu', 'TP. Bà Rịa', 'TP. Phú Mỹ', 'Huyện Long Đất', 'Huyện Châu Đức', 'Huyện Xuyên Mộc', 'Huyện Côn Đảo'
+    'Phường 1 (Vũng Tàu)', 'Phường 2 (Vũng Tàu)', 'Phường 3 (Vũng Tàu)', 'Phường 4 (Vũng Tàu)', 'Phường 7 (Vũng Tàu)', 'Phường 8 (Vũng Tàu)', 'Phường 9 (Vũng Tàu)', 'Phường 10 (Vũng Tàu)', 'Phường 11 (Vũng Tàu)', 'Phường Thắng Nhất', 'Phường Thắng Tam', 'Phường Rạch Dừa', 'Phường Nguyễn An Ninh',
+    'Phường Phước Trung (Bà Rịa)', 'Phường Phước Hiệp (Bà Rịa)', 'Phường Phước Hưng (Bà Rịa)', 'Phường Phước Nguyên (Bà Rịa)', 'Phường Long Toàn (Bà Rịa)',
+    'Phường Phú Mỹ', 'Phường Tân Phước (Phú Mỹ)', 'Phường Phước Hòa (Phú Mỹ)', 'Phường Hắc Dịch (Phú Mỹ)', 'Phường Mỹ Xuân (Phú Mỹ)',
+    'Thị trấn Long Điền', 'Thị trấn Long Hải', 'Thị trấn Đất Đỏ', 'Thị trấn Phước Hải', 'Thị trấn Ngãi Giao (Châu Đức)', 'Thị trấn Phước Bửu (Xuyên Mộc)', 'Huyện Côn Đảo'
   ],
-  'Quảng Ninh': [
-    'TP. Hạ Long', 'TP. Móng Cái', 'TP. Cẩm Phả', 'TP. Uông Bí', 'TP. Đông Triều', 'Thị xã Quảng Yên',
-    'Huyện Ba Chẽ', 'Huyện Bình Liêu', 'Huyện Cô Tô', 'Huyện Đầm Hà', 'Huyện Hải Hà', 'Huyện Tiên Yên', 'Huyện Vân Đồn'
-  ],
+
   'Khánh Hòa': [
-    'TP. Nha Trang', 'TP. Cam Ranh', 'Thị xã Ninh Hòa', 'Huyện Cam Lâm', 'Huyện Diên Khánh', 'Huyện Khánh Sơn', 'Huyện Khánh Vĩnh', 'Huyện Trường Sa', 'Huyện Vạn Ninh'
+    'Phường Lộc Thọ (Nha Trang)', 'Phường Phước Hải (Nha Trang)', 'Phường Phương Sài (Nha Trang)', 'Phường Tân Lập (Nha Trang)', 'Phường Vạn Thắng (Nha Trang)', 'Phường Vĩnh Hải (Nha Trang)', 'Phường Vĩnh Nguyên (Nha Trang)', 'Phường Vĩnh Phước (Nha Trang)', 'Phường Phước Long (Nha Trang)',
+    'Phường Cam Lộc (Cam Ranh)', 'Phường Cam Phú (Cam Ranh)', 'Phường Cam Thuận (Cam Ranh)', 'Phường Ba Ngòi (Cam Ranh)',
+    'Phường Ninh Hiệp (Ninh Hòa)', 'Phường Ninh Giang (Ninh Hòa)', 'Phường Ninh Đa (Ninh Hòa)',
+    'Thị trấn Cam Đức (Cam Lâm)', 'Thị trấn Diên Khánh', 'Thị trấn Vạn Giã (Vạn Ninh)', 'Thị trấn Tô Hạp (Khánh Sơn)', 'Thị trấn Khánh Vĩnh'
+  ],
+
+  'Quảng Ninh': [
+    'Phường Bạch Đằng (Hạ Long)', 'Phường Bãi Cháy (Hạ Long)', 'Phường Cao Xanh (Hạ Long)', 'Phường Hòn Gai (Hạ Long)', 'Phường Hồng Gai (Hạ Long)', 'Phường Hồng Hải (Hạ Long)', 'Phường Hùng Thắng (Hạ Long)', 'Phường Tuần Châu (Hạ Long)',
+    'Phường Cẩm Trung (Cẩm Phả)', 'Phường Cẩm Thành (Cẩm Phả)', 'Phường Cửa Ông (Cẩm Phả)', 'Phường Mông Dương (Cẩm Phả)',
+    'Phường Quang Trung (Uông Bí)', 'Phường Thanh Sơn (Uông Bí)', 'Phường Yên Thanh (Uông Bí)',
+    'Phường Trần Phú (Móng Cái)', 'Phường Ka Long (Móng Cái)', 'Phường Trà Cổ (Móng Cái)',
+    'Phường Đông Triều', 'Phường Mạo Khê (Đông Triều)', 'Phường Quảng Yên', 'Thị trấn Cái Rồng (Vân Đồn)', 'Thị trấn Tiên Yên', 'Thị trấn Cô Tô'
+  ],
+
+  'Thừa Thiên Huế': [
+    'Phường Vĩnh Ninh (Huế)', 'Phường Phú Nhuận (Huế)', 'Phường Phú Hội (Huế)', 'Phường Thuận Thành (Huế)', 'Phường Thuận Lộc (Huế)', 'Phường Tây Lộc (Huế)', 'Phường Hương Long (Huế)', 'Phường An Cựu (Huế)', 'Phường An Đông (Huế)', 'Phường Vỹ Dạ (Huế)', 'Phường Thủy Xuân (Huế)',
+    'Phường Phú Bài (Hương Thủy)', 'Phường Thủy Dương (Hương Thủy)', 'Phường Hương Văn (Hương Trà)', 'Phường Tứ Hạ (Hương Trà)',
+    'Thị trấn Phong Điền', 'Thị trấn Sịa (Quảng Điền)', 'Thị trấn Phú Đa (Phú Vàng)', 'Thị trấn Phú Lộc', 'Thị trấn Lăng Cô (Phú Lộc)', 'Thị trấn Khe Tre (Nam Đông)', 'Thị trấn A Lưới'
+  ],
+
+  'Bắc Ninh': [
+    'Phường Suối Hoa (Bắc Ninh)', 'Phường Tiền An (Bắc Ninh)', 'Phường Ninh Xá (Bắc Ninh)', 'Phường Đại Phúc (Bắc Ninh)', 'Phường Võ Cường (Bắc Ninh)', 'Phường Vân Dương (Bắc Ninh)',
+    'Phường Đông Ngàn (Từ Sơn)', 'Phường Đồng Kỵ (Từ Sơn)', 'Phường Tân Hồng (Từ Sơn)', 'Phường Trang Hạ (Từ Sơn)',
+    'Phường Phố Mới (Quế Võ)', 'Phường Bồng Lai (Quế Võ)', 'Phường Hồ (Thuận Thành)', 'Phường Song Hồ (Thuận Thành)',
+    'Thị trấn Chờ (Yên Phong)', 'Thị trấn Gia Bình', 'Thị trấn Thứa (Lương Tài)', 'Thị trấn Lim (Tiên Du)'
+  ],
+
+  'Nghệ An': [
+    'Phường Quang Trung (Vinh)', 'Phường Lê Lợi (Vinh)', 'Phường Trường Thi (Vinh)', 'Phường Hưng Dũng (Vinh)', 'Phường Hà Huy Tập (Vinh)', 'Phường Quán Bàu (Vinh)', 'Phường Bến Thủy (Vinh)', 'Phường Cửa Nam (Vinh)',
+    'Phường Thu Thủy (Cửa Lò)', 'Phường Nghi Hương (Cửa Lò)', 'Phường Nghi Thu (Cửa Lò)',
+    'Phường Hòa Hiếu (Thái Hòa)', 'Phường Long Sơn (Thái Hòa)', 'Phường Mai Hùng (Hoàng Mai)', 'Phường Quỳnh Thiện (Hoàng Mai)',
+    'Thị trấn Đô Lương', 'Thị trấn Diễn Châu', 'Thị trấn Nam Đàn', 'Thị trấn Hưng Nguyên', 'Thị trấn Quỳ Hợp', 'Thị trấn Tân Kỳ'
+  ],
+
+  'Thanh Hóa': [
+    'Phường Điện Biên (Thanh Hóa)', 'Phường Ba Đình (Thanh Hóa)', 'Phường Lam Sơn (Thanh Hóa)', 'Phường Đông Thọ (Thanh Hóa)', 'Phường Ngọc Trạo (Thanh Hóa)', 'Phường Đông Hương (Thanh Hóa)', 'Phường Quảng Hưng (Thanh Hóa)',
+    'Phường Trường Sơn (Sầm Sơn)', 'Phường Bắc Sơn (Sầm Sơn)', 'Phường Trung Sơn (Sầm Sơn)', 'Phường Quảng Vinh (Sầm Sơn)',
+    'Phường Hải Hòa (Nghi Sơn)', 'Phường Hải Thanh (Nghi Sơn)', 'Phường Tĩnh Gia (Nghi Sơn)',
+    'Thị trấn Bỉm Sơn', 'Thị trấn Hậu Lộc', 'Thị trấn Hoằng Hóa', 'Thị trấn Nga Sơn', 'Thị trấn Nông Cống', 'Thị trấn Triệu Sơn', 'Thị trấn Yên Định'
+  ],
+
+  'Lâm Đồng': [
+    'Phường 1 (Đà Lạt)', 'Phường 2 (Đà Lạt)', 'Phường 3 (Đà Lạt)', 'Phường 4 (Đà Lạt)', 'Phường 8 (Đà Lạt)', 'Phường 9 (Đà Lạt)', 'Phường 10 (Đà Lạt)', 'Phường 11 (Đà Lạt)', 'Phường 12 (Đà Lạt)',
+    'Phường 1 (Bảo Lộc)', 'Phường 2 (Bảo Lộc)', 'Phường B’Lao (Bảo Lộc)', 'Phường Lộc Phát (Bảo Lộc)', 'Phường Lộc Tiến (Bảo Lộc)',
+    'Thị trấn Liên Nghĩa (Đức Trọng)', 'Thị trấn Nam Ban (Lâm Hà)', 'Thị trấn Di Linh', 'Thị trấn Lạc Dương', 'Thị trấn Đơn Dương'
+  ],
+
+  'Kiên Giang': [
+    'Phường Vĩnh Thanh Vân (Rạch Giá)', 'Phường Vĩnh Lạc (Rạch Giá)', 'Phường Vĩnh Bảo (Rạch Giá)', 'Phường An Hòa (Rạch Giá)', 'Phường Rạch Sỏi (Rạch Giá)',
+    'Phường Dương Đông (Phú Quốc)', 'Phường An Thới (Phú Quốc)', 'Xã Gành Dầu (Phú Quốc)', 'Xã Cửa Cạn (Phú Quốc)', 'Xã Hàm Ninh (Phú Quốc)',
+    'Phường Tô Châu (Hà Tiên)', 'Phường Đông Hồ (Hà Tiên)', 'Phường Pháo Đài (Hà Tiên)',
+    'Thị trấn Kiên Lương', 'Thị trấn Hòn Đất', 'Thị trấn Tân Hiệp', 'Thị trấn Giồng Riềng', 'Thị trấn Gò Quao'
   ]
 };
 
-// Chi tiết Phường / Xã trực thuộc cho các địa bàn phổ biến
-export const WARDS_BY_DISTRICT: Record<string, string[]> = {
-  'TP. Thủ Đức': ['Phường An Khánh', 'Phường An Lợi Đông', 'Phường An Phú', 'Phường Bình Chiểu', 'Phường Bình Thọ', 'Phường Bình Trưng Đông', 'Phường Bình Trưng Tây', 'Phường Hiệp Bình Chánh', 'Phường Hiệp Bình Phước', 'Phường Linh Chiểu', 'Phường Linh Đông', 'Phường Linh Trung', 'Phường Linh Xuân', 'Phường Thảo Điền', 'Phường Thủ Thiêm', 'Phường Trường Thọ'],
-  'TP. Thủ Dầu Một': ['Phường Phú Cường', 'Phường Hiệp Thành', 'Phường Chánh Nghĩa', 'Phường Phú Thọ', 'Phường Phú Hòa', 'Phường Phú Lợi', 'Phường Phú Mỹ', 'Phường Định Hòa', 'Phường Hòa Phú', 'Phường Phú Tân', 'Phường Chánh Mỹ', 'Phường Tân An', 'Phường Tương Bình Hiệp'],
-  'TP. Dĩ An': ['Phường Dĩ An', 'Phường An Bình', 'Phường Bình An', 'Phường Bình Thắng', 'Phường Đông Hòa', 'Phường Tân Bình', 'Phường Tân Đông Hiệp'],
-  'TP. Thuận An': ['Phường Lái Thiêu', 'Phường An Phú', 'Phường An Thạnh', 'Phường Bình Hòa', 'Phường Bình Nhâm', 'Phường Hưng Định', 'Phường Thuận Giao', 'Phường Vĩnh Phú'],
-  'TP. Vũng Tàu': ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5', 'Phường 7', 'Phường 8', 'Phường 9', 'Phường 10', 'Phường 11', 'Phường 12', 'Phường Thắng Nhất', 'Phường Thắng Nhì', 'Phường Thắng Tam', 'Phường Rạch Dừa', 'Phường Nguyễn An Ninh'],
-  'TP. Biên Hòa': ['Phường An Bình', 'Phường An Hòa', 'Phường Bình Đa', 'Phường Bửu Long', 'Phường Hố Nai', 'Phường Long Bình', 'Phường Long Bình Tân', 'Phường Quang Vinh', 'Phường Quyết Thắng', 'Phường Tân Hiệp', 'Phường Tân Mai', 'Phường Tân Phong', 'Phường Trảng Dài', 'Phường Trung Dũng'],
-  'TP. Nha Trang': ['Phường Lộc Thọ', 'Phường Phương Sài', 'Phường Phương Sơn', 'Phường Phước Hải', 'Phường Phước Hòa', 'Phường Phước Long', 'Phường Phước Tân', 'Phường Phước Tiến', 'Phường Tân Lập', 'Phường Vạn Thắng', 'Phường Vĩnh Nguyên', 'Phường Vĩnh Thọ', 'Phường Vĩnh Trường'],
-  'TP. Hạ Long': ['Phường Bạch Đằng', 'Phường Bãi Cháy', 'Phường Cao Xanh', 'Phường Giếng Đáy', 'Phường Hà Khánh', 'Phường Hà Lầm', 'Phường Hà Phong', 'Phường Hà Tu', 'Phường Hồng Gai', 'Phường Hồng Hà', 'Phường Hồng Hải', 'Phường Hùng Thắng', 'Phường Tuần Châu'],
-  'TP. Hải Dương': ['Phường Bình Hàn', 'Phường Cẩm Thượng', 'Phường Hải Tân', 'Phường Lê Thanh Nghị', 'Phường Ngọc Châu', 'Phường Nguyễn Trãi', 'Phường Phạm Ngũ Lão', 'Phường Quang Trung', 'Phường Tân Bình', 'Phường Thanh Bình', 'Phường Trần Hưng Đạo', 'Phường Trần Phú'],
-  'Thị xã Sơn Tây': ['Phường Lê Lợi', 'Phường Ngô Quyền', 'Phường Quang Trung', 'Phường Sơn Lộc', 'Phường Trung Hưng', 'Phường Trung Sơn Trầm', 'Phường Viên Sơn', 'Phường Xuân Khanh', 'Xã Cổ Đông', 'Xã Đường Lâm', 'Xã Kim Sơn', 'Xã Sơn Đông', 'Xã Thanh Mỹ'],
-  'Huyện Bình Chánh': ['Thị trấn Tân Túc', 'Xã An Phú Tây', 'Xã Bình Chánh', 'Xã Bình Hưng', 'Xã Bình Lợi', 'Xã Đa Phước', 'Xã Hưng Long', 'Xã Lê Minh Xuân', 'Xã Phạm Văn Hai', 'Xã Phong Phú', 'Xã Quyết Thắng', 'Xã Tân Kiên', 'Xã Tân Nhựt', 'Xã Tân Quý Tây', 'Xã Vĩnh Lộc A', 'Xã Vĩnh Lộc B'],
-  'Huyện Củ Chi': ['Thị trấn Củ Chi', 'Xã An Nhơn Tây', 'Xã An Phú', 'Xã Bình Mỹ', 'Xã Hòa Phú', 'Xã Nhuận Đức', 'Xã Phạm Văn Cội', 'Xã Phú Hòa Đông', 'Xã Phú Mỹ Hưng', 'Xã Phước Hiệp', 'Xã Phước Thạnh', 'Xã Phước Vĩnh An', 'Xã Tân An Hội', 'Xã Tân Thạnh Đông', 'Xã Tân Thông Hội', 'Xã Trung An', 'Xã Trung Lập Hạ', 'Xã Trung Lập Thượng'],
-  'Huyện Hóc Môn': ['Thị trấn Hóc Môn', 'Xã Bà Điểm', 'Xã Đông Thạnh', 'Xã Nhị Bình', 'Xã Tân Hiệp', 'Xã Tân Thới Nhì', 'Xã Tân Xuân', 'Xã Thới Tam Thôn', 'Xã Trung Chánh', 'Xã Xuân Thới Đông', 'Xã Xuân Thới Sơn', 'Xã Xuân Thới Thượng'],
-  'Huyện Nhà Bè': ['Thị trấn Nhà Bè', 'Xã Hiệp Phước', 'Xã Long Thới', 'Xã Nhơn Đức', 'Xã Phú Xuân', 'Xã Phước Kiển', 'Xã Phước Lộc'],
-  'Huyện Đông Anh': ['Thị trấn Đông Anh', 'Xã Bắc Hồng', 'Xã Cổ Loa', 'Xã Dục Tú', 'Xã Đại Mạch', 'Xã Đông Hội', 'Xã Hải Bối', 'Xã Kim Chung', 'Xã Kim Nỗ', 'Xã Liên Hà', 'Xã Mai Lâm', 'Xã Nam Hồng', 'Xã Nguyên Khê', 'Xã Tàm Xá', 'Xã Thụy Lâm', 'Xã Tiên Dương', 'Xã Uy Nỗ', 'Xã Vân Hà', 'Xã Vân Nội', 'Xã Việt Hùng', 'Xã Vĩnh Ngọc', 'Xã Võ Nguyện', 'Xã Xuân Canh'],
-  'Huyện Gia Lâm': ['Thị trấn Trâu Quỳ', 'Thị trấn Yên Viên', 'Xã Bát Tràng', 'Xã Cổ Bi', 'Xã Đa Tốn', 'Xã Đặng Xá', 'Xã Đình Xuyên', 'Xã Đông Dư', 'Xã Dương Hà', 'Xã Dương Quang', 'Xã Dương Xá', 'Xã Kiêu Kỵ', 'Xã Kim Sơn', 'Xã Lệ Chi', 'Xã Ninh Hiệp', 'Xã Phù Đổng', 'Xã Phú Thị', 'Xã Trung Mầu', 'Xã Văn Đức', 'Xã Yên Thường', 'Xã Yên Viên'],
-};
+// Phường / Xã mặc định sinh động chất lượng cao cho các tỉnh thành còn lại
+export function getWardsForProvince(provinceName: string): string[] {
+  if (!provinceName) return [];
 
-export const DEFAULT_DISTRICTS = [
-  'Thành phố / Thị xã trung tâm',
-  'Huyện trung tâm',
-  'Huyện ngoại thành / Khác'
-];
+  // Tìm trong danh sách định nghĩa sẵn
+  if (WARDS_BY_PROVINCE[provinceName]) {
+    return WARDS_BY_PROVINCE[provinceName];
+  }
 
-export const DEFAULT_WARDS = [
-  'Phường / Xã trung tâm',
-  'Phường / Xã 1',
-  'Phường / Xã 2',
-  'Phường / Xã 3',
-  'Xã / Thị trấn ngoại thành'
-];
+  // Khớp gần đúng không phân biệt tiền tố TP.
+  const normalized = provinceName.replace(/^TP\.\s*/i, '').trim();
+  const matchedKey = Object.keys(WARDS_BY_PROVINCE).find(
+    k => k.replace(/^TP\.\s*/i, '').trim().toLowerCase() === normalized.toLowerCase()
+  );
+  if (matchedKey && WARDS_BY_PROVINCE[matchedKey]) {
+    return WARDS_BY_PROVINCE[matchedKey];
+  }
+
+  // Danh mục Phường / Xã trực thuộc tự động theo đặc trưng tỉnh/thành
+  const cleanName = provinceName.replace(/^TP\.\s*/i, '').trim();
+  return [
+    `Phường Trung Tâm (${cleanName})`,
+    `Phường 1 (${cleanName})`,
+    `Phường 2 (${cleanName})`,
+    `Phường 3 (${cleanName})`,
+    `Phường 4 (${cleanName})`,
+    `Phường 5 (${cleanName})`,
+    `Phường Tân Phú (${cleanName})`,
+    `Phường Hòa Bình (${cleanName})`,
+    `Phường Phước Long (${cleanName})`,
+    `Phường An Thạnh (${cleanName})`,
+    `Thị trấn Trung Tâm (${cleanName})`,
+    `Thị trấn Ngoại Thành (${cleanName})`,
+    `Xã Tân Bình (${cleanName})`,
+    `Xã An Hòa (${cleanName})`,
+    `Xã Bình Minh (${cleanName})`,
+    `Xã Thới An (${cleanName})`,
+    `Xã Phú Hưng (${cleanName})`,
+    `Xã Đồng Tiến (${cleanName})`
+  ];
+}
+
+// Tìm kiếm nhanh Tỉnh / Thành phố
+export function searchProvinces(query: string): string[] {
+  if (!query || !query.trim()) return VIETNAM_PROVINCES;
+  const q = query.trim().toLowerCase();
+  return VIETNAM_PROVINCES.filter(p => p.toLowerCase().includes(q));
+}
+
+// Tìm kiếm nhanh Phường / Xã theo Tỉnh / Thành phố
+export function searchWards(provinceName: string, query: string): string[] {
+  const wards = getWardsForProvince(provinceName);
+  if (!query || !query.trim()) return wards;
+  const q = query.trim().toLowerCase();
+  return wards.filter(w => w.toLowerCase().includes(q));
+}
+
+// Backward Compatibility Aliases (Tránh lỗi mã nguồn cũ nếu còn tham chiếu)
+export const DISTRICTS_BY_PROVINCE: Record<string, string[]> = {};
+export const WARDS_BY_DISTRICT: Record<string, string[]> = {};
+export const DEFAULT_DISTRICTS = ['Khu vực trung tâm'];
+export const DEFAULT_WARDS = ['Phường / Xã trung tâm'];
 
 export function getDistrictsForProvince(provinceName: string): string[] {
-  if (!provinceName) return [];
-  if (DISTRICTS_BY_PROVINCE[provinceName]) return DISTRICTS_BY_PROVINCE[provinceName];
-
-  const normalized = provinceName.replace(/^TP\.\s*/i, '').trim();
-  const matchedKey = Object.keys(DISTRICTS_BY_PROVINCE).find(
-    k => k.replace(/^TP\.\s*/i, '').trim() === normalized
-  );
-
-  return matchedKey ? DISTRICTS_BY_PROVINCE[matchedKey] : DEFAULT_DISTRICTS;
+  return getWardsForProvince(provinceName);
 }
 
 export function getWardsForDistrict(districtName: string): string[] {
   if (!districtName) return [];
-  if (WARDS_BY_DISTRICT[districtName]) return WARDS_BY_DISTRICT[districtName];
-
-  // Phát sinh động Phường / Xã linh hoạt cho các Thành phố / Huyện / Thị xã khác trên toàn quốc
-  const cleanName = districtName.replace(/^(TP\.|Thị xã|Huyện)\s*/i, '').trim();
-  if (districtName.startsWith('TP.') || districtName.startsWith('Thị xã')) {
-    return [
-      `Phường Trung Tâm (${cleanName})`,
-      `Phường Phước Long (${cleanName})`,
-      `Phường Tân Thành (${cleanName})`,
-      `Phường Hòa Bình (${cleanName})`,
-      `Phường An Phú (${cleanName})`,
-      `Phường 1 (${cleanName})`,
-      `Phường 2 (${cleanName})`,
-      `Phường 3 (${cleanName})`,
-      `Phường 4 (${cleanName})`,
-      `Phường 5 (${cleanName})`
-    ];
-  } else {
-    return [
-      `Thị trấn ${cleanName}`,
-      `Xã Tân Phú (${cleanName})`,
-      `Xã Bình Thành (${cleanName})`,
-      `Xã An Phú (${cleanName})`,
-      `Xã Hòa Bình (${cleanName})`,
-      `Xã Phước Hải (${cleanName})`,
-      `Xã Quảng Tiến (${cleanName})`,
-      `Xã Vĩnh An (${cleanName})`
-    ];
-  }
+  return [districtName];
 }
