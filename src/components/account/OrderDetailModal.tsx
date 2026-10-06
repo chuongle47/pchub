@@ -501,23 +501,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
           flexWrap: 'wrap',
           flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link
-              href={`/tai-khoan/don-hang/${order.id}`}
-              onClick={onClose}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#2563eb',
-                textDecoration: 'none',
-              }}
-            >
-              <ExternalLink size={15} /> Mở trang riêng →
-            </Link>
-
+          <div>
             {canCancel && (
               <button
                 type="button"
@@ -530,7 +514,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                   color: '#b91c1c',
                   border: '1px solid #fecaca',
                   borderRadius: '10px',
-                  padding: '8px 14px',
+                  padding: '9px 16px',
                   fontSize: '12.5px',
                   fontWeight: 700,
                   cursor: 'pointer',
