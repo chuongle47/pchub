@@ -25,8 +25,8 @@ const SHIPPING_OPTIONS = [
 const PAYMENT_METHODS = [
   {
     id: 'wallet',
-    label: 'Ví điện tử thành viên (NKS E-Wallet)',
-    desc: 'Thanh toán trực tiếp bằng số dư ví điện tử PCHub / NKS',
+    label: 'Ví điện tử thành viên',
+    desc: 'Thanh toán trực tiếp bằng số dư ví điện tử của bạn',
     icon: '💳',
     color: '#2563eb',
     showQR: false,

@@ -316,7 +316,7 @@ export default function MemberWalletPage() {
                 alignItems: 'center',
                 gap: '5px',
               }}>
-                <ShieldCheck size={14} color="#38bdf8" /> VÍ THÀNH VIÊN PCHUB & NKS ECARD
+                <ShieldCheck size={14} color="#38bdf8" /> VÍ THÀNH VIÊN
               </span>
               <span style={{
                 background: '#10b981',
@@ -487,7 +487,7 @@ export default function MemberWalletPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-              Hệ thống ví liên kết & thanh toán (ZaloPay / MoMo / NKS)
+              Hệ thống ví liên kết & thanh toán (ZaloPay / MoMo)
             </h2>
             <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0' }}>
               Mỗi tài khoản được liên kết tối đa 1 ví MoMo và 1 ví ZaloPay chính chủ
@@ -706,7 +706,7 @@ export default function MemberWalletPage() {
         {loading ? (
           <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>
             <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px', color: '#2563eb' }} />
-            Đang tải dữ liệu giao dịch từ máy chủ NKS...
+            Đang tải dữ liệu giao dịch...
           </div>
         ) : filteredTransactions.length === 0 ? (
           <div style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
@@ -831,7 +831,7 @@ export default function MemberWalletPage() {
             <div style={{ background: '#16a34a', color: '#fff', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ArrowDownLeft size={20} />
-                <strong style={{ fontSize: '16px' }}>Nạp tiền vào ví điện tử NKS</strong>
+                <strong style={{ fontSize: '16px' }}>Nạp tiền vào ví điện tử</strong>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={20} /></button>
             </div>
@@ -1057,7 +1057,7 @@ export default function MemberWalletPage() {
             <div style={{ background: '#2563eb', color: '#fff', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Send size={18} />
-                <strong style={{ fontSize: '16px' }}>Chuyển tiền nội bộ NKS / PCHub</strong>
+                <strong style={{ fontSize: '16px' }}>Chuyển tiền qua ví điện tử</strong>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={20} /></button>
             </div>
