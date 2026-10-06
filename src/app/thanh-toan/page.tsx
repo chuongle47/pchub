@@ -674,26 +674,22 @@ export default function CheckoutPage() {
 
                     <div>
                       <label style={labelStyle}>Phường / Xã / Thị trấn <span style={{ color: '#ef4444' }}>*</span></label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          required
-                          list="ward-list"
-                          placeholder={form.province ? "Chọn hoặc gõ tìm Phường / Xã..." : "Vui lòng chọn Tỉnh/TP trước"}
-                          value={form.ward}
-                          onChange={e => setForm(p => ({ ...p, ward: e.target.value }))}
-                          disabled={!form.province}
-                          style={{
-                            ...inputStyle,
-                            background: !form.province ? '#f8fafc' : '#ffffff',
-                            cursor: !form.province ? 'not-allowed' : 'text'
-                          }}
-                        />
-                        <datalist id="ward-list">
-                          {getWardsForProvince(form.province).map(w => (
-                            <option key={w} value={w} />
-                          ))}
-                        </datalist>
-                      </div>
+                      <select
+                        required
+                        value={form.ward}
+                        onChange={e => setForm(p => ({ ...p, ward: e.target.value }))}
+                        disabled={!form.province}
+                        style={{
+                          ...inputStyle,
+                          background: !form.province ? '#f8fafc' : '#ffffff',
+                          cursor: !form.province ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        <option value="">{form.province ? '-- Chọn Phường / Xã / Thị trấn --' : '-- Vui lòng chọn Tỉnh/TP trước --'}</option>
+                        {getWardsForProvince(form.province).map(w => (
+                          <option key={w} value={w}>{w}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div style={{ gridColumn: '1/-1' }}>
