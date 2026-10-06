@@ -682,12 +682,25 @@ export default function MemberWalletPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filteredTransactions.map((tx, idx) => {
+              const isRefund = tx.type === 'REFUND';
               const isDeposit = tx.type === 'DEPOSIT';
               const isWithdraw = tx.type === 'WITHDRAW';
               const isTransfer = tx.type === 'TRANSFER';
+              const isPositive = isDeposit || isRefund;
+              const isOrderPayment = isWithdraw && (tx.description?.toLowerCase().includes('đơn hàng') || tx.code?.startsWith('ORD-'));
 
-              const badgeColor = isDeposit ? '#16a34a' : isWithdraw ? '#dc2626' : '#2563eb';
-              const badgeBg = isDeposit ? '#dcfce7' : isWithdraw ? '#fee2e2' : '#eff6ff';
+              const title = isRefund
+                ? 'Hoàn tiền đơn hàng'
+                : isOrderPayment
+                ? 'Thanh toán đơn hàng'
+                : isDeposit
+                ? 'Nạp tiền vào ví'
+                : isWithdraw
+                ? 'Rút tiền từ ví'
+                : 'Chuyển tiền';
+
+              const badgeColor = isRefund ? '#059669' : isDeposit ? '#16a34a' : isOrderPayment ? '#2563eb' : isWithdraw ? '#dc2626' : '#2563eb';
+              const badgeBg = isRefund ? '#ecfdf5' : isDeposit ? '#dcfce7' : isOrderPayment ? '#eff6ff' : isWithdraw ? '#fee2e2' : '#eff6ff';
 
               return (
                 <div
@@ -719,13 +732,13 @@ export default function MemberWalletPage() {
                       justifyContent: 'center',
                       flexShrink: 0,
                     }}>
-                      {isDeposit ? <ArrowDownLeft size={18} /> : isWithdraw ? <ArrowUpRight size={18} /> : <ArrowLeftRight size={18} />}
+                      {isPositive ? <ArrowDownLeft size={18} /> : isWithdraw ? <ArrowUpRight size={18} /> : <ArrowLeftRight size={18} />}
                     </div>
 
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
-                          {isDeposit ? 'Nạp tiền vào ví' : isWithdraw ? 'Rút tiền từ ví' : 'Chuyển tiền'}
+                          {title}
                         </span>
                         <span style={{
                           fontSize: '10.5px',
@@ -751,10 +764,10 @@ export default function MemberWalletPage() {
                     <div style={{
                       fontSize: '15px',
                       fontWeight: 900,
-                      color: isDeposit ? '#16a34a' : '#dc2626',
+                      color: isPositive ? '#16a34a' : '#dc2626',
                       fontVariantNumeric: 'tabular-nums',
                     }}>
-                      {isDeposit ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')} ₫
+                      {isPositive ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')} ₫
                     </div>
                     <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
                       {tx.date || tx.created_at || 'Thành công ✓'}
