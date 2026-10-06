@@ -161,6 +161,10 @@ export const useWalletStore = create<WalletStoreState>()(
       },
 
       syncWithBackend: async (token?: string, orders?: any[]) => {
+        let serverWalletCode = '';
+        let serverCurrency = 'VND';
+        let serverTxs: WalletTransaction[] = [];
+
         try {
           const res = await fetch('/api/wallet', {
             method: 'POST',
@@ -169,14 +173,8 @@ export const useWalletStore = create<WalletStoreState>()(
           });
           const json = await res.json();
           if (json.success && json.data) {
-            set((state) => ({
-              wallet: {
-                ...state.wallet,
-                balance: json.data.balance,
-                walletcode: json.data.walletcode || state.wallet.walletcode,
-                currency: json.data.currency || 'VND',
-              },
-            }));
+            serverWalletCode = json.data.walletcode || '';
+            serverCurrency = json.data.currency || 'VND';
           }
 
           const txRes = await fetch('/api/wallet/transactions', {
@@ -186,30 +184,29 @@ export const useWalletStore = create<WalletStoreState>()(
           });
           const txJson = await txRes.json();
           if (txJson.success && Array.isArray(txJson.data) && txJson.data.length > 0) {
-            const currentTxs = get().transactions;
-            const combined = [...txJson.data];
-            currentTxs.forEach((localTx) => {
-              if (!combined.some((c) => c.code === localTx.code)) {
-                combined.push(localTx);
-              }
-            });
-            set({ transactions: combined });
+            serverTxs = txJson.data;
           }
         } catch (err) {
           console.warn('[WalletStore] syncWithBackend warning:', err);
         }
 
-        // Auto-reconcile with orders placed via Wallet
-        if (Array.isArray(orders) && orders.length > 0) {
-          const state = get();
-          let currentBalance = state.wallet.balance;
-          let currentTxs = [...state.transactions];
-          let changed = false;
+        const state = get();
+        const walletcode = serverWalletCode || state.wallet.walletcode || '1fb5-82ed-4bac-b971';
 
+        // 1. Combine server & existing transactions
+        let currentTxs = [...state.transactions];
+        serverTxs.forEach((stx) => {
+          if (!currentTxs.some((t) => t.code === stx.code)) {
+            currentTxs.push(stx);
+          }
+        });
+
+        // 2. Reconcile with all orders placed in the system
+        if (Array.isArray(orders) && orders.length > 0) {
           orders.forEach((ord: any) => {
             const isWalletPayment = ord.paymentMethod === 'wallet' ||
               (ord.paymentMethodLabel && ord.paymentMethodLabel.toLowerCase().includes('ví'));
-            
+
             if (!isWalletPayment) return;
 
             const orderTotal = Number(ord.total) || 0;
@@ -217,11 +214,11 @@ export const useWalletStore = create<WalletStoreState>()(
             const prodName = ord.products?.[0]?.name || 'Sản phẩm linh kiện';
 
             const hasPaymentTx = currentTxs.some((t) => t.code === orderRef || t.code === `ORD-${orderRef}` || t.code === `TX-${orderRef}`);
-            
+
             if (!hasPaymentTx) {
               const payTx: WalletTransaction = {
                 code: orderRef,
-                sender_wallet_code: state.wallet?.walletcode || 'PCH-8789',
+                sender_wallet_code: walletcode,
                 receiver_wallet_code: null,
                 type: 'WITHDRAW',
                 amount: orderTotal,
@@ -231,11 +228,9 @@ export const useWalletStore = create<WalletStoreState>()(
                 date: ord.date || 'Gần đây',
               };
               currentTxs = [payTx, ...currentTxs];
-              currentBalance = Math.max(0, currentBalance - orderTotal);
-              changed = true;
             }
 
-            // Handle cancellation refund if cancelled
+            // If order was cancelled, make sure refund transaction exists
             if (ord.status === 'cancelled') {
               const refundRef = `REF-${orderRef}`;
               const hasRefundTx = currentTxs.some((t) => t.code === refundRef);
@@ -243,7 +238,7 @@ export const useWalletStore = create<WalletStoreState>()(
                 const refundTx: WalletTransaction = {
                   code: refundRef,
                   sender_wallet_code: null,
-                  receiver_wallet_code: state.wallet?.walletcode || 'PCH-8789',
+                  receiver_wallet_code: walletcode,
                   type: 'REFUND',
                   amount: orderTotal,
                   fee: 0,
@@ -252,19 +247,37 @@ export const useWalletStore = create<WalletStoreState>()(
                   date: ord.date || 'Gần đây',
                 };
                 currentTxs = [refundTx, ...currentTxs];
-                currentBalance = currentBalance + orderTotal;
-                changed = true;
               }
             }
           });
-
-          if (changed) {
-            set({
-              wallet: { ...state.wallet, balance: currentBalance },
-              transactions: currentTxs,
-            });
-          }
         }
+
+        // 3. Compute net balance starting from 16.000.000 base + deposits/refunds - withdrawals/transfers
+        // Initial base seed: 16.000.000 (standard NKS e-wallet seed)
+        let computedBalance = 16000000;
+        
+        // Sum up all transactions beyond the initial seed transactions
+        const seedTxCodes = new Set(['62ff0cad-8e0d-48ec-a0b8-bd4a91b14805', 'df7398a2-936a-4ff7-b6e8-6cd2ac4e8b85', '42b88241-5127-4e11-ae92-74ba32b9da76']);
+        
+        currentTxs.forEach((tx) => {
+          if (seedTxCodes.has(tx.code)) return; // Seed transactions already reflected in 16.000.000 base
+
+          const amt = Number(tx.amount) || 0;
+          if (tx.type === 'DEPOSIT' || tx.type === 'REFUND') {
+            computedBalance += amt;
+          } else if (tx.type === 'WITHDRAW' || tx.type === 'TRANSFER') {
+            computedBalance = Math.max(0, computedBalance - amt);
+          }
+        });
+
+        set({
+          wallet: {
+            walletcode,
+            balance: computedBalance,
+            currency: serverCurrency,
+          },
+          transactions: currentTxs,
+        });
       },
 
       resetWallet: () => {

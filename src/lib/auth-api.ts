@@ -3,14 +3,31 @@ const BASE_URL = '/api/nks';
 export function getNksToken(): string {
   if (typeof document === 'undefined') return '';
   const match = document.cookie.match(/(?:^|; )nks_token=([^;]*)/);
-  if (match) return decodeURIComponent(match[1]);
+  if (match && match[1]) return decodeURIComponent(match[1]);
+
+  const pchubToken = document.cookie.match(/(?:^|; )pchub-token=([^;]*)/);
+  if (pchubToken && pchubToken[1]) {
+    try {
+      const decoded = decodeURIComponent(pchubToken[1]);
+      if (decoded.startsWith('{')) {
+        const p = JSON.parse(decoded);
+        if (p.nks_token) return p.nks_token;
+        if (p.token) return p.token;
+      } else if (decoded.length > 20) {
+        return decoded;
+      }
+    } catch {}
+  }
 
   try {
     const authStorage = localStorage.getItem('pchub-auth');
     if (authStorage) {
       const parsed = JSON.parse(authStorage);
+      if (parsed.state?.user?.nks_token) return parsed.state.user.nks_token;
       if (parsed.state?.user?.token) return parsed.state.user.token;
       if (parsed.state?.user?.access_token) return parsed.state.user.access_token;
+      if (parsed.state?.user?.user?.token) return parsed.state.user.user.token;
+      if (parsed.state?.user?.user?.nks_token) return parsed.state.user.user.nks_token;
     }
   } catch (e) {}
 

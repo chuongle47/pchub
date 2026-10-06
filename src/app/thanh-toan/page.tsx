@@ -302,12 +302,15 @@ export default function CheckoutPage() {
 
       // Trừ tiền trong ví qua Backend API
       try {
+        const { getNksToken } = await import('@/lib/auth-api');
+        const activeToken = userToken || getNksToken();
         await fetch('/api/wallet/withdraw', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount: finalTotal,
-            access_token: userToken,
+            access_token: activeToken,
+            currency: 'VND',
             note: `Thanh toán đơn hàng ${orderId}`
           })
         });
