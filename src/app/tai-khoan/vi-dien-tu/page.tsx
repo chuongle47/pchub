@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, useOrderStore } from '@/lib/store';
 import { useWalletStore } from '@/lib/wallet-store';
+import { getNksToken } from '@/lib/auth-api';
 import { WalletData, WalletTransaction, LinkedWallet } from '@/lib/wallet-service';
 
 export default function MemberWalletPage() {
@@ -59,7 +60,7 @@ export default function MemberWalletPage() {
   const [linkWalletName, setLinkWalletName] = useState(nksUser?.name || '');
 
   // Filter & Search State
-  const [filterType, setFilterType] = useState<'ALL' | 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER' | 'REFUND'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -68,14 +69,21 @@ export default function MemberWalletPage() {
   };
 
   // Fetch Wallet info & transactions from backend API
-  const fetchWalletData = useCallback(async (isSilent = false) => {
-    if (!isSilent) setLoading(true);
+  const fetchWalletData = useCallback(async (isManualRefresh = false) => {
+    if (!isManualRefresh) setLoading(true);
     setRefreshing(true);
 
     try {
-      await syncWithBackend(userToken, orders);
+      const activeToken = userToken || getNksToken();
+      await syncWithBackend(activeToken, orders);
+      if (isManualRefresh) {
+        showToast('success', 'Đã làm mới số dư và lịch sử giao dịch thành công!');
+      }
     } catch (err: any) {
       console.warn('Wallet fetch warning:', err);
+      if (isManualRefresh) {
+        showToast('error', 'Không thể làm mới dữ liệu từ máy chủ ví.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -618,15 +626,40 @@ export default function MemberWalletPage() {
       }}>
         {/* Header & Filter Tabs */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <History size={18} color="#2563eb" />
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-              Lịch sử giao dịch ví ({filteredTransactions.length})
-            </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <History size={18} color="#2563eb" />
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                Lịch sử giao dịch ví ({filteredTransactions.length})
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => fetchWalletData(true)}
+              disabled={refreshing}
+              title="Làm mới lịch sử giao dịch"
+              style={{
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#2563eb',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+              <span>{refreshing ? 'Đang tải...' : 'Làm mới'}</span>
+            </button>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {(['ALL', 'DEPOSIT', 'WITHDRAW', 'TRANSFER'] as const).map(type => (
+            {(['ALL', 'DEPOSIT', 'WITHDRAW', 'TRANSFER', 'REFUND'] as const).map(type => (
               <button
                 key={type}
                 type="button"
@@ -643,7 +676,7 @@ export default function MemberWalletPage() {
                   transition: 'all 0.15s ease',
                 }}
               >
-                {type === 'ALL' ? 'Tất cả' : type === 'DEPOSIT' ? 'Nạp tiền' : type === 'WITHDRAW' ? 'Rút tiền' : 'Chuyển tiền'}
+                {type === 'ALL' ? 'Tất cả' : type === 'DEPOSIT' ? 'Nạp tiền' : type === 'WITHDRAW' ? 'Rút tiền' : type === 'TRANSFER' ? 'Chuyển tiền' : 'Hoàn tiền'}
               </button>
             ))}
           </div>
