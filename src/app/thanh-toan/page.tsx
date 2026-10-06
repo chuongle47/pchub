@@ -166,10 +166,12 @@ export default function CheckoutPage() {
     province: '', district: '', ward: '', address: '', note: '',
   });
 
+  const orders = useOrderStore(s => s.orders);
+
   // Sync wallet on mount
   useEffect(() => {
-    syncWalletWithBackend(userToken);
-  }, [userToken, syncWalletWithBackend]);
+    syncWalletWithBackend(userToken, orders);
+  }, [userToken, orders, syncWalletWithBackend]);
 
   // Auto-fill buyer & recipient form từ thông tin user khi trang load
   useEffect(() => {

@@ -160,7 +160,7 @@ export const useWalletStore = create<WalletStoreState>()(
         set({ linkedWallets: wallets });
       },
 
-      syncWithBackend: async (token?: string) => {
+      syncWithBackend: async (token?: string, orders?: any[]) => {
         try {
           const res = await fetch('/api/wallet', {
             method: 'POST',
@@ -187,7 +187,6 @@ export const useWalletStore = create<WalletStoreState>()(
           const txJson = await txRes.json();
           if (txJson.success && Array.isArray(txJson.data) && txJson.data.length > 0) {
             const currentTxs = get().transactions;
-            // Merge backend transactions with local ones without losing local checkout txs
             const combined = [...txJson.data];
             currentTxs.forEach((localTx) => {
               if (!combined.some((c) => c.code === localTx.code)) {
@@ -198,6 +197,73 @@ export const useWalletStore = create<WalletStoreState>()(
           }
         } catch (err) {
           console.warn('[WalletStore] syncWithBackend warning:', err);
+        }
+
+        // Auto-reconcile with orders placed via Wallet
+        if (Array.isArray(orders) && orders.length > 0) {
+          const state = get();
+          let currentBalance = state.wallet.balance;
+          let currentTxs = [...state.transactions];
+          let changed = false;
+
+          orders.forEach((ord: any) => {
+            const isWalletPayment = ord.paymentMethod === 'wallet' ||
+              (ord.paymentMethodLabel && ord.paymentMethodLabel.toLowerCase().includes('ví'));
+            
+            if (!isWalletPayment) return;
+
+            const orderTotal = Number(ord.total) || 0;
+            const orderRef = ord.id;
+            const prodName = ord.products?.[0]?.name || 'Sản phẩm linh kiện';
+
+            const hasPaymentTx = currentTxs.some((t) => t.code === orderRef || t.code === `ORD-${orderRef}` || t.code === `TX-${orderRef}`);
+            
+            if (!hasPaymentTx) {
+              const payTx: WalletTransaction = {
+                code: orderRef,
+                sender_wallet_code: state.wallet?.walletcode || 'PCH-8789',
+                receiver_wallet_code: null,
+                type: 'WITHDRAW',
+                amount: orderTotal,
+                fee: 0,
+                currency: 'VND',
+                description: `Thanh toán đơn hàng ${orderRef} (${prodName})`,
+                date: ord.date || 'Gần đây',
+              };
+              currentTxs = [payTx, ...currentTxs];
+              currentBalance = Math.max(0, currentBalance - orderTotal);
+              changed = true;
+            }
+
+            // Handle cancellation refund if cancelled
+            if (ord.status === 'cancelled') {
+              const refundRef = `REF-${orderRef}`;
+              const hasRefundTx = currentTxs.some((t) => t.code === refundRef);
+              if (!hasRefundTx) {
+                const refundTx: WalletTransaction = {
+                  code: refundRef,
+                  sender_wallet_code: null,
+                  receiver_wallet_code: state.wallet?.walletcode || 'PCH-8789',
+                  type: 'REFUND',
+                  amount: orderTotal,
+                  fee: 0,
+                  currency: 'VND',
+                  description: `Hoàn tiền hủy đơn hàng ${orderRef}`,
+                  date: ord.date || 'Gần đây',
+                };
+                currentTxs = [refundTx, ...currentTxs];
+                currentBalance = currentBalance + orderTotal;
+                changed = true;
+              }
+            }
+          });
+
+          if (changed) {
+            set({
+              wallet: { ...state.wallet, balance: currentBalance },
+              transactions: currentTxs,
+            });
+          }
         }
       },
 

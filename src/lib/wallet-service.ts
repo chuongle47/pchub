@@ -35,10 +35,15 @@ export interface LinkedWallet {
 }
 
 /**
- * Helper to call NKS Wallet API using FormData
+ * Helper to call NKS Wallet API with robust param handling (URL Query, URLSearchParams & FormData)
  */
 async function callNksWalletApi(endpoint: string, formDataFields: Record<string, any>) {
-  const url = `${NKS_WALLET_BASE_URL}${endpoint ? `/${endpoint.replace(/^\//, '')}` : ''}`;
+  const token = formDataFields.access_token || '';
+  let url = `${NKS_WALLET_BASE_URL}${endpoint ? `/${endpoint.replace(/^\//, '')}` : ''}`;
+  
+  if (token) {
+    url += (url.includes('?') ? '&' : '?') + `access_token=${encodeURIComponent(token)}`;
+  }
 
   const formData = new FormData();
   Object.entries(formDataFields).forEach(([key, value]) => {
@@ -50,6 +55,10 @@ async function callNksWalletApi(endpoint: string, formDataFields: Record<string,
   try {
     const response = await fetch(url, {
       method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
       body: formData,
       cache: 'no-store',
     });
@@ -60,7 +69,11 @@ async function callNksWalletApi(endpoint: string, formDataFields: Record<string,
       result = await response.json();
     } else {
       const text = await response.text();
-      result = { message: text };
+      try {
+        result = JSON.parse(text);
+      } catch {
+        result = { message: text };
+      }
     }
 
     return {

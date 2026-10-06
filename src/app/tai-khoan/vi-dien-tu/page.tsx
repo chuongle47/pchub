@@ -7,7 +7,7 @@ import {
   Search, Filter, AlertCircle, CheckCircle2, History, Building2,
   ExternalLink, ChevronRight, Sparkles, Send, Download, X
 } from 'lucide-react';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useOrderStore } from '@/lib/store';
 import { useWalletStore } from '@/lib/wallet-store';
 import { WalletData, WalletTransaction, LinkedWallet } from '@/lib/wallet-service';
 
@@ -15,6 +15,7 @@ export default function MemberWalletPage() {
   const user = useAuthStore(s => s.user);
   const nksUser = (user as any)?.user || user;
   const userToken = nksUser?.nks_token || nksUser?.token || (user as any)?.token || '';
+  const orders = useOrderStore(s => s.orders);
 
   // Wallet store state
   const wallet = useWalletStore(s => s.wallet);
@@ -72,14 +73,14 @@ export default function MemberWalletPage() {
     setRefreshing(true);
 
     try {
-      await syncWithBackend(userToken);
+      await syncWithBackend(userToken, orders);
     } catch (err: any) {
       console.warn('Wallet fetch warning:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [userToken, syncWithBackend]);
+  }, [userToken, orders, syncWithBackend]);
 
   useEffect(() => {
     fetchWalletData();
