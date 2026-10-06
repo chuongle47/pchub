@@ -234,10 +234,6 @@ export default function MemberWalletPage() {
     setActiveModal(null);
   };
 
-    showToast('success', `Đã liên kết ví ${linkWalletType === 'momo' ? 'MoMo' : 'ZaloPay'} (${linkWalletPhone}) thành công!`);
-    setActiveModal(null);
-  };
-
   // Filtered transactions
   const filteredTransactions = transactions.filter(t => {
     const matchesType = filterType === 'ALL' || t.type === filterType;

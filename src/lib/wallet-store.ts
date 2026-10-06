@@ -14,7 +14,7 @@ export interface WalletStoreState {
   addTransaction: (tx: WalletTransaction) => void;
   setTransactions: (txs: WalletTransaction[]) => void;
   setLinkedWallets: (wallets: LinkedWallet[]) => void;
-  syncWithBackend: (token?: string) => Promise<void>;
+  syncWithBackend: (token?: string, orders?: any[]) => Promise<void>;
   resetWallet: () => void;
 }
 
