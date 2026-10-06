@@ -422,32 +422,62 @@ export default function CompareClient() {
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '24px 0 80px' }}>
-      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 20px' }}>
+      <style jsx>{`
+        .compare-header-wrap {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+        }
+        .compare-title {
+          margin: 0;
+          color: #0f172a;
+          font-size: 26px;
+          line-height: 1.25;
+          font-weight: 900;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .compare-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 640px) {
+          .compare-title {
+            font-size: 19px !important;
+          }
+          .compare-actions {
+            width: 100%;
+          }
+          .compare-actions > button {
+            flex: 1;
+            justify-content: center;
+          }
+        }
+      `}</style>
+
+      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 16px' }}>
         
         {/* Breadcrumb */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '13px', marginBottom: '16px' }}>
           <Link href="/" style={{ color: '#64748b', textDecoration: 'none' }}>Trang chủ</Link>
           <ChevronRight size={14} />
           <span style={{ color: '#0f172a', fontWeight: 600 }}>So sánh sản phẩm</span>
         </div>
 
         {/* Header */}
-        <header
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: '16px',
-            marginBottom: '24px',
-            flexWrap: 'wrap',
-          }}
-        >
+        <header className="compare-header-wrap">
           <div>
-            <div style={{ color: '#2563eb', fontSize: '11px', fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
+            <div style={{ color: '#2563eb', fontSize: '11px', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
               PCHUB COMPARE TOOL — SO SÁNH CÙNG DANH MỤC
             </div>
-            <h1 style={{ margin: 0, color: '#0f172a', fontSize: '28px', lineHeight: 1.2, fontWeight: 900, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ArrowLeftRight size={28} color="#2563eb" /> So sánh chi tiết thông số
+            <h1 className="compare-title">
+              <ArrowLeftRight size={24} color="#2563eb" /> So sánh chi tiết thông số
             </h1>
             {currentCategoryName && (
               <div style={{
@@ -458,7 +488,7 @@ export default function CompareClient() {
                 background: '#eff6ff',
                 border: '1px solid #bfdbfe',
                 color: '#1d4ed8',
-                fontSize: '13px',
+                fontSize: '12.5px',
                 fontWeight: 700,
                 padding: '4px 12px',
                 borderRadius: '8px',
@@ -468,7 +498,7 @@ export default function CompareClient() {
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="compare-actions">
             {products.length > 0 && (
               <button
                 type="button"
@@ -478,7 +508,7 @@ export default function CompareClient() {
                   color: '#ef4444',
                   border: '1px solid #fecdd3',
                   borderRadius: '8px',
-                  padding: '8px 14px',
+                  padding: '9px 14px',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -512,7 +542,7 @@ export default function CompareClient() {
                 }}
               >
                 <Plus size={15} />
-                <span>{currentCategoryName ? `Thêm sản phẩm ${currentCategoryName}` : 'Thêm sản phẩm so sánh'}</span>
+                <span>{currentCategoryName ? `Thêm sản phẩm ${currentCategoryName}` : 'Thêm sản phẩm'}</span>
               </button>
             )}
           </div>

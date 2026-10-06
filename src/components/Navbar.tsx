@@ -124,8 +124,8 @@ export default function Navbar() {
                 onChange={(e) => setSearchVal(e.target.value)}
                 style={{
                   width: '100%',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   borderRadius: '9999px',
                   padding: '8px 16px 8px 40px',
                   fontSize: '13px',
@@ -134,12 +134,12 @@ export default function Navbar() {
                   transition: 'border-color 0.2s, background 0.2s',
                 }}
                 onFocus={e => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.background = 'rgba(59,130,246,0.1)';
+                  e.target.style.borderColor = '#38bdf8';
+                  e.target.style.background = 'rgba(0, 0, 0, 0.45)';
                 }}
                 onBlur={e => {
-                  e.target.style.borderColor = 'rgba(255,255,255,0.15)';
-                  e.target.style.background = 'rgba(255,255,255,0.06)';
+                  e.target.style.borderColor = 'rgba(255,255,255,0.2)';
+                  e.target.style.background = 'rgba(0, 0, 0, 0.25)';
                 }}
               />
               <Search size={15} style={{

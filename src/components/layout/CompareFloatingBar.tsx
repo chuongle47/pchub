@@ -1,15 +1,17 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ArrowLeftRight, Trash2, ChevronRight } from 'lucide-react';
 import { useCompareStore } from '@/lib/store';
 
 export default function CompareFloatingBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { items, activeCategory, clearCompare } = useCompareStore();
 
-  if (!items || items.length === 0) {
+  // Hide floating bar if already on comparison page or no items
+  if (pathname === '/so-sanh' || !items || items.length === 0) {
     return null;
   }
 
