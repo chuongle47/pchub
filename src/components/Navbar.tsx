@@ -71,13 +71,13 @@ export default function Navbar() {
         </div>
       </div>
 
-      <header style={{
+      <header className="site-header" style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)',
         color: '#fff',
         borderBottom: '1px solid rgba(255,255,255,0.15)',
         position: 'sticky',
         top: 0,
-        zIndex: 200,
+        zIndex: 9999,
         /* Honor iPhone notch — falls back to 0px on non-notched devices */
         paddingTop: 'env(safe-area-inset-top, 0px)',
       }}>

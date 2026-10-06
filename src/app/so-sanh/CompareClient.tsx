@@ -471,10 +471,10 @@ export default function CompareClient() {
         </div>
 
         {/* Header */}
-        <header className="compare-header-wrap">
+        <div className="compare-header-wrap">
           <div>
             <div style={{ color: '#2563eb', fontSize: '11px', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
-              PCHUB COMPARE TOOL — SO SÁNH CÙNG DANH MỤC
+              CÔNG CỤ SO SÁNH — SO SÁNH CÙNG DANH MỤC
             </div>
             <h1 className="compare-title">
               <ArrowLeftRight size={24} color="#2563eb" /> So sánh chi tiết thông số
@@ -546,7 +546,7 @@ export default function CompareClient() {
               </button>
             )}
           </div>
-        </header>
+        </div>
 
         {/* Notice Banner when only 1 product is selected */}
         {products.length === 1 && (

@@ -2571,11 +2571,11 @@ a:hover {
    viewport. Replacing hidden→clip (above) fixes it.
    These rules add belt-and-suspenders safety.
    ============================================================ */
-header[class],
-header {
+header.site-header,
+.site-header {
   position: sticky !important;
   top: 0 !important;
-  z-index: 200 !important;
+  z-index: 9999 !important;
   /* Honor iPhone notch / Dynamic Island */
   padding-top: env(safe-area-inset-top, 0px);
 }
