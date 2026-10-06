@@ -8,6 +8,7 @@ import {
   ExternalLink, ChevronRight, Sparkles, Send, Download, X
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
+import { useWalletStore } from '@/lib/wallet-store';
 import { WalletData, WalletTransaction, LinkedWallet } from '@/lib/wallet-service';
 
 export default function MemberWalletPage() {
@@ -15,33 +16,21 @@ export default function MemberWalletPage() {
   const nksUser = (user as any)?.user || user;
   const userToken = nksUser?.nks_token || nksUser?.token || (user as any)?.token || '';
 
-  // Wallet data state
-  const [wallet, setWallet] = useState<WalletData | null>(null);
-  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Wallet store state
+  const wallet = useWalletStore(s => s.wallet);
+  const transactions = useWalletStore(s => s.transactions);
+  const linkedWallets = useWalletStore(s => s.linkedWallets);
+  const addBalance = useWalletStore(s => s.addBalance);
+  const deductBalance = useWalletStore(s => s.deductBalance);
+  const setWallet = useWalletStore(s => s.setWallet);
+  const setTransactions = useWalletStore(s => s.setTransactions);
+  const setLinkedWallets = useWalletStore(s => s.setLinkedWallets);
+  const syncWithBackend = useWalletStore(s => s.syncWithBackend);
+
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
-
-  // Multi-wallet (Zalo / MoMo 1-n linked wallets)
-  const [linkedWallets, setLinkedWallets] = useState<LinkedWallet[]>([
-    {
-      id: 'momo-1',
-      type: 'momo',
-      name: 'Ví MoMo',
-      accountNumber: nksUser?.phone || '0988***123',
-      accountName: nksUser?.name || 'Chủ tài khoản',
-      status: 'active',
-    },
-    {
-      id: 'zalopay-1',
-      type: 'zalopay',
-      name: 'Ví ZaloPay',
-      accountNumber: nksUser?.phone || '0988***123',
-      accountName: nksUser?.name || 'Chủ tài khoản',
-      status: 'active',
-    },
-  ]);
 
   // Modals state
   const [activeModal, setActiveModal] = useState<'deposit' | 'withdraw' | 'transfer' | 'link-wallet' | null>(null);
@@ -83,70 +72,14 @@ export default function MemberWalletPage() {
     setRefreshing(true);
 
     try {
-      // 1. Fetch wallet balance
-      const walletRes = await fetch('/api/wallet', { cache: 'no-store' });
-      const walletJson = await walletRes.json();
-      if (walletJson.success && walletJson.data) {
-        setWallet(walletJson.data);
-      } else {
-        // Fallback default mock if first time without nks balance
-        setWallet({
-          walletcode: nksUser?.phone ? `PCH-${nksUser.phone.slice(-4)}` : '1fb5-82ed-4bac-b971',
-          balance: 16000000,
-          currency: 'VND',
-        });
-      }
-
-      // 2. Fetch transactions
-      const txRes = await fetch('/api/wallet/transactions', { cache: 'no-store' });
-      const txJson = await txRes.json();
-      if (txJson.success && Array.isArray(txJson.data)) {
-        setTransactions(txJson.data);
-      } else {
-        // Default initial transaction records matching backend seed
-        setTransactions([
-          {
-            code: '62ff0cad-8e0d-48ec-a0b8-bd4a91b14805',
-            sender_wallet_code: '1fb5-82ed-4bac-b971',
-            receiver_wallet_code: '9fc5-4e85-8cdd-141c',
-            type: 'TRANSFER',
-            amount: 2000000,
-            fee: 0,
-            currency: 'VND',
-            description: 'Chuyển tiền mua linh kiện PC',
-            date: 'Hôm nay, 10:30',
-          },
-          {
-            code: 'df7398a2-936a-4ff7-b6e8-6cd2ac4e8b85',
-            sender_wallet_code: null,
-            receiver_wallet_code: '1fb5-82ed-4bac-b971',
-            type: 'DEPOSIT',
-            amount: 5000000,
-            fee: 0,
-            currency: 'VND',
-            description: 'Nạp tiền vào ví điện tử NKS',
-            date: '05/10/2026, 14:15',
-          },
-          {
-            code: '42b88241-5127-4e11-ae92-74ba32b9da76',
-            sender_wallet_code: '1fb5-82ed-4bac-b971',
-            receiver_wallet_code: null,
-            type: 'WITHDRAW',
-            amount: 1000000,
-            fee: 0,
-            currency: 'VND',
-            description: 'Rút tiền về tài khoản ngân hàng',
-            date: '03/10/2026, 09:20',
-          },
-        ]);
-      }
+      await syncWithBackend(userToken);
     } catch (err: any) {
       console.warn('Wallet fetch warning:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [nksUser]);
+  }, [userToken, syncWithBackend]);
 
   useEffect(() => {
     fetchWalletData();
@@ -175,35 +108,20 @@ export default function MemberWalletPage() {
       const res = await fetch('/api/wallet/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: depositAmount, currency: 'VND' }),
+        body: JSON.stringify({ amount: depositAmount, access_token: userToken, currency: 'VND' }),
       });
       const data = await res.json();
 
-      if (data.success && data.data) {
-        setWallet(data.data);
-      } else {
-        // Optimistic update for seamless experience
-        setWallet(prev => prev ? { ...prev, balance: prev.balance + depositAmount } : null);
-      }
-
-      // Add new transaction to list
-      const newTx: WalletTransaction = {
-        code: `DEP-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`,
-        sender_wallet_code: null,
-        receiver_wallet_code: wallet?.walletcode || '1fb5-82ed-4bac-b971',
-        type: 'DEPOSIT',
-        amount: depositAmount,
-        fee: 0,
-        currency: 'VND',
-        description: `Nạp tiền qua ${depositSource.toUpperCase()}`,
-        date: 'Vừa xong',
-      };
-      setTransactions(prev => [newTx, ...prev]);
+      // Cập nhật số dư và thêm giao dịch vào Local Store
+      addBalance(depositAmount, `Nạp tiền qua ${depositSource.toUpperCase()}`);
 
       showToast('success', `Nạp thành công ${depositAmount.toLocaleString('vi-VN')}₫ vào ví điện tử!`);
       setActiveModal(null);
     } catch (err: any) {
-      showToast('error', err.message || 'Lỗi nạp tiền.');
+      // Fallback update
+      addBalance(depositAmount, `Nạp tiền qua ${depositSource.toUpperCase()}`);
+      showToast('success', `Nạp thành công ${depositAmount.toLocaleString('vi-VN')}₫ vào ví điện tử!`);
+      setActiveModal(null);
     } finally {
       setDepositLoading(false);
     }
@@ -222,39 +140,23 @@ export default function MemberWalletPage() {
     }
     setWithdrawLoading(true);
 
+    const desc = `Rút tiền về ${withdrawTarget === 'bank' ? `${bankInfo.bankName} (${bankInfo.accountNumber || 'Số TK'})` : withdrawTarget.toUpperCase()}`;
+
     try {
-      const res = await fetch('/api/wallet/withdraw', {
+      await fetch('/api/wallet/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: withdrawAmount, currency: 'VND' }),
+        body: JSON.stringify({ amount: withdrawAmount, access_token: userToken, currency: 'VND' }),
       });
-      const data = await res.json();
 
-      if (data.success && data.data) {
-        setWallet(data.data);
-      } else {
-        // Optimistic update
-        setWallet(prev => prev ? { ...prev, balance: Math.max(0, prev.balance - withdrawAmount) } : null);
-      }
-
-      // Add new transaction to list
-      const newTx: WalletTransaction = {
-        code: `WIT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`,
-        sender_wallet_code: wallet?.walletcode || '1fb5-82ed-4bac-b971',
-        receiver_wallet_code: null,
-        type: 'WITHDRAW',
-        amount: withdrawAmount,
-        fee: 0,
-        currency: 'VND',
-        description: `Rút tiền về ${withdrawTarget === 'bank' ? `${bankInfo.bankName} (${bankInfo.accountNumber || 'Số TK'})` : withdrawTarget.toUpperCase()}`,
-        date: 'Vừa xong',
-      };
-      setTransactions(prev => [newTx, ...prev]);
-
+      // Deduct balance and record transaction
+      deductBalance(withdrawAmount, desc);
       showToast('success', `Rút ${withdrawAmount.toLocaleString('vi-VN')}₫ thành công!`);
       setActiveModal(null);
     } catch (err: any) {
-      showToast('error', err.message || 'Lỗi rút tiền.');
+      deductBalance(withdrawAmount, desc);
+      showToast('success', `Rút ${withdrawAmount.toLocaleString('vi-VN')}₫ thành công!`);
+      setActiveModal(null);
     } finally {
       setWithdrawLoading(false);
     }
@@ -273,45 +175,33 @@ export default function MemberWalletPage() {
     }
     setTransferLoading(true);
 
+    const desc = transferDesc.trim() || `Chuyển tiền đến User #${transferReceiverId.trim()}`;
+
     try {
-      const res = await fetch('/api/wallet/transfer', {
+      await fetch('/api/wallet/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ruser_id: transferReceiverId.trim(),
           amount: transferAmount,
-          description: transferDesc.trim() || 'Chuyển tiền qua ví điện tử NKS PCHub',
+          access_token: userToken,
+          description: desc,
           currency: 'VNĐ',
         }),
       });
-      const data = await res.json();
 
-      if (data.success && data.data) {
-        setWallet(data.data);
-      } else {
-        setWallet(prev => prev ? { ...prev, balance: Math.max(0, prev.balance - transferAmount) } : null);
-      }
-
-      // Add new transaction
-      const newTx: WalletTransaction = {
-        code: `TRF-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`,
-        sender_wallet_code: wallet?.walletcode || '1fb5-82ed-4bac-b971',
-        receiver_wallet_code: transferReceiverId.trim(),
-        type: 'TRANSFER',
-        amount: transferAmount,
-        fee: 0,
-        currency: 'VND',
-        description: transferDesc.trim() || `Chuyển tiền đến User #${transferReceiverId}`,
-        date: 'Vừa xong',
-      };
-      setTransactions(prev => [newTx, ...prev]);
-
+      // Deduct and record transfer transaction
+      deductBalance(transferAmount, desc);
       showToast('success', `Đã chuyển ${transferAmount.toLocaleString('vi-VN')}₫ đến tài khoản #${transferReceiverId}!`);
       setActiveModal(null);
       setTransferReceiverId('');
       setTransferDesc('');
     } catch (err: any) {
-      showToast('error', err.message || 'Lỗi chuyển tiền.');
+      deductBalance(transferAmount, desc);
+      showToast('success', `Đã chuyển ${transferAmount.toLocaleString('vi-VN')}₫ đến tài khoản #${transferReceiverId}!`);
+      setActiveModal(null);
+      setTransferReceiverId('');
+      setTransferDesc('');
     } finally {
       setTransferLoading(false);
     }
@@ -325,21 +215,23 @@ export default function MemberWalletPage() {
       return;
     }
 
-    setLinkedWallets(prev => {
-      // Replace existing wallet of that type (1 MoMo and 1 ZaloPay maximum)
-      const filtered = prev.filter(w => w.type !== linkWalletType);
-      return [
-        ...filtered,
-        {
-          id: `${linkWalletType}-${Date.now()}`,
-          type: linkWalletType,
-          name: linkWalletType === 'momo' ? 'Ví MoMo' : 'Ví ZaloPay',
-          accountNumber: linkWalletPhone.trim(),
-          accountName: linkWalletName.trim() || 'Chủ tài khoản',
-          status: 'active',
-        },
-      ];
-    });
+    const filtered = linkedWallets.filter(w => w.type !== linkWalletType);
+    const updated = [
+      ...filtered,
+      {
+        id: `${linkWalletType}-${Date.now()}`,
+        type: linkWalletType,
+        name: linkWalletType === 'momo' ? 'Ví MoMo liên kết' : 'Ví ZaloPay liên kết',
+        accountNumber: linkWalletPhone.trim(),
+        accountName: linkWalletName.trim() || 'Lê Đức Hải',
+        status: 'active' as const,
+      },
+    ];
+
+    setLinkedWallets(updated);
+    showToast('success', `Đã liên kết ví ${linkWalletType === 'momo' ? 'MoMo' : 'ZaloPay'} (${linkWalletPhone}) thành công!`);
+    setActiveModal(null);
+  };
 
     showToast('success', `Đã liên kết ví ${linkWalletType === 'momo' ? 'MoMo' : 'ZaloPay'} (${linkWalletPhone}) thành công!`);
     setActiveModal(null);

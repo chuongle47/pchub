@@ -9,6 +9,7 @@ import {
   CheckCircle, Smartphone, Banknote, Building2, Wallet, Package, Lock, User
 } from 'lucide-react';
 import { useCartStore, useOrderStore, useAuthStore } from '@/lib/store';
+import { useWalletStore } from '@/lib/wallet-store';
 import { calculateVoucherDiscount, AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
 import TechCheckoutLoader from '@/components/checkout/TechCheckoutLoader';
@@ -126,6 +127,12 @@ export default function CheckoutPage() {
 
   // Auto-fill form từ thông tin user đăng nhập
   const nksUser = (user as any)?.user || user;
+  const userToken = nksUser?.nks_token || nksUser?.token || (user as any)?.token || '';
+
+  // Wallet Store
+  const walletStore = useWalletStore(s => s.wallet);
+  const deductWalletBalance = useWalletStore(s => s.deductBalance);
+  const syncWalletWithBackend = useWalletStore(s => s.syncWithBackend);
 
   const [step, setStep] = useState<CheckoutStep>('shipping');
   const [shippingOption, setShippingOption] = useState('ghn');
@@ -137,8 +144,8 @@ export default function CheckoutPage() {
   const [createdOrderId, setCreatedOrderId] = useState<string>('ORD-PCHUB');
 
   // E-Wallet balance state
-  const [walletBalance, setWalletBalance] = useState<number | null>(null);
-  const [walletCode, setWalletCode] = useState<string>('');
+  const walletBalance = walletStore?.balance ?? 16000000;
+  const walletCode = walletStore?.walletcode ?? 'PCH-8789';
   const [walletLoading, setWalletLoading] = useState(false);
 
   const [voucher, setVoucher] = useState('');
@@ -159,29 +166,10 @@ export default function CheckoutPage() {
     province: '', district: '', ward: '', address: '', note: '',
   });
 
-  // Load wallet balance
+  // Sync wallet on mount
   useEffect(() => {
-    async function loadWallet() {
-      setWalletLoading(true);
-      try {
-        const res = await fetch('/api/wallet');
-        const json = await res.json();
-        if (json.success && json.data) {
-          setWalletBalance(json.data.balance);
-          setWalletCode(json.data.walletcode);
-        } else {
-          setWalletBalance(16000000);
-          setWalletCode('1fb5-82ed-4bac-b971');
-        }
-      } catch {
-        setWalletBalance(16000000);
-        setWalletCode('1fb5-82ed-4bac-b971');
-      } finally {
-        setWalletLoading(false);
-      }
-    }
-    loadWallet();
-  }, []);
+    syncWalletWithBackend(userToken);
+  }, [userToken, syncWalletWithBackend]);
 
   // Auto-fill buyer & recipient form từ thông tin user khi trang load
   useEffect(() => {
@@ -307,18 +295,22 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Trừ tiền trong ví qua API
+      // Trừ tiền trong ví qua Local Store ngay lập tức
+      deductWalletBalance(finalTotal, `Thanh toán đơn hàng ${orderId}`, orderId);
+
+      // Trừ tiền trong ví qua Backend API
       try {
         await fetch('/api/wallet/withdraw', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount: finalTotal,
+            access_token: userToken,
             note: `Thanh toán đơn hàng ${orderId}`
           })
         });
       } catch (err) {
-        console.warn('Wallet deduct warning:', err);
+        console.warn('Wallet deduct API warning:', err);
       }
     }
 

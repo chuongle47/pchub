@@ -80,8 +80,26 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
         updateOrderStatus(order.id, 'cancelled', 'Đã hủy');
         order.status = 'cancelled';
         order.statusLabel = 'Đã hủy';
+
+        // Nếu đơn hàng thanh toán bằng ví điện tử, hoàn tiền lại vào ví
+        const isPaidByWallet = order.paymentMethod === 'wallet' ||
+          (order.paymentMethodLabel && order.paymentMethodLabel.toLowerCase().includes('ví'));
+        if (isPaidByWallet) {
+          try {
+            const { useWalletStore } = await import('@/lib/wallet-store');
+            useWalletStore.getState().addBalance(
+              Number(order.total) || 0,
+              `Hoàn tiền hủy đơn hàng ${order.id}`,
+              `REF-${order.id}`,
+              'REFUND'
+            );
+          } catch (e) {
+            console.warn('Wallet refund store error:', e);
+          }
+        }
+
         setShowCancelModal(false);
-        setCancelMessage('Đã hủy đơn hàng thành công!');
+        setCancelMessage(`Đã hủy đơn hàng thành công!${isPaidByWallet ? ` Tiền (${(Number(order.total) || 0).toLocaleString('vi-VN')}₫) đã được hoàn lại vào Ví điện tử.` : ''}`);
       } else {
         alert(data.error || 'Có lỗi khi hủy đơn');
       }
