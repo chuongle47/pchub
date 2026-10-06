@@ -143,12 +143,11 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
         .flash-sale-timer-wrap {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           font-size: 13px;
           font-weight: 700;
           color: #334155;
           flex-shrink: 0;
-          flex-wrap: wrap;
         }
         @media (max-width: 640px) {
           .flash-sale-banner-box {
@@ -161,8 +160,10 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
           .flash-sale-timer-wrap {
             width: 100%;
             justify-content: space-between;
-            padding-top: 8px;
+            align-items: center;
+            padding-top: 10px;
             border-top: 1px dashed #fecdd3;
+            flex-wrap: nowrap;
           }
         }
       `}</style>
@@ -222,7 +223,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 alignItems: 'center',
                 gap: '6px',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 800,
                 background: '#fee2e2',
                 color: '#dc2626',
                 padding: '3px 9px',
@@ -230,6 +231,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 border: '1px solid #fecaca',
                 letterSpacing: '0.02em',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}>
                 <span style={{
                   width: '7px',
@@ -248,7 +250,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 alignItems: 'center',
                 gap: '6px',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 800,
                 background: '#f1f5f9',
                 color: '#64748b',
                 padding: '3px 9px',
@@ -256,60 +258,64 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
                 border: '1px solid #cbd5e1',
                 letterSpacing: '0.02em',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}>
                 ĐÃ KẾT THÚC
               </span>
             )}
 
-            <span style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap' }}>
-              {timer.isEnded ? 'Đã kết thúc:' : 'Kết thúc trong:'}
-            </span>
+            {/* Combined Timer Label and Digit Blocks */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              <span style={{ fontSize: '11.5px', color: '#64748b', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                {timer.isEnded ? 'Đã kết thúc:' : 'Kết thúc trong:'}
+              </span>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{
-                background: timer.isEnded ? '#64748b' : '#ef4444',
-                color: '#ffffff',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                fontSize: '13px',
-                fontWeight: 900,
-                minWidth: '28px',
-                textAlign: 'center',
-                boxShadow: timer.isEnded ? 'none' : '0 2px 4px rgba(239,68,68,0.2)',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {String(timer.hours).padStart(2, '0')}
-              </span>
-              <span style={{ fontWeight: 900, color: timer.isEnded ? '#64748b' : '#ef4444' }}>:</span>
-              <span style={{
-                background: timer.isEnded ? '#64748b' : '#ef4444',
-                color: '#ffffff',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                fontSize: '13px',
-                fontWeight: 900,
-                minWidth: '28px',
-                textAlign: 'center',
-                boxShadow: timer.isEnded ? 'none' : '0 2px 4px rgba(239,68,68,0.2)',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {String(timer.minutes).padStart(2, '0')}
-              </span>
-              <span style={{ fontWeight: 900, color: timer.isEnded ? '#64748b' : '#ef4444' }}>:</span>
-              <span style={{
-                background: timer.isEnded ? '#64748b' : '#ef4444',
-                color: '#ffffff',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                fontSize: '13px',
-                fontWeight: 900,
-                minWidth: '28px',
-                textAlign: 'center',
-                boxShadow: timer.isEnded ? 'none' : '0 2px 4px rgba(239,68,68,0.2)',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {String(timer.seconds).padStart(2, '0')}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                <span style={{
+                  background: timer.isEnded ? '#64748b' : '#ef4444',
+                  color: '#ffffff',
+                  borderRadius: '6px',
+                  padding: '3px 6px',
+                  fontSize: '12.5px',
+                  fontWeight: 900,
+                  minWidth: '26px',
+                  textAlign: 'center',
+                  boxShadow: timer.isEnded ? 'none' : '0 2px 4px rgba(239,68,68,0.2)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {String(timer.hours).padStart(2, '0')}
+                </span>
+                <span style={{ fontWeight: 900, color: timer.isEnded ? '#64748b' : '#ef4444', fontSize: '12px' }}>:</span>
+                <span style={{
+                  background: timer.isEnded ? '#64748b' : '#ef4444',
+                  color: '#ffffff',
+                  borderRadius: '6px',
+                  padding: '3px 6px',
+                  fontSize: '12.5px',
+                  fontWeight: 900,
+                  minWidth: '26px',
+                  textAlign: 'center',
+                  boxShadow: timer.isEnded ? 'none' : '0 2px 4px rgba(239,68,68,0.2)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {String(timer.minutes).padStart(2, '0')}
+                </span>
+                <span style={{ fontWeight: 900, color: timer.isEnded ? '#64748b' : '#ef4444', fontSize: '12px' }}>:</span>
+                <span style={{
+                  background: timer.isEnded ? '#64748b' : '#ef4444',
+                  color: '#ffffff',
+                  borderRadius: '6px',
+                  padding: '3px 6px',
+                  fontSize: '12.5px',
+                  fontWeight: 900,
+                  minWidth: '26px',
+                  textAlign: 'center',
+                  boxShadow: timer.isEnded ? 'none' : '0 2px 4px rgba(239,68,68,0.2)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {String(timer.seconds).padStart(2, '0')}
+                </span>
+              </div>
             </div>
           </div>
         </div>
