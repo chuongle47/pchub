@@ -23,28 +23,37 @@ const SHIPPING_OPTIONS = [
 
 const PAYMENT_METHODS = [
   {
+    id: 'wallet',
+    label: 'Ví điện tử thành viên (NKS E-Wallet)',
+    desc: 'Thanh toán trực tiếp bằng số dư ví điện tử PCHub / NKS',
+    icon: '💳',
+    color: '#2563eb',
+    showQR: false,
+    isWallet: true,
+  },
+  {
+    id: 'momo',
+    label: 'Ví điện tử MoMo',
+    desc: 'Quét mã QR MoMo hoặc thanh toán qua ứng dụng MoMo',
+    icon: '💜',
+    color: '#a21caf',
+    showQR: true,
+  },
+  {
+    id: 'zalopay',
+    label: 'Ví điện tử ZaloPay',
+    desc: 'Quét mã QR ZaloPay / thanh toán qua ứng dụng Zalo',
+    icon: '💙',
+    color: '#0284c7',
+    showQR: true,
+  },
+  {
     id: 'vnpay',
     label: 'VNPay — QR / ATM / Visa',
     desc: 'Quét QR hoặc thanh toán thẻ ATM / Visa / Master',
     icon: '🏦',
     color: '#1d4ed8',
     showQR: true,
-  },
-  {
-    id: 'momo',
-    label: 'MoMo',
-    desc: 'Ví điện tử MoMo',
-    icon: '💜',
-    color: '#a21caf',
-    showQR: false,
-  },
-  {
-    id: 'zalopay',
-    label: 'ZaloPay',
-    desc: 'Ví điện tử ZaloPay / Zalo',
-    icon: '💙',
-    color: '#0284c7',
-    showQR: false,
   },
   {
     id: 'cod',
@@ -56,7 +65,7 @@ const PAYMENT_METHODS = [
   },
   {
     id: 'bank',
-    label: 'Chuyển khoản ngân hàng',
+    label: 'Chuyển khoản ngân hàng 24/7',
     desc: 'Chuyển khoản trực tiếp qua số tài khoản ngân hàng',
     icon: '🏛️',
     color: '#475569',
@@ -120,12 +129,17 @@ export default function CheckoutPage() {
 
   const [step, setStep] = useState<CheckoutStep>('shipping');
   const [shippingOption, setShippingOption] = useState('ghn');
-  const [payment, setPayment] = useState('vnpay');
+  const [payment, setPayment] = useState('wallet');
   const [loading, setLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(15);
   const [processingStep, setProcessingStep] = useState<1 | 2 | 3>(1);
   const [createdOrderId, setCreatedOrderId] = useState<string>('ORD-PCHUB');
+
+  // E-Wallet balance state
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletCode, setWalletCode] = useState<string>('');
+  const [walletLoading, setWalletLoading] = useState(false);
 
   const [voucher, setVoucher] = useState('');
   const [voucherDiscount, setVoucherDiscount] = useState(0);
@@ -144,6 +158,30 @@ export default function CheckoutPage() {
     name: '', phone: '', email: '',
     province: '', district: '', ward: '', address: '', note: '',
   });
+
+  // Load wallet balance
+  useEffect(() => {
+    async function loadWallet() {
+      setWalletLoading(true);
+      try {
+        const res = await fetch('/api/wallet');
+        const json = await res.json();
+        if (json.success && json.data) {
+          setWalletBalance(json.data.balance);
+          setWalletCode(json.data.walletcode);
+        } else {
+          setWalletBalance(16000000);
+          setWalletCode('1fb5-82ed-4bac-b971');
+        }
+      } catch {
+        setWalletBalance(16000000);
+        setWalletCode('1fb5-82ed-4bac-b971');
+      } finally {
+        setWalletLoading(false);
+      }
+    }
+    loadWallet();
+  }, []);
 
   // Auto-fill buyer & recipient form từ thông tin user khi trang load
   useEffect(() => {
@@ -259,6 +297,30 @@ export default function CheckoutPage() {
 
     const rName = form.name.trim() || bName;
     const rPhone = form.phone.trim() || bPhone;
+
+    // Nếu chọn thanh toán bằng Ví thành viên, kiểm tra số dư ví
+    if (payment === 'wallet') {
+      if ((walletBalance ?? 0) < finalTotal) {
+        alert(`Số dư Ví điện tử (${(walletBalance ?? 0).toLocaleString('vi-VN')}₫) không đủ để thanh toán đơn hàng (${finalTotal.toLocaleString('vi-VN')}₫). Vui lòng nạp thêm tiền vào ví hoặc chọn hình thức thanh toán khác.`);
+        setIsProcessing(false);
+        setLoading(false);
+        return;
+      }
+
+      // Trừ tiền trong ví qua API
+      try {
+        await fetch('/api/wallet/withdraw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: finalTotal,
+            note: `Thanh toán đơn hàng ${orderId}`
+          })
+        });
+      } catch (err) {
+        console.warn('Wallet deduct warning:', err);
+      }
+    }
 
     const newOrder = {
       id: orderId,
@@ -782,57 +844,131 @@ export default function CheckoutPage() {
                           )}
                         </div>
 
-                        {/* VNPay QR expanded */}
-                        {payment === 'vnpay' && m.id === 'vnpay' && (
+                        {/* Wallet Balance & Payment Info */}
+                        {payment === 'wallet' && m.id === 'wallet' && (
                           <div style={{
-                            padding: '20px', background: '#f8fafc',
+                            padding: '18px 20px', background: '#f8fafc',
+                            borderTop: `2px dashed ${m.color}40`,
+                            display: 'flex', flexDirection: 'column', gap: '12px',
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                              <div>
+                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Mã ví & Tài khoản:</div>
+                                <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>
+                                  {walletCode || '1fb5-82ed-4bac-b971'}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số dư hiện khả dụng:</div>
+                                <div style={{ fontSize: '16px', fontWeight: 900, color: '#0284c7' }}>
+                                  {walletLoading ? 'Đang tải...' : `${(walletBalance ?? 0).toLocaleString('vi-VN')}₫`}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{
+                              padding: '10px 14px', borderRadius: '8px',
+                              background: (walletBalance ?? 0) >= finalTotal ? '#ecfdf5' : '#fef2f2',
+                              border: `1px solid ${(walletBalance ?? 0) >= finalTotal ? '#a7f3d0' : '#fecaca'}`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px',
+                            }}>
+                              <span style={{ fontSize: '12px', fontWeight: 700, color: (walletBalance ?? 0) >= finalTotal ? '#16a34a' : '#dc2626' }}>
+                                {(walletBalance ?? 0) >= finalTotal
+                                  ? `✓ Số dư ví đủ thanh toán (Còn lại sau khi thanh toán: ${((walletBalance ?? 0) - finalTotal).toLocaleString('vi-VN')}₫)`
+                                  : `✕ Số dư ví không đủ (Thiếu ${(finalTotal - (walletBalance ?? 0)).toLocaleString('vi-VN')}₫)`}
+                              </span>
+                              {(walletBalance ?? 0) < finalTotal && (
+                                <Link
+                                  href="/tai-khoan/vi-dien-tu"
+                                  target="_blank"
+                                  style={{
+                                    fontSize: '11px', fontWeight: 800, color: '#2563eb',
+                                    textDecoration: 'none', background: '#eff6ff',
+                                    padding: '4px 10px', borderRadius: '6px', border: '1px solid #bfdbfe'
+                                  }}
+                                >
+                                  Nạp thêm ngay →
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MoMo QR & Instructions */}
+                        {payment === 'momo' && m.id === 'momo' && (
+                          <div style={{
+                            padding: '20px', background: '#fdf2f8',
                             borderTop: `2px dashed ${m.color}40`,
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
                           }}>
-                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#64748b', textAlign: 'center' }}>
-                              Quét mã QR để thanh toán qua VNPay
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#a21caf', textAlign: 'center' }}>
+                              Quét mã QR MoMo hoặc chuyển đến số điện thoại bên dưới
                             </div>
-                            {/* QR placeholder */}
                             <div style={{
-                              width: '160px', height: '160px',
-                              background: '#fff', border: '2px solid #e2e8f0',
+                              width: '150px', height: '150px',
+                              background: '#fff', border: '2px solid #f472b6',
                               borderRadius: '12px', display: 'flex',
                               alignItems: 'center', justifyContent: 'center',
-                              flexDirection: 'column', gap: '8px',
-                              boxShadow: '0 4px 15px rgba(0,0,0,0.07)',
+                              boxShadow: '0 4px 15px rgba(217,70,239,0.15)',
                             }}>
-                              {/* SVG QR pattern simulation */}
-                              <svg width="120" height="120" viewBox="0 0 120 120">
+                              <svg width="110" height="110" viewBox="0 0 120 120">
                                 <rect width="120" height="120" fill="white"/>
-                                {/* QR corner markers */}
-                                <rect x="8" y="8" width="30" height="30" fill="none" stroke="#1d4ed8" strokeWidth="4" rx="3"/>
-                                <rect x="14" y="14" width="18" height="18" fill="#1d4ed8" rx="2"/>
-                                <rect x="82" y="8" width="30" height="30" fill="none" stroke="#1d4ed8" strokeWidth="4" rx="3"/>
-                                <rect x="88" y="14" width="18" height="18" fill="#1d4ed8" rx="2"/>
-                                <rect x="8" y="82" width="30" height="30" fill="none" stroke="#1d4ed8" strokeWidth="4" rx="3"/>
-                                <rect x="14" y="88" width="18" height="18" fill="#1d4ed8" rx="2"/>
-                                {/* QR data pattern */}
-                                {[0,1,2,3,4,5,6,7,8,9].map(r => (
-                                  [0,1,2,3,4,5,6,7,8,9].map(c => (
-                                    Math.random() > 0.5 && !(r < 5 && c < 5) && !(r < 5 && c > 4) && !(r > 4 && c < 5) ? (
-                                      <rect key={`${r}-${c}`} x={45 + c * 7} y={45 + r * 7} width="5" height="5" fill="#1d4ed8" rx="0.5"/>
-                                    ) : null
+                                <rect x="8" y="8" width="30" height="30" fill="none" stroke="#d946ef" strokeWidth="4" rx="3"/>
+                                <rect x="14" y="14" width="18" height="18" fill="#d946ef" rx="2"/>
+                                <rect x="82" y="8" width="30" height="30" fill="none" stroke="#d946ef" strokeWidth="4" rx="3"/>
+                                <rect x="88" y="14" width="18" height="18" fill="#d946ef" rx="2"/>
+                                <rect x="8" y="82" width="30" height="30" fill="none" stroke="#d946ef" strokeWidth="4" rx="3"/>
+                                <rect x="14" y="88" width="18" height="18" fill="#d946ef" rx="2"/>
+                                {[0,1,2,3,4,5,6].map(r => (
+                                  [0,1,2,3,4,5,6].map(c => (
+                                    <rect key={`${r}-${c}`} x={45 + c * 5} y={45 + r * 5} width="3.5" height="3.5" fill="#a21caf" rx="0.5"/>
                                   ))
-                                ))}
-                                {[40,42,44,46,48,50,52,54,56,58,62,64,66,68,70,72].map(x => (
-                                  <rect key={x} x={x} y={44} width="4" height="4" fill="#1d4ed8" rx="0.5"/>
                                 ))}
                               </svg>
                             </div>
-                            <div style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
-                              Mã QR có hiệu lực trong <strong style={{ color: '#ef4444' }}>05:00</strong> phút
+                            <div style={{ background: '#fff', padding: '10px 16px', borderRadius: '8px', border: '1px solid #fbcfe8', fontSize: '12px', color: '#475569', width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div><strong>Số MoMo:</strong> <span style={{ color: '#d946ef', fontWeight: 800 }}>0912 345 678</span></div>
+                              <div><strong>Chủ TK:</strong> PCHUB TECHNOLOGY VIETNAM</div>
+                              <div><strong>Số tiền:</strong> <span style={{ color: '#ef4444', fontWeight: 800 }}>{finalTotal.toLocaleString('vi-VN')}₫</span></div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ZaloPay QR & Instructions */}
+                        {payment === 'zalopay' && m.id === 'zalopay' && (
+                          <div style={{
+                            padding: '20px', background: '#eff6ff',
+                            borderTop: `2px dashed ${m.color}40`,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+                          }}>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0369a1', textAlign: 'center' }}>
+                              Quét mã ZaloPay QR Đa Năng để hoàn tất thanh toán
                             </div>
                             <div style={{
-                              display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center',
+                              width: '150px', height: '150px',
+                              background: '#fff', border: '2px solid #0284c7',
+                              borderRadius: '12px', display: 'flex',
+                              alignItems: 'center', justifyContent: 'center',
+                              boxShadow: '0 4px 15px rgba(2,132,199,0.15)',
                             }}>
-                              {['Vietcombank', 'Techcombank', 'MB Bank', 'VietinBank'].map(b => (
-                                <span key={b} style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', background: '#e2e8f0', padding: '3px 8px', borderRadius: '4px' }}>{b}</span>
-                              ))}
+                              <svg width="110" height="110" viewBox="0 0 120 120">
+                                <rect width="120" height="120" fill="white"/>
+                                <rect x="8" y="8" width="30" height="30" fill="none" stroke="#0068ff" strokeWidth="4" rx="3"/>
+                                <rect x="14" y="14" width="18" height="18" fill="#0068ff" rx="2"/>
+                                <rect x="82" y="8" width="30" height="30" fill="none" stroke="#0068ff" strokeWidth="4" rx="3"/>
+                                <rect x="88" y="14" width="18" height="18" fill="#0068ff" rx="2"/>
+                                <rect x="8" y="82" width="30" height="30" fill="none" stroke="#0068ff" strokeWidth="4" rx="3"/>
+                                <rect x="14" y="88" width="18" height="18" fill="#0068ff" rx="2"/>
+                                {[0,1,2,3,4,5,6].map(r => (
+                                  [0,1,2,3,4,5,6].map(c => (
+                                    <rect key={`${r}-${c}`} x={45 + c * 5} y={45 + r * 5} width="3.5" height="3.5" fill="#0068ff" rx="0.5"/>
+                                  ))
+                                ))}
+                              </svg>
+                            </div>
+                            <div style={{ background: '#fff', padding: '10px 16px', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '12px', color: '#475569', width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div><strong>Tài khoản ZaloPay:</strong> <span style={{ color: '#0068ff', fontWeight: 800 }}>PCHUB VIETNAM</span></div>
+                              <div><strong>Số tiền:</strong> <span style={{ color: '#ef4444', fontWeight: 800 }}>{finalTotal.toLocaleString('vi-VN')}₫</span></div>
                             </div>
                           </div>
                         )}
