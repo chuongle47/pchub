@@ -675,6 +675,66 @@ export async function fetchSbuyWooCommercePaymentGateways(): Promise<WooCommerce
             description = description || 'Thanh toán qua séc hoặc ủy nhiệm chi doanh nghiệp';
             icon = '📑';
             color = '#0284c7';
+          } else if (g.id === 'ppcp-gateway') {
+            title = 'PayPal Quốc tế';
+            description = 'Thanh toán an toàn bảo mật qua tài khoản PayPal';
+            icon = '🅿️';
+            color = '#003087';
+          } else if (g.id === 'ppcp-card-button-gateway' || g.id === 'ppcp-axo-gateway') {
+            title = 'Thẻ quốc tế (Visa / Master / JCB)';
+            description = 'Thanh toán trực tiếp bằng thẻ ghi nợ & tín dụng quốc tế qua PayPal';
+            icon = '💳';
+            color = '#1d4ed8';
+          } else if (g.id === 'ppcp-applepay') {
+            title = 'Apple Pay (qua PayPal)';
+            description = 'Thanh toán một chạm tiện lợi trên thiết bị Apple';
+            icon = '🍎';
+            color = '#0f172a';
+          } else if (g.id === 'ppcp-googlepay') {
+            title = 'Google Pay (qua PayPal)';
+            description = 'Thanh toán nhanh một chạm bằng tài khoản Google';
+            icon = '🟢';
+            color = '#ea4335';
+          } else if (g.id === 'ppcp-bancontact') {
+            title = 'Bancontact (qua PayPal)';
+            description = description || 'Thanh toán điện tử Bancontact';
+            icon = '💳';
+            color = '#00457c';
+          } else if (g.id === 'ppcp-ideal') {
+            title = 'iDeal (qua PayPal)';
+            description = description || 'Thanh toán ngân hàng trực tuyến iDeal';
+            icon = '🏦';
+            color = '#cc0066';
+          } else if (g.id === 'ppcp-blik') {
+            title = 'Blik (qua PayPal)';
+            description = description || 'Thanh toán di động Blik';
+            icon = '📱';
+            color = '#e6194b';
+          } else if (g.id === 'ppcp-eps') {
+            title = 'EPS (qua PayPal)';
+            description = description || 'Thanh toán trực tuyến EPS';
+            icon = '🏛️';
+            color = '#006699';
+          } else if (g.id === 'ppcp-mybank') {
+            title = 'MyBank (qua PayPal)';
+            description = description || 'Chuyển khoản ngân hàng trực tuyến MyBank';
+            icon = '🏦';
+            color = '#1785fb';
+          } else if (g.id === 'ppcp-p24') {
+            title = 'Przelewy24 (qua PayPal)';
+            description = description || 'Cổng thanh toán trực tuyến Przelewy24';
+            icon = '💳';
+            color = '#d62828';
+          } else if (g.id === 'ppcp-trustly') {
+            title = 'Trustly (qua PayPal)';
+            description = description || 'Thanh toán trực tiếp ngân hàng Trustly';
+            icon = '🛡️';
+            color = '#00ab6b';
+          } else if (g.id === 'ppcp-multibanco') {
+            title = 'Multibanco (qua PayPal)';
+            description = description || 'Thanh toán trực tuyến Multibanco';
+            icon = '📑';
+            color = '#00609c';
           }
 
           return {
@@ -685,6 +745,23 @@ export async function fetchSbuyWooCommercePaymentGateways(): Promise<WooCommerce
             icon,
             color
           };
+        });
+
+        // Sort priority: COD -> BACS -> PayPal/Cards -> Apple/Google Pay -> Cheque -> Others
+        const orderPriority: Record<string, number> = {
+          'cod': 1,
+          'bacs': 2,
+          'ppcp-card-button-gateway': 3,
+          'ppcp-gateway': 4,
+          'ppcp-applepay': 5,
+          'ppcp-googlepay': 6,
+          'cheque': 7
+        };
+
+        mapped.sort((a, b) => {
+          const pA = orderPriority[a.id] || 99;
+          const pB = orderPriority[b.id] || 99;
+          return pA - pB;
         });
 
         return mapped;
@@ -777,15 +854,6 @@ export async function fetchSbuyWooCommerceShippingMethods(): Promise<WooCommerce
         }
 
         if (mapped.length > 0) {
-          if (!mapped.some(m => m.method_id === 'flat_rate')) {
-            mapped.push({
-              id: 'flat_rate',
-              name: 'Giao hàng nhanh Express (GHN/GHTK)',
-              estimate: '1-2 ngày',
-              price: 25000,
-              method_id: 'flat_rate'
-            });
-          }
           return mapped;
         }
       }
@@ -794,11 +862,9 @@ export async function fetchSbuyWooCommerceShippingMethods(): Promise<WooCommerce
     console.warn('Failed to fetch WooCommerce shipping methods:', err);
   }
 
-  // Fallback shipping options
+  // Fallback shipping options (strictly WooCommerce Zone 1 methods)
   return [
-    { id: 'free_shipping', name: 'Miễn phí vận chuyển (Free shipping)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' },
-    { id: 'flat_rate', name: 'Giao hàng nhanh Express (GHN/GHTK)', estimate: '1-2 ngày', price: 25000, method_id: 'flat_rate' },
-    { id: 'local_pickup', name: 'Nhận trực tiếp tại showroom', estimate: 'Trong ngày', price: 0, method_id: 'local_pickup' },
+    { id: 'free_shipping', name: 'Free shipping (Miễn phí vận chuyển)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' }
   ];
 }
 

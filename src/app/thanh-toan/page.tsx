@@ -17,9 +17,7 @@ import { VIETNAM_PROVINCES, getWardsForProvince } from '@/data/vietnam-locations
 type CheckoutStep = 'shipping' | 'payment';
 
 const DEFAULT_SHIPPING_OPTIONS = [
-  { id: 'free_shipping', name: 'Miễn phí vận chuyển (Free shipping)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' },
-  { id: 'flat_rate', name: 'Giao hàng tiêu chuẩn Express (GHN/GHTK)', estimate: '1-2 ngày', price: 25000, method_id: 'flat_rate' },
-  { id: 'local_pickup', name: 'Nhận trực tiếp tại Showroom', estimate: 'Trong ngày', price: 0, method_id: 'local_pickup' },
+  { id: 'free_shipping', name: 'Free shipping (Miễn phí vận chuyển)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' },
 ];
 
 const DEFAULT_PAYMENT_METHODS = [
@@ -193,7 +191,7 @@ export default function CheckoutPage() {
 
   const totalPrice = total();
   const selectedShipping = shippingOptions.find(s => s.id === shippingOption) || shippingOptions[0];
-  const shippingFee = (totalPrice >= 500000 || selectedShipping?.price === 0) ? 0 : (selectedShipping?.price ?? 25000);
+  const shippingFee = selectedShipping?.price ?? 0;
   const finalTotal = Math.max(0, totalPrice + shippingFee - voucherDiscount);
 
   const applyVoucher = async (codeToApply?: string) => {
@@ -870,8 +868,42 @@ export default function CheckoutPage() {
                           </div>
                         )}
 
+                        {/* PayPal & International Cards */}
+                        {payment === m.id && (m.id === 'ppcp-gateway' || m.id === 'ppcp-card-button-gateway' || m.id === 'ppcp-axo-gateway') && (
+                          <div style={{
+                            padding: '16px 20px', background: '#f0f7ff',
+                            borderTop: `2px dashed ${(m.color || '#003087')}40`,
+                            fontSize: '13px', color: '#0f172a', display: 'flex', flexDirection: 'column', gap: '8px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#003087' }}>
+                              <span>🅿️</span>
+                              <span>Cổng thanh toán bảo mật PayPal / Thẻ quốc tế</span>
+                            </div>
+                            <div style={{ fontSize: '12.5px', color: '#475569' }}>
+                              Đơn hàng của quý khách sẽ được kết nối và ghi nhận trực tiếp qua cổng thanh toán WooCommerce PayPal.
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Apple Pay & Google Pay */}
+                        {payment === m.id && (m.id === 'ppcp-applepay' || m.id === 'ppcp-googlepay') && (
+                          <div style={{
+                            padding: '16px 20px', background: '#f8fafc',
+                            borderTop: `2px dashed ${(m.color || '#2563eb')}40`,
+                            fontSize: '13px', color: '#0f172a', display: 'flex', flexDirection: 'column', gap: '8px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f172a' }}>
+                              <span>{m.icon || '📱'}</span>
+                              <span>Thanh toán {m.label || m.title} qua WooCommerce</span>
+                            </div>
+                            <div style={{ fontSize: '12.5px', color: '#475569' }}>
+                              Xác nhận đơn hàng một chạm bảo mật trên thiết bị hỗ trợ của quý khách.
+                            </div>
+                          </div>
+                        )}
+
                         {/* Other WooCommerce gateways fallback info */}
-                        {payment === m.id && m.id !== 'bacs' && m.id !== 'cod' && m.id !== 'cheque' && (
+                        {payment === m.id && m.id !== 'bacs' && m.id !== 'cod' && m.id !== 'cheque' && !m.id.startsWith('ppcp-') && (
                           <div style={{
                             padding: '14px 18px', background: '#f8fafc',
                             borderTop: `2px dashed ${(m.color || '#2563eb')}40`,
