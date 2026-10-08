@@ -793,126 +793,16 @@ export default function CheckoutPage() {
                           <span style={{ fontSize: '20px', flexShrink: 0 }}>{m.icon || '💳'}</span>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{m.label || m.title}</div>
-                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{m.desc || m.description}</div>
+                            {Boolean(m.desc || m.description) && (
+                              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px', lineHeight: '1.4' }}>
+                                {m.desc || m.description}
+                              </div>
+                            )}
                           </div>
                           {payment === m.id && (
                             <CheckCircle size={18} color={m.color || '#2563eb'} style={{ flexShrink: 0 }} />
                           )}
                         </div>
-
-                        {/* Direct Bank Transfer (BACS) */}
-                        {payment === 'bacs' && m.id === 'bacs' && (
-                          <div style={{
-                            padding: '18px 20px', background: '#f8fafc',
-                            borderTop: `2px dashed ${(m.color || '#475569')}40`,
-                            display: 'flex', flexDirection: 'column', gap: '12px',
-                          }}>
-                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                              Thông tin tài khoản chuyển khoản ngân hàng:
-                            </div>
-                            <div style={{
-                              background: '#fff', padding: '14px 16px', borderRadius: '10px',
-                              border: '1px solid #cbd5e1', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px'
-                            }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#64748b' }}>Ngân hàng:</span>
-                                <strong style={{ color: '#0f172a' }}>VietinBank (Chi nhánh TP.HCM)</strong>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#64748b' }}>Số tài khoản:</span>
-                                <strong style={{ color: '#2563eb', fontSize: '15px', fontFamily: 'monospace' }}>1028 7899 9999</strong>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#64748b' }}>Chủ tài khoản:</span>
-                                <strong style={{ color: '#0f172a' }}>PCHUB TECHNOLOGY VIETNAM</strong>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#64748b' }}>Số tiền:</span>
-                                <strong style={{ color: '#ef4444', fontSize: '15px' }}>{finalTotal.toLocaleString('vi-VN')}₫</strong>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#64748b' }}>Nội dung CK:</span>
-                                <strong style={{ color: '#0f172a', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
-                                  PCHUB {form.phone || '0901234567'}
-                                </strong>
-                              </div>
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#16a34a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>✓</span>
-                              <span>Hệ thống tự động đồng bộ đơn hàng lên WooCommerce ngay khi quý khách bấm xác nhận.</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Cash on Delivery (COD) */}
-                        {payment === 'cod' && m.id === 'cod' && (
-                          <div style={{
-                            padding: '14px 18px', background: '#f0fdf4',
-                            borderTop: `2px dashed ${(m.color || '#16a34a')}40`,
-                            fontSize: '12.5px', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px'
-                          }}>
-                            <span>💵</span>
-                            <span>Quý khách thanh toán tiền mặt trực tiếp cho nhân viên bưu tá khi nhận hàng và kiểm tra đầy đủ linh kiện.</span>
-                          </div>
-                        )}
-
-                        {/* Cheque / Corporate Payment */}
-                        {payment === 'cheque' && m.id === 'cheque' && (
-                          <div style={{
-                            padding: '14px 18px', background: '#f0f9ff',
-                            borderTop: `2px dashed ${(m.color || '#0284c7')}40`,
-                            fontSize: '12.5px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px'
-                          }}>
-                            <span>📑</span>
-                            <span>Chuyên viên doanh nghiệp của PCHub sẽ liên hệ tiếp nhận hồ sơ séc / ủy nhiệm chi trong vòng 15 phút.</span>
-                          </div>
-                        )}
-
-                        {/* PayPal & International Cards */}
-                        {payment === m.id && (m.id === 'ppcp-gateway' || m.id === 'ppcp-card-button-gateway' || m.id === 'ppcp-axo-gateway') && (
-                          <div style={{
-                            padding: '16px 20px', background: '#f0f7ff',
-                            borderTop: `2px dashed ${(m.color || '#003087')}40`,
-                            fontSize: '13px', color: '#0f172a', display: 'flex', flexDirection: 'column', gap: '8px'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#003087' }}>
-                              <span>🅿️</span>
-                              <span>Cổng thanh toán bảo mật PayPal / Thẻ quốc tế</span>
-                            </div>
-                            <div style={{ fontSize: '12.5px', color: '#475569' }}>
-                              Đơn hàng của quý khách sẽ được kết nối và ghi nhận trực tiếp qua cổng thanh toán WooCommerce PayPal.
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Apple Pay & Google Pay */}
-                        {payment === m.id && (m.id === 'ppcp-applepay' || m.id === 'ppcp-googlepay') && (
-                          <div style={{
-                            padding: '16px 20px', background: '#f8fafc',
-                            borderTop: `2px dashed ${(m.color || '#2563eb')}40`,
-                            fontSize: '13px', color: '#0f172a', display: 'flex', flexDirection: 'column', gap: '8px'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f172a' }}>
-                              <span>{m.icon || '📱'}</span>
-                              <span>Thanh toán {m.label || m.title} qua WooCommerce</span>
-                            </div>
-                            <div style={{ fontSize: '12.5px', color: '#475569' }}>
-                              Xác nhận đơn hàng một chạm bảo mật trên thiết bị hỗ trợ của quý khách.
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Other WooCommerce gateways fallback info */}
-                        {payment === m.id && m.id !== 'bacs' && m.id !== 'cod' && m.id !== 'cheque' && !m.id.startsWith('ppcp-') && (
-                          <div style={{
-                            padding: '14px 18px', background: '#f8fafc',
-                            borderTop: `2px dashed ${(m.color || '#2563eb')}40`,
-                            fontSize: '12.5px', color: '#475569', display: 'flex', alignItems: 'center', gap: '8px'
-                          }}>
-                            <span>💳</span>
-                            <span>{m.desc || m.description || 'Thanh toán trực tiếp theo cấu hình cổng WooCommerce.'}</span>
-                          </div>
-                        )}
                       </label>
                     ))}
                   </div>
