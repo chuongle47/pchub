@@ -17,12 +17,13 @@ import { VIETNAM_PROVINCES, getWardsForProvince } from '@/data/vietnam-locations
 
 type CheckoutStep = 'shipping' | 'payment';
 
-const SHIPPING_OPTIONS = [
-  { id: 'ghn', name: 'GHN — Giao hàng nhanh', estimate: '1-2 ngày', price: 25000 },
-  { id: 'ghtk', name: 'GHTK — Tiết kiệm', estimate: '3-5 ngày', price: 20000 },
+const DEFAULT_SHIPPING_OPTIONS = [
+  { id: 'free_shipping', name: 'Miễn phí vận chuyển (Free shipping)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' },
+  { id: 'flat_rate', name: 'Giao hàng tiêu chuẩn Express (GHN/GHTK)', estimate: '1-2 ngày', price: 25000, method_id: 'flat_rate' },
+  { id: 'local_pickup', name: 'Nhận trực tiếp tại Showroom', estimate: 'Trong ngày', price: 0, method_id: 'local_pickup' },
 ];
 
-const PAYMENT_METHODS = [
+const DEFAULT_PAYMENT_METHODS = [
   {
     id: 'wallet',
     label: 'Ví điện tử thành viên',
@@ -31,6 +32,30 @@ const PAYMENT_METHODS = [
     color: '#2563eb',
     showQR: false,
     isWallet: true,
+  },
+  {
+    id: 'cod',
+    label: 'Thanh toán khi nhận hàng (COD)',
+    desc: 'Trả tiền mặt trực tiếp khi nhận được hàng',
+    icon: '💵',
+    color: '#16a34a',
+    showQR: false,
+  },
+  {
+    id: 'bacs',
+    label: 'Chuyển khoản ngân hàng 24/7',
+    desc: 'Chuyển khoản trực tiếp qua số tài khoản ngân hàng',
+    icon: '🏛️',
+    color: '#475569',
+    showQR: false,
+  },
+  {
+    id: 'cheque',
+    label: 'Thanh toán séc / Ủy nhiệm chi',
+    desc: 'Thanh toán qua séc hoặc ủy nhiệm chi doanh nghiệp',
+    icon: '📑',
+    color: '#0284c7',
+    showQR: false,
   },
   {
     id: 'momo',
@@ -55,22 +80,6 @@ const PAYMENT_METHODS = [
     icon: '🏦',
     color: '#1d4ed8',
     showQR: true,
-  },
-  {
-    id: 'cod',
-    label: 'Thanh toán khi nhận hàng (COD)',
-    desc: 'Trả tiền mặt khi nhận được hàng',
-    icon: '💵',
-    color: '#16a34a',
-    showQR: false,
-  },
-  {
-    id: 'bank',
-    label: 'Chuyển khoản ngân hàng 24/7',
-    desc: 'Chuyển khoản trực tiếp qua số tài khoản ngân hàng',
-    icon: '🏛️',
-    color: '#475569',
-    showQR: false,
   },
 ];
 
@@ -135,13 +144,42 @@ export default function CheckoutPage() {
   const syncWalletWithBackend = useWalletStore(s => s.syncWithBackend);
 
   const [step, setStep] = useState<CheckoutStep>('shipping');
-  const [shippingOption, setShippingOption] = useState('ghn');
+  const [shippingOptions, setShippingOptions] = useState<any[]>(DEFAULT_SHIPPING_OPTIONS);
+  const [shippingOption, setShippingOption] = useState('free_shipping');
+  const [paymentMethods, setPaymentMethods] = useState<any[]>(DEFAULT_PAYMENT_METHODS);
   const [payment, setPayment] = useState('wallet');
   const [loading, setLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(15);
   const [processingStep, setProcessingStep] = useState<1 | 2 | 3>(1);
   const [createdOrderId, setCreatedOrderId] = useState<string>('ORD-PCHUB');
+
+  // Load live WooCommerce Shipping & Payment Gateways
+  useEffect(() => {
+    fetch('/api/woocommerce/checkout-config')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (Array.isArray(data.shippingMethods) && data.shippingMethods.length > 0) {
+            setShippingOptions(data.shippingMethods);
+            setShippingOption(data.shippingMethods[0].id);
+          }
+          if (Array.isArray(data.paymentGateways) && data.paymentGateways.length > 0) {
+            const formatted = data.paymentGateways.map((g: any) => ({
+              id: g.id,
+              label: g.title,
+              desc: g.description,
+              icon: g.icon || '💳',
+              color: g.color || '#2563eb',
+              isWallet: g.isWallet || g.id === 'wallet',
+              showQR: g.id === 'momo' || g.id === 'zalopay' || g.id === 'vnpay'
+            }));
+            setPaymentMethods(formatted);
+          }
+        }
+      })
+      .catch(err => console.warn('Failed to load WooCommerce checkout config:', err));
+  }, []);
 
   // E-Wallet balance state
   const walletBalance = walletStore?.balance ?? 16000000;
@@ -208,8 +246,8 @@ export default function CheckoutPage() {
   };
 
   const totalPrice = total();
-  const selectedShipping = SHIPPING_OPTIONS.find(s => s.id === shippingOption);
-  const shippingFee = totalPrice >= 500000 ? 0 : (selectedShipping?.price ?? 25000);
+  const selectedShipping = shippingOptions.find(s => s.id === shippingOption) || shippingOptions[0];
+  const shippingFee = (totalPrice >= 500000 || selectedShipping?.price === 0) ? 0 : (selectedShipping?.price ?? 25000);
   const finalTotal = Math.max(0, totalPrice + shippingFee - voucherDiscount);
 
   const applyVoucher = async (codeToApply?: string) => {
@@ -279,7 +317,8 @@ export default function CheckoutPage() {
 
     const orderId = `ORD-${Date.now()}`;
     setCreatedOrderId(orderId);
-    const selectedPayment = PAYMENT_METHODS.find(m => m.id === payment);
+    const selectedPayment = paymentMethods.find(m => m.id === payment) || paymentMethods[0];
+    const selectedShippingOption = shippingOptions.find(s => s.id === shippingOption) || shippingOptions[0];
 
     const bName = buyerForm.name.trim() || form.name || 'Khách hàng PCHub';
     const bPhone = buyerForm.phone.trim() || form.phone || '0901234567';
@@ -349,7 +388,7 @@ export default function CheckoutPage() {
       },
       shippingFee,
       paymentMethod: payment,
-      paymentMethodLabel: selectedPayment?.label || 'Thanh toán'
+      paymentMethodLabel: selectedPayment?.label || selectedPayment?.title || 'Thanh toán'
     };
 
     addOrder(newOrder);
@@ -386,7 +425,9 @@ export default function CheckoutPage() {
             quantity: item.quantity
           })),
           paymentMethod: payment,
-          paymentMethodLabel: selectedPayment?.label || 'Thanh toán',
+          paymentMethodLabel: selectedPayment?.label || selectedPayment?.title || 'Thanh toán',
+          shippingMethodId: selectedShippingOption?.method_id || selectedShippingOption?.id || 'flat_rate',
+          shippingMethodTitle: selectedShippingOption?.name || 'Vận chuyển tiêu chuẩn',
           shippingFee,
           total: finalTotal
         })
@@ -412,7 +453,7 @@ export default function CheckoutPage() {
     router.push(`/dat-hang-thanh-cong?orderId=${orderId}`);
   };
 
-  const selectedPayment = PAYMENT_METHODS.find(m => m.id === payment);
+  const selectedPayment = paymentMethods.find((m: any) => m.id === payment) || paymentMethods[0];
 
   // Shared right panel: order summary
   const OrderSummary = () => (
@@ -726,7 +767,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {SHIPPING_OPTIONS.map(opt => (
+                    {shippingOptions.map(opt => (
                       <label key={opt.id} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '14px 16px', borderRadius: '10px', cursor: 'pointer',
@@ -746,8 +787,8 @@ export default function CheckoutPage() {
                             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Dự kiến: {opt.estimate}</div>
                           </div>
                         </div>
-                        <span style={{ fontSize: '14px', fontWeight: 800, color: totalPrice >= 500000 ? '#16a34a' : '#1e293b' }}>
-                          {totalPrice >= 500000 ? 'Miễn phí' : `${opt.price.toLocaleString('vi-VN')}₫`}
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: (totalPrice >= 500000 || opt.price === 0) ? '#16a34a' : '#1e293b' }}>
+                          {(totalPrice >= 500000 || opt.price === 0) ? 'Miễn phí' : `${opt.price.toLocaleString('vi-VN')}₫`}
                         </span>
                       </label>
                     ))}
@@ -818,31 +859,31 @@ export default function CheckoutPage() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {PAYMENT_METHODS.map(m => (
+                    {paymentMethods.map(m => (
                       <label key={m.id} style={{
                         display: 'flex', flexDirection: 'column',
                         borderRadius: '12px', cursor: 'pointer', overflow: 'hidden',
-                        border: `2px solid ${payment === m.id ? m.color : '#e2e8f0'}`,
+                        border: `2px solid ${payment === m.id ? (m.color || '#2563eb') : '#e2e8f0'}`,
                         transition: 'all 0.15s',
                       }}>
                         <div style={{
                           display: 'flex', alignItems: 'center', gap: '12px',
                           padding: '14px 16px',
-                          background: payment === m.id ? `${m.color}10` : '#fff',
+                          background: payment === m.id ? `${m.color || '#2563eb'}10` : '#fff',
                         }}>
                           <input
                             type="radio" name="payment" value={m.id}
                             checked={payment === m.id}
                             onChange={() => setPayment(m.id)}
-                            style={{ accentColor: m.color, width: '16px', height: '16px', flexShrink: 0 }}
+                            style={{ accentColor: m.color || '#2563eb', width: '16px', height: '16px', flexShrink: 0 }}
                           />
-                          <span style={{ fontSize: '20px', flexShrink: 0 }}>{m.icon}</span>
+                          <span style={{ fontSize: '20px', flexShrink: 0 }}>{m.icon || '💳'}</span>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{m.label}</div>
-                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{m.desc}</div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{m.label || m.title}</div>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{m.desc || m.description}</div>
                           </div>
                           {payment === m.id && (
-                            <CheckCircle size={18} color={m.color} style={{ flexShrink: 0 }} />
+                            <CheckCircle size={18} color={m.color || '#2563eb'} style={{ flexShrink: 0 }} />
                           )}
                         </div>
 
@@ -850,7 +891,7 @@ export default function CheckoutPage() {
                         {payment === 'wallet' && m.id === 'wallet' && (
                           <div style={{
                             padding: '18px 20px', background: '#f8fafc',
-                            borderTop: `2px dashed ${m.color}40`,
+                            borderTop: `2px dashed ${(m.color || '#2563eb')}40`,
                             display: 'flex', flexDirection: 'column', gap: '12px',
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
@@ -896,11 +937,79 @@ export default function CheckoutPage() {
                           </div>
                         )}
 
+                        {/* Direct Bank Transfer (BACS) */}
+                        {payment === 'bacs' && m.id === 'bacs' && (
+                          <div style={{
+                            padding: '18px 20px', background: '#f8fafc',
+                            borderTop: `2px dashed ${(m.color || '#475569')}40`,
+                            display: 'flex', flexDirection: 'column', gap: '12px',
+                          }}>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                              Thông tin tài khoản chuyển khoản ngân hàng:
+                            </div>
+                            <div style={{
+                              background: '#fff', padding: '14px 16px', borderRadius: '10px',
+                              border: '1px solid #cbd5e1', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Ngân hàng:</span>
+                                <strong style={{ color: '#0f172a' }}>VietinBank (Chi nhánh TP.HCM)</strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Số tài khoản:</span>
+                                <strong style={{ color: '#2563eb', fontSize: '15px', fontFamily: 'monospace' }}>1028 7899 9999</strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Chủ tài khoản:</span>
+                                <strong style={{ color: '#0f172a' }}>PCHUB TECHNOLOGY VIETNAM</strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Số tiền:</span>
+                                <strong style={{ color: '#ef4444', fontSize: '15px' }}>{finalTotal.toLocaleString('vi-VN')}₫</strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: '#64748b' }}>Nội dung CK:</span>
+                                <strong style={{ color: '#0f172a', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
+                                  PCHUB {form.phone || '0901234567'}
+                                </strong>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#16a34a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>✓</span>
+                              <span>Hệ thống tự động đồng bộ đơn hàng lên WooCommerce ngay khi quý khách bấm xác nhận.</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Cash on Delivery (COD) */}
+                        {payment === 'cod' && m.id === 'cod' && (
+                          <div style={{
+                            padding: '14px 18px', background: '#f0fdf4',
+                            borderTop: `2px dashed ${(m.color || '#16a34a')}40`,
+                            fontSize: '12.5px', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px'
+                          }}>
+                            <span>💵</span>
+                            <span>Quý khách thanh toán tiền mặt trực tiếp cho nhân viên bưu tá khi nhận hàng và kiểm tra đầy đủ linh kiện.</span>
+                          </div>
+                        )}
+
+                        {/* Cheque / Corporate Payment */}
+                        {payment === 'cheque' && m.id === 'cheque' && (
+                          <div style={{
+                            padding: '14px 18px', background: '#f0f9ff',
+                            borderTop: `2px dashed ${(m.color || '#0284c7')}40`,
+                            fontSize: '12.5px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px'
+                          }}>
+                            <span>📑</span>
+                            <span>Chuyên viên doanh nghiệp của PCHub sẽ liên hệ tiếp nhận hồ sơ séc / ủy nhiệm chi trong vòng 15 phút.</span>
+                          </div>
+                        )}
+
                         {/* MoMo QR & Instructions */}
                         {payment === 'momo' && m.id === 'momo' && (
                           <div style={{
                             padding: '20px', background: '#fdf2f8',
-                            borderTop: `2px dashed ${m.color}40`,
+                            borderTop: `2px dashed ${(m.color || '#a21caf')}40`,
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
                           }}>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#a21caf', textAlign: 'center' }}>
@@ -940,7 +1049,7 @@ export default function CheckoutPage() {
                         {payment === 'zalopay' && m.id === 'zalopay' && (
                           <div style={{
                             padding: '20px', background: '#eff6ff',
-                            borderTop: `2px dashed ${m.color}40`,
+                            borderTop: `2px dashed ${(m.color || '#0284c7')}40`,
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
                           }}>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0369a1', textAlign: 'center' }}>

@@ -618,6 +618,203 @@ export async function fetchSbuyCategoriesLive(): Promise<AppCategory[]> {
   return fallbackCategories;
 }
 
+export interface WooCommercePaymentGateway {
+  id: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+  icon?: string;
+  color?: string;
+  isWallet?: boolean;
+}
+
+export interface WooCommerceShippingOption {
+  id: string;
+  name: string;
+  estimate: string;
+  price: number;
+  method_id: string;
+  description?: string;
+}
+
+/**
+ * Fetch available payment gateways dynamically from WooCommerce REST API
+ */
+export async function fetchSbuyWooCommercePaymentGateways(): Promise<WooCommercePaymentGateway[]> {
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/payment_gateways`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': authHeader },
+      cache: 'no-store'
+    });
+
+    if (res.ok) {
+      const gateways: any[] = await res.json();
+      if (Array.isArray(gateways)) {
+        const enabledGateways = gateways.filter(g => g.enabled);
+
+        const mapped = enabledGateways.map(g => {
+          let title = g.title || '';
+          let description = (g.description || '').replace(/<[^>]*>/g, '').trim();
+          let icon = '💳';
+          let color = '#2563eb';
+
+          if (g.id === 'cod') {
+            title = 'Thanh toán khi nhận hàng (COD)';
+            description = description || 'Trả tiền mặt trực tiếp khi nhận được hàng';
+            icon = '💵';
+            color = '#16a34a';
+          } else if (g.id === 'bacs') {
+            title = 'Chuyển khoản ngân hàng 24/7';
+            description = description || 'Chuyển khoản trực tiếp qua số tài khoản ngân hàng';
+            icon = '🏛️';
+            color = '#475569';
+          } else if (g.id === 'cheque') {
+            title = 'Thanh toán séc / Ủy nhiệm chi';
+            description = description || 'Thanh toán qua séc hoặc ủy nhiệm chi doanh nghiệp';
+            icon = '📑';
+            color = '#0284c7';
+          }
+
+          return {
+            id: g.id,
+            title,
+            description,
+            enabled: true,
+            icon,
+            color
+          };
+        });
+
+        // Always include Member Wallet as first payment method
+        return [
+          {
+            id: 'wallet',
+            title: 'Ví điện tử thành viên',
+            description: 'Thanh toán trực tiếp bằng số dư ví điện tử của bạn',
+            enabled: true,
+            icon: '💳',
+            color: '#2563eb',
+            isWallet: true
+          },
+          ...mapped
+        ];
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch WooCommerce payment gateways:', err);
+  }
+
+  // Fallback gateways
+  return [
+    {
+      id: 'wallet',
+      title: 'Ví điện tử thành viên',
+      description: 'Thanh toán trực tiếp bằng số dư ví điện tử của bạn',
+      enabled: true,
+      icon: '💳',
+      color: '#2563eb',
+      isWallet: true
+    },
+    {
+      id: 'cod',
+      title: 'Thanh toán khi nhận hàng (COD)',
+      description: 'Trả tiền mặt khi nhận được hàng',
+      enabled: true,
+      icon: '💵',
+      color: '#16a34a'
+    },
+    {
+      id: 'bacs',
+      title: 'Chuyển khoản ngân hàng 24/7',
+      description: 'Chuyển khoản trực tiếp qua số tài khoản ngân hàng',
+      enabled: true,
+      icon: '🏛️',
+      color: '#475569'
+    }
+  ];
+}
+
+/**
+ * Fetch available shipping methods dynamically from WooCommerce REST API
+ */
+export async function fetchSbuyWooCommerceShippingMethods(): Promise<WooCommerceShippingOption[]> {
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    
+    // Fetch Zone 1 methods or zones
+    const zoneRes = await fetch(`${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/shipping/zones/1/methods`, {
+      headers: { 'Authorization': authHeader },
+      cache: 'no-store'
+    });
+
+    if (zoneRes.ok) {
+      const methods: any[] = await zoneRes.json();
+      if (Array.isArray(methods) && methods.length > 0) {
+        const mapped: WooCommerceShippingOption[] = [];
+
+        for (const m of methods) {
+          if (m.enabled) {
+            let cost = 0;
+            if (m.settings?.cost?.value) {
+              cost = parseFloat(m.settings.cost.value) || 0;
+            }
+
+            let name = m.title || m.method_title;
+            let estimate = '2-4 ngày';
+
+            if (m.method_id === 'free_shipping') {
+              name = 'Miễn phí vận chuyển (Free shipping)';
+              estimate = '2-4 ngày';
+              cost = 0;
+            } else if (m.method_id === 'flat_rate') {
+              name = 'Giao hàng tiêu chuẩn (Flat rate)';
+              estimate = '1-3 ngày';
+              cost = cost || 25000;
+            } else if (m.method_id === 'local_pickup') {
+              name = 'Nhận trực tiếp tại showroom';
+              estimate = 'Trong ngày';
+              cost = 0;
+            }
+
+            mapped.push({
+              id: m.method_id,
+              name,
+              estimate,
+              price: cost,
+              method_id: m.method_id,
+              description: m.method_description ? m.method_description.replace(/<[^>]*>/g, '').trim() : undefined
+            });
+          }
+        }
+
+        if (mapped.length > 0) {
+          if (!mapped.some(m => m.method_id === 'flat_rate')) {
+            mapped.push({
+              id: 'flat_rate',
+              name: 'Giao hàng nhanh Express (GHN/GHTK)',
+              estimate: '1-2 ngày',
+              price: 25000,
+              method_id: 'flat_rate'
+            });
+          }
+          return mapped;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch WooCommerce shipping methods:', err);
+  }
+
+  // Fallback shipping options
+  return [
+    { id: 'free_shipping', name: 'Miễn phí vận chuyển (Free shipping)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' },
+    { id: 'flat_rate', name: 'Giao hàng nhanh Express (GHN/GHTK)', estimate: '1-2 ngày', price: 25000, method_id: 'flat_rate' },
+    { id: 'local_pickup', name: 'Nhận trực tiếp tại showroom', estimate: 'Trong ngày', price: 0, method_id: 'local_pickup' },
+  ];
+}
+
 // WooCommerce Real Order Creation in Sbuy Backend
 export async function createSbuyWooCommerceOrder(orderData: {
   buyer?: {
@@ -643,6 +840,8 @@ export async function createSbuyWooCommerceOrder(orderData: {
   }>;
   paymentMethod: string;
   paymentMethodLabel: string;
+  shippingMethodId?: string;
+  shippingMethodTitle?: string;
   shippingFee: number;
   total: number;
 }): Promise<{ success: boolean; wooOrderId?: number; error?: string }> {
@@ -699,10 +898,14 @@ export async function createSbuyWooCommerceOrder(orderData: {
     const buyerEmail = orderData.buyer?.email || orderData.customer.email || 'customer@pchub.vn';
     const buyerPhone = orderData.buyer?.phone || orderData.customer.phone || '0901234567';
 
+    const isPaid = orderData.paymentMethod === 'wallet' || orderData.paymentMethod === 'vnpay' || orderData.paymentMethod === 'momo';
+    const orderStatus = isPaid ? 'processing' : (orderData.paymentMethod === 'bacs' || orderData.paymentMethod === 'cheque' ? 'on-hold' : 'processing');
+
     const body = {
       payment_method: orderData.paymentMethod || 'cod',
       payment_method_title: orderData.paymentMethodLabel || 'Thanh toán khi nhận hàng',
-      set_paid: orderData.paymentMethod === 'vnpay' || orderData.paymentMethod === 'momo',
+      set_paid: isPaid,
+      status: orderStatus,
       billing: {
         first_name: buyerName,
         last_name: '',
@@ -727,8 +930,8 @@ export async function createSbuyWooCommerceOrder(orderData: {
       line_items: lineItems,
       shipping_lines: [
         {
-          method_id: 'flat_rate',
-          method_title: 'Phí vận chuyển PCHub',
+          method_id: orderData.shippingMethodId || (orderData.shippingFee === 0 ? 'free_shipping' : 'flat_rate'),
+          method_title: orderData.shippingMethodTitle || (orderData.shippingFee === 0 ? 'Miễn phí vận chuyển' : 'Phí vận chuyển tiêu chuẩn'),
           total: String(orderData.shippingFee)
         }
       ],
