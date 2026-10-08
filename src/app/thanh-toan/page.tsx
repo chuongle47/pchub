@@ -339,9 +339,11 @@ export default function CheckoutPage() {
           })),
           paymentMethod: payment,
           paymentMethodLabel: selectedPayment?.label || selectedPayment?.title || 'Thanh toán',
-          shippingMethodId: selectedShippingOption?.method_id || selectedShippingOption?.id || 'flat_rate',
-          shippingMethodTitle: selectedShippingOption?.name || 'Vận chuyển tiêu chuẩn',
+          shippingMethodId: selectedShippingOption?.method_id || selectedShippingOption?.id || 'free_shipping',
+          shippingMethodTitle: selectedShippingOption?.name || 'Free shipping',
           shippingFee,
+          voucher: voucher.trim().toUpperCase() || undefined,
+          voucherDiscount: voucherDiscount || 0,
           total: finalTotal
         })
       });
@@ -807,6 +809,26 @@ export default function CheckoutPage() {
                     ))}
                   </div>
 
+                  {/* Voucher card in Payment Step */}
+                  <div style={{ marginTop: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                      <span style={{ color: '#16a34a', fontWeight: 800 }}>%</span>
+                      <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>Mã giảm giá (Voucher)</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        value={voucher}
+                        onChange={e => { setVoucher(e.target.value.toUpperCase()); setVoucherMessage(''); setVoucherDiscount(0); }}
+                        placeholder="Nhập mã giảm giá..."
+                        style={{ ...inputStyle, flex: 1, background: '#fff' }}
+                      />
+                      <button type="button" onClick={() => applyVoucher()} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', padding: '0 18px', fontWeight: 700, cursor: 'pointer' }}>
+                        Áp dụng
+                      </button>
+                    </div>
+                    {voucherMessage && <p style={{ margin: '8px 0 0', fontSize: '12px', color: voucherDiscount > 0 ? '#16a34a' : '#dc2626' }}>{voucherDiscount > 0 ? '✓ ' : '✕ '}{voucherMessage}</p>}
+                  </div>
+
                   <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
                     <button
                       type="button"
@@ -895,6 +917,12 @@ export default function CheckoutPage() {
                         {shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString('vi-VN')}₫`}
                       </span>
                     </div>
+                    {voucherDiscount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#16a34a' }}>
+                        <span>Giảm voucher ({voucher.trim().toUpperCase()})</span>
+                        <span style={{ fontWeight: 600 }}>−{voucherDiscount.toLocaleString('vi-VN')}₫</span>
+                      </div>
+                    )}
                     <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>Tổng cộng</span>
                       <span style={{ fontSize: '22px', fontWeight: 900, color: '#ef4444', fontVariantNumeric: 'tabular-nums' }}>

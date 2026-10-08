@@ -896,6 +896,8 @@ export async function createSbuyWooCommerceOrder(orderData: {
   shippingMethodId?: string;
   shippingMethodTitle?: string;
   shippingFee: number;
+  voucher?: string;
+  voucherDiscount?: number;
   total: number;
 }): Promise<{ success: boolean; wooOrderId?: number; error?: string }> {
   try {
@@ -954,7 +956,7 @@ export async function createSbuyWooCommerceOrder(orderData: {
     const isPaid = orderData.paymentMethod === 'ppcp-gateway';
     const orderStatus = (orderData.paymentMethod === 'bacs' || orderData.paymentMethod === 'cheque') ? 'on-hold' : 'processing';
 
-    const body = {
+    const body: Record<string, any> = {
       payment_method: orderData.paymentMethod || 'cod',
       payment_method_title: orderData.paymentMethodLabel || 'Thanh toán khi nhận hàng',
       set_paid: isPaid,
@@ -984,9 +986,22 @@ export async function createSbuyWooCommerceOrder(orderData: {
       shipping_lines: [
         {
           method_id: orderData.shippingMethodId || (orderData.shippingFee === 0 ? 'free_shipping' : 'flat_rate'),
-          method_title: orderData.shippingMethodTitle || (orderData.shippingFee === 0 ? 'Miễn phí vận chuyển' : 'Phí vận chuyển tiêu chuẩn'),
+          method_title: orderData.shippingMethodTitle || (orderData.shippingFee === 0 ? 'Free shipping' : 'Vận chuyển tiêu chuẩn'),
           total: String(orderData.shippingFee)
         }
+      ],
+      ...(orderData.voucher ? {
+        coupon_lines: [
+          {
+            code: orderData.voucher.toLowerCase(),
+            discount: String(orderData.voucherDiscount || 0)
+          }
+        ]
+      } : {}),
+      meta_data: [
+        ...(orderData.voucher ? [
+          { key: 'Voucher', value: `${orderData.voucher} (-${(orderData.voucherDiscount || 0).toLocaleString('vi-VN')}₫)` }
+        ] : [])
       ],
       customer_note: orderData.customer.note || 'Đặt hàng qua web PCHub'
     };

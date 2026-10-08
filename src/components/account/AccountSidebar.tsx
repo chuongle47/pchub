@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Bell, Bot, Heart, LayoutDashboard, MapPin, Monitor, Package, ShieldCheck, UserRound, Wallet } from 'lucide-react';
+import { LogOut, Bell, Bot, Heart, LayoutDashboard, MapPin, Monitor, Package, ShieldCheck, UserRound } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 
 interface AccountSidebarProps {
@@ -14,7 +14,6 @@ interface AccountSidebarProps {
 
 const links = [
   ['/tai-khoan', 'Tổng quan', LayoutDashboard],
-  ['/tai-khoan/vi-dien-tu', 'Ví điện tử & Giao dịch', Wallet],
   ['/tai-khoan/don-hang', 'Đơn hàng của tôi', Package],
   ['/tai-khoan/yeu-thich', 'Yêu thích', Heart],
   ['/tai-khoan/bao-hanh', 'Yêu cầu bảo hành', ShieldCheck],

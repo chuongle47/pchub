@@ -83,8 +83,8 @@ export default function Footer() {
                 { label: 'Chính sách bảo hành', href: '/support#chinh-sach-bao-hanh' },
                 { label: 'Chính sách đổi trả', href: '/support#chinh-sach-doi-tra' },
                 { label: 'Hướng dẫn mua hàng', href: '/support#huong-dan-mua-hang' },
-                { label: 'Blog & Hướng dẫn', href: '/community' },
-                { label: 'Cộng đồng PC', href: '/community' },
+                { label: 'Blog & Hướng dẫn', href: '/community?tab=news' },
+                { label: 'Cộng đồng PC', href: '/community?tab=builds' },
               ].map(link => (
                 <li key={link.href + link.label}>
                   <Link href={link.href} style={{
@@ -110,7 +110,7 @@ export default function Footer() {
                 { label: 'Mainboard – Bo mạch chủ', href: '/search?category=mainboard' },
                 { label: 'PSU – Nguồn máy tính', href: '/search?category=psu' },
                 { label: '🖥️ Build PC', href: '/build-pc' },
-                { label: '👥 Cộng đồng PC', href: '/community' },
+                { label: '👥 Cộng đồng PC', href: '/community?tab=builds' },
               ].map(link => (
                 <li key={link.href}>
                   <Link href={link.href} style={{

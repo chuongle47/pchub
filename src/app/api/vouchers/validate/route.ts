@@ -12,36 +12,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Vui lòng nhập mã giảm giá' }, { status: 400 });
     }
 
-    // 1️⃣ Check local presets first
-    const localVoucher = AVAILABLE_VOUCHERS.find(v => v.code === normalizedCode);
-    if (localVoucher) {
-      if (totalPrice < localVoucher.minOrder) {
-        return NextResponse.json({
-          success: false,
-          error: `Đơn hàng tối thiểu ${localVoucher.minOrder.toLocaleString('vi-VN')}₫ để sử dụng mã ${localVoucher.code}`
-        }, { status: 400 });
-      }
-
-      let discount = 0;
-      if (localVoucher.type === 'percent') {
-        const raw = Math.round((totalPrice * localVoucher.value) / 100);
-        discount = localVoucher.maxDiscount ? Math.min(raw, localVoucher.maxDiscount) : raw;
-      } else if (localVoucher.type === 'fixed') {
-        discount = Math.min(localVoucher.value, totalPrice);
-      }
-
-      return NextResponse.json({
-        success: true,
-        code: localVoucher.code,
-        discount,
-        type: localVoucher.type,
-        label: localVoucher.name
-      });
-    }
-
-    // 2️⃣ Query live WooCommerce Coupons REST API
+    // 1️⃣ Query live WooCommerce Coupons REST API first
     const wooCoupon = await fetchSbuyWooCommerceCoupon(normalizedCode);
     if (wooCoupon) {
+      // Check expiry date if specified
+      if ((wooCoupon as any).date_expires) {
+        const expTime = new Date((wooCoupon as any).date_expires).getTime();
+        // Allow expiry on same day (end of day)
+        if (expTime > 0 && expTime + 86400000 < Date.now()) {
+          return NextResponse.json({
+            success: false,
+            error: `Mã giảm giá ${wooCoupon.code.toUpperCase()} đã hết hạn sử dụng`
+          }, { status: 400 });
+        }
+      }
+
       const minAmount = parseFloat(wooCoupon.minimum_amount || '0');
       if (minAmount > 0 && totalPrice < minAmount) {
         return NextResponse.json({
@@ -72,6 +57,33 @@ export async function POST(req: Request) {
         discount,
         type: wooCoupon.discount_type === 'percent' ? 'percent' : 'fixed',
         label
+      });
+    }
+
+    // 2️⃣ Fallback to local presets if not found in WooCommerce
+    const localVoucher = AVAILABLE_VOUCHERS.find(v => v.code === normalizedCode);
+    if (localVoucher) {
+      if (totalPrice < localVoucher.minOrder) {
+        return NextResponse.json({
+          success: false,
+          error: `Đơn hàng tối thiểu ${localVoucher.minOrder.toLocaleString('vi-VN')}₫ để sử dụng mã ${localVoucher.code}`
+        }, { status: 400 });
+      }
+
+      let discount = 0;
+      if (localVoucher.type === 'percent') {
+        const raw = Math.round((totalPrice * localVoucher.value) / 100);
+        discount = localVoucher.maxDiscount ? Math.min(raw, localVoucher.maxDiscount) : raw;
+      } else if (localVoucher.type === 'fixed') {
+        discount = Math.min(localVoucher.value, totalPrice);
+      }
+
+      return NextResponse.json({
+        success: true,
+        code: localVoucher.code,
+        discount,
+        type: localVoucher.type,
+        label: localVoucher.name
       });
     }
 
