@@ -503,17 +503,6 @@ export const WARDS_BY_DISTRICT: Record<string, string[]> = {};
 export const DEFAULT_DISTRICTS = ['Khu vực trung tâm'];
 export const DEFAULT_WARDS = ['Phường / Xã trung tâm'];
 
-export const LEGACY_PROVINCE_MAP = {
-  'Hà Tây': 'TP. Hà Nội',
-  'Thừa Thiên Huế': 'TP. Huế',
-  'Hồ Chí Minh': 'TP. Hồ Chí Minh',
-  'Hà Nội': 'TP. Hà Nội',
-  'Đà Nẵng': 'TP. Đà Nẵng',
-  'Hải Phòng': 'TP. Hải Phòng',
-  'Cần Thơ': 'TP. Cần Thơ',
-  'Bà Rịa - Vũng Tàu': 'Đồng Nai',
-};
-
 export function getDistrictsForProvince(provinceName: string): string[] {
   return getWardsForProvince(provinceName);
 }

@@ -141,7 +141,7 @@ async function runTestSuite() {
 
   const checkoutPageFile = fs.readFileSync(path.resolve('src/app/thanh-toan/page.tsx'), 'utf-8');
   assert('Trang thanh toán tích hợp dynamic WooCommerce Shipping & Gateways', checkoutPageFile.includes('/api/woocommerce/checkout-config') && checkoutPageFile.includes('shippingOptions') && checkoutPageFile.includes('paymentMethods'));
-  assert('Trang thanh toán có đầy đủ box Chuyển khoản BACS & Tiền mặt COD', checkoutPageFile.includes("payment === 'bacs'") && checkoutPageFile.includes("payment === 'cod'") && checkoutPageFile.includes("payment === 'wallet'"));
+  assert('Trang thanh toán có đầy đủ box Chuyển khoản BACS, Tiền mặt COD & Séc Cheque', checkoutPageFile.includes("payment === 'bacs'") && checkoutPageFile.includes("payment === 'cod'") && checkoutPageFile.includes("payment === 'cheque'"));
 
   // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ

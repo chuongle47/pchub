@@ -687,40 +687,19 @@ export async function fetchSbuyWooCommercePaymentGateways(): Promise<WooCommerce
           };
         });
 
-        // Always include Member Wallet as first payment method
-        return [
-          {
-            id: 'wallet',
-            title: 'Ví điện tử thành viên',
-            description: 'Thanh toán trực tiếp bằng số dư ví điện tử của bạn',
-            enabled: true,
-            icon: '💳',
-            color: '#2563eb',
-            isWallet: true
-          },
-          ...mapped
-        ];
+        return mapped;
       }
     }
   } catch (err) {
     console.warn('Failed to fetch WooCommerce payment gateways:', err);
   }
 
-  // Fallback gateways
+  // Fallback gateways (strictly WooCommerce default enabled gateways)
   return [
-    {
-      id: 'wallet',
-      title: 'Ví điện tử thành viên',
-      description: 'Thanh toán trực tiếp bằng số dư ví điện tử của bạn',
-      enabled: true,
-      icon: '💳',
-      color: '#2563eb',
-      isWallet: true
-    },
     {
       id: 'cod',
       title: 'Thanh toán khi nhận hàng (COD)',
-      description: 'Trả tiền mặt khi nhận được hàng',
+      description: 'Trả tiền mặt trực tiếp khi nhận được hàng',
       enabled: true,
       icon: '💵',
       color: '#16a34a'
@@ -732,6 +711,14 @@ export async function fetchSbuyWooCommercePaymentGateways(): Promise<WooCommerce
       enabled: true,
       icon: '🏛️',
       color: '#475569'
+    },
+    {
+      id: 'cheque',
+      title: 'Thanh toán séc / Ủy nhiệm chi',
+      description: 'Thanh toán qua séc hoặc ủy nhiệm chi doanh nghiệp',
+      enabled: true,
+      icon: '📑',
+      color: '#0284c7'
     }
   ];
 }
@@ -898,8 +885,8 @@ export async function createSbuyWooCommerceOrder(orderData: {
     const buyerEmail = orderData.buyer?.email || orderData.customer.email || 'customer@pchub.vn';
     const buyerPhone = orderData.buyer?.phone || orderData.customer.phone || '0901234567';
 
-    const isPaid = orderData.paymentMethod === 'wallet' || orderData.paymentMethod === 'vnpay' || orderData.paymentMethod === 'momo';
-    const orderStatus = isPaid ? 'processing' : (orderData.paymentMethod === 'bacs' || orderData.paymentMethod === 'cheque' ? 'on-hold' : 'processing');
+    const isPaid = orderData.paymentMethod === 'ppcp-gateway';
+    const orderStatus = (orderData.paymentMethod === 'bacs' || orderData.paymentMethod === 'cheque') ? 'on-hold' : 'processing';
 
     const body = {
       payment_method: orderData.paymentMethod || 'cod',
