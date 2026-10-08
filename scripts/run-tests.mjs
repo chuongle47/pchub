@@ -144,6 +144,41 @@ async function runTestSuite() {
   assert('Trang thanh toán kết nối và render danh sách cổng thanh toán WooCommerce', checkoutPageFile.includes('paymentMethods.map') && checkoutPageFile.includes('setPayment'));
 
   // -------------------------------------------------------------
+  // TEST GROUP 7: Kiểm thử Module Cộng đồng PCHub (/community)
+  // -------------------------------------------------------------
+  console.log('\n\x1b[33m[7/8] Kiểm thử Hệ thống Cộng đồng, Build PC & Tin tức\x1b[0m');
+  const communityDataFile = fs.readFileSync(path.resolve('src/data/community-data.ts'), 'utf-8');
+  assert('Dữ liệu Cộng đồng tồn tại và có schema đầy đủ', communityDataFile.includes('INITIAL_COMMUNITY_BUILDS') && communityDataFile.includes('INITIAL_COMMUNITY_POSTS'));
+  assert('Có tối thiểu 9 cấu hình build mẫu', (communityDataFile.match(/id:\s*'b[0-9]+'/g) || []).length >= 9);
+  assert('Có tối thiểu 6 bài viết hướng dẫn công nghệ tiếng Việt', (communityDataFile.match(/id:\s*'p[0-9]+'/g) || []).length >= 6);
+  assert('Hỗ trợ đầy đủ 4 danh mục: Gaming, Workstation, Streaming, Budget', communityDataFile.includes("'Gaming'") && communityDataFile.includes("'Workstation'") && communityDataFile.includes("'Streaming'") && communityDataFile.includes("'Budget'"));
+  assert('Cấu hình có đầy đủ dữ liệu Benchmark FPS và Mức ăn điện', communityDataFile.includes('fpsBenchmarks') && communityDataFile.includes('powerConsumption') && communityDataFile.includes('aiCompatibility'));
+  assert('Hỗ trợ helper lưu trữ LocalStorage (Build, Comment, Like, Save)', communityDataFile.includes('saveCommunityBuild') && communityDataFile.includes('addCommunityComment') && communityDataFile.includes('toggleLikeBuildId') && communityDataFile.includes('toggleSaveCommunityBuildId'));
+
+  const communityPageFile = fs.readFileSync(path.resolve('src/app/community/page.tsx'), 'utf-8');
+  assert('Trang /community đồng bộ URL Query tab & bộ lọc', communityPageFile.includes("searchParams.get('tab')") && communityPageFile.includes('BUILD_CATEGORIES') && communityPageFile.includes('PRICE_RANGES'));
+
+  const buildDetailPageFile = fs.readFileSync(path.resolve('src/app/community/builds/[id]/page.tsx'), 'utf-8');
+  assert('Trang chi tiết /community/builds/[id] tích hợp Giỏ hàng & Build PC', buildDetailPageFile.includes('addMultipleItems') && buildDetailPageFile.includes('pchub_pending_ai_preset') && buildDetailPageFile.includes('partsArray'));
+
+  const newsDetailPageFile = fs.readFileSync(path.resolve('src/app/community/news/[slug]/page.tsx'), 'utf-8');
+  assert('Trang chi tiết bài viết có JSON-LD Article Schema cho SEO', newsDetailPageFile.includes('application/ld+json') && newsDetailPageFile.includes('@type') && newsDetailPageFile.includes('Article'));
+
+  const submitPageFile = fs.readFileSync(path.resolve('src/app/community/submit/page.tsx'), 'utf-8');
+  assert('Trang đăng cấu hình /community/submit có kiểm tra AI và tính tổng giá', submitPageFile.includes('handleRunAiCheck') && submitPageFile.includes('totalPrice') && submitPageFile.includes('saveCommunityBuild'));
+
+  // -------------------------------------------------------------
+  // TEST GROUP 8: Kiểm thử Điều hướng & Footer
+  // -------------------------------------------------------------
+  console.log('\n\x1b[33m[8/8] Kiểm thử Menu Điều Hướng & Footer\x1b[0m');
+  const footerFile = fs.readFileSync(path.resolve('src/components/layout/Footer.tsx'), 'utf-8');
+  assert('Footer trỏ đúng Blog sang /community?tab=news', footerFile.includes('/community?tab=news'));
+  assert('Footer trỏ đúng Cộng đồng sang /community?tab=builds', footerFile.includes('/community?tab=builds'));
+
+  const sidebarFile = fs.readFileSync(path.resolve('src/components/account/AccountSidebar.tsx'), 'utf-8');
+  assert('Menu tài khoản cá nhân đã loại bỏ Ví điện tử', !sidebarFile.includes('/tai-khoan/vi-dien-tu'));
+
+  // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ
   // -------------------------------------------------------------
   console.log('\n\x1b[36m=======================================================');
