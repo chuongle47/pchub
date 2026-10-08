@@ -143,26 +143,11 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setReviewNotice('Cảm ơn bạn! Đánh giá đã được gửi thành công.');
+        setReviewNotice('Cảm ơn bạn! Đánh giá & bình luận đã được gửi thành công và đang chờ ban quản trị kiểm duyệt trước khi hiển thị công khai.');
         setReviewText('');
         setReviewerName('');
         setReviewerEmail('');
         setReviewRating(5);
-        // Re-fetch reviews từ WooCommerce để cập nhật rating ngay
-        setTimeout(() => {
-          fetch(`/api/reviews?productId=${product.id}`)
-            .then(r => r.json())
-            .then(d => {
-              if (d.success && Array.isArray(d.reviews)) {
-                setWooReviews(d.reviews);
-              } else if (data.review) {
-                setWooReviews(prev => [data.review, ...prev]);
-              }
-            })
-            .catch(() => {
-              if (data.review) setWooReviews(prev => [data.review, ...prev]);
-            });
-        }, 1500);
       } else {
         alert(data.error || 'Lỗi gửi đánh giá. Vui lòng thử lại!');
       }
@@ -1512,7 +1497,11 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
                     }}
                   />
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: '#2563eb' }}>🛡️</span>
+                      <em>Mọi bình luận & đánh giá sẽ được ban quản trị duyệt trước khi hiển thị công khai.</em>
+                    </div>
                     <button
                       type="submit"
                       disabled={submittingReview}
@@ -1537,7 +1526,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               {/* Reviews List Sorted Chronologically */}
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
-                  💬 Các bình luận & Đánh giá
+                  💬 Các bình luận & Đánh giá đã duyệt
                 </h3>
 
                 {loadingReviews ? (

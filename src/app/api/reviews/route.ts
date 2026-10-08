@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         review: result.review,
-        message: 'Gửi đánh giá thành công! Đã đồng bộ lên WooCommerce.'
+        message: 'Gửi đánh giá thành công! Đánh giá của bạn đang được kiểm duyệt và sẽ hiển thị sau khi được phê duyệt.'
       });
     } else {
       return NextResponse.json({

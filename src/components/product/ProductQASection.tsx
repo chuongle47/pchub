@@ -15,6 +15,7 @@ export interface QAItem {
   createdAt: string;
   category?: 'compatibility' | 'warranty' | 'shipping' | 'general';
   likes: number;
+  status?: 'pending' | 'approved';
   answer?: {
     staffName: string;
     staffRole: string;
@@ -84,6 +85,7 @@ export default function ProductQASection({
         createdAt: 'Vừa xong',
         category: 'compatibility',
         likes: 0,
+        status: 'pending',
         answer: {
           staffName: 'Kỹ thuật viên PCHub',
           staffRole: 'Trực kỹ thuật 24/7',
@@ -103,10 +105,10 @@ export default function ProductQASection({
       }
 
       setQuestionContent('');
-      setSuccessNotice(`Cảm ơn bạn ${authorName}! Câu hỏi đã được gửi thành công. Nhân viên kỹ thuật PCHub sẽ phản hồi ngay!`);
+      setSuccessNotice(`Cảm ơn bạn ${authorName}! Câu hỏi & bình luận của bạn đã được gửi thành công và đang chờ ban quản trị kiểm duyệt trước khi hiển thị công khai.`);
       setIsSubmitting(false);
 
-      setTimeout(() => setSuccessNotice(null), 5000);
+      setTimeout(() => setSuccessNotice(null), 6000);
     }, 600);
   };
 
@@ -367,9 +369,15 @@ export default function ProductQASection({
           </button>
         </div>
 
-        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <ShieldCheck size={13} color="#16a34a" />
-          <span>Thông tin số điện thoại / email của bạn được bảo mật tuyệt đối và chỉ dùng để nhân viên kỹ thuật hỗ trợ.</span>
+        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <ShieldCheck size={13} color="#16a34a" />
+            <span>Thông tin liên hệ của bạn được bảo mật tuyệt đối và chỉ dùng để chuyên viên hỗ trợ.</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#2563eb' }}>
+            <span>🛡️</span>
+            <em>Câu hỏi & bình luận sẽ được duyệt trước khi hiển thị công khai.</em>
+          </div>
         </div>
       </form>
 
@@ -509,9 +517,25 @@ export default function ProductQASection({
                   Q
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                     <strong style={{ fontSize: '13.5px', color: '#0f172a' }}>{item.authorName}</strong>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>• {item.createdAt}</span>
+                    {item.status === 'pending' && (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        background: '#fef3c7',
+                        color: '#92400e',
+                        padding: '1px 7px',
+                        borderRadius: '6px',
+                        border: '1px solid #fde68a',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        ⏳ Đang chờ duyệt
+                      </span>
+                    )}
                   </div>
                   <p style={{ margin: 0, fontSize: '14px', color: '#1e293b', fontWeight: 600, lineHeight: '1.45' }}>
                     {item.question}
