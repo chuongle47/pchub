@@ -41,13 +41,17 @@ async function runTestSuite() {
   // -------------------------------------------------------------
   // TEST GROUP 2: Hệ thống Voucher & Tính toán giảm giá
   // -------------------------------------------------------------
-  console.log('\n\x1b[33m[2/6] Kiểm thử Hệ thống Voucher & Tính toán giảm giá\x1b[0m');
+  console.log('\n\x1b[33m[2/8] Kiểm thử Hệ thống Voucher & Tính toán giảm giá\x1b[0m');
   const vouchersFile = fs.readFileSync(path.resolve('src/lib/vouchers.ts'), 'utf-8');
   assert('Tệp cấu hình voucher tồn tại', vouchersFile.includes('AVAILABLE_VOUCHERS') && vouchersFile.includes('calculateVoucherDiscount'));
   assert('Hỗ trợ mã giảm 10% (PCHUB10)', vouchersFile.includes("'PCHUB10'"));
   assert('Hỗ trợ mã giảm 50K (SAVE50K)', vouchersFile.includes("'SAVE50K'"));
   assert('Hỗ trợ mã miễn phí vận chuyển (FREESHIP)', vouchersFile.includes("'FREESHIP'"));
   assert('Hỗ trợ mã khách mới (PCNEW10)', vouchersFile.includes("'PCNEW10'"));
+
+  const validateApiFile = fs.readFileSync(path.resolve('src/app/api/vouchers/validate/route.ts'), 'utf-8');
+  assert('API validate voucher hỗ trợ kiểm tra danh mục sản phẩm hợp lệ (restricted categories)', validateApiFile.includes('restrictedCatIds') && validateApiFile.includes('isItemEligible') && validateApiFile.includes('eligibleItems'));
+  assert('API validate tính toán giảm giá chính xác chỉ trên sản phẩm đủ điều kiện', validateApiFile.includes('eligibleSubtotal') && validateApiFile.includes('fixed_product'));
 
   // -------------------------------------------------------------
   // TEST GROUP 3: WooCommerce Shipping & Payment Gateways Config

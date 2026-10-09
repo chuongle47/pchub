@@ -1073,10 +1073,17 @@ export interface WooCommerceCoupon {
   amount: string;
   discount_type: string;
   description: string;
+  date_expires?: string | null;
   minimum_amount: string;
   maximum_amount: string;
   usage_limit: number | null;
   usage_count: number;
+  product_ids?: number[];
+  excluded_product_ids?: number[];
+  product_categories?: number[];
+  excluded_product_categories?: number[];
+  exclude_sale_items?: boolean;
+  free_shipping?: boolean;
 }
 
 export async function fetchSbuyWooCommerceCoupon(code: string): Promise<WooCommerceCoupon | null> {
@@ -1093,7 +1100,7 @@ export async function fetchSbuyWooCommerceCoupon(code: string): Promise<WooComme
         'Authorization': authHeader,
         'Content-Type': 'application/json'
       },
-      next: { revalidate: 30 }
+      cache: 'no-store'
     });
 
     if (!res.ok) {
@@ -1108,6 +1115,36 @@ export async function fetchSbuyWooCommerceCoupon(code: string): Promise<WooComme
     console.warn('WooCommerce coupon query error:', err);
   }
   return null;
+}
+
+export async function fetchSbuyWooCommerceCategories(): Promise<{ id: number; name: string; slug: string }[]> {
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products/categories?per_page=100`;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      next: { revalidate: 300 }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        return data.map((c: any) => ({
+          id: Number(c.id),
+          name: String(c.name || ''),
+          slug: String(c.slug || '')
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('WooCommerce categories fetch error:', err);
+  }
+  return [];
 }
 
 export interface WooCommerceReview {
