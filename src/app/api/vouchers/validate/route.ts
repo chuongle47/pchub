@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchSbuyWooCommerceCoupon, fetchSbuyWooCommerceCategories } from '@/lib/sbuy';
+import { fetchSbuyWooCommerceCoupon, fetchSbuyWooCommerceCategories, fetchSbuyWooCommerceProductsByIds } from '@/lib/sbuy';
 import { AVAILABLE_VOUCHERS } from '@/lib/vouchers';
 
 interface CartItemInput {
@@ -56,22 +56,62 @@ export async function POST(req: Request) {
 
       const hasRestrictions = restrictedCatIds.length > 0 || restrictedProdIds.length > 0;
 
-      // Fetch categories map from WooCommerce for accurate name mapping
-      const wcCategories = await fetchSbuyWooCommerceCategories();
+      // Fetch categories map & product metadata from WooCommerce for accurate name/slug mapping
+      const [wcCategories, restrictedProds, excludedProds] = await Promise.all([
+        fetchSbuyWooCommerceCategories(),
+        fetchSbuyWooCommerceProductsByIds(restrictedProdIds),
+        fetchSbuyWooCommerceProductsByIds(excludedProdIds)
+      ]);
       const catMap = new Map(wcCategories.map(c => [c.id, c]));
 
       // Function to check if a single cart item matches the coupon restrictions
       const isItemEligible = (item: CartItemInput) => {
         const rawItemId = Number(String(item.id || item.product?.id || '').replace(/\D/g, ''));
+        const itemName = (item.name || item.product?.name || '').toLowerCase().trim();
+        const itemSlug = (item.slug || item.product?.slug || '').toLowerCase().trim();
+        const itemSku = (item.product?.sku || '').toLowerCase().trim();
         
-        // Excluded products
-        if (excludedProdIds.length > 0 && rawItemId && excludedProdIds.includes(rawItemId)) {
-          return false;
+        // 1. Excluded products check (by ID, Name, Slug, or SKU)
+        if (excludedProdIds.length > 0) {
+          if (rawItemId && excludedProdIds.includes(rawItemId)) {
+            return false;
+          }
+          for (const ep of excludedProds) {
+            const epName = ep.name.toLowerCase().trim();
+            const epSlug = ep.slug.toLowerCase().trim();
+            const epSku = ep.sku.toLowerCase().trim();
+            if (epName && (itemName.includes(epName) || epName.includes(itemName))) return false;
+            if (epSlug && (itemSlug === epSlug || itemSlug.includes(epSlug))) return false;
+            if (epSku && itemSku && epSku === itemSku) return false;
+          }
         }
 
-        // Restricted products
+        // 2. Restricted products check (by ID, Name, Slug, or SKU)
         if (restrictedProdIds.length > 0) {
+          let matchedRestrictedProduct = false;
           if (rawItemId && restrictedProdIds.includes(rawItemId)) {
+            matchedRestrictedProduct = true;
+          } else {
+            for (const rp of restrictedProds) {
+              const rpName = rp.name.toLowerCase().trim();
+              const rpSlug = rp.slug.toLowerCase().trim();
+              const rpSku = rp.sku.toLowerCase().trim();
+              if (rpName && (itemName.includes(rpName) || rpName.includes(itemName))) {
+                matchedRestrictedProduct = true;
+                break;
+              }
+              if (rpSlug && (itemSlug === rpSlug || itemSlug.includes(rpSlug))) {
+                matchedRestrictedProduct = true;
+                break;
+              }
+              if (rpSku && itemSku && rpSku === itemSku) {
+                matchedRestrictedProduct = true;
+                break;
+              }
+            }
+          }
+
+          if (matchedRestrictedProduct) {
             return true;
           }
           if (restrictedCatIds.length === 0) {

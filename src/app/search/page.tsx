@@ -263,8 +263,11 @@ function SearchContent() {
     addItemToCart({
       id: product.id,
       name: product.name,
+      slug: product.slug,
       price: product.price,
       image: product.image,
+      category: product.categoryName || product.category,
+      brand: product.brandName || product.brand,
     });
     setToastMessage(`Đã thêm "${product.name.slice(0, 30)}..." vào giỏ hàng`);
     setTimeout(() => setToastMessage(null), 3000);

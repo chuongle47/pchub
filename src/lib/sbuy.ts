@@ -1147,6 +1147,40 @@ export async function fetchSbuyWooCommerceCategories(): Promise<{ id: number; na
   return [];
 }
 
+export async function fetchSbuyWooCommerceProductsByIds(ids: number[]): Promise<{ id: number; name: string; slug: string; sku: string }[]> {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${SBUY_CONFIG.consumerKey}:${SBUY_CONFIG.consumerSecret}`).toString('base64');
+    const validIds = ids.filter(id => typeof id === 'number' && id > 0);
+    if (validIds.length === 0) return [];
+    const url = `${SBUY_CONFIG.baseUrl}/wp-json/wc/v3/products?include=${validIds.join(',')}&per_page=100`;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      next: { revalidate: 300 }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        return data.map((p: any) => ({
+          id: Number(p.id),
+          name: String(p.name || ''),
+          slug: String(p.slug || ''),
+          sku: String(p.sku || '')
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('WooCommerce products fetch by IDs error:', err);
+  }
+  return [];
+}
+
 export interface WooCommerceReview {
   id: number;
   date_created: string;
