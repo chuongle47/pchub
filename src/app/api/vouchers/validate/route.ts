@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
       // Function to check if a single cart item matches the coupon restrictions
       const isItemEligible = (item: CartItemInput) => {
-        const rawItemId = Number(String(item.id || '').replace(/\D/g, ''));
+        const rawItemId = Number(String(item.id || item.product?.id || '').replace(/\D/g, ''));
         
         // Excluded products
         if (excludedProdIds.length > 0 && rawItemId && excludedProdIds.includes(rawItemId)) {
