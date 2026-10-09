@@ -123,7 +123,6 @@ export async function POST(req: Request) {
         const itemCatName = (item.category || item.product?.category_name || '').toLowerCase().trim();
         const itemCatSlug = (item.product?.category_slug || '').toLowerCase().trim();
         const itemProdCats: number[] = (item.product?.categories || []).map((c: any) => Number(c.id));
-        const itemName = (item.name || '').toLowerCase();
 
         // Check excluded categories
         if (excludedCatIds.length > 0) {
