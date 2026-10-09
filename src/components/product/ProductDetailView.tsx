@@ -200,29 +200,14 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   const categoryName = product.category_name || 'Linh kiện PC';
   const brandName = product.brand_name || 'Chính hãng';
 
-  // Dynamic Product Variants
-  const variants = React.useMemo(() => {
-    const basePrice = Number(product.price);
-    const stock = product.stock ?? 15;
-    return [
-      { id: 'v-std', name: 'Tiêu Chuẩn (Box Chính Hãng)', priceDelta: 0, stock: stock, skuSuffix: '' },
-      { id: 'v-oc', name: 'Phiên Bản OC (Ép Xung)', priceDelta: Math.round((basePrice * 0.05) / 10000) * 10000, stock: Math.max(1, stock - 3), skuSuffix: '-OC' },
-      { id: 'v-vip', name: 'Gói VIP 1 Đổi 1 Tại Nhà', priceDelta: Math.round((basePrice * 0.08) / 10000) * 10000, stock: stock, skuSuffix: '-VIP' },
-    ];
-  }, [product]);
-
-  const [selectedVariantId, setSelectedVariantId] = useState('v-std');
-  const activeVariant = variants.find(v => v.id === selectedVariantId) || variants[0];
-
   const rawOrigPrice = resolveProductOriginalPrice(product);
-
-  const currentPrice = Number(product.price) + activeVariant.priceDelta;
-  const currentOriginalPrice = rawOrigPrice > Number(product.price)
-    ? rawOrigPrice + activeVariant.priceDelta
+  const currentPrice = Number(product.price);
+  const currentOriginalPrice = rawOrigPrice > currentPrice
+    ? rawOrigPrice
     : Math.round((currentPrice * 1.15) / 10000) * 10000;
-  const currentStock = activeVariant.stock;
+  const currentStock = product.stock ?? 15;
   const isOutOfStock = currentStock <= 0;
-  const currentSku = (product.sku || product.id) + activeVariant.skuSuffix;
+  const currentSku = product.sku || product.id;
   const originalPrice = rawOrigPrice;
 
   // Build multi-angle views for gallery thumbnails matching user design
@@ -309,8 +294,8 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
 
   const handleAddToCart = () => {
     addItem({
-      id: `${product.id}${activeVariant.skuSuffix}`,
-      name: `${product.name} (${activeVariant.name})`,
+      id: product.id,
+      name: product.name,
       price: currentPrice,
       originalPrice: currentOriginalPrice,
       image: imageUrl,
@@ -320,14 +305,14 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
       quantity,
     });
     setCartOpen(true);
-    setAddedNotice(`Đã thêm ${quantity}x sản phẩm [${activeVariant.name}] vào giỏ hàng!`);
+    setAddedNotice(`Đã thêm ${quantity}x sản phẩm vào giỏ hàng!`);
     setTimeout(() => setAddedNotice(null), 2500);
   };
 
   const handleBuyNow = () => {
     addItem({
-      id: `${product.id}${activeVariant.skuSuffix}`,
-      name: `${product.name} (${activeVariant.name})`,
+      id: product.id,
+      name: product.name,
       price: currentPrice,
       originalPrice: currentOriginalPrice,
       image: imageUrl,
@@ -967,64 +952,7 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
               </div>
 
 
-              {/* Variant Selector */}
-              <div style={{ marginBottom: '20px', maxWidth: '100%' }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                  Tùy chọn phiên bản / biến thể:
-                </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '100%' }}>
-                  {variants.map(v => {
-                    const isSelected = v.id === selectedVariantId;
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => setSelectedVariantId(v.id)}
-                        style={{
-                          background: isSelected ? '#eff6ff' : '#ffffff',
-                          border: isSelected ? '2px solid #2563eb' : '2px solid #cbd5e1',
-                          color: isSelected ? '#2563eb' : '#334155',
-                          borderRadius: '8px',
-                          padding: '7px 12px',
-                          fontSize: '12.5px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          maxWidth: '100%',
-                          textAlign: 'left',
-                          boxSizing: 'border-box',
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            background: isSelected ? '#2563eb' : '#e2e8f0',
-                            color: '#ffffff',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          {isSelected ? <Check size={11} strokeWidth={3} /> : null}
-                        </span>
-                        <span>{v.name}</span>
-                        {v.priceDelta > 0 && (
-                          <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700, flexShrink: 0 }}>
-                            (+{v.priceDelta.toLocaleString('vi-VN')}₫)
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+
 
               {/* Quantity Selector with Number Input & Bounds Validation */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px 16px', marginBottom: '24px', flexWrap: 'wrap' }}>
