@@ -90,7 +90,7 @@ export function calculateVoucherDiscount(
     return {
       discount: 0,
       shipping: shippingFee,
-      error: 'Mã giảm giá không tồn tại hoặc đã hết hạn',
+      error: 'Mã giảm giá này lỗi',
     };
   }
 
@@ -98,9 +98,7 @@ export function calculateVoucherDiscount(
     return {
       discount: 0,
       shipping: shippingFee,
-      error: `Đơn hàng tối thiểu ${voucher.minOrder.toLocaleString(
-        'vi-VN'
-      )}₫ để dùng mã ${voucher.code}`,
+      error: 'Mã giảm giá này lỗi',
     };
   }
 

@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         if (expTime > 0 && expTime + 86400000 < Date.now()) {
           return NextResponse.json({
             success: false,
-            error: `Mã giảm giá ${wooCoupon.code.toUpperCase()} đã hết hạn sử dụng`
+            error: 'Mã giảm giá này lỗi'
           }, { status: 400 });
         }
       }
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       if (minAmount > 0 && totalPrice < minAmount) {
         return NextResponse.json({
           success: false,
-          error: `Mã ${wooCoupon.code.toUpperCase()} yêu cầu đơn hàng tối thiểu ${minAmount.toLocaleString('vi-VN')}₫`
+          error: 'Mã giảm giá này lỗi'
         }, { status: 400 });
       }
 
@@ -179,7 +179,7 @@ export async function POST(req: Request) {
 
           return NextResponse.json({
             success: false,
-            error: `Mã ${wooCoupon.code.toUpperCase()} chỉ áp dụng cho sản phẩm thuộc danh mục: ${catNames || 'quy định'}. Trong giỏ hàng của bạn không có sản phẩm nào hợp lệ.`
+            error: 'Mã giảm giá này lỗi'
           }, { status: 400 });
         }
       }
@@ -233,7 +233,7 @@ export async function POST(req: Request) {
       if (totalPrice < localVoucher.minOrder) {
         return NextResponse.json({
           success: false,
-          error: `Đơn hàng tối thiểu ${localVoucher.minOrder.toLocaleString('vi-VN')}₫ để sử dụng mã ${localVoucher.code}`
+          error: 'Mã giảm giá này lỗi'
         }, { status: 400 });
       }
 
@@ -256,14 +256,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: false,
-      error: 'Mã giảm giá không hợp lệ hoặc đã hết hạn'
+      error: 'Mã giảm giá này lỗi'
     }, { status: 404 });
 
   } catch (error: any) {
     console.error('Voucher validation API error:', error);
     return NextResponse.json({
       success: false,
-      error: 'Không thể xác thực mã giảm giá. Vui lòng thử lại.'
+      error: 'Mã giảm giá này lỗi'
     }, { status: 500 });
   }
 }

@@ -88,7 +88,7 @@ export default function CartPage() {
     }
 
     const found = VOUCHER_CODES[code];
-    if (!found) { setVoucherError('Mã không hợp lệ hoặc đã hết hạn.'); return; }
+    if (!found) { setVoucherError('Mã giảm giá này lỗi'); return; }
     setAppliedVoucher({ code, ...found });
     setVoucherError('');
     setVoucherInput('');
