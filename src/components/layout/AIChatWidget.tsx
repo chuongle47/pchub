@@ -217,6 +217,11 @@ export default function AIChatWidget() {
     <>
       {open && (
         <div
+          onClick={() => {
+            if (!isFullscreen) {
+              setOpen(false);
+            }
+          }}
           style={
             isFullscreen
               ? {
@@ -227,7 +232,6 @@ export default function AIChatWidget() {
                   bottom: 0,
                   width: '100vw',
                   height: '100vh',
-                  maxHeight: '100vh',
                   zIndex: 99999,
                   background: '#f8fafc',
                   display: 'flex',
@@ -236,23 +240,47 @@ export default function AIChatWidget() {
                 }
               : {
                   position: 'fixed',
-                  right: '20px',
-                  bottom: '84px',
-                  width: 'min(440px, calc(100vw - 32px))',
-                  height: '560px',
-                  maxHeight: 'calc(100vh - 110px)',
-                  zIndex: 1000,
-                  background: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  boxShadow: '0 24px 60px rgba(15,23,42,.28)',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 999,
+                  background: 'rgba(15, 23, 42, 0.45)',
+                  backdropFilter: 'blur(5px)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  animation: 'scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '16px',
+                  paddingTop: 'clamp(60px, 8vh, 90px)',
+                  paddingBottom: '24px',
+                  animation: 'fadeIn 0.2s ease-out',
                 }
           }
         >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={
+              isFullscreen
+                ? {
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }
+                : {
+                    width: 'min(780px, calc(100vw - 32px))',
+                    height: 'min(640px, calc(100vh - 120px))',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    boxShadow: '0 25px 60px -10px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }
+            }
+          >
           {/* Header */}
           <div
             style={{
@@ -632,7 +660,8 @@ export default function AIChatWidget() {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Floating Toggle Icon */}
       <button
