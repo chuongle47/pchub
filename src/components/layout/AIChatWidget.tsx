@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState, useRef, useEffect } from 'react';
-import { Bot, ChevronDown, MessageCircle, Send, X, Loader2, Sparkles, RefreshCw, Maximize2, Minimize2, Trash2 } from 'lucide-react';
+import { Bot, ChevronDown, MessageCircle, Send, X, Loader2, Sparkles, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/lib/store';
 import { matchPresetKeyFromText, AI_BUILD_PRESETS, reconcileBuildComponents } from '@/lib/buildPresets';
@@ -44,23 +44,22 @@ export default function AIChatWidget() {
   const router = useRouter();
   const open = useUIStore(state => state.isChatOpen);
   const setOpen = useUIStore(state => state.setChatOpen);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle ESC key to exit fullscreen
+  // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open && isFullscreen) {
-        setIsFullscreen(false);
+      if (e.key === 'Escape' && open) {
+        setOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, isFullscreen]);
+  }, [open, setOpen]);
 
   const handleClearChat = () => {
     setMessages([INITIAL_MESSAGE]);
@@ -126,7 +125,6 @@ export default function AIChatWidget() {
       console.error('Failed to save preset to storage:', e);
     }
     setOpen(false);
-    setIsFullscreen(false);
     router.push('/build-pc');
   };
 
@@ -143,7 +141,7 @@ export default function AIChatWidget() {
     if (open) {
       scrollToBottom();
     }
-  }, [messages, open, loading, isFullscreen]);
+  }, [messages, open, loading]);
 
   const sendMessage = async (text = input) => {
     const trimmed = text.trim();
@@ -217,97 +215,58 @@ export default function AIChatWidget() {
     <>
       {open && (
         <div
-          onClick={() => {
-            if (!isFullscreen) {
-              setOpen(false);
-            }
+          onClick={() => setOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999,
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            paddingTop: 'clamp(64px, 8vh, 96px)',
+            paddingBottom: '24px',
+            animation: 'fadeIn 0.2s ease-out',
           }}
-          style={
-            isFullscreen
-              ? {
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: '100vw',
-                  height: '100vh',
-                  zIndex: 99999,
-                  background: '#f8fafc',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  animation: 'fadeIn 0.2s ease-out',
-                }
-              : {
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 999,
-                  background: 'rgba(15, 23, 42, 0.45)',
-                  backdropFilter: 'blur(5px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '16px',
-                  paddingTop: 'clamp(60px, 8vh, 90px)',
-                  paddingBottom: '24px',
-                  animation: 'fadeIn 0.2s ease-out',
-                }
-          }
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={
-              isFullscreen
-                ? {
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }
-                : {
-                    width: 'min(780px, calc(100vw - 32px))',
-                    height: 'min(640px, calc(100vh - 120px))',
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '20px',
-                    overflow: 'hidden',
-                    boxShadow: '0 25px 60px -10px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255,255,255,0.1)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }
-            }
-          >
-          {/* Header */}
-          <div
             style={{
-              background: 'linear-gradient(135deg, #0055d4 0%, #1d4ed8 100%)',
-              padding: isFullscreen ? '14px 24px' : '14px 16px',
-              color: '#fff',
+              width: 'min(980px, calc(100vw - 32px))',
+              height: 'min(700px, calc(100vh - 120px))',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 60px -10px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255,255,255,0.1)',
               display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              flexShrink: 0,
+              flexDirection: 'column',
+              animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
+            {/* Header */}
             <div
               style={{
-                width: '100%',
-                maxWidth: isFullscreen ? '1000px' : '100%',
+                background: 'linear-gradient(135deg, #0055d4 0%, #1d4ed8 100%)',
+                padding: '14px 24px',
+                color: '#fff',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                flexShrink: 0,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: isFullscreen ? '12px' : '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div
                   style={{
-                    width: isFullscreen ? '40px' : '36px',
-                    height: isFullscreen ? '40px' : '36px',
+                    width: '40px',
+                    height: '40px',
                     borderRadius: '50%',
                     background: 'rgba(255,255,255,.2)',
                     display: 'flex',
@@ -316,15 +275,15 @@ export default function AIChatWidget() {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   }}
                 >
-                  <Bot size={isFullscreen ? 22 : 20} />
+                  <Bot size={22} />
                 </div>
                 <div>
-                  <strong style={{ display: 'block', fontSize: isFullscreen ? '16px' : '14px', fontWeight: 800 }}>
-                    PCHub AI Advisor ⚡ {isFullscreen && <span style={{ fontSize: '12px', fontWeight: 600, background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '20px', marginLeft: '6px' }}>Toàn màn hình</span>}
+                  <strong style={{ display: 'block', fontSize: '15px', fontWeight: 800 }}>
+                    PCHub AI Advisor ⚡
                   </strong>
                   <span
                     style={{
-                      fontSize: isFullscreen ? '12px' : '11px',
+                      fontSize: '11.5px',
                       color: '#dbeafe',
                       display: 'flex',
                       alignItems: 'center',
@@ -346,7 +305,7 @@ export default function AIChatWidget() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <button
                   type="button"
                   onClick={handleClearChat}
@@ -354,7 +313,7 @@ export default function AIChatWidget() {
                   aria-label="Làm mới cuộc trò chuyện"
                   style={{
                     color: '#fff',
-                    padding: isFullscreen ? '8px' : '6px',
+                    padding: '8px',
                     cursor: 'pointer',
                     background: 'rgba(255,255,255,0.1)',
                     border: 'none',
@@ -367,40 +326,17 @@ export default function AIChatWidget() {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                 >
-                  <RefreshCw size={isFullscreen ? 18 : 16} />
+                  <RefreshCw size={17} />
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  title={isFullscreen ? 'Thu nhỏ cửa sổ (ESC)' : 'Mở toàn màn hình'}
-                  aria-label={isFullscreen ? 'Thu nhỏ cửa sổ' : 'Mở toàn màn hình'}
-                  style={{
-                    color: '#fff',
-                    padding: isFullscreen ? '8px' : '6px',
-                    cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                >
-                  {isFullscreen ? <Minimize2 size={isFullscreen ? 18 : 16} /> : <Maximize2 size={isFullscreen ? 18 : 16} />}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { setOpen(false); setIsFullscreen(false); }}
-                  title="Đóng AI Advisor"
+                  onClick={() => setOpen(false)}
+                  title="Đóng AI Advisor (ESC)"
                   aria-label="Đóng AI Advisor"
                   style={{
                     color: '#fff',
-                    padding: isFullscreen ? '8px' : '6px',
+                    padding: '8px',
                     cursor: 'pointer',
                     background: 'rgba(255,255,255,0.1)',
                     border: 'none',
@@ -413,30 +349,29 @@ export default function AIChatWidget() {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.8)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                 >
-                  <X size={isFullscreen ? 20 : 18} />
+                  <X size={19} />
                 </button>
               </div>
             </div>
-          </div>
 
           {/* Messages Container */}
           <div
             ref={chatContainerRef}
             style={{
               flex: 1,
-              padding: isFullscreen ? '24px 20px' : '14px',
+              padding: '20px 24px',
               overflowY: 'auto',
               background: '#f8fafc',
             }}
           >
             <div
               style={{
-                maxWidth: isFullscreen ? '1000px' : '100%',
+                maxWidth: '100%',
                 margin: '0 auto',
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: isFullscreen ? '16px' : '10px',
+                gap: '14px',
               }}
             >
               {messages.map((message, index) => (
@@ -450,33 +385,33 @@ export default function AIChatWidget() {
                   {message.from === 'ai' && (
                     <div
                       style={{
-                        width: isFullscreen ? '32px' : '26px',
-                        height: isFullscreen ? '32px' : '26px',
+                        width: '32px',
+                        height: '32px',
                         borderRadius: '50%',
                         background: '#0055d4',
                         color: '#fff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginRight: isFullscreen ? '10px' : '6px',
+                        marginRight: '10px',
                         flexShrink: 0,
                         marginTop: '2px',
                         boxShadow: '0 2px 6px rgba(0,85,212,0.2)',
                       }}
                     >
-                      <Bot size={isFullscreen ? 18 : 14} />
+                      <Bot size={18} />
                     </div>
                   )}
                   <div
                     style={{
-                      maxWidth: isFullscreen ? '80%' : '88%',
-                      padding: isFullscreen ? '14px 18px' : '10px 14px',
+                      maxWidth: '82%',
+                      padding: '12px 16px',
                       borderRadius:
                         message.from === 'user' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
                       background: message.from === 'user' ? 'linear-gradient(135deg, #0055d4, #1d4ed8)' : '#ffffff',
                       color: message.from === 'user' ? '#ffffff' : '#1e293b',
                       border: message.from === 'user' ? 'none' : '1px solid #e2e8f0',
-                      fontSize: isFullscreen ? '14px' : '12.5px',
+                      fontSize: '13.5px',
                       lineHeight: '1.6',
                       boxShadow: message.from === 'user' ? '0 4px 12px rgba(0,85,212,0.25)' : '0 2px 8px rgba(0,0,0,0.04)',
                     }}
@@ -486,20 +421,20 @@ export default function AIChatWidget() {
                     {/* Interactive Recommended Products Cards */}
                     {message.products && message.products.length > 0 && (
                       <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ fontSize: isFullscreen ? '12px' : '11px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           🛒 Sản phẩm gợi ý tại PCHub:
                         </div>
                         <div
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: isFullscreen ? 'repeat(auto-fill, minmax(260px, 1fr))' : '1fr',
-                            gap: '8px',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                            gap: '10px',
                           }}
                         >
                           {message.products.map(prod => (
                             <div
                               key={prod.id}
-                              onClick={() => { setOpen(false); setIsFullscreen(false); router.push(`/product/${prod.slug}`); }}
+                              onClick={() => { setOpen(false); router.push(`/product/${prod.slug}`); }}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -520,10 +455,10 @@ export default function AIChatWidget() {
                                 style={{ width: '46px', height: '46px', objectFit: 'contain', borderRadius: '6px', background: '#fff', padding: '2px', border: '1px solid #f1f5f9' }}
                               />
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: isFullscreen ? '13px' : '11.5px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {prod.name}
                                 </div>
-                                <div style={{ fontSize: isFullscreen ? '12px' : '11px', fontWeight: 800, color: '#ef4444', marginTop: '2px' }}>
+                                <div style={{ fontSize: '12px', fontWeight: 800, color: '#ef4444', marginTop: '2px' }}>
                                   {prod.price ? `${prod.price.toLocaleString('vi-VN')}₫` : 'Liên hệ'}
                                 </div>
                               </div>
@@ -547,8 +482,8 @@ export default function AIChatWidget() {
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '8px',
-                            padding: isFullscreen ? '10px 16px' : '7px 12px',
-                            fontSize: isFullscreen ? '13px' : '11.5px',
+                            padding: '10px 16px',
+                            fontSize: '13px',
                             fontWeight: 800,
                             cursor: 'pointer',
                             display: 'flex',
@@ -559,7 +494,7 @@ export default function AIChatWidget() {
                             transition: 'all 0.15s ease',
                           }}
                         >
-                          <Sparkles size={isFullscreen ? 15 : 13} />
+                          <Sparkles size={15} />
                           <span>⚡ Áp Dụng Cấu Hình Này Vào PC Builder →</span>
                         </button>
                       </div>
@@ -569,7 +504,7 @@ export default function AIChatWidget() {
               ))}
 
               {loading && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: isFullscreen ? '13px' : '12px', paddingLeft: isFullscreen ? '42px' : '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '13px', paddingLeft: '42px' }}>
                   <Loader2 size={16} className="animate-spin" style={{ color: '#0055d4' }} />
                   <span>Gemini AI đang phân tích dữ liệu phần cứng & tính toán độ tương thích...</span>
                 </div>
@@ -578,12 +513,12 @@ export default function AIChatWidget() {
           </div>
 
           {/* Quick Questions Chips & Input Form */}
-          <div style={{ padding: isFullscreen ? '16px 24px' : '12px', borderTop: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}>
-            <div style={{ maxWidth: isFullscreen ? '1000px' : '100%', margin: '0 auto', width: '100%' }}>
+          <div style={{ padding: '14px 24px', borderTop: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}>
+            <div style={{ maxWidth: '100%', margin: '0 auto', width: '100%' }}>
               <div
                 style={{
                   display: 'flex',
-                  gap: '6px',
+                  gap: '8px',
                   overflowX: 'auto',
                   paddingBottom: '8px',
                   marginBottom: '8px',
@@ -602,8 +537,8 @@ export default function AIChatWidget() {
                       color: '#1d4ed8',
                       background: '#eff6ff',
                       borderRadius: '20px',
-                      padding: isFullscreen ? '6px 14px' : '5px 11px',
-                      fontSize: isFullscreen ? '12px' : '10.5px',
+                      padding: '6px 14px',
+                      fontSize: '12px',
                       fontWeight: 600,
                       cursor: loading ? 'not-allowed' : 'pointer',
                       transition: 'all 0.15s',
@@ -626,8 +561,8 @@ export default function AIChatWidget() {
                     minWidth: 0,
                     border: '1.5px solid #cbd5e1',
                     borderRadius: '12px',
-                    padding: isFullscreen ? '12px 16px' : '9px 12px',
-                    fontSize: isFullscreen ? '14px' : '12.5px',
+                    padding: '12px 16px',
+                    fontSize: '13.5px',
                     outline: 'none',
                     background: loading ? '#f8fafc' : '#fff',
                     boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)',
@@ -640,8 +575,8 @@ export default function AIChatWidget() {
                   disabled={loading || !input.trim()}
                   aria-label="Gửi câu hỏi"
                   style={{
-                    width: isFullscreen ? '48px' : '38px',
-                    height: isFullscreen ? '48px' : '38px',
+                    width: '46px',
+                    height: '46px',
                     borderRadius: '12px',
                     color: '#fff',
                     background: loading || !input.trim() ? '#94a3b8' : 'linear-gradient(135deg, #0055d4, #1d4ed8)',
@@ -654,7 +589,7 @@ export default function AIChatWidget() {
                     boxShadow: loading || !input.trim() ? 'none' : '0 4px 12px rgba(0,85,212,0.3)',
                   }}
                 >
-                  {loading ? <Loader2 size={isFullscreen ? 20 : 16} className="animate-spin" /> : <Send size={isFullscreen ? 20 : 16} />}
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                 </button>
               </form>
             </div>
