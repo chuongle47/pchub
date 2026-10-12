@@ -30,9 +30,9 @@ export default function Footer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
                 { icon: MapPin, text: '123 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh' },
-                { icon: Phone, text: '1900-6789 (8:00 – 22:00 hàng ngày)' },
+                { icon: Phone, text: '0901 234 567 (Hotline 8:00 – 21:30 hàng ngày)' },
                 { icon: Mail, text: 'support@pchub.vn' },
-                { icon: Clock, text: 'Mở cửa: 8:00 – 20:00 (Thứ 2 – Chủ nhật)' },
+                { icon: Clock, text: 'Mở cửa: 8:00 – 21:30 (Thứ 2 – Chủ nhật)' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px' }}>
                   <Icon size={13} style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }} />
@@ -48,13 +48,13 @@ export default function Footer() {
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
                 'TP. Hồ Chí Minh — 123 Nguyễn Trãi, Quận 1',
-                'TP. Hồ Chí Minh — 456 Lê Văn Việt, Quận 9',
+                'TP. Hồ Chí Minh — 456 Lê Văn Việt, TP. Thủ Đức',
                 'Hà Nội — 789 Cầu Giấy',
                 'Đà Nẵng — 321 Nguyễn Văn Linh',
                 'Cần Thơ — 654 Trần Hưng Đạo',
               ].map(loc => (
                 <li key={loc}>
-                  <Link href="/support" style={{
+                  <Link href="/lien-he" style={{
                     color: '#64748b',
                     fontSize: '12px',
                     textDecoration: 'none',
@@ -66,7 +66,7 @@ export default function Footer() {
                 </li>
               ))}
               <li>
-                <Link href="/support" aria-label="Xem tất cả địa chỉ cửa hàng PCHub" style={{ color: '#3b82f6', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Link href="/lien-he" aria-label="Xem tất cả địa chỉ cửa hàng PCHub" style={{ color: '#3b82f6', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   Xem tất cả cửa hàng <ArrowRight size={12} />
                 </Link>
               </li>
@@ -79,7 +79,7 @@ export default function Footer() {
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
                 { label: 'Về PCHub', href: '/support#ve-pchub' },
-                { label: 'Liên hệ hỗ trợ', href: '/support#lien-he' },
+                { label: 'Liên hệ hỗ trợ', href: '/lien-he' },
                 { label: 'Chính sách bảo hành', href: '/support#chinh-sach-bao-hanh' },
                 { label: 'Chính sách đổi trả', href: '/support#chinh-sach-doi-tra' },
                 { label: 'Hướng dẫn mua hàng', href: '/support#huong-dan-mua-hang' },

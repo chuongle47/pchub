@@ -18,6 +18,7 @@ const NAV_LINKS: NavLink[] = [
   { label: 'Build PC', href: '/build-pc', highlight: true },
   { label: 'Cộng đồng', href: '/community' },
   { label: 'Khuyến mãi', href: '/search?sale=true' },
+  { label: 'Liên hệ', href: '/lien-he' },
 ];
 
 export default function Navbar() {
@@ -66,7 +67,7 @@ export default function Navbar() {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <span>🚚 Miễn phí giao hàng đơn từ 500K · Hotline: <span style={{ color: '#38bdf8', fontWeight: 700 }}>1900-6789</span></span>
+          <span>🚚 Miễn phí giao hàng đơn từ 500K · Hotline: <a href="tel:0901234567" style={{ color: '#38bdf8', fontWeight: 700, textDecoration: 'none' }}>0901 234 567</a></span>
           <span className="top-bar-secondary">✅ Bảo hành chính hãng 36 tháng · 🔄 Đổi trả 7 ngày dễ dàng</span>
         </div>
       </div>

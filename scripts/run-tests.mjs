@@ -183,6 +183,24 @@ async function runTestSuite() {
   assert('Menu tài khoản cá nhân đã loại bỏ Ví điện tử', !sidebarFile.includes('/tai-khoan/vi-dien-tu'));
 
   // -------------------------------------------------------------
+  // TEST GROUP 9: Kiểm thử Trang Liên Hệ & Nút Liên Hệ Nổi (/lien-he & Floating Buttons)
+  // -------------------------------------------------------------
+  console.log('\n\x1b[33m[9/9] Kiểm thử Trang Liên Hệ & Nút Tương Tác Nổi\x1b[0m');
+  const contactConfigFile = fs.readFileSync(path.resolve('src/lib/contactConfig.ts'), 'utf-8');
+  assert('Cấu hình liên hệ trích xuất chính xác Hotline 0901234567, Zalo & Messenger', contactConfigFile.includes('0901234567') && contactConfigFile.includes('pchub') && contactConfigFile.includes('Góc phải'));
+  assert('Định nghĩa đầy đủ 5 Showroom tại các thành phố lớn', contactConfigFile.includes('hcm-q1') && contactConfigFile.includes('hn-caugiay') && contactConfigFile.includes('dn-haichau'));
+
+  const floatingBtnFile = fs.readFileSync(path.resolve('src/components/layout/FloatingContactButtons.tsx'), 'utf-8');
+  assert('Widget nút liên hệ nổi hỗ trợ 3 kênh: Gọi ngay, Zalo, Messenger', floatingBtnFile.includes('tel:0901234567') && floatingBtnFile.includes('zalo.me/0901234567') && floatingBtnFile.includes('m.me/pchub'));
+  assert('Nút liên hệ nổi được tích hợp vào Providers toàn site', fs.readFileSync(path.resolve('src/app/providers.tsx'), 'utf-8').includes('FloatingContactButtons'));
+
+  const contactPageFile = fs.readFileSync(path.resolve('src/app/lien-he/page.tsx'), 'utf-8');
+  assert('Trang /lien-he có form liên hệ trực tuyến, showroom tabs và Google Maps embed', contactPageFile.includes('handleSubmit') && contactPageFile.includes('selectedShowroom') && contactPageFile.includes('iframe'));
+
+  const navbarFile = fs.readFileSync(path.resolve('src/components/Navbar.tsx'), 'utf-8');
+  assert('Menu điều hướng Navbar có liên kết đến /lien-he', navbarFile.includes('/lien-he'));
+
+  // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ
   // -------------------------------------------------------------
   console.log('\n\x1b[36m=======================================================');
