@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Contact submit error:', error);
     return NextResponse.json(
-      { success: false, message: 'Có lỗi xảy ra khi gửi tin nhắn. Vui lòng liên hệ hotline 0901 234 567.' },
+      { success: false, message: 'Có lỗi xảy ra khi gửi tin nhắn. Vui lòng liên hệ hotline 0322 323 233.' },
       { status: 500 }
     );
   }

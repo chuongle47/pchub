@@ -67,7 +67,7 @@ export default function Navbar() {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <span>🚚 Miễn phí giao hàng đơn từ 500K · Hotline: <a href="tel:0901234567" style={{ color: '#38bdf8', fontWeight: 700, textDecoration: 'none' }}>0901 234 567</a></span>
+          <span>🚚 Miễn phí giao hàng đơn từ 500K · Hotline: <a href="tel:0322323233" style={{ color: '#38bdf8', fontWeight: 700, textDecoration: 'none' }}>0322 323 233</a></span>
           <span className="top-bar-secondary">✅ Bảo hành chính hãng 36 tháng · 🔄 Đổi trả 7 ngày dễ dàng</span>
         </div>
       </div>

@@ -29,8 +29,8 @@ export default function Footer() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { icon: MapPin, text: '123 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh' },
-                { icon: Phone, text: '0901 234 567 (Hotline 8:00 – 21:30 hàng ngày)' },
+                { icon: MapPin, text: 'Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh' },
+                { icon: Phone, text: '0322 323 233 (Hotline 8:00 – 21:30 hàng ngày)' },
                 { icon: Mail, text: 'support@pchub.vn' },
                 { icon: Clock, text: 'Mở cửa: 8:00 – 21:30 (Thứ 2 – Chủ nhật)' },
               ].map(({ icon: Icon, text }) => (
@@ -42,32 +42,29 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* COL 2 — Store Locations */}
+          {/* COL 2 — Store Location */}
           <div>
-            <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '14px' }}>Cửa hàng PCHub</h3>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {[
-                'TP. Hồ Chí Minh — 123 Nguyễn Trãi, Quận 1',
-                'TP. Hồ Chí Minh — 456 Lê Văn Việt, TP. Thủ Đức',
-                'Hà Nội — 789 Cầu Giấy',
-                'Đà Nẵng — 321 Nguyễn Văn Linh',
-                'Cần Thơ — 654 Trần Hưng Đạo',
-              ].map(loc => (
-                <li key={loc}>
-                  <Link href="/lien-he" style={{
-                    color: '#64748b',
-                    fontSize: '12px',
-                    textDecoration: 'none',
-                    transition: 'color 0.2s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                  onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}
-                  >• {loc}</Link>
-                </li>
-              ))}
+            <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '14px' }}>Trụ sở & Showroom PCHub</h3>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <li>
-                <Link href="/lien-he" aria-label="Xem tất cả địa chỉ cửa hàng PCHub" style={{ color: '#3b82f6', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  Xem tất cả cửa hàng <ArrowRight size={12} />
+                <div style={{ fontSize: '12.5px', color: '#e2e8f0', fontWeight: 600 }}>Showroom & Trung Tâm Kỹ Thuật</div>
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px', lineHeight: 1.5 }}>
+                  Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh
+                </div>
+              </li>
+              <li>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  📞 Hotline: <a href="tel:0322323233" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 700 }}>0322 323 233</a>
+                </div>
+              </li>
+              <li>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  💬 Zalo: <a href="https://zalo.me/0333333333" target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 700 }}>0333 333 333</a>
+                </div>
+              </li>
+              <li>
+                <Link href="/lien-he" aria-label="Xem bản đồ và chỉ đường đến PCHub" style={{ color: '#3b82f6', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                  Xem bản đồ & hướng dẫn đường đi <ArrowRight size={12} />
                 </Link>
               </li>
             </ul>

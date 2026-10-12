@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Phone, MessageSquare, Mail, MapPin, Clock, 
@@ -8,12 +8,29 @@ import {
   Building2, ArrowRight, ShieldCheck, HelpCircle,
   ExternalLink, Loader2
 } from 'lucide-react';
-import { CONTACT_CONFIG, Showroom } from '@/lib/contactConfig';
+import { CONTACT_CONFIG, Showroom, ContactButton } from '@/lib/contactConfig';
 import { useUIStore } from '@/lib/store';
 
 export default function ContactPage() {
   const setChatOpen = useUIStore(s => s.setChatOpen);
-  const [selectedShowroom, setSelectedShowroom] = useState<Showroom>(CONTACT_CONFIG.showrooms[0]);
+  const [config, setConfig] = useState(CONTACT_CONFIG);
+  const [buttons, setButtons] = useState<ContactButton[]>(
+    CONTACT_CONFIG.buttons.filter(b => b.enabled && b.value && b.value.trim().length > 0)
+  );
+
+  // Dynamic fetch to sync with WordPress / server changes
+  useEffect(() => {
+    fetch('/api/contact-buttons')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success) {
+          if (Array.isArray(data.buttons)) {
+            setButtons(data.buttons);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -30,6 +47,22 @@ export default function ContactPage() {
 
   // FAQ state
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+
+  const phoneButton = buttons.find(b => b.type === 'phone') || {
+    label: 'Call now',
+    value: config.hotline,
+    href: `tel:${config.hotline}`,
+    color: '#00a651'
+  };
+
+  const zaloButton = buttons.find(b => b.type === 'zalo') || {
+    label: 'Chat Zalo',
+    value: config.zalo,
+    href: `https://zalo.me/${config.zalo}`,
+    color: '#0068ff'
+  };
+
+  const messengerButton = buttons.find(b => b.type === 'messenger' && b.value);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +102,7 @@ export default function ContactPage() {
         message: '',
       });
     } catch (err: any) {
-      setFormError(err.message || 'Đã xảy ra sự cố kết nối. Vui lòng thử lại hoặc gọi Hotline.');
+      setFormError(err.message || `Đã xảy ra sự cố. Vui lòng liên hệ Hotline: ${config.hotline}`);
     } finally {
       setSubmitting(false);
     }
@@ -78,26 +111,28 @@ export default function ContactPage() {
   const FAQS = [
     {
       q: 'PCHub có hỗ trợ tư vấn cấu hình PC online và giao hàng tận nơi không?',
-      a: 'Có! PCHub hỗ trợ tư vấn 24/7 qua Hotline 0901 234 567, Zalo OA và Chatbot AI. Chúng tôi giao hàng hỏa tốc trong 2 giờ tại TP.HCM và Hà Nội, đồng thời giao hàng chống sốc toàn quốc.',
+      a: `Có! PCHub hỗ trợ tư vấn 24/7 qua Hotline ${config.hotlineDisplay}, Zalo ${config.zalo} và Chatbot AI. Chúng tôi giao hàng hỏa tốc trong 2 giờ và đóng gói chuyên dụng chống sốc trên toàn quốc.`,
     },
     {
-      q: 'Thời gian bảo hành và đổi trả linh kiện tại các Showroom như thế nào?',
+      q: 'Thời gian bảo hành và đổi trả linh kiện tại Showroom như thế nào?',
       a: 'Mọi linh kiện chính hãng tại PCHub đều được bảo hành từ 36 đến 60 tháng. Đổi mới 100% trong 30 ngày đầu nếu phát sinh lỗi từ nhà sản xuất.',
     },
     {
       q: 'Tôi có thể mang linh kiện có sẵn đến cửa hàng để nhờ lắp ráp hoàn thiện không?',
-      a: 'Hoàn toàn được! Đội ngũ kỹ thuật viên PCHub hỗ trợ kiểm tra tương thích, vệ sinh và lắp ráp hoàn chỉnh kèm dịch vụ đi dây gọn gàng, test stress nhiệt độ miễn phí khi mua kèm linh kiện tại cửa hàng.',
+      a: `Hoàn toàn được! Đội ngũ kỹ thuật viên PCHub tại địa chỉ ${config.address} luôn sẵn sàng hỗ trợ kiểm tra tương thích, vệ sinh và lắp ráp hoàn chỉnh kèm dịch vụ đi dây gọn gàng, test stress nhiệt độ miễn phí.`,
     },
   ];
+
+  const showroom = config.showrooms[0];
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', color: '#1e293b' }}>
       
-      {/* Top Banner / Hero Header */}
+      {/* Top Banner / Hero Header (High Contrast Crisp White Text) */}
       <section style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%)',
+        background: 'linear-gradient(135deg, #091e42 0%, #0c367b 45%, #1d4ed8 100%)',
         color: '#ffffff',
-        padding: '52px 20px 60px',
+        padding: '56px 20px 68px',
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -105,44 +140,61 @@ export default function ContactPage() {
           position: 'absolute',
           top: '-60px',
           right: '-60px',
-          width: '320px',
-          height: '320px',
+          width: '360px',
+          height: '360px',
           borderRadius: '50%',
-          background: 'rgba(59, 130, 246, 0.15)',
-          filter: 'blur(50px)',
+          background: 'rgba(59, 130, 246, 0.25)',
+          filter: 'blur(60px)',
           pointerEvents: 'none',
         }} />
 
         <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Breadcrumbs */}
-          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#94a3b8', marginBottom: '20px' }}>
-            <Link href="/" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Trang chủ</Link>
-            <ChevronRight size={14} />
-            <span style={{ color: '#38bdf8', fontWeight: 600 }}>Liên hệ & Showroom</span>
+          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#bfdbfe', marginBottom: '20px' }}>
+            <Link href="/" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 600 }}>Trang chủ</Link>
+            <ChevronRight size={14} color="#93c5fd" />
+            <span style={{ color: '#67e8f9', fontWeight: 700 }}>Liên hệ & Showroom</span>
           </nav>
 
-          <div style={{ maxWidth: '760px' }}>
+          <div style={{ maxWidth: '820px' }}>
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'rgba(255, 255, 255, 0.16)',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
               borderRadius: '9999px',
               padding: '6px 16px',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              color: '#93c5fd',
-              marginBottom: '16px'
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#ffffff',
+              marginBottom: '18px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-              <Sparkles size={14} color="#60a5fa" />
+              <Sparkles size={15} color="#38bdf8" />
               <span>Hỗ trợ kỹ thuật & Tư vấn phần cứng 24/7</span>
             </div>
 
-            <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 900, lineHeight: 1.2, marginBottom: '16px' }}>
+            {/* Title with forced pure white and crisp contrast */}
+            <h1 style={{
+              fontSize: 'clamp(30px, 4.5vw, 44px)',
+              fontWeight: 900,
+              lineHeight: 1.25,
+              marginBottom: '16px',
+              color: '#ffffff',
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.45)',
+              letterSpacing: '-0.5px'
+            }}>
               Liên hệ với PCHub Technology
             </h1>
-            <p style={{ fontSize: '15.5px', color: '#cbd5e1', lineHeight: 1.6, margin: 0 }}>
+            <p style={{
+              fontSize: '16px',
+              color: '#f1f5f9',
+              lineHeight: 1.65,
+              margin: 0,
+              fontWeight: 500,
+              textShadow: '0 1px 4px rgba(0, 0, 0, 0.3)'
+            }}>
               Chúng tôi luôn sẵn sàng lắng nghe, tư vấn cấu hình tối ưu theo ngân sách và đồng hành cùng mọi trải nghiệm công nghệ của bạn.
             </p>
           </div>
@@ -152,14 +204,14 @@ export default function ContactPage() {
       {/* Main Content Container */}
       <main style={{ maxWidth: '1200px', margin: '-32px auto 0', padding: '0 20px 80px', position: 'relative', zIndex: 2 }}>
         
-        {/* 1. Fast Action Buttons Cards (Extracted from WordPress Nút liên hệ nổi) */}
+        {/* 1. Fast Action Buttons Cards (Synced from WordPress) */}
         <section aria-label="Các kênh liên hệ trực tiếp" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '18px',
+          gridTemplateColumns: messengerButton ? 'repeat(auto-fit, minmax(260px, 1fr))' : 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '20px',
           marginBottom: '40px'
         }}>
-          {/* Card 1: Gọi điện Hotline */}
+          {/* Card 1: Call now */}
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
@@ -170,7 +222,6 @@ export default function ContactPage() {
             flexDirection: 'column',
             justifyContent: 'space-between',
             gap: '16px',
-            transition: 'transform 0.2s, box-shadow 0.2s',
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
               <div style={{
@@ -191,8 +242,8 @@ export default function ContactPage() {
                 <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Hotline Trực Tiếp
                 </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '2px 0 4px' }}>
-                  0901 234 567
+                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
+                  {phoneButton.value}
                 </h3>
                 <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
                   Tư vấn kỹ thuật & báo giá hỏa tốc
@@ -200,7 +251,7 @@ export default function ContactPage() {
               </div>
             </div>
             <a
-              href="tel:0901234567"
+              href={phoneButton.href}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -210,8 +261,8 @@ export default function ContactPage() {
                 color: '#ffffff',
                 textDecoration: 'none',
                 fontWeight: 700,
-                fontSize: '13.5px',
-                padding: '11px 16px',
+                fontSize: '14px',
+                padding: '12px 16px',
                 borderRadius: '10px',
                 transition: 'opacity 0.15s',
               }}
@@ -219,7 +270,7 @@ export default function ContactPage() {
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               <Phone size={16} />
-              <span>Gọi ngay bây giờ</span>
+              <span>{phoneButton.label}</span>
             </a>
           </div>
 
@@ -254,10 +305,10 @@ export default function ContactPage() {
               </div>
               <div>
                 <span style={{ fontSize: '12px', color: '#0068ff', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Zalo OA Chính Thức
+                  Zalo Tư Vấn Trực Tiếp
                 </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '2px 0 4px' }}>
-                  0901 234 567
+                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
+                  {zaloButton.value}
                 </h3>
                 <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
                   Chat gửi ảnh linh kiện, cấu hình PC
@@ -265,7 +316,7 @@ export default function ContactPage() {
               </div>
             </div>
             <a
-              href="https://zalo.me/0901234567"
+              href={zaloButton.href}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -277,8 +328,8 @@ export default function ContactPage() {
                 color: '#ffffff',
                 textDecoration: 'none',
                 fontWeight: 700,
-                fontSize: '13.5px',
-                padding: '11px 16px',
+                fontSize: '14px',
+                padding: '12px 16px',
                 borderRadius: '10px',
                 transition: 'opacity 0.15s',
               }}
@@ -286,74 +337,74 @@ export default function ContactPage() {
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               <ExternalLink size={16} />
-              <span>Mở Chat Zalo</span>
+              <span>{zaloButton.label}</span>
             </a>
           </div>
 
-          {/* Card 3: Facebook Messenger */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '24px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #00b2fe 0%, #0084ff 100%)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: '0 4px 12px rgba(0, 132, 255, 0.25)',
-              }}>
-                <MessageSquare size={24} />
+          {/* Card 3: Messenger (Only if configured in WordPress) */}
+          {messengerButton && (
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              border: '1px solid #e2e8f0',
+              padding: '24px',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '16px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #00b2fe 0%, #0084ff 100%)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(0, 132, 255, 0.25)',
+                }}>
+                  <MessageSquare size={24} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '12px', color: '#0284c7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Facebook Messenger
+                  </span>
+                  <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
+                    @{messengerButton.value}
+                  </h3>
+                  <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
+                    Hỗ trợ kỹ thuật & bảo hành
+                  </p>
+                </div>
               </div>
-              <div>
-                <span style={{ fontSize: '12px', color: '#0284c7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Facebook Fanpage
-                </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '2px 0 4px' }}>
-                  @pchub
-                </h3>
-                <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
-                  Nhận tin nhắn cộng đồng & bảo hành
-                </p>
-              </div>
+              <a
+                href={messengerButton.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: '#0084ff',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  transition: 'opacity 0.15s',
+                }}
+              >
+                <ExternalLink size={16} />
+                <span>Chat Messenger</span>
+              </a>
             </div>
-            <a
-              href="https://m.me/pchub"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: '#0084ff',
-                color: '#ffffff',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '13.5px',
-                padding: '11px 16px',
-                borderRadius: '10px',
-                transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              <ExternalLink size={16} />
-              <span>Chat Messenger</span>
-            </a>
-          </div>
+          )}
 
           {/* Card 4: AI Advisor Assistant */}
           <div style={{
@@ -386,7 +437,7 @@ export default function ContactPage() {
                 <span style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Trí Tuệ Nhân Tạo
                 </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e3a8a', margin: '2px 0 4px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1e3a8a', margin: '2px 0 4px' }}>
                   PCHub AI Advisor
                 </h3>
                 <p style={{ fontSize: '12.5px', color: '#475569', margin: 0 }}>
@@ -406,8 +457,8 @@ export default function ContactPage() {
                 color: '#ffffff',
                 border: 'none',
                 fontWeight: 700,
-                fontSize: '13.5px',
-                padding: '11px 16px',
+                fontSize: '14px',
+                padding: '12px 16px',
                 borderRadius: '10px',
                 cursor: 'pointer',
                 transition: 'opacity 0.15s',
@@ -553,7 +604,7 @@ export default function ContactPage() {
                     <input
                       type="tel"
                       required
-                      placeholder="0901 234 567"
+                      placeholder="0322 323 233"
                       value={formData.phone}
                       onChange={e => setFormData({ ...formData, phone: e.target.value })}
                       style={{
@@ -710,7 +761,7 @@ export default function ContactPage() {
             )}
           </div>
 
-          {/* Right Column: Showroom System & Location Info */}
+          {/* Right Column: Single Official Store Address */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{
               background: '#ffffff',
@@ -719,46 +770,16 @@ export default function ContactPage() {
               padding: '28px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <div>
-                  <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Hệ Thống Trải Nghiệm
-                  </span>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '2px 0 0' }}>
-                    Showroom PCHub toàn quốc
-                  </h2>
-                </div>
-                <div style={{ background: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, color: '#475569' }}>
-                  {CONTACT_CONFIG.showrooms.length} Cửa hàng
-                </div>
+              <div style={{ marginBottom: '18px' }}>
+                <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Địa Chỉ Trực Tiếp
+                </span>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '4px 0 0' }}>
+                  Showroom & Trụ Sở PCHub
+                </h2>
               </div>
 
-              {/* Showroom selector tabs */}
-              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '16px' }}>
-                {CONTACT_CONFIG.showrooms.map(sr => (
-                  <button
-                    key={sr.id}
-                    type="button"
-                    onClick={() => setSelectedShowroom(sr)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      fontSize: '12.5px',
-                      fontWeight: selectedShowroom.id === sr.id ? 700 : 500,
-                      background: selectedShowroom.id === sr.id ? '#2563eb' : '#f8fafc',
-                      color: selectedShowroom.id === sr.id ? '#ffffff' : '#475569',
-                      border: selectedShowroom.id === sr.id ? '1px solid #2563eb' : '1px solid #e2e8f0',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {sr.city} - {sr.name.split('Showroom ')[1] || sr.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Active Showroom Details Card */}
+              {/* Showroom Details Card */}
               <div style={{
                 background: '#f8fafc',
                 border: '1px solid #e2e8f0',
@@ -766,37 +787,40 @@ export default function ContactPage() {
                 padding: '20px',
                 marginBottom: '18px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
                   <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                    {selectedShowroom.name}
+                    {showroom.name}
                   </h4>
-                  {selectedShowroom.isHeadquarter && (
-                    <span style={{ fontSize: '11px', background: '#dbeafe', color: '#1e40af', padding: '3px 8px', borderRadius: '6px', fontWeight: 800 }}>
-                      Trụ sở chính
-                    </span>
-                  )}
+                  <span style={{ fontSize: '11px', background: '#dbeafe', color: '#1e40af', padding: '3px 8px', borderRadius: '6px', fontWeight: 800 }}>
+                    Trụ sở chính
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#475569' }}>
-                    <MapPin size={16} color="#2563eb" style={{ marginTop: '2px', flexShrink: 0 }} />
-                    <span>{selectedShowroom.address}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13.5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#334155' }}>
+                    <MapPin size={18} color="#2563eb" style={{ marginTop: '2px', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600 }}>{config.address}</span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#475569' }}>
-                    <Phone size={16} color="#00a651" style={{ flexShrink: 0 }} />
-                    <span>Hotline: <strong style={{ color: '#0f172a' }}>{selectedShowroom.phone}</strong></span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#334155' }}>
+                    <Phone size={17} color="#00a651" style={{ flexShrink: 0 }} />
+                    <span>Hotline: <strong style={{ color: '#0f172a' }}>{phoneButton.value}</strong></span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#475569' }}>
-                    <Clock size={16} color="#f59e0b" style={{ flexShrink: 0 }} />
-                    <span>Mở cửa: {selectedShowroom.hours}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#334155' }}>
+                    <Mail size={17} color="#0284c7" style={{ flexShrink: 0 }} />
+                    <span>Email: <strong style={{ color: '#0f172a' }}>{config.email}</strong></span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#334155' }}>
+                    <Clock size={17} color="#f59e0b" style={{ flexShrink: 0 }} />
+                    <span>Mở cửa: <strong>{config.workingHours}</strong></span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
                   <a
-                    href={`tel:${selectedShowroom.phone.replace(/\s+/g, '')}`}
+                    href={`tel:${phoneButton.value.replace(/\s+/g, '')}`}
                     style={{
                       flex: 1,
                       display: 'flex',
@@ -805,19 +829,19 @@ export default function ContactPage() {
                       gap: '6px',
                       background: '#00a651',
                       color: '#fff',
-                      padding: '9px 12px',
+                      padding: '10px 14px',
                       borderRadius: '8px',
-                      fontSize: '12.5px',
+                      fontSize: '13px',
                       fontWeight: 700,
                       textDecoration: 'none'
                     }}
                   >
-                    <Phone size={14} />
+                    <Phone size={15} />
                     <span>Gọi cửa hàng</span>
                   </a>
 
                   <a
-                    href={selectedShowroom.directionUrl}
+                    href={showroom.directionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -828,15 +852,15 @@ export default function ContactPage() {
                       gap: '6px',
                       background: '#ffffff',
                       color: '#2563eb',
-                      border: '1px solid #bfdbfe',
-                      padding: '9px 12px',
+                      border: '1.5px solid #bfdbfe',
+                      padding: '10px 14px',
                       borderRadius: '8px',
-                      fontSize: '12.5px',
+                      fontSize: '13px',
                       fontWeight: 700,
                       textDecoration: 'none'
                     }}
                   >
-                    <MapPin size={14} />
+                    <MapPin size={15} />
                     <span>Chỉ đường Maps</span>
                   </a>
                 </div>
@@ -847,12 +871,12 @@ export default function ContactPage() {
                 borderRadius: '12px',
                 overflow: 'hidden',
                 border: '1px solid #e2e8f0',
-                height: '240px',
+                height: '250px',
                 position: 'relative'
               }}>
                 <iframe
-                  title={`Bản đồ ${selectedShowroom.name}`}
-                  src={selectedShowroom.mapEmbedUrl}
+                  title={`Bản đồ ${config.address}`}
+                  src={showroom.mapEmbedUrl}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

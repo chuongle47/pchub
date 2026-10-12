@@ -132,11 +132,10 @@ export default function SupportPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
             {[
               { label: 'AI Chatbot', info: 'Tư vấn 24/7', icon: Bot, href: '/build-pc' },
-              { label: 'Live Support (Zalo)', info: '8:00 - 21:30', icon: MessageCircle, href: 'https://zalo.me/0901234567' },
-              { label: 'Hotline 0901 234 567', info: 'Tư vấn trực tiếp', icon: Phone, href: 'tel:0901234567' },
+              { label: 'Live Support (Zalo)', info: '8:00 - 21:30', icon: MessageCircle, href: 'https://zalo.me/0333333333' },
+              { label: 'Hotline 0322 323 233', info: 'Tư vấn trực tiếp', icon: Phone, href: 'tel:0322323233' },
               { label: 'Email CSKH', info: 'support@pchub.vn', icon: Mail, href: 'mailto:support@pchub.vn' },
-              { label: 'Chat Messenger', info: 'Official PCHub', icon: QrCode, href: 'https://m.me/pchub' },
-              { label: 'Hệ thống Showroom', info: 'Hà Nội & TP.HCM', icon: MapPin, href: '/lien-he' }
+              { label: 'Showroom & Trụ Sở', info: 'Số 06, Trần Văn Ơn, TP.HCM', icon: MapPin, href: '/lien-he' }
             ].map((item, idx) => {
               const Icon = item.icon;
               return (

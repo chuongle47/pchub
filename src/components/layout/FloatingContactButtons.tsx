@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Phone, MessageCircle } from 'lucide-react';
-import { CONTACT_CONFIG } from '@/lib/contactConfig';
+import React, { useState, useEffect } from 'react';
+import { Phone, MessageSquare } from 'lucide-react';
+import { CONTACT_CONFIG, ContactButton } from '@/lib/contactConfig';
 
-// Custom SVG Icons for Zalo and Facebook Messenger
+// Custom SVG Icon for Zalo
 function ZaloIcon({ size = 22 }: { size?: number }) {
   return (
     <svg
@@ -50,9 +50,23 @@ function MessengerIcon({ size = 22 }: { size?: number }) {
 }
 
 export default function FloatingContactButtons() {
-  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [buttons, setButtons] = useState<ContactButton[]>(
+    CONTACT_CONFIG.buttons.filter(b => b.enabled && b.value && b.value.trim().length > 0)
+  );
 
-  if (!CONTACT_CONFIG.enabled) return null;
+  useEffect(() => {
+    // Dynamic fetch from API to ensure sync with server/WordPress updates
+    fetch('/api/contact-buttons')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.buttons)) {
+          setButtons(data.buttons);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!CONTACT_CONFIG.enabled || buttons.length === 0) return null;
 
   return (
     <>
@@ -187,62 +201,41 @@ export default function FloatingContactButtons() {
         role="complementary"
         aria-label="Kênh liên hệ nhanh"
       >
-        {/* Nút 1: Gọi điện / Gọi ngay (0901234567) */}
-        <a
-          href="tel:0901234567"
-          className="pchub-contact-btn pchub-contact-btn-phone"
-          aria-label="Gọi ngay hotline 0901 234 567"
-          title="Gọi ngay hotline 0901 234 567"
-          onMouseEnter={() => setHoveredButton('phone')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
-          <div className="pchub-contact-tooltip">
-            <span>📞 Gọi ngay: <strong>0901 234 567</strong></span>
-          </div>
-          <div className="pchub-contact-btn-circle">
-            <span className="pchub-phone-icon">
-              <Phone size={22} strokeWidth={2.4} />
-            </span>
-          </div>
-        </a>
+        {buttons.map(btn => {
+          const isPhone = btn.type === 'phone';
+          const isZalo = btn.type === 'zalo';
+          const isMessenger = btn.type === 'messenger';
 
-        {/* Nút 2: Zalo / Chat Zalo (0901234567) */}
-        <a
-          href="https://zalo.me/0901234567"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pchub-contact-btn pchub-contact-btn-zalo"
-          aria-label="Chat Zalo tư vấn 0901 234 567"
-          title="Chat Zalo tư vấn 0901 234 567"
-          onMouseEnter={() => setHoveredButton('zalo')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
-          <div className="pchub-contact-tooltip">
-            <span>💬 Chat Zalo: <strong>0901 234 567</strong></span>
-          </div>
-          <div className="pchub-contact-btn-circle">
-            <ZaloIcon size={24} />
-          </div>
-        </a>
-
-        {/* Nút 3: Facebook Messenger (pchub) */}
-        <a
-          href="https://m.me/pchub"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pchub-contact-btn pchub-contact-btn-messenger"
-          aria-label="Chat Messenger PCHub"
-          title="Chat Messenger PCHub"
-          onMouseEnter={() => setHoveredButton('messenger')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
-          <div className="pchub-contact-tooltip">
-            <span>⚡ Chat Messenger: <strong>@pchub</strong></span>
-          </div>
-          <div className="pchub-contact-btn-circle">
-            <MessengerIcon size={22} />
-          </div>
-        </a>
+          return (
+            <a
+              key={btn.id}
+              href={btn.href}
+              target={btn.openNewTab ? '_blank' : '_self'}
+              rel={btn.openNewTab ? 'noopener noreferrer' : undefined}
+              className={`pchub-contact-btn pchub-contact-btn-${btn.type}`}
+              aria-label={`${btn.label}: ${btn.value}`}
+              title={`${btn.label}: ${btn.value}`}
+            >
+              <div className="pchub-contact-tooltip">
+                <span>
+                  {isPhone && '📞 '}
+                  {isZalo && '💬 '}
+                  {isMessenger && '⚡ '}
+                  {btn.label}: <strong>{btn.value}</strong>
+                </span>
+              </div>
+              <div className="pchub-contact-btn-circle" style={{ backgroundColor: btn.color }}>
+                {isPhone && (
+                  <span className="pchub-phone-icon">
+                    <Phone size={22} strokeWidth={2.4} />
+                  </span>
+                )}
+                {isZalo && <ZaloIcon size={24} />}
+                {isMessenger && <MessengerIcon size={22} />}
+              </div>
+            </a>
+          );
+        })}
       </div>
     </>
   );
