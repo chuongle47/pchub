@@ -54,9 +54,8 @@ export default function FloatingContactButtons() {
     CONTACT_CONFIG.buttons.filter(b => b.enabled && b.value && b.value.trim().length > 0)
   );
 
-  useEffect(() => {
-    // Dynamic fetch from API to ensure sync with server/WordPress updates
-    fetch('/api/contact-buttons')
+  const fetchLatest = () => {
+    fetch('/api/contact-buttons?t=' + Date.now())
       .then(r => r.json())
       .then(data => {
         if (data && data.success && Array.isArray(data.buttons)) {
@@ -64,6 +63,13 @@ export default function FloatingContactButtons() {
         }
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchLatest();
+    // Auto sync poll every 10 seconds to reflect immediate admin changes without full page reload
+    const interval = setInterval(fetchLatest, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!CONTACT_CONFIG.enabled || buttons.length === 0) return null;
@@ -71,15 +77,15 @@ export default function FloatingContactButtons() {
   return (
     <>
       <style jsx global>{`
-        @keyframes pulseGlowPhone {
+        @keyframes pulseGlowCustom {
           0% {
-            box-shadow: 0 0 0 0 rgba(0, 166, 81, 0.7);
+            box-shadow: 0 0 0 0 rgba(112, 10, 41, 0.7);
           }
           70% {
-            box-shadow: 0 0 0 14px rgba(0, 166, 81, 0);
+            box-shadow: 0 0 0 14px rgba(112, 10, 41, 0);
           }
           100% {
-            box-shadow: 0 0 0 0 rgba(0, 166, 81, 0);
+            box-shadow: 0 0 0 0 rgba(112, 10, 41, 0);
           }
         }
 
@@ -131,11 +137,12 @@ export default function FloatingContactButtons() {
           align-items: center;
           justify-content: center;
           color: #fff;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-          border: 2px solid #ffffff;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+          border: 2.5px solid #ffffff;
           position: relative;
           flex-shrink: 0;
           cursor: pointer;
+          transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
         @media (max-width: 768px) {
@@ -145,21 +152,8 @@ export default function FloatingContactButtons() {
           }
         }
 
-        .pchub-contact-btn-phone .pchub-contact-btn-circle {
-          background: linear-gradient(135deg, #00c853 0%, #00a651 100%);
-          animation: pulseGlowPhone 2s infinite ease-out;
-        }
-
         .pchub-contact-btn-phone:hover .pchub-phone-icon {
           animation: phoneRingShake 0.8s ease-in-out infinite;
-        }
-
-        .pchub-contact-btn-zalo .pchub-contact-btn-circle {
-          background: linear-gradient(135deg, #0084ff 0%, #0068ff 100%);
-        }
-
-        .pchub-contact-btn-messenger .pchub-contact-btn-circle {
-          background: linear-gradient(135deg, #00b2fe 0%, #0084ff 100%);
         }
 
         .pchub-contact-tooltip {
@@ -224,7 +218,13 @@ export default function FloatingContactButtons() {
                   {btn.label}: <strong>{btn.value}</strong>
                 </span>
               </div>
-              <div className="pchub-contact-btn-circle" style={{ backgroundColor: btn.color }}>
+              <div
+                className="pchub-contact-btn-circle"
+                style={{
+                  background: btn.color || '#2563eb',
+                  boxShadow: `0 4px 16px ${btn.color ? btn.color + '66' : 'rgba(0,0,0,0.25)'}`,
+                }}
+              >
                 {isPhone && (
                   <span className="pchub-phone-icon">
                     <Phone size={22} strokeWidth={2.4} />

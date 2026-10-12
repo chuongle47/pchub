@@ -18,18 +18,25 @@ export default function ContactPage() {
     CONTACT_CONFIG.buttons.filter(b => b.enabled && b.value && b.value.trim().length > 0)
   );
 
-  // Dynamic fetch to sync with WordPress / server changes
+  // Dynamic fetch to sync with WordPress / server changes in real time
   useEffect(() => {
-    fetch('/api/contact-buttons')
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.success) {
-          if (Array.isArray(data.buttons)) {
+    const fetchLatest = () => {
+      fetch('/api/contact-buttons?t=' + Date.now())
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.success && Array.isArray(data.buttons)) {
             setButtons(data.buttons);
+            if (data.hotline) setConfig(c => ({ ...c, hotline: data.hotline, hotlineDisplay: data.hotlineDisplay || data.hotline }));
+            if (data.zalo) setConfig(c => ({ ...c, zalo: data.zalo }));
+            if (data.address) setConfig(c => ({ ...c, address: data.address }));
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {});
+    };
+
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Form states
@@ -205,206 +212,95 @@ export default function ContactPage() {
       <main style={{ maxWidth: '1200px', margin: '-32px auto 0', padding: '0 20px 80px', position: 'relative', zIndex: 2 }}>
         
         {/* 1. Fast Action Buttons Cards (Synced from WordPress) */}
+        {/* 1. Fast Action Buttons Cards (Synced from WordPress) */}
         <section aria-label="Các kênh liên hệ trực tiếp" style={{
           display: 'grid',
-          gridTemplateColumns: messengerButton ? 'repeat(auto-fit, minmax(260px, 1fr))' : 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '20px',
           marginBottom: '40px'
         }}>
-          {/* Card 1: Call now */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '24px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #00c853 0%, #00a651 100%)',
-                color: '#fff',
+          {buttons.map((btn) => {
+            const isPhone = btn.type === 'phone';
+            const isZalo = btn.type === 'zalo';
+            const isMessenger = btn.type === 'messenger';
+            const btnColor = btn.color || (isPhone ? '#700a29' : isMessenger ? '#0084ff' : '#0068ff');
+            
+            return (
+              <div key={btn.id || btn.type} style={{
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: '0 4px 12px rgba(0, 166, 81, 0.25)',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '16px',
               }}>
-                <Phone size={24} />
-              </div>
-              <div>
-                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Hotline Trực Tiếp
-                </span>
-                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
-                  {phoneButton.value}
-                </h3>
-                <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
-                  Tư vấn kỹ thuật & báo giá hỏa tốc
-                </p>
-              </div>
-            </div>
-            <a
-              href={phoneButton.href}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: '#00a651',
-                color: '#ffffff',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '14px',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              <Phone size={16} />
-              <span>{phoneButton.label}</span>
-            </a>
-          </div>
-
-          {/* Card 2: Chat Zalo */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '24px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #0084ff 0%, #0068ff 100%)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: '0 4px 12px rgba(0, 104, 255, 0.25)',
-                fontWeight: 900,
-                fontSize: '15px'
-              }}>
-                Zalo
-              </div>
-              <div>
-                <span style={{ fontSize: '12px', color: '#0068ff', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Zalo Tư Vấn Trực Tiếp
-                </span>
-                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
-                  {zaloButton.value}
-                </h3>
-                <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
-                  Chat gửi ảnh linh kiện, cấu hình PC
-                </p>
-              </div>
-            </div>
-            <a
-              href={zaloButton.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: '#0068ff',
-                color: '#ffffff',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '14px',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              <ExternalLink size={16} />
-              <span>{zaloButton.label}</span>
-            </a>
-          </div>
-
-          {/* Card 3: Messenger (Only if configured in WordPress) */}
-          {messengerButton && (
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0',
-              padding: '24px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '16px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #00b2fe 0%, #0084ff 100%)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 4px 12px rgba(0, 132, 255, 0.25)',
-                }}>
-                  <MessageSquare size={24} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: btnColor,
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: `0 4px 12px ${btnColor}40`,
+                    fontWeight: 900,
+                    fontSize: '15px'
+                  }}>
+                    {isPhone && <Phone size={24} />}
+                    {isZalo && 'Zalo'}
+                    {isMessenger && <MessageSquare size={24} />}
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '12px', color: btnColor, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {isPhone && 'Hotline Trực Tiếp'}
+                      {isMessenger && 'Facebook Messenger'}
+                      {isZalo && 'Zalo Tư Vấn Trực Tiếp'}
+                    </span>
+                    <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
+                      {isMessenger ? (btn.value.startsWith('@') ? btn.value : `@${btn.value}`) : btn.value}
+                    </h3>
+                    <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
+                      {isPhone && 'Tư vấn kỹ thuật & báo giá hỏa tốc'}
+                      {isMessenger && 'Hỗ trợ kỹ thuật & giải đáp 24/7'}
+                      {isZalo && 'Chat gửi ảnh linh kiện, cấu hình PC'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ fontSize: '12px', color: '#0284c7', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Facebook Messenger
-                  </span>
-                  <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
-                    @{messengerButton.value}
-                  </h3>
-                  <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0 }}>
-                    Hỗ trợ kỹ thuật & bảo hành
-                  </p>
-                </div>
+                <a
+                  href={btn.href}
+                  target={btn.openNewTab ? '_blank' : '_self'}
+                  rel={btn.openNewTab ? 'noopener noreferrer' : undefined}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: btnColor,
+                    color: '#ffffff',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                >
+                  {isPhone && <Phone size={16} />}
+                  {isZalo && <ExternalLink size={16} />}
+                  {isMessenger && <MessageSquare size={16} />}
+                  <span>{btn.label}</span>
+                </a>
               </div>
-              <a
-                href={messengerButton.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: '#0084ff',
-                  color: '#ffffff',
-                  textDecoration: 'none',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  transition: 'opacity 0.15s',
-                }}
-              >
-                <ExternalLink size={16} />
-                <span>Chat Messenger</span>
-              </a>
-            </div>
-          )}
+            );
+          })}
 
           {/* Card 4: AI Advisor Assistant */}
           <div style={{

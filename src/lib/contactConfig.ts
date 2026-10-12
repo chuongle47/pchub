@@ -22,21 +22,24 @@ export interface Showroom {
   directionUrl: string;
 }
 
-// Cấu hình đồng bộ chính xác với WordPress "Nút liên hệ nổi" (nks-contact-buttons)
+// Cấu hình đồng bộ chính xác với WordPress "Floating Contact Buttons" mới nhất
 export const CONTACT_CONFIG = {
   enabled: true,
   position: 'right' as const, // 'Góc phải'
   hotline: '0322323233',
   hotlineDisplay: '0322 323 233',
   zalo: '0333333333',
-  messenger: '', // Để trống theo cấu hình WordPress -> không hiển thị nút này
+  messenger: 'dfd',
   email: 'support@pchub.vn',
   workingHours: '8:00 – 21:30 (Thứ 2 – Chủ nhật)',
 
   // Địa chỉ duy nhất của PCHub theo yêu cầu: Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh
   address: 'Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh',
 
-  // Danh sách nút theo WordPress (Nút để trống giá trị sẽ không hiển thị)
+  // Danh sách nút theo đúng thứ tự và màu sắc đã lưu trong WordPress Admin:
+  // 1. Call now (0322323233) - Màu tím mận / Maroon (#700a29)
+  // 2. Messenger (dfd) - Màu xanh Messenger (#0084ff)
+  // 3. Chat Zalo (0333333333) - Màu xanh Zalo (#0068ff)
   buttons: [
     {
       id: 'phone',
@@ -45,7 +48,18 @@ export const CONTACT_CONFIG = {
       sublabel: '0322 323 233',
       value: '0322323233',
       href: 'tel:0322323233',
-      color: '#00a651', // Màu xanh lá WordPress
+      color: '#700a29', // Màu tím mận WordPress
+      openNewTab: true,
+      enabled: true,
+    },
+    {
+      id: 'messenger',
+      type: 'messenger' as const,
+      label: 'Messenger',
+      sublabel: '@dfd',
+      value: 'dfd',
+      href: 'https://m.me/dfd',
+      color: '#0084ff', // Màu xanh Messenger WordPress
       openNewTab: true,
       enabled: true,
     },
@@ -56,20 +70,9 @@ export const CONTACT_CONFIG = {
       sublabel: '0333 333 333',
       value: '0333333333',
       href: 'https://zalo.me/0333333333',
-      color: '#0068ff', // Màu xanh Zalo
+      color: '#0068ff', // Màu xanh Zalo WordPress
       openNewTab: true,
       enabled: true,
-    },
-    {
-      id: 'messenger',
-      type: 'messenger' as const,
-      label: 'Messenger',
-      sublabel: '',
-      value: '', // Trống -> ẩn theo quy tắc của plugin
-      href: '',
-      color: '#0084ff',
-      openNewTab: true,
-      enabled: false,
     },
   ],
 
