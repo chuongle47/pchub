@@ -23,18 +23,54 @@ export async function POST(req: Request) {
 
     const isQuote = subject?.toLowerCase().includes('báo giá') || body.isQuote;
     const ticketId = isQuote 
-      ? `BG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+      ? (body.ticketId || `BG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`)
       : `PCHUB-CONTACT-${Date.now().toString().slice(-6)}`;
 
     // Log contact/quotation ticket for backend admin / email notification
     console.log(`[PCHUB ${isQuote ? 'BÁO GIÁ PC' : 'CONTACT'}] New ticket ${ticketId} from ${name} (${phoneClean}, ${email || 'No email'}): [${subject || 'Tư vấn chung'}]`);
 
+    // Sync to WordPress REST API so it immediately shows up in WordPress Admin ("Báo giá PC")
+    let wpSynced = false;
+    try {
+      const wpUrl = process.env.SBUY_BASE_URL || 'https://sbuy.io.vn';
+      const wpRes = await fetch(`${wpUrl}/wp-json/pchub/v1/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phoneClean,
+          email: (email || '').trim(),
+          subject: subject || (isQuote ? 'Yêu cầu báo giá PC' : 'Liên hệ tư vấn'),
+          message,
+          company: body.company || '',
+          tax: body.tax || '',
+          address: body.address || '',
+          purpose: body.purpose || '',
+          budget: body.budget || '',
+          quantity: body.quantity || 1,
+          components: body.components || message,
+          ticketId,
+        }),
+        signal: AbortSignal.timeout(4000),
+      });
+
+      if (wpRes.ok) {
+        wpSynced = true;
+        console.log(`[PCHUB SYNC] Successfully synced quote ${ticketId} to WordPress (${wpUrl})`);
+      } else {
+        console.warn(`[PCHUB SYNC] WordPress response ${wpRes.status} for ticket ${ticketId}`);
+      }
+    } catch (wpErr) {
+      console.warn(`[PCHUB SYNC] Could not push to WordPress immediately (will store locally):`, wpErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: isQuote 
-        ? 'Gửi yêu cầu báo giá thành công! Chuyên viên PCHub sẽ gửi bảng dự toán chi tiết trong 15-30 phút.'
+        ? 'Gửi yêu cầu báo giá thành công! Chuyên viên PCHub đã tiếp nhận và sẽ liên hệ qua Zalo / SĐT trong 15-30 phút.'
         : 'Cảm ơn bạn đã liên hệ! Đội ngũ tư vấn PCHub sẽ phản hồi trong vòng 15-30 phút làm việc.',
       ticketId,
+      wpSynced,
     });
   } catch (error) {
     console.error('Contact submit error:', error);

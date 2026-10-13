@@ -379,3 +379,105 @@ function ncb_page() {
 	</div>
 	<?php
 }
+
+/* -------------------------------------------------------------------------
+ * INTEGRATION: BÁO GIÁ CẤU HÌNH PC & CONTACT FORM 7 (CF7)
+ * ---------------------------------------------------------------------- */
+if ( file_exists( __DIR__ . '/pchub-pc-quote.php' ) ) {
+	require_once __DIR__ . '/pchub-pc-quote.php';
+} else {
+	// Fallback inline definition if pchub-pc-quote.php is not present
+	if ( ! defined( 'PCHUB_QUOTE_POST_TYPE' ) ) {
+		define( 'PCHUB_QUOTE_POST_TYPE', 'pchub_quote' );
+	}
+
+	add_action( 'init', function () {
+		if ( post_type_exists( PCHUB_QUOTE_POST_TYPE ) ) return;
+		$labels = array(
+			'name'               => 'Báo giá PC',
+			'singular_name'      => 'Phiếu báo giá',
+			'menu_name'          => 'Báo giá PC',
+			'all_items'          => 'Tất cả phiếu báo giá',
+			'add_new'            => 'Tạo phiếu mới',
+			'edit_item'          => 'Chi tiết phiếu báo giá',
+			'not_found'          => 'Chưa có yêu cầu báo giá nào.',
+		);
+		register_post_type( PCHUB_QUOTE_POST_TYPE, array(
+			'labels'          => $labels,
+			'public'          => false,
+			'show_ui'         => true,
+			'show_in_menu'    => true,
+			'menu_icon'       => 'dashicons-desktop',
+			'menu_position'   => 26,
+			'supports'        => array( 'title' ),
+			'capability_type' => 'post',
+		) );
+	} );
+
+	// Tự động bắt từ CF7
+	add_action( 'wpcf7_mail_sent', 'ncb_capture_cf7_quote' );
+	add_action( 'wpcf7_before_send_mail', 'ncb_capture_cf7_quote' );
+	function ncb_capture_cf7_quote( $contact_form ) {
+		static $run = false;
+		if ( $run ) return;
+		$run = true;
+		$submission = class_exists( 'WPCF7_Submission' ) ? WPCF7_Submission::get_instance() : null;
+		if ( ! $submission ) return;
+		$data = $submission->get_posted_data();
+		if ( empty( $data ) ) return;
+		$name    = $data['your-name'] ?? $data['name'] ?? 'Khách CF7';
+		$phone   = $data['your-tel'] ?? $data['phone'] ?? '';
+		$email   = $data['your-email'] ?? $data['email'] ?? '';
+		$message = $data['your-message'] ?? $data['message'] ?? '';
+		$ticket  = 'BG-' . gmdate('Y') . '-' . wp_rand(1000, 9999);
+		$pid     = wp_insert_post( array(
+			'post_type'    => PCHUB_QUOTE_POST_TYPE,
+			'post_title'   => "[$ticket] $name - $phone",
+			'post_content' => $message,
+			'post_status'  => 'publish',
+		) );
+		if ( $pid && ! is_wp_error( $pid ) ) {
+			update_post_meta( $pid, '_pchub_ticket_id', $ticket );
+			update_post_meta( $pid, '_pchub_name', sanitize_text_field( $name ) );
+			update_post_meta( $pid, '_pchub_phone', sanitize_text_field( $phone ) );
+			update_post_meta( $pid, '_pchub_email', sanitize_email( $email ) );
+			update_post_meta( $pid, '_pchub_status', 'new' );
+			update_post_meta( $pid, '_pchub_source', 'Contact Form 7' );
+		}
+	}
+
+	// REST API endpoint cho Next.js
+	add_action( 'rest_api_init', function () {
+		register_rest_route( 'pchub/v1', '/quote', array(
+			'methods'             => 'POST',
+			'callback'            => function ( $request ) {
+				$p       = $request->get_json_params() ?: $request->get_params();
+				$name    = sanitize_text_field( $p['name'] ?? '' );
+				$phone   = sanitize_text_field( $p['phone'] ?? '' );
+				$ticket  = sanitize_text_field( $p['ticketId'] ?? ( 'BG-' . gmdate('Y') . '-' . wp_rand(1000, 9999) ) );
+				if ( ! $name || ! $phone ) {
+					return new WP_REST_Response( array( 'success' => false, 'message' => 'Thiếu họ tên hoặc SĐT' ), 400 );
+				}
+				$pid = wp_insert_post( array(
+					'post_type'    => PCHUB_QUOTE_POST_TYPE,
+					'post_title'   => "[$ticket] $name - $phone",
+					'post_content' => sanitize_textarea_field( $p['components'] ?? $p['message'] ?? '' ),
+					'post_status'  => 'publish',
+				) );
+				if ( is_wp_error( $pid ) ) {
+					return new WP_REST_Response( array( 'success' => false ), 500 );
+				}
+				update_post_meta( $pid, '_pchub_ticket_id', $ticket );
+				update_post_meta( $pid, '_pchub_name', $name );
+				update_post_meta( $pid, '_pchub_phone', $phone );
+				update_post_meta( $pid, '_pchub_email', sanitize_email( $p['email'] ?? '' ) );
+				update_post_meta( $pid, '_pchub_budget', sanitize_text_field( $p['budget'] ?? '' ) );
+				update_post_meta( $pid, '_pchub_status', 'new' );
+				update_post_meta( $pid, '_pchub_source', 'Website Next.js' );
+				return new WP_REST_Response( array( 'success' => true, 'ticket_id' => $ticket, 'post_id' => $pid ), 200 );
+			},
+			'permission_callback' => '__return_true',
+		) );
+	} );
+}
+
