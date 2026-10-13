@@ -645,6 +645,7 @@ function pchub_quote_render_metabox( $post ) {
 				<div>
 					<span style="font-weight:700; color:#2563eb; font-size:14px; margin-right: 12px;"><?php echo esc_html( $ticket ); ?></span>
 					<a href="<?php echo esc_url( $print_url ); ?>" target="_blank" class="button button-primary" style="background:#2563eb; border-color:#2563eb;">🖨️ In / Xuất báo giá PDF</a>
+					<button type="button" class="button" onclick="pchubSendQuoteEmail()" id="pchub-btn-send-email" style="background:#059669; color:#fff; border-color:#059669; font-weight:700; margin-left:6px;">✉️ Gửi báo giá qua Email</button>
 				</div>
 			</div>
 
@@ -1005,6 +1006,44 @@ function pchub_quote_render_metabox( $post ) {
 			pchubClosePicker();
 		}
 
+		function pchubSendQuoteEmail() {
+			var emailInput = document.querySelector('input[name="pchub_email"]');
+			var email = emailInput ? emailInput.value.trim() : '';
+			if (!email) {
+				alert('Vui lòng nhập Email khách hàng trước khi gửi báo giá!');
+				if (emailInput) emailInput.focus();
+				return;
+			}
+			if (!confirm('Gửi bảng báo giá cấu hình này đến email: ' + email + '?')) {
+				return;
+			}
+			var btn = document.getElementById('pchub-btn-send-email');
+			var oldText = btn.innerText;
+			btn.innerText = 'Đang gửi email...';
+			btn.disabled = true;
+
+			jQuery.post(ajaxurl, {
+				action: 'pchub_send_quote_email',
+				nonce: '<?php echo esc_js( $ajax_nonce ); ?>',
+				post_id: <?php echo (int) $post->ID; ?>,
+				email: email
+			}, function(res) {
+				btn.innerText = oldText;
+				btn.disabled = false;
+				if (res && res.success) {
+					alert('✅ ' + res.data.message);
+					var statusSel = document.querySelector('select[name="pchub_status"]');
+					if (statusSel) statusSel.value = 'sent';
+				} else {
+					alert('❌ Lỗi: ' + (res.data ? res.data.message : 'Không thể gửi email.'));
+				}
+			}).fail(function() {
+				btn.innerText = oldText;
+				btn.disabled = false;
+				alert('❌ Lỗi kết nối tới máy chủ khi gửi email.');
+			});
+		}
+
 		// Close modal if clicked outside
 		window.onclick = function(event) {
 			var modal = document.getElementById('pchub-product-modal');
@@ -1265,4 +1304,156 @@ function pchub_render_print_quote_page() {
 	</html>
 	<?php
 	exit;
+}
+
+/* -------------------------------------------------------------------------
+ * 8. AJAX: GỬI BẢNG BÁO GIÁ QUA EMAIL CHO KHÁCH HÀNG
+ * ---------------------------------------------------------------------- */
+add_action( 'wp_ajax_pchub_send_quote_email', 'pchub_ajax_send_quote_email' );
+function pchub_ajax_send_quote_email() {
+	check_ajax_referer( 'pchub_quote_ajax_nonce', 'nonce' );
+
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		wp_send_json_error( array( 'message' => 'Bạn không có quyền thực hiện thao tác này.' ) );
+	}
+
+	$post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+	$post    = get_post( $post_id );
+	if ( ! $post || PCHUB_QUOTE_POST_TYPE !== $post->post_type ) {
+		wp_send_json_error( array( 'message' => 'Phiếu báo giá không tồn tại.' ) );
+	}
+
+	$name     = get_post_meta( $post_id, '_pchub_name', true ) ?: 'Quý Khách Hàng';
+	$email    = sanitize_email( $_POST['email'] ?? get_post_meta( $post_id, '_pchub_email', true ) );
+	$ticket   = get_post_meta( $post_id, '_pchub_ticket_id', true ) ?: ( 'BG-' . $post_id );
+	$quantity = max( 1, (int) ( get_post_meta( $post_id, '_pchub_quantity', true ) ?: 1 ) );
+	$items    = get_post_meta( $post_id, '_pchub_items', true ) ?: array();
+
+	if ( empty( $email ) || ! is_email( $email ) ) {
+		wp_send_json_error( array( 'message' => 'Email của khách hàng không hợp lệ hoặc chưa được nhập.' ) );
+	}
+
+	$subtotal_pc = 0;
+	$table_rows_html = '';
+	$stt = 1;
+	foreach ( $items as $it ) {
+		$q = max( 1, (int) ( $it['qty'] ?? 1 ) );
+		$p = max( 0, (float) ( $it['price'] ?? 0 ) );
+		$line = $q * $p;
+		if ( empty( $it['name'] ) && 0 === $p ) continue;
+		$subtotal_pc += $line;
+
+		$table_rows_html .= sprintf(
+			'<tr>
+				<td style="border:1px solid #e2e8f0; padding:8px 10px; text-align:center;">%d</td>
+				<td style="border:1px solid #e2e8f0; padding:8px 10px; font-weight:bold; color:#334155;">%s</td>
+				<td style="border:1px solid #e2e8f0; padding:8px 10px;">%s</td>
+				<td style="border:1px solid #e2e8f0; padding:8px 10px; text-align:center; font-weight:bold;">%d</td>
+				<td style="border:1px solid #e2e8f0; padding:8px 10px; text-align:right;">%s đ</td>
+				<td style="border:1px solid #e2e8f0; padding:8px 10px; text-align:right; font-weight:bold; color:#2563eb;">%s đ</td>
+			</tr>',
+			$stt++,
+			esc_html( $it['cat'] ?? '' ),
+			esc_html( $it['name'] ?? '' ),
+			$q,
+			number_format( $p, 0, ',', '.' ),
+			number_format( $line, 0, ',', '.' )
+		);
+	}
+	$grand_total = $subtotal_pc * $quantity;
+	$print_url   = admin_url( 'admin-post.php?action=pchub_print_quote&post_id=' . $post_id );
+	$subject     = sprintf( '[PCHub] Bảng Báo Giá Cấu Hình PC #%s - Kính gửi %s', $ticket, $name );
+
+	$email_body = '
+	<!DOCTYPE html>
+	<html>
+	<head><meta charset="UTF-8"></head>
+	<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b;">
+		<div style="max-width: 680px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+			<div style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); padding: 24px; color: #ffffff; text-align: center;">
+				<h1 style="margin: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px;">BẢNG BÁO GIÁ CẤU HÌNH PC</h1>
+				<p style="margin: 6px 0 0; font-size: 13px; color: #94a3b8;">CÔNG TY CỔ PHẦN CÔNG NGHỆ PCHUB · Mã phiếu: <strong>' . esc_html( $ticket ) . '</strong></p>
+			</div>
+			<div style="padding: 24px;">
+				<p style="font-size: 14px; margin-top: 0;">Kính gửi: <strong>' . esc_html( $name ) . '</strong>,</p>
+				<p style="font-size: 13.5px; color: #475569; line-height: 1.5;">
+					PCHub trân trọng gửi đến Quý khách bảng dự toán chi tiết cấu hình máy tính theo yêu cầu. Dưới đây là bảng linh kiện và báo giá chính thức:
+				</p>
+
+				<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+					<thead>
+						<tr style="background: #f1f5f9; color: #0f172a;">
+							<th style="border: 1px solid #e2e8f0; padding: 8px; width: 6%;">STT</th>
+							<th style="border: 1px solid #e2e8f0; padding: 8px; width: 22%;">Danh mục</th>
+							<th style="border: 1px solid #e2e8f0; padding: 8px;">Linh kiện & Thông số</th>
+							<th style="border: 1px solid #e2e8f0; padding: 8px; width: 8%;">SL</th>
+							<th style="border: 1px solid #e2e8f0; padding: 8px; width: 18%;">Đơn giá</th>
+							<th style="border: 1px solid #e2e8f0; padding: 8px; width: 20%;">Thành tiền</th>
+						</tr>
+					</thead>
+					<tbody>
+						' . $table_rows_html . '
+					</tbody>
+				</table>
+
+				<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 18px; margin: 18px 0;">
+					<div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 4px;">
+						<span>Đơn giá 01 bộ PC:</span>
+						<strong>' . number_format( $subtotal_pc, 0, ',', '.' ) . ' VNĐ</strong>
+					</div>
+					<div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px;">
+						<span>Số lượng đặt hàng:</span>
+						<strong>' . $quantity . ' bộ</strong>
+					</div>
+					<div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; color: #b91c1c; border-top: 1px dashed #93c5fd; padding-top: 6px;">
+						<span>TỔNG CỘNG GIÁ TRỊ ĐƠN HÀNG:</span>
+						<span>' . number_format( $grand_total, 0, ',', '.' ) . ' VNĐ</span>
+					</div>
+				</div>
+
+				<div style="background: #f8fafc; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #475569; margin-bottom: 20px;">
+					<strong>Cam kết chất lượng từ PCHub:</strong>
+					<ul style="margin: 4px 0 0 16px; padding: 0;">
+						<li>100% linh kiện mới chính hãng fullbox, bảo hành từ 12 đến 36 tháng.</li>
+						<li>1 đổi 1 trong 30 ngày đầu nếu lỗi nhà sản xuất.</li>
+						<li>Miễn phí lắp ráp chuyên nghiệp, đi dây giấu nguồn thẩm mỹ, cài đặt phần mềm & test stress 24h.</li>
+					</ul>
+				</div>
+
+				<div style="text-align: center; margin: 24px 0 10px;">
+					<a href="' . esc_url( $print_url ) . '" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 14px; padding: 10px 24px; border-radius: 6px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+						🖨️ Xem & In Bảng Báo Giá Chi Tiết (PDF)
+					</a>
+				</div>
+			</div>
+
+			<div style="background: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+				<p style="margin: 0; font-weight: bold;">CÔNG TY CỔ PHẦN CÔNG NGHỆ PCHUB</p>
+				<p style="margin: 4px 0 0;">Hotline: 0322 323 233 | Zalo tư vấn: 0333 333 333 | Website: pchub.vn</p>
+				<p style="margin: 4px 0 0;">Địa chỉ: Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh</p>
+			</div>
+		</div>
+	</body>
+	</html>';
+
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'From: PCHub Technology <' . get_option( 'admin_email' ) . '>',
+	);
+
+	$sent = wp_mail( $email, $subject, $email_body, $headers );
+
+	if ( $sent ) {
+		update_post_meta( $post_id, '_pchub_status', 'sent' );
+		update_post_meta( $post_id, '_pchub_email_sent_at', current_time( 'mysql' ) );
+
+		wp_send_json_success( array(
+			'message' => 'Đã gửi email báo giá thành công tới ' . $email . '!',
+			'email'   => $email,
+		) );
+	} else {
+		wp_send_json_error( array(
+			'message' => 'Máy chủ chưa thể gửi email (vui lòng cài plugin WP Mail SMTP hoặc kiểm tra cấu hình SMTP mail).',
+		) );
+	}
 }
