@@ -16,6 +16,7 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { label: 'Build PC', href: '/build-pc', highlight: true },
+  { label: 'Báo giá', href: '/bao-gia' },
   { label: 'Cộng đồng', href: '/community' },
   { label: 'Khuyến mãi', href: '/search?sale=true' },
   { label: 'Liên hệ', href: '/lien-he' },

@@ -21,13 +21,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // Log contact ticket for backend admin / email notification
-    console.log(`[PCHUB CONTACT] New message from ${name} (${phoneClean}, ${email || 'No email'}): [${subject || 'Tư vấn chung'}] ${message}`);
+    const isQuote = subject?.toLowerCase().includes('báo giá') || body.isQuote;
+    const ticketId = isQuote 
+      ? `BG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+      : `PCHUB-CONTACT-${Date.now().toString().slice(-6)}`;
+
+    // Log contact/quotation ticket for backend admin / email notification
+    console.log(`[PCHUB ${isQuote ? 'BÁO GIÁ PC' : 'CONTACT'}] New ticket ${ticketId} from ${name} (${phoneClean}, ${email || 'No email'}): [${subject || 'Tư vấn chung'}]`);
 
     return NextResponse.json({
       success: true,
-      message: 'Cảm ơn bạn đã liên hệ! Đội ngũ tư vấn PCHub sẽ phản hồi trong vòng 15-30 phút làm việc.',
-      ticketId: `PCHUB-CONTACT-${Date.now().toString().slice(-6)}`,
+      message: isQuote 
+        ? 'Gửi yêu cầu báo giá thành công! Chuyên viên PCHub sẽ gửi bảng dự toán chi tiết trong 15-30 phút.'
+        : 'Cảm ơn bạn đã liên hệ! Đội ngũ tư vấn PCHub sẽ phản hồi trong vòng 15-30 phút làm việc.',
+      ticketId,
     });
   } catch (error) {
     console.error('Contact submit error:', error);

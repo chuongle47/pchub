@@ -187,9 +187,12 @@ async function runTestSuite() {
   // -------------------------------------------------------------
   console.log('\n\x1b[33m[9/9] Kiểm thử Trang Liên Hệ & Nút Tương Tác Nổi\x1b[0m');
   const contactConfigFile = fs.readFileSync(path.resolve('src/lib/contactConfig.ts'), 'utf-8');
-  assert('Cấu hình liên hệ cập nhật chính xác Hotline 0322323233, Zalo 0333333333 & Messenger dfd theo WordPress', contactConfigFile.includes('0322323233') && contactConfigFile.includes('0333333333') && contactConfigFile.includes('dfd'));
-  assert('Đồng bộ màu sắc nút WordPress (#700a29, #0084ff, #0068ff)', contactConfigFile.includes('#700a29') && contactConfigFile.includes('#0084ff') && contactConfigFile.includes('#0068ff'));
+  assert('Cấu hình liên hệ cập nhật chính xác Hotline 0322323233, Zalo 0333333333 & Messenger chuong theo WordPress', contactConfigFile.includes('0322323233') && contactConfigFile.includes('0333333333') && contactConfigFile.includes('chuong'));
+  assert('Đồng bộ màu sắc nút WordPress (#00c853, #0084ff, #0068ff)', contactConfigFile.includes('#00c853') && contactConfigFile.includes('#0084ff') && contactConfigFile.includes('#0068ff'));
   assert('Hệ thống địa chỉ duy nhất tại Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh', contactConfigFile.includes('Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh'));
+
+  const wpPluginFile = fs.readFileSync(path.resolve('nks-contact-buttons.php'), 'utf-8');
+  assert('Plugin WordPress nks-contact-buttons.php có đăng ký REST API ncb/v1/buttons', wpPluginFile.includes('ncb/v1') && wpPluginFile.includes('register_rest_route'));
 
   const floatingBtnFile = fs.readFileSync(path.resolve('src/components/layout/FloatingContactButtons.tsx'), 'utf-8');
   assert('Widget nút liên hệ nổi kết nối API động /api/contact-buttons', floatingBtnFile.includes('/api/contact-buttons'));
@@ -200,7 +203,7 @@ async function runTestSuite() {
   assert('Trang /lien-he render động các thẻ liên hệ theo thứ tự và màu sắc cấu hình', contactPageFile.includes('buttons.map') && contactPageFile.includes('btnColor'));
 
   const navbarFile = fs.readFileSync(path.resolve('src/components/Navbar.tsx'), 'utf-8');
-  assert('Menu điều hướng Navbar có liên kết đến /lien-he', navbarFile.includes('/lien-he'));
+  assert('Menu điều hướng Navbar có liên kết riêng đến /bao-gia và /lien-he', navbarFile.includes('/bao-gia') && navbarFile.includes('/lien-he'));
 
   // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ

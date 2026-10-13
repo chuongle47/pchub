@@ -384,28 +384,66 @@ export default function ContactPage() {
             padding: '32px',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
           }}>
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: '#2563eb',
-                fontSize: '12px',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '6px'
-              }}>
-                <Send size={14} />
-                <span>Gửi Tin Nhắn / Yêu Cầu Báo Giá</span>
+              <div style={{ marginBottom: '24px' }}>
+                {/* Banner chuyển sang trang Báo Giá riêng */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                  border: '1.5px solid #93c5fd',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Sparkles size={18} color="#2563eb" />
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e40af' }}>
+                      Cần tính toán dự toán & báo giá cấu hình PC chi tiết?
+                    </span>
+                  </div>
+                  <Link
+                    href="/bao-gia"
+                    style={{
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      textDecoration: 'none',
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>Trang Báo Giá PC Riêng →</span>
+                  </Link>
+                </div>
+
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#2563eb',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: '6px'
+                }}>
+                  <Send size={14} />
+                  <span>Gửi Tin Nhắn / Hỗ Trợ Kỹ Thuật</span>
+                </div>
+                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
+                  Để lại thông tin hỗ trợ
+                </h2>
+                <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  Chuyên viên PCHub sẽ phản hồi và hỗ trợ giải đáp thắc mắc qua Zalo / Số điện thoại trong 15-30 phút.
+                </p>
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-                Để lại thông tin hỗ trợ
-              </h2>
-              <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-                Chuyên viên PCHub sẽ phản hồi và gửi bảng báo giá tối ưu qua Zalo / Số điện thoại trong 15-30 phút.
-              </p>
-            </div>
 
             {submittedTicket ? (
               <div style={{

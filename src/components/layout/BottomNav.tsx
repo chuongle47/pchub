@@ -138,49 +138,24 @@ export default function BottomNav() {
           <span style={{ color: '#38bdf8', fontWeight: 700 }}>Tư vấn AI</span>
         </button>
 
-        {/* 5. Giỏ hàng */}
-        <button
-          type="button"
-          onClick={toggleCart}
+        {/* 5. Tài khoản */}
+        <Link
+          href="/tai-khoan"
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '3px',
-            color: '#94a3b8',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
+            color: pathname.startsWith('/tai-khoan') || pathname.startsWith('/login') ? '#38bdf8' : '#94a3b8',
+            textDecoration: 'none',
             fontSize: '11px',
-            fontWeight: 500,
-            position: 'relative',
+            fontWeight: pathname.startsWith('/tai-khoan') ? 800 : 500,
           }}
         >
-          <div style={{ position: 'relative' }}>
-            <ShoppingCart size={19} />
-            {cartCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-5px',
-                right: '-8px',
-                background: '#ef4444',
-                color: '#fff',
-                width: '15px',
-                height: '15px',
-                borderRadius: '50%',
-                fontSize: '9px',
-                fontWeight: 900,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
-          </div>
-          <span>Giỏ hàng</span>
-        </button>
+          <User size={19} />
+          <span>Tài khoản</span>
+        </Link>
       </div>
     </div>
   );

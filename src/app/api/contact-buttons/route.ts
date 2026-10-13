@@ -12,6 +12,28 @@ let runtimeAddress: string = CONTACT_CONFIG.address;
 
 export async function GET() {
   try {
+    // Attempt live fetch from WordPress REST API (nks-contact-buttons plugin)
+    const wpBase = process.env.SBUY_BASE_URL || 'https://sbuy.io.vn';
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1800);
+      const wpRes = await fetch(`${wpBase}/wp-json/ncb/v1/buttons`, {
+        signal: controller.signal,
+        headers: { 'Cache-Control': 'no-cache' },
+        next: { revalidate: 0 },
+      });
+      clearTimeout(timeoutId);
+
+      if (wpRes.ok) {
+        const wpData = await wpRes.json();
+        if (wpData && wpData.success && Array.isArray(wpData.buttons) && wpData.buttons.length > 0) {
+          runtimeButtons = wpData.buttons;
+        }
+      }
+    } catch {
+      // WordPress API not ready or timeout, use memory / config fallback
+    }
+
     // Only return buttons that have non-empty value and are enabled
     const activeButtons = runtimeButtons.filter(
       b => b.enabled && b.value && b.value.trim().length > 0

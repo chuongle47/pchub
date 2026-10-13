@@ -1179,87 +1179,113 @@ export default function BuildPcPage() {
           </div>
 
           {/* Actions & Quantity Adjuster */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            flexWrap: 'wrap',
+            width: isSelected ? '100%' : 'auto',
+            marginTop: isSelected ? '8px' : '0',
+            paddingTop: isSelected ? '8px' : '0',
+            borderTop: isSelected ? '1px dashed #e2e8f0' : 'none',
+          }}>
             {isSelected ? (
               <>
-                {/* Quantity Control Buttons [- Qty +] */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  background: '#f8fafc',
-                  overflow: 'hidden',
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => handleQtyChange(slot.key, -1)}
-                    style={{
-                      padding: '6px 10px',
-                      border: 'none',
-                      background: 'transparent',
-                      cursor: 'pointer',
-                      color: '#475569',
-                    }}
-                  >
-                    <Minus size={13} />
-                  </button>
-                  <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 8px', color: '#0f172a' }}>
-                    {slot.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleQtyChange(slot.key, 1)}
-                    style={{
-                      padding: '6px 10px',
-                      border: 'none',
-                      background: 'transparent',
-                      cursor: 'pointer',
-                      color: '#475569',
-                    }}
-                  >
-                    <Plus size={13} />
-                  </button>
-                </div>
-
-                <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', minWidth: '100px', textAlign: 'right' }}>
-                  {((slot.selected?.price || 0) * slot.quantity).toLocaleString('vi-VN')} ₫
-                </div>
-
-                <button
-                  onClick={() => setActiveModalSlotKey(slot.key)}
-                  style={{
-                    background: '#eff6ff',
-                    color: '#2563eb',
-                    border: '1.5px solid #bfdbfe',
-                    borderRadius: '8px',
-                    padding: '7px 12px',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
+                {/* Left: Quantity Stepper & Price */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {/* Quantity Control Buttons [- Qty +] */}
+                  <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <RefreshCw size={13} />
-                  Đổi
-                </button>
-
-                <button
-                  onClick={() => handleRemove(slot.key)}
-                  style={{
-                    background: '#fef2f2',
-                    color: '#ef4444',
-                    border: '1px solid #fecdd3',
+                    border: '1.5px solid #cbd5e1',
                     borderRadius: '8px',
-                    padding: '7px',
-                    cursor: 'pointer'
-                  }}
-                  title="Xóa linh kiện"
-                >
-                  <Trash2 size={14} />
-                </button>
+                    background: '#f8fafc',
+                    overflow: 'hidden',
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => handleQtyChange(slot.key, -1)}
+                      style={{
+                        padding: '6px 10px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        color: '#475569',
+                      }}
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 8px', color: '#0f172a' }}>
+                      {slot.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleQtyChange(slot.key, 1)}
+                      style={{
+                        padding: '6px 10px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        color: '#475569',
+                      }}
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', textAlign: 'left' }}>
+                    {((slot.selected?.price || 0) * slot.quantity).toLocaleString('vi-VN')} ₫
+                  </div>
+                </div>
+
+                {/* Right: Change & Remove Action Buttons Group */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModalSlotKey(slot.key)}
+                    style={{
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      border: '1.5px solid #bfdbfe',
+                      borderRadius: '8px',
+                      padding: '7px 12px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <RefreshCw size={13} />
+                    <span>Đổi</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(slot.key)}
+                    style={{
+                      background: '#fff1f2',
+                      color: '#e11d48',
+                      border: '1.5px solid #fecdd3',
+                      borderRadius: '8px',
+                      padding: '7px 11px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.15s',
+                    }}
+                    title="Xóa linh kiện này"
+                  >
+                    <Trash2 size={13} />
+                    <span>Xóa</span>
+                  </button>
+                </div>
               </>
             ) : (
               <button
