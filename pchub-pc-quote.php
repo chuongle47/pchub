@@ -1436,24 +1436,54 @@ function pchub_ajax_send_quote_email() {
 	</body>
 	</html>';
 
+	$domain = wp_parse_url( home_url(), PHP_URL_HOST ) ?: 'sbuy.io.vn';
+	$domain = preg_replace( '/^www\./', '', $domain );
+	$from_email = 'no-reply@' . $domain;
+
+	$admin_email = get_option( 'admin_email' );
+	if ( ! empty( $admin_email ) && strpos( $admin_email, '@' . $domain ) !== false ) {
+		$from_email = $admin_email;
+	}
+
+	$from_filter = function() use ( $from_email ) { return $from_email; };
+	$name_filter = function() { return 'PCHub Technology'; };
+	add_filter( 'wp_mail_from', $from_filter, 999 );
+	add_filter( 'wp_mail_from_name', $name_filter, 999 );
+
 	$headers = array(
 		'Content-Type: text/html; charset=UTF-8',
-		'From: PCHub Technology <' . get_option( 'admin_email' ) . '>',
+		'From: PCHub Technology <' . $from_email . '>',
+		'Reply-To: PCHub Support <' . ( $admin_email ?: $from_email ) . '>',
 	);
 
+	global $pchub_last_mail_error;
+	$pchub_last_mail_error = '';
+	$error_tracker = function( $wp_error ) {
+		global $pchub_last_mail_error;
+		if ( is_wp_error( $wp_error ) ) {
+			$pchub_last_mail_error = $wp_error->get_error_message();
+		}
+	};
+	add_action( 'wp_mail_failed', $error_tracker );
+
 	$sent = wp_mail( $email, $subject, $email_body, $headers );
+
+	remove_filter( 'wp_mail_from', $from_filter, 999 );
+	remove_filter( 'wp_mail_from_name', $name_filter, 999 );
+	remove_action( 'wp_mail_failed', $error_tracker );
 
 	if ( $sent ) {
 		update_post_meta( $post_id, '_pchub_status', 'sent' );
 		update_post_meta( $post_id, '_pchub_email_sent_at', current_time( 'mysql' ) );
 
 		wp_send_json_success( array(
-			'message' => 'Đã gửi email báo giá thành công tới ' . $email . '!',
+			'message' => 'Đã gửi email báo giá thành công tới ' . $email . ' (Gửi từ ' . $from_email . ')!',
 			'email'   => $email,
 		) );
 	} else {
+		$err_msg = ! empty( $pchub_last_mail_error ) ? $pchub_last_mail_error : 'Máy chủ chưa thể gửi email trực tiếp.';
 		wp_send_json_error( array(
-			'message' => 'Máy chủ chưa thể gửi email (vui lòng cài plugin WP Mail SMTP hoặc kiểm tra cấu hình SMTP mail).',
+			'message' => 'Lỗi gửi mail: ' . $err_msg . '. Vui lòng kiểm tra cấu hình GoSMTP / SMTP trong WordPress.',
 		) );
 	}
 }
