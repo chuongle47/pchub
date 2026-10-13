@@ -37,21 +37,10 @@ export const CONTACT_CONFIG = {
   address: 'Số 06, Trần Văn Ơn, Phường Phú Lợi, TP Hồ Chí Minh',
 
   // Danh sách nút theo đúng thứ tự và màu sắc đã lưu trong WordPress Admin:
-  // 1. Call now (0322323233) - Màu xanh lá (#00c853)
-  // 2. Messenger (chuong) - Màu xanh Messenger (#0084ff)
+  // 1. Messenger (chuong) - Màu xanh Messenger (#0084ff)
+  // 2. Call now (0322323233) - Màu xanh lá (#00c853)
   // 3. Chat Zalo (0333333333) - Màu xanh Zalo (#0068ff)
   buttons: [
-    {
-      id: 'phone',
-      type: 'phone' as const,
-      label: 'Call now',
-      sublabel: '0322 323 233',
-      value: '0322323233',
-      href: 'tel:0322323233',
-      color: '#00c853', // Màu xanh lá WordPress Admin
-      openNewTab: true,
-      enabled: true,
-    },
     {
       id: 'messenger',
       type: 'messenger' as const,
@@ -60,6 +49,17 @@ export const CONTACT_CONFIG = {
       value: 'chuong',
       href: 'https://m.me/chuong',
       color: '#0084ff', // Màu xanh Messenger WordPress
+      openNewTab: true,
+      enabled: true,
+    },
+    {
+      id: 'phone',
+      type: 'phone' as const,
+      label: 'Call now',
+      sublabel: '0322 323 233',
+      value: '0322323233',
+      href: 'tel:0322323233',
+      color: '#00c853', // Màu xanh lá WordPress Admin
       openNewTab: true,
       enabled: true,
     },
