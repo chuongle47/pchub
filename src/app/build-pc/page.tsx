@@ -927,6 +927,12 @@ export default function BuildPcPage() {
     } else if (cpuText.includes('AM4') || cpuText.includes('ATHLON') || cpuText.includes('3000G') || cpuText.includes('5600') || cpuText.includes('5700') || cpuText.includes('5800X3D') || cpuText.includes('3600') || cpuText.includes('3200G') || cpuText.includes('3400G') || cpuText.includes('5500')) {
       socket = 'AM4';
       isIntel = false;
+    } else if (cpuText.includes('LGA1200') || cpuText.includes('10100') || cpuText.includes('10400') || cpuText.includes('10700') || cpuText.includes('10900') || cpuText.includes('11400') || cpuText.includes('11700') || cpuText.includes('11900') || cpuText.includes('GEN 10') || cpuText.includes('GEN 11')) {
+      socket = 'LGA1200';
+      isIntel = true;
+    } else if (cpuText.includes('1851') || cpuText.includes('ULTRA')) {
+      socket = 'LGA1851';
+      isIntel = true;
     }
 
     const isDdr5 = mbText.includes('DDR5') || cpuText.includes('AM5') || mbText.includes('Z790') || mbText.includes('B650') || (!mb && (cpuText.includes('14700') || cpuText.includes('14900') || cpuText.includes('AM5')));
@@ -1179,12 +1185,11 @@ export default function BuildPcPage() {
           </div>
 
           {/* Actions & Quantity Adjuster */}
-          <div style={{
+          <div className="builder-actions-row" style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '10px',
-            flexWrap: 'wrap',
+            gap: '8px',
             width: isSelected ? '100%' : 'auto',
             marginTop: isSelected ? '8px' : '0',
             paddingTop: isSelected ? '8px' : '0',
@@ -1193,7 +1198,7 @@ export default function BuildPcPage() {
             {isSelected ? (
               <>
                 {/* Left: Quantity Stepper & Price */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   {/* Quantity Control Buttons [- Qty +] */}
                   <div style={{
                     display: 'flex',
@@ -1207,40 +1212,40 @@ export default function BuildPcPage() {
                       type="button"
                       onClick={() => handleQtyChange(slot.key, -1)}
                       style={{
-                        padding: '6px 10px',
+                        padding: '5px 8px',
                         border: 'none',
                         background: 'transparent',
                         cursor: 'pointer',
                         color: '#475569',
                       }}
                     >
-                      <Minus size={13} />
+                      <Minus size={12} />
                     </button>
-                    <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 8px', color: '#0f172a' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 800, padding: '0 6px', color: '#0f172a' }}>
                       {slot.quantity}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleQtyChange(slot.key, 1)}
                       style={{
-                        padding: '6px 10px',
+                        padding: '5px 8px',
                         border: 'none',
                         background: 'transparent',
                         cursor: 'pointer',
                         color: '#475569',
                       }}
                     >
-                      <Plus size={13} />
+                      <Plus size={12} />
                     </button>
                   </div>
 
-                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', textAlign: 'left' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#2563eb', whiteSpace: 'nowrap' }}>
                     {((slot.selected?.price || 0) * slot.quantity).toLocaleString('vi-VN')} ₫
                   </div>
                 </div>
 
                 {/* Right: Change & Remove Action Buttons Group */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: 'auto' }}>
                   <button
                     type="button"
                     onClick={() => setActiveModalSlotKey(slot.key)}
@@ -1249,17 +1254,18 @@ export default function BuildPcPage() {
                       color: '#2563eb',
                       border: '1.5px solid #bfdbfe',
                       borderRadius: '8px',
-                      padding: '7px 12px',
-                      fontSize: '12.5px',
+                      padding: '5px 10px',
+                      fontSize: '12px',
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '5px',
+                      gap: '4px',
+                      whiteSpace: 'nowrap',
                       transition: 'all 0.15s',
                     }}
                   >
-                    <RefreshCw size={13} />
+                    <RefreshCw size={12} />
                     <span>Đổi</span>
                   </button>
 
@@ -1271,18 +1277,19 @@ export default function BuildPcPage() {
                       color: '#e11d48',
                       border: '1.5px solid #fecdd3',
                       borderRadius: '8px',
-                      padding: '7px 11px',
-                      fontSize: '12.5px',
+                      padding: '5px 9px',
+                      fontSize: '12px',
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
+                      whiteSpace: 'nowrap',
                       transition: 'all 0.15s',
                     }}
                     title="Xóa linh kiện này"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={12} />
                     <span>Xóa</span>
                   </button>
                 </div>
@@ -1397,8 +1404,8 @@ export default function BuildPcPage() {
   };
 
   return (
-    <div style={{ background: '#f8fafc', color: '#1e293b', minHeight: '100vh', padding: '24px 0 60px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+    <div className="builder-page-wrapper" style={{ background: '#f8fafc', color: '#1e293b', minHeight: '100vh', padding: '24px 0 60px' }}>
+      <div className="builder-page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
 
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>

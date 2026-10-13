@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Phone, MessageSquare } from 'lucide-react';
+import { Phone, MessageSquare, X, Headphones } from 'lucide-react';
 import { CONTACT_CONFIG, ContactButton } from '@/lib/contactConfig';
 
 // Official Vector SVG Icon for Zalo (Sharp at any DPI, authentic brand geometry)
@@ -51,6 +51,7 @@ export default function FloatingContactButtons() {
   const [buttons, setButtons] = useState<ContactButton[]>(
     CONTACT_CONFIG.buttons.filter(b => b.enabled && b.value && b.value.trim().length > 0)
   );
+  const [mobileExpanded, setMobileExpanded] = useState(false);
 
   const fetchLatest = () => {
     fetch('/api/contact-buttons?t=' + Date.now())
@@ -75,18 +76,6 @@ export default function FloatingContactButtons() {
   return (
     <>
       <style jsx global>{`
-        @keyframes pulseGlowCustom {
-          0% {
-            box-shadow: 0 0 0 0 rgba(112, 10, 41, 0.7);
-          }
-          70% {
-            box-shadow: 0 0 0 14px rgba(112, 10, 41, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(112, 10, 41, 0);
-          }
-        }
-
         @keyframes phoneRingShake {
           0%, 100% { transform: rotate(0deg); }
           10%, 30% { transform: rotate(-14deg); }
@@ -94,23 +83,83 @@ export default function FloatingContactButtons() {
           50% { transform: rotate(0deg); }
         }
 
-        .pchub-floating-contact-stack {
+        @keyframes launcherPulseRing {
+          0% { box-shadow: 0 0 0 0 rgba(0, 104, 255, 0.6); }
+          70% { box-shadow: 0 0 0 12px rgba(0, 104, 255, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(0, 104, 255, 0); }
+        }
+
+        .pchub-floating-contact-container {
           position: fixed;
           right: 22px;
           bottom: 86px;
           z-index: 1000;
           display: flex;
           flex-direction: column;
-          gap: 12px;
           align-items: flex-end;
           pointer-events: auto;
         }
 
+        .pchub-floating-contact-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          align-items: flex-end;
+          transition: all 0.25s ease;
+        }
+
+        /* Mobile Launcher Toggle Button */
+        .pchub-mobile-contact-launcher {
+          display: none;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #0068ff 0%, #1e40af 100%);
+          color: #ffffff;
+          border: 2.5px solid #ffffff;
+          box-shadow: 0 4px 16px rgba(0, 104, 255, 0.4);
+          cursor: pointer;
+          align-items: center;
+          justify-content: center;
+          margin-top: 8px;
+          animation: launcherPulseRing 2s infinite;
+        }
+
         @media (max-width: 768px) {
-          .pchub-floating-contact-stack {
+          .pchub-floating-contact-container {
             right: 14px !important;
-            bottom: calc(180px + env(safe-area-inset-bottom, 0px)) !important;
+            bottom: calc(125px + env(safe-area-inset-bottom, 0px)) !important;
+          }
+
+          .pchub-mobile-contact-launcher {
+            display: flex !important;
+          }
+
+          .pchub-floating-contact-stack {
+            display: ${mobileExpanded ? 'flex' : 'none'} !important;
             gap: 10px !important;
+            margin-bottom: 8px;
+            animation: fadeInSlideUp 0.2s ease-out forwards;
+          }
+
+          .pchub-contact-btn-circle {
+            width: 44px !important;
+            height: 44px !important;
+          }
+
+          .pchub-contact-tooltip {
+            display: none !important;
+          }
+        }
+
+        @keyframes fadeInSlideUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
 
@@ -143,13 +192,6 @@ export default function FloatingContactButtons() {
           transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
-        @media (max-width: 768px) {
-          .pchub-contact-btn-circle {
-            width: 46px !important;
-            height: 46px !important;
-          }
-        }
-
         .pchub-contact-btn-phone:hover .pchub-phone-icon {
           animation: phoneRingShake 0.8s ease-in-out infinite;
         }
@@ -180,60 +222,67 @@ export default function FloatingContactButtons() {
           opacity: 1;
           transform: translateX(0);
         }
-
-        @media (max-width: 768px) {
-          .pchub-contact-tooltip {
-            display: none !important;
-          }
-        }
       `}</style>
 
       <div
-        className="pchub-floating-contact-stack"
+        className="pchub-floating-contact-container"
         role="complementary"
         aria-label="Kênh liên hệ nhanh"
       >
-        {buttons.map(btn => {
-          const isPhone = btn.type === 'phone';
-          const isZalo = btn.type === 'zalo';
-          const isMessenger = btn.type === 'messenger';
+        <div className="pchub-floating-contact-stack">
+          {buttons.map(btn => {
+            const isPhone = btn.type === 'phone';
+            const isZalo = btn.type === 'zalo';
+            const isMessenger = btn.type === 'messenger';
 
-          return (
-            <a
-              key={btn.id}
-              href={btn.href}
-              target={btn.openNewTab ? '_blank' : '_self'}
-              rel={btn.openNewTab ? 'noopener noreferrer' : undefined}
-              className={`pchub-contact-btn pchub-contact-btn-${btn.type}`}
-              aria-label={`${btn.label}: ${btn.value}`}
-              title={`${btn.label}: ${btn.value}`}
-            >
-              <div className="pchub-contact-tooltip">
-                <span>
-                  {isPhone && '📞 '}
-                  {isZalo && '💬 '}
-                  {isMessenger && '⚡ '}
-                  {btn.label}: <strong>{btn.value}</strong>
-                </span>
-              </div>
-              <div
-                className="pchub-contact-btn-circle"
-                style={{
-                  background: btn.color || '#2563eb',
-                  boxShadow: `0 4px 16px ${btn.color ? btn.color + '66' : 'rgba(0,0,0,0.25)'}`,
-                }}
+            return (
+              <a
+                key={btn.id}
+                href={btn.href}
+                target={btn.openNewTab ? '_blank' : '_self'}
+                rel={btn.openNewTab ? 'noopener noreferrer' : undefined}
+                className={`pchub-contact-btn pchub-contact-btn-${btn.type}`}
+                aria-label={`${btn.label}: ${btn.value}`}
+                title={`${btn.label}: ${btn.value}`}
               >
-                {isPhone && (
-                  <span className="pchub-phone-icon">
-                    <Phone size={22} strokeWidth={2.4} />
+                <div className="pchub-contact-tooltip">
+                  <span>
+                    {isPhone && '📞 '}
+                    {isZalo && '💬 '}
+                    {isMessenger && '⚡ '}
+                    {btn.label}: <strong>{btn.value}</strong>
                   </span>
-                )}
-                {isZalo && <ZaloIcon size={24} />}
-                {isMessenger && <MessengerIcon size={22} />}
-              </div>
-            </a>
-          );
-        })}
+                </div>
+                <div
+                  className="pchub-contact-btn-circle"
+                  style={{
+                    background: btn.color || '#2563eb',
+                    boxShadow: `0 4px 16px ${btn.color ? btn.color + '66' : 'rgba(0,0,0,0.25)'}`,
+                  }}
+                >
+                  {isPhone && (
+                    <span className="pchub-phone-icon">
+                      <Phone size={20} strokeWidth={2.4} />
+                    </span>
+                  )}
+                  {isZalo && <ZaloIcon size={22} />}
+                  {isMessenger && <MessengerIcon size={20} />}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+
+        {/* Mobile Expand / Collapse Launcher Trigger */}
+        <button
+          type="button"
+          className="pchub-mobile-contact-launcher"
+          onClick={() => setMobileExpanded(v => !v)}
+          aria-label={mobileExpanded ? 'Đóng liên hệ nhanh' : 'Mở kênh tư vấn Zalo & Hotline'}
+          title={mobileExpanded ? 'Đóng' : 'Liên hệ tư vấn'}
+        >
+          {mobileExpanded ? <X size={20} strokeWidth={2.5} /> : <Headphones size={22} strokeWidth={2.4} />}
+        </button>
       </div>
     </>
   );
