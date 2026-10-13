@@ -19,16 +19,10 @@ define( 'PCHUB_QUOTE_POST_TYPE', 'pchub_quote' );
  * ---------------------------------------------------------------------- */
 add_action( 'init', 'pchub_quote_register_cpt' );
 function pchub_quote_register_cpt() {
-	$new_count = pchub_quote_get_pending_count();
-	$menu_name = 'Báo giá PC';
-	if ( $new_count > 0 ) {
-		$menu_name .= sprintf( ' <span class="awaiting-mod count-%d"><span class="pending-count">%d</span></span>', $new_count, $new_count );
-	}
-
 	$labels = array(
 		'name'               => 'Báo giá PC',
 		'singular_name'      => 'Phiếu báo giá',
-		'menu_name'          => $menu_name,
+		'menu_name'          => 'Báo giá PC',
 		'all_items'          => 'Tất cả phiếu báo giá',
 		'add_new'            => 'Tạo phiếu mới',
 		'add_new_item'       => 'Tạo phiếu báo giá mới',
@@ -71,6 +65,25 @@ function pchub_quote_get_pending_count() {
 		),
 	) );
 	return count( $posts );
+}
+
+add_action( 'admin_menu', 'pchub_quote_add_menu_bubble', 999 );
+function pchub_quote_add_menu_bubble() {
+	global $menu;
+	$count = pchub_quote_get_pending_count();
+	if ( $count < 1 || ! is_array( $menu ) ) {
+		return;
+	}
+	foreach ( $menu as $key => $item ) {
+		if ( isset( $item[2] ) && 'edit.php?post_type=' . PCHUB_QUOTE_POST_TYPE === $item[2] ) {
+			$menu[ $key ][0] .= sprintf(
+				' <span class="update-plugins count-%d"><span class="plugin-count">%d</span></span>',
+				$count,
+				$count
+			);
+			break;
+		}
+	}
 }
 
 /* -------------------------------------------------------------------------
