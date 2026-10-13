@@ -336,24 +336,25 @@ function pchub_ajax_get_wc_products() {
 	$cat_slug = sanitize_text_field( $_POST['cat'] ?? '' );
 	$keyword  = sanitize_text_field( $_POST['search'] ?? '' );
 
-	// Ánh xạ tên danh mục tiếng Việt sang slug WooCommerce nếu cần
+	// Ánh xạ tên danh mục tiếng Việt sang slug WooCommerce chuẩn xác
 	$cat_mapping = array(
-		'CPU - Bộ Vi Xử Lý'        => array( 'cpu', 'linh-kien-may-tinh' ),
-		'Mainboard - Bo Mạch Chủ'   => array( 'mainboard', 'linh-kien-may-tinh' ),
-		'RAM - Bộ Nhớ Trong'        => array( 'ram', 'linh-kien-may-tinh' ),
-		'VGA - Card Màn Hình'       => array( 'vga', 'card-man-hinh', 'linh-kien-may-tinh' ),
-		'SSD - Ổ Cứng Lưu Trữ'     => array( 'o-cung', 'ssd', 'hdd', 'linh-kien-may-tinh' ),
-		'Nguồn Máy Tính (PSU)'     => array( 'nguon', 'psu', 'linh-kien-may-tinh' ),
-		'Vỏ Case Máy Tính'          => array( 'case', 'vo-case', 'linh-kien-may-tinh' ),
-		'Tản Nhiệt (Cooling)'       => array( 'tan-nhiet', 'cooling', 'linh-kien-may-tinh' ),
-		'Màn Hình Máy Tính'        => array( 'man-hinh', 'man-hinh-may-tinh' ),
-		'Bàn Phím & Chuột'          => array( 'ban-phim', 'chuot', 'gaming-gear' ),
+		'CPU - Bộ Vi Xử Lý'       => array( 'cpu' ),
+		'Mainboard - Bo Mạch Chủ' => array( 'mainboard' ),
+		'RAM - Bộ Nhớ Trong'      => array( 'ram' ),
+		'VGA - Card Màn Hình'     => array( 'vga', 'card-man-hinh' ),
+		'SSD - Ổ Cứng Lưu Trữ'    => array( 'o-cung', 'ssd', 'hdd' ),
+		'Nguồn Máy Tính (PSU)'    => array( 'nguon', 'psu' ),
+		'Vỏ Case Máy Tính'        => array( 'case', 'vo-case' ),
+		'Tản Nhiệt (Cooling)'     => array( 'tan-nhiet', 'cooling' ),
+		'Màn Hình Máy Tính'       => array( 'man-hinh', 'man-hinh-may-tinh' ),
+		'Bàn Phím & Chuột'        => array( 'ban-phim', 'chuot' ),
+		'Phụ Kiện / Dịch Vụ'      => array( 'gaming-gear', 'tai-nghe', 'loa-may-tinh', 'thiet-bi-am-thanh' ),
 	);
 
 	$args = array(
 		'post_type'      => 'product',
 		'post_status'    => 'publish',
-		'posts_per_page' => 40,
+		'posts_per_page' => 50,
 		'orderby'        => 'title',
 		'order'          => 'ASC',
 	);
@@ -364,7 +365,7 @@ function pchub_ajax_get_wc_products() {
 
 	// Lọc theo taxonomy product_cat nếu có
 	if ( ! empty( $cat_slug ) && 'all' !== $cat_slug ) {
-		$target_slugs = $cat_mapping[ $cat_slug ] ?? array( $cat_slug );
+		$target_slugs = $cat_mapping[ $cat_slug ] ?? array( sanitize_title( $cat_slug ) );
 		$args['tax_query'] = array(
 			array(
 				'taxonomy' => 'product_cat',
@@ -396,6 +397,51 @@ function pchub_ajax_get_wc_products() {
 			);
 		}
 		wp_reset_postdata();
+	}
+
+	// Fallback nếu chưa gán taxonomy product_cat nhưng tiêu đề chứa từ khóa linh kiện
+	if ( empty( $products ) && empty( $keyword ) && ! empty( $cat_slug ) && 'all' !== $cat_slug ) {
+		$fallback_words = array(
+			'CPU - Bộ Vi Xử Lý'       => 'CPU',
+			'Mainboard - Bo Mạch Chủ' => 'Mainboard',
+			'RAM - Bộ Nhớ Trong'      => 'RAM',
+			'VGA - Card Màn Hình'     => 'VGA',
+			'SSD - Ổ Cứng Lưu Trữ'    => 'Ổ cứng',
+			'Nguồn Máy Tính (PSU)'    => 'Nguồn',
+			'Vỏ Case Máy Tính'        => 'Case',
+			'Tản Nhiệt (Cooling)'     => 'Tản',
+			'Màn Hình Máy Tính'       => 'Màn hình',
+			'Bàn Phím & Chuột'        => 'Bàn phím',
+		);
+		if ( ! empty( $fallback_words[ $cat_slug ] ) ) {
+			$fb_query = new WP_Query( array(
+				'post_type'      => 'product',
+				'post_status'    => 'publish',
+				'posts_per_page' => 50,
+				's'              => $fallback_words[ $cat_slug ],
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			) );
+			if ( $fb_query->have_posts() ) {
+				while ( $fb_query->have_posts() ) {
+					$fb_query->the_post();
+					$pid = get_the_ID();
+					$product = function_exists( 'wc_get_product' ) ? wc_get_product( $pid ) : null;
+					$price = $product ? (float) $product->get_price() : (float) get_post_meta( $pid, '_price', true );
+					$thumb = get_the_post_thumbnail_url( $pid, 'thumbnail' ) ?: '';
+
+					$products[] = array(
+						'id'              => $pid,
+						'name'            => html_entity_decode( get_the_title() ),
+						'price'           => $price,
+						'formatted_price' => number_format( $price, 0, ',', '.' ) . ' ₫',
+						'sku'             => $product ? $product->get_sku() : '',
+						'image'           => $thumb,
+					);
+				}
+				wp_reset_postdata();
+			}
+		}
 	}
 
 	wp_send_json_success( array(
@@ -875,7 +921,11 @@ function pchub_quote_render_metabox( $post ) {
 		}
 
 		function pchubFetchProducts() {
-			var cat = document.getElementById('pchub-cat-select').value;
+			var catSelect = document.getElementById('pchub-cat-select');
+			var cat = catSelect.value;
+			var catLabel = catSelect.options[catSelect.selectedIndex] ? catSelect.options[catSelect.selectedIndex].text : cat;
+			document.getElementById('pchub-modal-title').innerText = 'Chọn sản phẩm cho mục: ' + catLabel;
+
 			var s = document.getElementById('pchub-search-input').value;
 			var container = document.getElementById('pchub-product-results');
 			container.innerHTML = '<div style="text-align:center; padding:30px; color:#64748b;">Đang tìm kiếm trong kho WooCommerce...</div>';
@@ -893,25 +943,55 @@ function pchub_quote_render_metabox( $post ) {
 
 				var prods = response.data.products;
 				if (prods.length === 0) {
-					container.innerHTML = '<div style="text-align:center; padding:30px; color:#64748b;">Không tìm thấy sản phẩm nào phù hợp trong danh mục này.</div>';
+					container.innerHTML = '<div style="text-align:center; padding:30px; color:#64748b;">Không tìm thấy sản phẩm nào trong danh mục này.<br><small style="color:#94a3b8;">Thử đổi sang "Tất cả sản phẩm" hoặc xóa từ khóa tìm kiếm.</small></div>';
 					return;
 				}
 
-				var html = '';
+				container.innerHTML = '';
 				prods.forEach(function(p) {
-					html += '<div class="pchub-prod-item">' +
-						'<div style="display:flex; align-items:center; gap:12px;">' +
-						(p.image ? '<img src="' + p.image + '" style="width:42px; height:42px; object-fit:cover; border-radius:4px; border:1px solid #e2e8f0;">' : '<div style="width:42px; height:42px; background:#f1f5f9; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#94a3b8;">No img</div>') +
-						'<div>' +
-						'<div style="font-weight:700; font-size:13px; color:#0f172a;">' + p.name + '</div>' +
-						'<div style="font-size:11.5px; color:#64748b;">' + (p.sku ? 'SKU: ' + p.sku + ' | ' : '') + '<strong style="color:#059669;">' + p.formatted_price + '</strong></div>' +
-						'</div>' +
-						'</div>' +
-						'<button type="button" class="button button-small" style="background:#16a34a; color:#fff; border-color:#16a34a; font-weight:700;" onclick="pchubSelectProduct(\'' + p.name.replace(/'/g, "\\'") + '\', ' + p.price + ')">Chọn</button>' +
-						'</div>';
-				});
+					var item = document.createElement('div');
+					item.className = 'pchub-prod-item';
 
-				container.innerHTML = html;
+					var left = document.createElement('div');
+					left.style.cssText = 'display:flex; align-items:center; gap:12px;';
+
+					if (p.image) {
+						var img = document.createElement('img');
+						img.src = p.image;
+						img.style.cssText = 'width:42px; height:42px; object-fit:cover; border-radius:4px; border:1px solid #e2e8f0;';
+						left.appendChild(img);
+					} else {
+						var noImg = document.createElement('div');
+						noImg.style.cssText = 'width:42px; height:42px; background:#f1f5f9; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#94a3b8;';
+						noImg.innerText = 'No img';
+						left.appendChild(noImg);
+					}
+
+					var info = document.createElement('div');
+					var title = document.createElement('div');
+					title.style.cssText = 'font-weight:700; font-size:13px; color:#0f172a;';
+					title.innerText = p.name;
+					info.appendChild(title);
+
+					var meta = document.createElement('div');
+					meta.style.cssText = 'font-size:11.5px; color:#64748b;';
+					meta.innerHTML = (p.sku ? 'SKU: ' + p.sku + ' | ' : '') + '<strong style="color:#059669;">' + p.formatted_price + '</strong>';
+					info.appendChild(meta);
+					left.appendChild(info);
+
+					var pickBtn = document.createElement('button');
+					pickBtn.type = 'button';
+					pickBtn.className = 'button button-small';
+					pickBtn.style.cssText = 'background:#16a34a; color:#fff; border-color:#16a34a; font-weight:700; cursor:pointer;';
+					pickBtn.innerText = 'Chọn';
+					pickBtn.onclick = function() {
+						pchubSelectProduct(p.name, p.price);
+					};
+
+					item.appendChild(left);
+					item.appendChild(pickBtn);
+					container.appendChild(item);
+				});
 			}).fail(function() {
 				container.innerHTML = '<div style="text-align:center; padding:30px; color:#ef4444;">Lỗi kết nối máy chủ.</div>';
 			});
