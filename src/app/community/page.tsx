@@ -102,16 +102,31 @@ function CommunityContent() {
 
   const authUser = useAuthStore(s => s.user);
 
-  // Read stored builds & likes on client mount
+  // Read stored builds & fetch approved builds from WordPress on client mount
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => {
-      setBuilds(getStoredCommunityBuilds());
-      setLikedBuildIds(getLikedBuildIds());
-      setSavedBuildIds(getSavedCommunityBuildIds());
-      setIsLoading(false);
-    }, 250);
-    return () => clearTimeout(timer);
+    // Instant local cache display
+    setBuilds(getStoredCommunityBuilds());
+    setLikedBuildIds(getLikedBuildIds());
+    setSavedBuildIds(getSavedCommunityBuildIds());
+
+    // Asynchronously fetch approved builds from WordPress
+    fetch('/api/community/builds?status=approved')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const localCustom = getStoredCommunityBuilds().filter(b => b.id.startsWith('custom-'));
+          const wpIds = new Set(json.data.map((b: CommunityBuild) => b.id));
+          const combined = [...localCustom.filter(b => !wpIds.has(b.id)), ...json.data];
+          setBuilds(combined);
+        }
+      })
+      .catch(err => {
+        console.warn('[COMMUNITY] Remote fetch failed, using local fallback:', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   // Debounce search input (300ms)
@@ -365,13 +380,23 @@ function CommunityContent() {
       likes: 1,
       commentsCount: 0,
       createdAt: new Date().toISOString().split('T')[0],
-      status: 'approved',
+      status: 'pending',
       description: submitForm.description,
       tags: [submitForm.category, 'Community Build', 'PCHub 2026'],
     };
 
     saveCommunityBuild(newBuild);
     setBuilds(prev => [newBuild, ...prev]);
+
+    // Forward to WordPress backend for Admin moderation
+    fetch('/api/community/builds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newBuild),
+    }).catch(err => {
+      console.warn('Failed to sync modal build to WordPress:', err);
+    });
+
     setSubmitSuccess(true);
 
     setTimeout(() => {

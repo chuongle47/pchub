@@ -166,12 +166,22 @@ export default function SubmitBuildPage() {
       likes: 1,
       commentsCount: 0,
       createdAt: new Date().toISOString().split('T')[0],
-      status: 'approved',
+      status: 'pending',
       description: form.description,
       tags: [form.category, 'Community Build', 'PCHub 2026'],
     };
 
     saveCommunityBuild(newBuild);
+
+    // Sync to WordPress Backend for Admin Moderation
+    fetch('/api/community/builds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newBuild),
+    }).catch(err => {
+      console.warn('Failed to sync build to WordPress API:', err);
+    });
+
     setIsSubmitted(true);
   };
 
@@ -203,9 +213,22 @@ export default function SubmitBuildPage() {
           <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', marginBottom: '8px' }}>
             🎉 Đăng Cấu Hình Thành Công!
           </h2>
-          <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6', marginBottom: '24px' }}>
-            Cấu hình của bạn đã được lưu vào hệ thống Cộng đồng PCHub và sẵn sàng để mọi người cùng thảo luận, đánh giá.
+          <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6', marginBottom: '20px' }}>
+            Cấu hình của bạn đã được gửi lên hệ thống và chuyển vào hàng đợi kiểm duyệt tại <strong>WordPress Admin (Cộng đồng PC)</strong>. Ban quản trị sẽ sớm phê duyệt để hiển thị công khai trên bảng tin cộng đồng!
           </p>
+          <div style={{
+            background: '#f1f5f9',
+            borderRadius: '12px',
+            padding: '12px',
+            fontSize: '13px',
+            color: '#334155',
+            marginBottom: '24px',
+            textAlign: 'left'
+          }}>
+            <div>✅ <strong>Tên cấu hình:</strong> {form.title}</div>
+            <div>💰 <strong>Tổng chi phí:</strong> {formatVND(totalPrice)}</div>
+            <div>⏳ <strong>Trạng thái:</strong> <span style={{ color: '#d97706', fontWeight: 700 }}>Chờ duyệt (Pending)</span></div>
+          </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             <Link
               href="/community"

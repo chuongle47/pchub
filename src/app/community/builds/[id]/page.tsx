@@ -72,6 +72,14 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const res = toggleLikeBuildId(build.id);
     setIsLiked(res.isLiked);
     setLikesCount(prev => prev + res.countDelta);
+
+    fetch(`/api/community/builds/${encodeURIComponent(build.id)}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: res.isLiked ? 'like' : 'unlike' })
+    }).catch(err => {
+      console.warn('Failed to sync like to API:', err);
+    });
   };
 
   const handleSave = () => {
@@ -154,6 +162,16 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
     addCommunityComment(newComment);
     setComments(prev => [newComment, ...prev]);
+
+    // Sync to API
+    fetch(`/api/community/builds/${encodeURIComponent(build.id)}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newComment),
+    }).catch(err => {
+      console.warn('Failed to sync comment to API:', err);
+    });
+
     setCommentInput('');
     showToast('Đã gửi bình luận của bạn!');
   };
