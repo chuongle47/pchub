@@ -7,14 +7,14 @@ import {
   Heart, Share2, Layers, ShoppingCart, Check, 
   Sparkles, ArrowLeft, MessageSquare, ShieldCheck, 
   Zap, AlertTriangle, AlertCircle, Bookmark, Copy, 
-  ExternalLink, User, Send, CornerDownRight, Flag
+  ExternalLink, User, Send, CornerDownRight, Flag, Key
 } from 'lucide-react';
 import { 
   CommunityBuild, CommunityComment,
   INITIAL_COMMUNITY_BUILDS,
   getStoredCommunityBuilds, getLikedBuildIds, toggleLikeBuildId,
   getSavedCommunityBuildIds, toggleSaveCommunityBuildId,
-  getStoredComments, addCommunityComment
+  getStoredComments, addCommunityComment, encodeBuildToCode
 } from '@/data/community-data';
 import { useCartStore, useAuthStore } from '@/lib/store';
 
@@ -118,14 +118,78 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       title: build.title,
       budgetLabel: formatVND(build.price),
       components: {
-        cpu: build.parts.cpu.name,
-        gpu: build.parts.gpu.name,
-        ram: build.parts.ram.name,
-        mainboard: build.parts.mainboard?.name,
-        storage: build.parts.ssd?.name,
-        psu: build.parts.psu?.name,
-        case: build.parts.case?.name,
-        cooling: build.parts.cooler?.name,
+        cpu: {
+          id: `c-cpu-${build.id}`,
+          name: build.parts.cpu.name,
+          price: build.parts.cpu.price || Math.round(build.price * 0.25),
+          tdp: 125,
+          specs: build.parts.cpu.specs || 'Chính hãng',
+          image: build.parts.cpu.image || '/images/cpu-box.jpg',
+          slug: build.parts.cpu.slug || '',
+        },
+        mainboard: build.parts.mainboard ? {
+          id: `c-mb-${build.id}`,
+          name: build.parts.mainboard.name,
+          price: build.parts.mainboard.price || Math.round(build.price * 0.1),
+          tdp: 40,
+          specs: build.parts.mainboard.specs || 'Chính hãng',
+          image: build.parts.mainboard.image || '/images/cat-mainboard.jpg',
+          slug: build.parts.mainboard.slug || '',
+        } : undefined,
+        ram: {
+          id: `c-ram-${build.id}`,
+          name: build.parts.ram.name,
+          price: build.parts.ram.price || Math.round(build.price * 0.08),
+          tdp: 15,
+          specs: build.parts.ram.specs || 'Chính hãng',
+          image: build.parts.ram.image || '/images/ram-rgb.jpg',
+          slug: build.parts.ram.slug || '',
+        },
+        gpu: {
+          id: `c-gpu-${build.id}`,
+          name: build.parts.gpu.name,
+          price: build.parts.gpu.price || Math.round(build.price * 0.45),
+          tdp: 250,
+          specs: build.parts.gpu.specs || 'Chính hãng',
+          image: build.parts.gpu.image || '/images/gpu-strix.jpg',
+          slug: build.parts.gpu.slug || '',
+        },
+        storage: build.parts.ssd ? {
+          id: `c-ssd-${build.id}`,
+          name: build.parts.ssd.name,
+          price: build.parts.ssd.price || Math.round(build.price * 0.05),
+          tdp: 10,
+          specs: build.parts.ssd.specs || 'Chính hãng',
+          image: build.parts.ssd.image || '/images/ssd-nvme.jpg',
+          slug: build.parts.ssd.slug || '',
+        } : undefined,
+        psu: build.parts.psu ? {
+          id: `c-psu-${build.id}`,
+          name: build.parts.psu.name,
+          price: build.parts.psu.price || Math.round(build.price * 0.04),
+          tdp: 0,
+          specs: build.parts.psu.specs || 'Chính hãng',
+          image: build.parts.psu.image || '/images/cat-psu.jpg',
+          slug: build.parts.psu.slug || '',
+        } : undefined,
+        case: build.parts.case ? {
+          id: `c-case-${build.id}`,
+          name: build.parts.case.name,
+          price: build.parts.case.price || Math.round(build.price * 0.03),
+          tdp: 0,
+          specs: build.parts.case.specs || 'Chính hãng',
+          image: build.parts.case.image || '/images/hero-pc.jpg',
+          slug: build.parts.case.slug || '',
+        } : undefined,
+        cooling: build.parts.cooler ? {
+          id: `c-cooler-${build.id}`,
+          name: build.parts.cooler.name,
+          price: build.parts.cooler.price || Math.round(build.price * 0.02),
+          tdp: 15,
+          specs: build.parts.cooler.specs || 'Chính hãng',
+          image: build.parts.cooler.image || '/images/hero-pc.jpg',
+          slug: build.parts.cooler.slug || '',
+        } : undefined,
       }
     };
     try {
@@ -486,6 +550,32 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 >
                   <Bookmark size={16} fill={isSaved ? '#2563eb' : 'none'} color={isSaved ? '#2563eb' : '#64748b'} />
                   {isSaved ? 'Đã lưu' : 'Lưu'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const code = encodeBuildToCode(build);
+                    navigator.clipboard.writeText(code);
+                    showToast('🔑 Đã sao chép Mã Cấu Hình (Build Code) chứa toàn bộ linh kiện!');
+                  }}
+                  style={{
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '8px',
+                    padding: '4px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: '#2563eb',
+                    cursor: 'pointer'
+                  }}
+                  title="Sao chép Mã Cấu Hình để chia sẻ với bạn bè"
+                >
+                  <Key size={14} />
+                  Mã build
                 </button>
 
                 <button

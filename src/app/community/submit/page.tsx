@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Plus, Sparkles, Check, ArrowLeft, ShieldCheck, 
-  AlertCircle, Zap, Cpu, Layers, HardDrive, Box, Fan, DollarSign
+  AlertCircle, Zap, Cpu, Layers, HardDrive, Box, Fan, DollarSign, Key, Copy, CheckCheck
 } from 'lucide-react';
 import { 
   CommunityBuild, CommunityCategory, 
-  saveCommunityBuild 
+  saveCommunityBuild, encodeBuildToCode, decodeCodeToBuild 
 } from '@/data/community-data';
 import { useAuthStore } from '@/lib/store';
 
@@ -47,6 +47,10 @@ export default function SubmitBuildPage() {
   const [isAiChecking, setIsAiChecking] = useState(false);
   const [aiReport, setAiReport] = useState<{ score: number; status: string; summary: string } | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [quickCodeInput, setQuickCodeInput] = useState('');
+  const [quickCodeError, setQuickCodeError] = useState('');
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Auto calculate total price
   const totalPrice = React.useMemo(() => {
@@ -171,6 +175,9 @@ export default function SubmitBuildPage() {
       tags: [form.category, 'Community Build', 'PCHub 2026'],
     };
 
+    const code = encodeBuildToCode(newBuild);
+    setGeneratedCode(code);
+
     saveCommunityBuild(newBuild);
 
     // Sync to WordPress Backend for Admin Moderation
@@ -229,6 +236,61 @@ export default function SubmitBuildPage() {
             <div>💰 <strong>Tổng chi phí:</strong> {formatVND(totalPrice)}</div>
             <div>⏳ <strong>Trạng thái:</strong> <span style={{ color: '#d97706', fontWeight: 700 }}>Chờ duyệt (Pending)</span></div>
           </div>
+
+          {generatedCode && (
+            <div style={{
+              background: '#f8fafc',
+              border: '1.5px dashed #3b82f6',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '24px',
+              textAlign: 'left'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#1d4ed8', marginBottom: '6px' }}>
+                <Key size={15} /> Mã Cấu Hình Của Bạn (Build Code):
+              </div>
+              <div style={{
+                background: '#fff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                color: '#0f172a',
+                wordBreak: 'break-all',
+                marginBottom: '10px'
+              }}>
+                {generatedCode}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedCode);
+                  setCopiedCode(true);
+                  setTimeout(() => setCopiedCode(false), 3000);
+                }}
+                style={{
+                  width: '100%',
+                  background: copiedCode ? '#16a34a' : '#2563eb',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '9px 14px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                {copiedCode ? <CheckCheck size={15} /> : <Copy size={15} />}
+                {copiedCode ? 'Đã sao chép mã!' : 'Sao chép mã cấu hình gửi cho bạn bè'}
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             <Link
               href="/community"
@@ -282,6 +344,94 @@ export default function SubmitBuildPage() {
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
               Cùng chia sẻ kinh nghiệm chọn linh kiện và nhận đánh giá tương thích tự động từ AI Advisor của PCHub.
             </p>
+          </div>
+
+          {/* Quick Import from Build Code */}
+          <div style={{
+            background: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: '12px',
+            padding: '14px 16px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#0369a1', marginBottom: '8px' }}>
+              <Key size={15} /> ⚡ Bạn có mã cấu hình từ bạn bè? Nạp nhanh dữ liệu
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="Dán mã PCB-... vào đây để tự động điền các linh kiện"
+                value={quickCodeInput}
+                onChange={e => {
+                  setQuickCodeInput(e.target.value);
+                  setQuickCodeError('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #7dd3fc',
+                  fontSize: '13px',
+                  outline: 'none',
+                  background: '#ffffff'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!quickCodeInput.trim()) {
+                    setQuickCodeError('Vui lòng nhập hoặc dán mã cấu hình');
+                    return;
+                  }
+                  const decoded = decodeCodeToBuild(quickCodeInput.trim());
+                  if (!decoded) {
+                    setQuickCodeError('Mã cấu hình không hợp lệ hoặc không tìm thấy dữ liệu.');
+                    return;
+                  }
+                  setQuickCodeError('');
+                  setForm(prev => ({
+                    ...prev,
+                    title: decoded.title || prev.title,
+                    category: decoded.category || prev.category,
+                    description: decoded.description || prev.description,
+                    cpu: decoded.cpu || prev.cpu,
+                    cpuPrice: decoded.cpuPrice ? decoded.cpuPrice.toString() : prev.cpuPrice,
+                    gpu: decoded.gpu || prev.gpu,
+                    gpuPrice: decoded.gpuPrice ? decoded.gpuPrice.toString() : prev.gpuPrice,
+                    ram: decoded.ram || prev.ram,
+                    ramPrice: decoded.ramPrice ? decoded.ramPrice.toString() : prev.ramPrice,
+                    mainboard: decoded.mainboard || prev.mainboard,
+                    mainboardPrice: decoded.mainboardPrice ? decoded.mainboardPrice.toString() : prev.mainboardPrice,
+                    ssd: decoded.ssd || prev.ssd,
+                    ssdPrice: decoded.ssdPrice ? decoded.ssdPrice.toString() : prev.ssdPrice,
+                    psu: decoded.psu || prev.psu,
+                    psuPrice: decoded.psuPrice ? decoded.psuPrice.toString() : prev.psuPrice,
+                    case: decoded.case || prev.case,
+                    casePrice: decoded.casePrice ? decoded.casePrice.toString() : prev.casePrice,
+                    cooler: decoded.cooler || prev.cooler,
+                    coolerPrice: decoded.coolerPrice ? decoded.coolerPrice.toString() : prev.coolerPrice,
+                  }));
+                }}
+                style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '9px 16px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Nạp dữ liệu
+              </button>
+            </div>
+            {quickCodeError && (
+              <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px', fontWeight: 600 }}>
+                {quickCodeError}
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

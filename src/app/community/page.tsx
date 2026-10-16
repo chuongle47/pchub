@@ -7,13 +7,15 @@ import {
   Heart, Search, Plus, Sparkles, MessageSquare, 
   Cpu, Layers, Eye, Share2, ThumbsUp, Filter, 
   ArrowUpDown, Check, Bookmark, BookOpen, Clock, 
-  User, ArrowRight, X, AlertCircle, Zap, ShieldCheck
+  User, ArrowRight, X, AlertCircle, Zap, ShieldCheck,
+  Key, Copy, CheckCheck
 } from 'lucide-react';
 import { 
   CommunityBuild, CommunityPost, CommunityCategory, NewsCategory,
   INITIAL_COMMUNITY_BUILDS, INITIAL_COMMUNITY_POSTS,
   getStoredCommunityBuilds, getLikedBuildIds, toggleLikeBuildId,
-  getSavedCommunityBuildIds, toggleSaveCommunityBuildId, saveCommunityBuild
+  getSavedCommunityBuildIds, toggleSaveCommunityBuildId, saveCommunityBuild,
+  encodeBuildToCode, decodeCodeToBuild, BuildCodeData
 } from '@/data/community-data';
 import { useAuthStore } from '@/lib/store';
 
@@ -99,6 +101,15 @@ function CommunityContent() {
   });
   const [submitErrors, setSubmitErrors] = useState<Record<string, string>>({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Build Code State
+  const [quickCodeInput, setQuickCodeInput] = useState('');
+  const [quickCodeError, setQuickCodeError] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importCodeInput, setImportCodeInput] = useState('');
+  const [importedBuild, setImportedBuild] = useState<BuildCodeData | null>(null);
+  const [importCodeError, setImportCodeError] = useState('');
 
   const authUser = useAuthStore(s => s.user);
 
@@ -219,14 +230,78 @@ function CommunityContent() {
       title: b.title,
       budgetLabel: formatVND(b.price),
       components: {
-        cpu: b.parts.cpu.name,
-        gpu: b.parts.gpu.name,
-        ram: b.parts.ram.name,
-        mainboard: b.parts.mainboard?.name,
-        storage: b.parts.ssd?.name,
-        psu: b.parts.psu?.name,
-        case: b.parts.case?.name,
-        cooling: b.parts.cooler?.name,
+        cpu: {
+          id: `c-cpu-${b.id}`,
+          name: b.parts.cpu.name,
+          price: b.parts.cpu.price || Math.round(b.price * 0.25),
+          tdp: 125,
+          specs: b.parts.cpu.specs || 'Chính hãng',
+          image: b.parts.cpu.image || '/images/cpu-box.jpg',
+          slug: b.parts.cpu.slug || '',
+        },
+        mainboard: b.parts.mainboard ? {
+          id: `c-mb-${b.id}`,
+          name: b.parts.mainboard.name,
+          price: b.parts.mainboard.price || Math.round(b.price * 0.1),
+          tdp: 40,
+          specs: b.parts.mainboard.specs || 'Chính hãng',
+          image: b.parts.mainboard.image || '/images/cat-mainboard.jpg',
+          slug: b.parts.mainboard.slug || '',
+        } : undefined,
+        ram: {
+          id: `c-ram-${b.id}`,
+          name: b.parts.ram.name,
+          price: b.parts.ram.price || Math.round(b.price * 0.08),
+          tdp: 15,
+          specs: b.parts.ram.specs || 'Chính hãng',
+          image: b.parts.ram.image || '/images/ram-rgb.jpg',
+          slug: b.parts.ram.slug || '',
+        },
+        gpu: {
+          id: `c-gpu-${b.id}`,
+          name: b.parts.gpu.name,
+          price: b.parts.gpu.price || Math.round(b.price * 0.45),
+          tdp: 250,
+          specs: b.parts.gpu.specs || 'Chính hãng',
+          image: b.parts.gpu.image || '/images/gpu-strix.jpg',
+          slug: b.parts.gpu.slug || '',
+        },
+        storage: b.parts.ssd ? {
+          id: `c-ssd-${b.id}`,
+          name: b.parts.ssd.name,
+          price: b.parts.ssd.price || Math.round(b.price * 0.05),
+          tdp: 10,
+          specs: b.parts.ssd.specs || 'Chính hãng',
+          image: b.parts.ssd.image || '/images/ssd-nvme.jpg',
+          slug: b.parts.ssd.slug || '',
+        } : undefined,
+        psu: b.parts.psu ? {
+          id: `c-psu-${b.id}`,
+          name: b.parts.psu.name,
+          price: b.parts.psu.price || Math.round(b.price * 0.04),
+          tdp: 0,
+          specs: b.parts.psu.specs || 'Chính hãng',
+          image: b.parts.psu.image || '/images/cat-psu.jpg',
+          slug: b.parts.psu.slug || '',
+        } : undefined,
+        case: b.parts.case ? {
+          id: `c-case-${b.id}`,
+          name: b.parts.case.name,
+          price: b.parts.case.price || Math.round(b.price * 0.03),
+          tdp: 0,
+          specs: b.parts.case.specs || 'Chính hãng',
+          image: b.parts.case.image || '/images/hero-pc.jpg',
+          slug: b.parts.case.slug || '',
+        } : undefined,
+        cooling: b.parts.cooler ? {
+          id: `c-cooler-${b.id}`,
+          name: b.parts.cooler.name,
+          price: b.parts.cooler.price || Math.round(b.price * 0.02),
+          tdp: 15,
+          specs: b.parts.cooler.specs || 'Chính hãng',
+          image: b.parts.cooler.image || '/images/hero-pc.jpg',
+          slug: b.parts.cooler.slug || '',
+        } : undefined,
       }
     };
     try {
@@ -385,6 +460,9 @@ function CommunityContent() {
       tags: [submitForm.category, 'Community Build', 'PCHub 2026'],
     };
 
+    const code = encodeBuildToCode(newBuild);
+    setGeneratedCode(code);
+
     saveCommunityBuild(newBuild);
     setBuilds(prev => [newBuild, ...prev]);
 
@@ -398,26 +476,52 @@ function CommunityContent() {
     });
 
     setSubmitSuccess(true);
+  };
 
-    setTimeout(() => {
-      setSubmitSuccess(false);
-      setIsSubmitModalOpen(false);
-      setSubmitForm({
-        title: '',
-        category: 'Gaming',
-        description: '',
-        cpu: '',
-        gpu: '',
-        ram: '',
-        mainboard: '',
-        ssd: '',
-        psu: '',
-        case: '',
-        cooler: '',
-        price: '',
-      });
-      showToast('🎉 Đăng cấu hình thành công!');
-    }, 1500);
+  // Nạp dữ liệu vào form từ Mã Cấu Hình (Build Code)
+  const handleQuickCodeImport = () => {
+    if (!quickCodeInput.trim()) {
+      setQuickCodeError('Vui lòng nhập hoặc dán mã cấu hình');
+      return;
+    }
+    const decoded = decodeCodeToBuild(quickCodeInput.trim());
+    if (!decoded) {
+      setQuickCodeError('Mã cấu hình không hợp lệ hoặc không tìm thấy dữ liệu.');
+      return;
+    }
+    setQuickCodeError('');
+    setSubmitForm({
+      title: decoded.title || '',
+      category: decoded.category || 'Gaming',
+      description: decoded.description || '',
+      cpu: decoded.cpu || '',
+      gpu: decoded.gpu || '',
+      ram: decoded.ram || '',
+      mainboard: decoded.mainboard || '',
+      ssd: decoded.ssd || '',
+      psu: decoded.psu || '',
+      case: decoded.case || '',
+      cooler: decoded.cooler || '',
+      price: decoded.price ? decoded.price.toString() : '',
+    });
+    setCopiedToast('✅ Đã nạp thành công toàn bộ linh kiện từ mã cấu hình!');
+    setTimeout(() => setCopiedToast(null), 3000);
+  };
+
+  // Giải mã trong Modal Độc Lập
+  const handleDecodeImportCode = () => {
+    if (!importCodeInput.trim()) {
+      setImportCodeError('Vui lòng nhập hoặc dán mã cấu hình');
+      return;
+    }
+    const decoded = decodeCodeToBuild(importCodeInput.trim());
+    if (!decoded) {
+      setImportCodeError('Mã cấu hình không hợp lệ hoặc không nhận diện được linh kiện.');
+      setImportedBuild(null);
+      return;
+    }
+    setImportCodeError('');
+    setImportedBuild(decoded);
   };
 
   return (
@@ -611,29 +715,63 @@ function CommunityContent() {
                     </select>
                   </div>
 
-                  {/* Share Build Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsSubmitModalOpen(true)}
-                    style={{
-                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '10px',
-                      padding: '10px 18px',
-                      fontSize: '13.5px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <Plus size={16} />
-                    Đăng build của bạn
-                  </button>
+                  {/* Actions: Import Code + Share Build */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsImportModalOpen(true);
+                        setImportCodeInput('');
+                        setImportedBuild(null);
+                        setImportCodeError('');
+                      }}
+                      style={{
+                        background: '#ffffff',
+                        color: '#2563eb',
+                        border: '1.5px solid #bfdbfe',
+                        borderRadius: '10px',
+                        padding: '10px 14px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Key size={15} />
+                      Nhập mã build
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSubmitModalOpen(true);
+                        setQuickCodeInput('');
+                        setQuickCodeError('');
+                      }}
+                      style={{
+                        background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '10px 18px',
+                        fontSize: '13.5px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <Plus size={16} />
+                      Đăng build của bạn
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1033,6 +1171,35 @@ function CommunityContent() {
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button
                               type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const code = encodeBuildToCode(b);
+                                navigator.clipboard.writeText(code);
+                                setCopiedToast(`🔑 Đã sao chép mã cấu hình "${b.title}"!`);
+                                setTimeout(() => setCopiedToast(null), 3000);
+                              }}
+                              title="Sao chép Mã Cấu Hình (Build Code) chứa toàn bộ linh kiện để gửi cho bạn bè"
+                              style={{
+                                background: '#eff6ff',
+                                color: '#2563eb',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                border: '1px solid #bfdbfe',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.15s'
+                              }}
+                            >
+                              <Key size={13} />
+                              Mã
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={(e) => handleLoadCommunityBuild(e, b)}
                               title="Tải cấu hình vào công cụ Build PC"
                               style={{
@@ -1337,29 +1504,177 @@ function CommunityContent() {
             </div>
 
             {submitSuccess ? (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{
-                  width: '60px',
-                  height: '60px',
+                  width: '56px',
+                  height: '56px',
                   borderRadius: '50%',
                   background: '#dcfce7',
                   color: '#16a34a',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 16px'
+                  margin: '0 auto 14px'
                 }}>
-                  <Check size={32} />
+                  <Check size={30} />
                 </div>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
                   Đăng Cấu Hình Thành Công!
                 </h3>
-                <p style={{ fontSize: '14px', color: '#64748b' }}>
-                  Cấu hình của bạn đã được lưu và hiển thị trên tab Cấu hình cộng đồng.
+                <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '16px' }}>
+                  Cấu hình của bạn đã được lưu và tạo mã chia sẻ tự chứa toàn bộ dữ liệu linh kiện.
                 </p>
+
+                {/* Generated Build Code Box */}
+                {generatedCode && (
+                  <div style={{
+                    background: '#f8fafc',
+                    border: '1.5px dashed #3b82f6',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    marginBottom: '18px',
+                    textAlign: 'left'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Key size={14} /> Mã cấu hình để bạn bè nạp lại:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedCode);
+                          setCopiedToast('🔑 Đã sao chép mã cấu hình!');
+                          setTimeout(() => setCopiedToast(null), 3000);
+                        }}
+                        style={{
+                          background: '#2563eb',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Copy size={12} /> Sao chép mã
+                      </button>
+                    </div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      padding: '8px 10px',
+                      fontFamily: 'monospace',
+                      fontSize: '11px',
+                      color: '#0f172a',
+                      wordBreak: 'break-all',
+                      maxHeight: '65px',
+                      overflowY: 'auto'
+                    }}>
+                      {generatedCode}
+                    </div>
+                    <p style={{ fontSize: '11.5px', color: '#64748b', margin: '6px 0 0' }}>
+                      💡 Bạn bè chỉ cần dán mã này vào nút <strong>"Nhập mã build"</strong> là có thể nạp ngay trọn bộ linh kiện của bạn vào máy tính!
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSubmitModalOpen(false);
+                    setSubmitSuccess(false);
+                    setGeneratedCode('');
+                    setSubmitForm({
+                      title: '',
+                      category: 'Gaming',
+                      description: '',
+                      cpu: '',
+                      gpu: '',
+                      ram: '',
+                      mainboard: '',
+                      ssd: '',
+                      psu: '',
+                      case: '',
+                      cooler: '',
+                      price: '',
+                    });
+                  }}
+                  style={{
+                    background: '#2563eb',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 24px',
+                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Hoàn tất & Đóng
+                </button>
               </div>
             ) : (
               <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                
+                {/* Fast Code Import Box */}
+                <div style={{
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '2px'
+                }}>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#166534', marginBottom: '6px' }}>
+                    ⚡ Bạn có mã cấu hình từ bạn bè? Nạp nhanh dữ liệu:
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Dán mã build (VD: PCB-... hoặc mã b1, b2...)"
+                      value={quickCodeInput}
+                      onChange={e => { setQuickCodeInput(e.target.value); setQuickCodeError(''); }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        border: quickCodeError ? '1.5px solid #ef4444' : '1px solid #86efac',
+                        fontSize: '12.5px',
+                        fontFamily: 'monospace',
+                        background: '#fff'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuickCodeImport}
+                      style={{
+                        background: '#16a34a',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Sparkles size={13} /> Nạp dữ liệu
+                    </button>
+                  </div>
+                  {quickCodeError && (
+                    <span style={{ fontSize: '11.5px', color: '#dc2626', marginTop: '4px', display: 'block' }}>
+                      {quickCodeError}
+                    </span>
+                  )}
+                </div>
                 
                 {/* Build Title */}
                 <div>
@@ -1567,6 +1882,72 @@ function CommunityContent() {
                   )}
                 </div>
 
+                {/* Live Build Code Preview Box */}
+                {(submitForm.cpu || submitForm.gpu || submitForm.title) && (
+                  <div style={{
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    fontSize: '12px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1e40af', fontWeight: 600, overflow: 'hidden' }}>
+                      <Key size={14} style={{ flexShrink: 0 }} />
+                      <span style={{ whiteSpace: 'nowrap' }}>Mã Build tự động:</span>
+                      <code style={{ fontFamily: 'monospace', fontSize: '11px', background: '#fff', padding: '3px 6px', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#2563eb', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {encodeBuildToCode({
+                          title: submitForm.title || 'Cấu hình PC',
+                          category: submitForm.category,
+                          price: parseInt(submitForm.price.replace(/\D/g, '')) || 0,
+                          cpu: submitForm.cpu,
+                          gpu: submitForm.gpu,
+                          ram: submitForm.ram,
+                          mainboard: submitForm.mainboard,
+                          description: submitForm.description
+                        }).slice(0, 32)}...
+                      </code>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const code = encodeBuildToCode({
+                          title: submitForm.title || 'Cấu hình PC',
+                          category: submitForm.category,
+                          price: parseInt(submitForm.price.replace(/\D/g, '')) || 0,
+                          cpu: submitForm.cpu,
+                          gpu: submitForm.gpu,
+                          ram: submitForm.ram,
+                          mainboard: submitForm.mainboard,
+                          description: submitForm.description
+                        });
+                        navigator.clipboard.writeText(code);
+                        setCopiedToast('🔑 Đã sao chép mã cấu hình để gửi bạn bè!');
+                        setTimeout(() => setCopiedToast(null), 3000);
+                      }}
+                      style={{
+                        background: '#eff6ff',
+                        color: '#2563eb',
+                        border: '1px solid #bfdbfe',
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Copy size={12} /> Sao chép mã
+                    </button>
+                  </div>
+                )}
+
                 {/* Submit Actions */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
                   <button
@@ -1611,6 +1992,300 @@ function CommunityContent() {
               </form>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* ======================= MODAL: NHẬP MÃ CẤU HÌNH (BUILD CODE) ======================= */}
+      {isImportModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          overflowY: 'auto'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '560px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '28px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+            position: 'relative'
+          }}>
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(false)}
+              aria-label="Đóng biểu mẫu nhập mã build"
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: '#f1f5f9',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748b'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Header */}
+            <div style={{ marginBottom: '18px' }}>
+              <span style={{ background: '#eff6ff', color: '#2563eb', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '9999px' }}>
+                🔑 PCHub Share System
+              </span>
+              <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '8px 0 4px' }}>
+                Nhập Mã Cấu Hình PC
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                Dán mã build do bạn bè chia sẻ để giải mã và nạp trọn bộ linh kiện vào máy của bạn.
+              </p>
+            </div>
+
+            {/* Input Box */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Dán mã cấu hình (Build Code):
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="Dán mã tại đây (VD: PCB-... hoặc b1, b2...)"
+                  value={importCodeInput}
+                  onChange={e => { setImportCodeInput(e.target.value); setImportCodeError(''); }}
+                  style={{
+                    flex: 1,
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: importCodeError ? '1.5px solid #ef4444' : '1.5px solid #cbd5e1',
+                    fontSize: '12.5px',
+                    fontFamily: 'monospace'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleDecodeImportCode}
+                  style={{
+                    background: '#2563eb',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Sparkles size={14} /> Giải mã
+                </button>
+              </div>
+              {importCodeError && (
+                <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                  {importCodeError}
+                </span>
+              )}
+            </div>
+
+            {/* Decoded Build Preview */}
+            {importedBuild && (
+              <div style={{
+                background: '#f8fafc',
+                border: '1.5px solid #bbf7d0',
+                borderRadius: '14px',
+                padding: '16px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div>
+                    <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
+                      {importedBuild.category}
+                    </span>
+                    <h4 style={{ margin: '4px 0 2px', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                      {importedBuild.title}
+                    </h4>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Tổng chi phí</div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#2563eb' }}>
+                      {formatVND(importedBuild.price)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Components List */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', margin: '12px 0', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div><strong>CPU:</strong> {importedBuild.cpu || 'Chưa rõ'}</div>
+                  <div><strong>GPU:</strong> {importedBuild.gpu || 'Chưa rõ'}</div>
+                  <div><strong>RAM:</strong> {importedBuild.ram || 'Chưa rõ'}</div>
+                  <div><strong>Main:</strong> {importedBuild.mainboard || 'Tương thích'}</div>
+                </div>
+
+                {importedBuild.description && (
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '8px 0 14px', fontStyle: 'italic' }}>
+                    "{importedBuild.description}"
+                  </p>
+                )}
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const preset = {
+                        title: importedBuild.title,
+                        budgetLabel: formatVND(importedBuild.price),
+                        components: {
+                          cpu: {
+                            id: `imp-cpu-${Date.now()}`,
+                            name: importedBuild.cpu,
+                            price: importedBuild.cpuPrice || Math.round(importedBuild.price * 0.25),
+                            tdp: 125,
+                            specs: 'Chính hãng',
+                            image: '/images/cpu-box.jpg',
+                          },
+                          gpu: {
+                            id: `imp-gpu-${Date.now()}`,
+                            name: importedBuild.gpu,
+                            price: importedBuild.gpuPrice || Math.round(importedBuild.price * 0.45),
+                            tdp: 250,
+                            specs: 'Chính hãng',
+                            image: '/images/gpu-strix.jpg',
+                          },
+                          ram: {
+                            id: `imp-ram-${Date.now()}`,
+                            name: importedBuild.ram,
+                            price: importedBuild.ramPrice || Math.round(importedBuild.price * 0.08),
+                            tdp: 15,
+                            specs: 'Chính hãng',
+                            image: '/images/ram-rgb.jpg',
+                          },
+                          mainboard: importedBuild.mainboard ? {
+                            id: `imp-mb-${Date.now()}`,
+                            name: importedBuild.mainboard,
+                            price: importedBuild.mainboardPrice || Math.round(importedBuild.price * 0.1),
+                            tdp: 40,
+                            specs: 'Chính hãng',
+                            image: '/images/cat-mainboard.jpg',
+                          } : undefined,
+                          storage: importedBuild.ssd ? {
+                            id: `imp-ssd-${Date.now()}`,
+                            name: importedBuild.ssd,
+                            price: importedBuild.ssdPrice || Math.round(importedBuild.price * 0.05),
+                            tdp: 10,
+                            specs: 'Chính hãng',
+                            image: '/images/ssd-nvme.jpg',
+                          } : undefined,
+                          psu: importedBuild.psu ? {
+                            id: `imp-psu-${Date.now()}`,
+                            name: importedBuild.psu,
+                            price: importedBuild.psuPrice || Math.round(importedBuild.price * 0.04),
+                            tdp: 0,
+                            specs: 'Chính hãng',
+                            image: '/images/cat-psu.jpg',
+                          } : undefined,
+                          case: importedBuild.case ? {
+                            id: `imp-case-${Date.now()}`,
+                            name: importedBuild.case,
+                            price: importedBuild.casePrice || Math.round(importedBuild.price * 0.03),
+                            tdp: 0,
+                            specs: 'Chính hãng',
+                            image: '/images/hero-pc.jpg',
+                          } : undefined,
+                          cooling: importedBuild.cooler ? {
+                            id: `imp-cooler-${Date.now()}`,
+                            name: importedBuild.cooler,
+                            price: importedBuild.coolerPrice || Math.round(importedBuild.price * 0.02),
+                            tdp: 15,
+                            specs: 'Chính hãng',
+                            image: '/images/hero-pc.jpg',
+                          } : undefined,
+                        }
+                      };
+                      try {
+                        localStorage.setItem('pchub_pending_ai_preset', JSON.stringify(preset));
+                      } catch {}
+                      router.push('/build-pc');
+                    }}
+                    style={{
+                      flex: 1,
+                      background: '#2563eb',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Layers size={14} /> Mở trong Xây Dựng PC
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmitForm({
+                        title: importedBuild.title,
+                        category: importedBuild.category,
+                        price: importedBuild.price ? importedBuild.price.toString() : '',
+                        cpu: importedBuild.cpu,
+                        gpu: importedBuild.gpu,
+                        ram: importedBuild.ram,
+                        mainboard: importedBuild.mainboard || '',
+                        ssd: importedBuild.ssd || '',
+                        psu: importedBuild.psu || '',
+                        case: importedBuild.case || '',
+                        cooler: importedBuild.cooler || '',
+                        description: importedBuild.description || '',
+                      });
+                      setIsImportModalOpen(false);
+                      setIsSubmitModalOpen(true);
+                      setCopiedToast('✅ Đã chuyển thông tin vào form đăng cấu hình!');
+                      setTimeout(() => setCopiedToast(null), 3000);
+                    }}
+                    style={{
+                      background: '#f1f5f9',
+                      color: '#334155',
+                      border: 'none',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Dùng làm mẫu đăng bài
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

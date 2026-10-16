@@ -16,6 +16,7 @@ import CompatibilityReportModal from '@/components/builder/CompatibilityReportMo
 import CartChoiceModal from '@/components/builder/CartChoiceModal';
 import { CompatibilityReport } from '@/lib/gemini';
 import { reconcileBuildComponents } from '@/lib/buildPresets';
+import { encodeBuildToCode, decodeCodeToBuild, BuildCodeData } from '@/data/community-data';
 import seed from '@/lib/seed.json';
 
 const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
@@ -212,32 +213,79 @@ export default function BuildPcPage() {
     }
   }, []);
 
-  // Listen for AI Preset application (from AI Advisor Chat)
+  // Listen for AI Preset application (from AI Advisor Chat, Community, etc.)
   useEffect(() => {
     const applyAiPreset = (preset: any) => {
       if (!preset || !preset.components) return;
-      const reconciledMap = reconcileBuildComponents(preset.components, liveSbuyProducts);
+
+      // Handle raw components or reconciled components
+      let reconciledMap: Record<string, any> = {};
+      try {
+        reconciledMap = reconcileBuildComponents(preset.components, liveSbuyProducts);
+      } catch (err) {
+        console.warn('reconcileBuildComponents warning:', err);
+        reconciledMap = { ...preset.components };
+      }
+
       setComponents(prev => prev.map(slot => {
-        const item = reconciledMap[slot.key];
+        // Find matching item by slot.key or common aliases
+        let item = reconciledMap[slot.key] ?? preset.components[slot.key];
+        if (!item && slot.key === 'storage') item = reconciledMap['ssd'] ?? preset.components['ssd'];
+        if (!item && slot.key === 'cooling') item = reconciledMap['cooler'] ?? preset.components['cooler'];
+        if (!item && slot.key === 'gpu') item = reconciledMap['vga'] ?? preset.components['vga'];
+        if (!item && slot.key === 'mainboard') item = reconciledMap['mb'] ?? preset.components['mb'];
+
         if (item) {
+          const fallbackImg = CATEGORY_DEFAULT_IMAGE[slot.key] || '/images/cpu-box.jpg';
+          const defaultTdp = slot.key === 'gpu' ? 250 : slot.key === 'cpu' ? 125 : slot.key === 'mainboard' ? 40 : 15;
+
+          // If item is a string (e.g. "AMD Ryzen 7 7700...")
+          if (typeof item === 'string') {
+            const cleanName = item.trim();
+            if (!cleanName) return slot;
+            return {
+              ...slot,
+              selected: {
+                id: `preset-${slot.key}-${Date.now()}`,
+                name: cleanName,
+                price: 0,
+                tdp: defaultTdp,
+                specs: 'Chính hãng',
+                image: fallbackImg,
+                slug: '',
+              },
+              quantity: 1,
+            };
+          }
+
+          // If item is an object
+          const itemName = item.name || item.title || '';
+          if (!itemName) return slot;
+
+          const itemPrice = typeof item.price === 'number' && !isNaN(item.price)
+            ? item.price
+            : (Number(item.price) || 0);
+
           return {
             ...slot,
             selected: {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              tdp: item.tdp,
-              specs: item.specs,
-              image: item.image,
-              slug: item.slug,
+              id: item.id || `preset-${slot.key}-${Date.now()}`,
+              name: itemName,
+              price: itemPrice,
+              tdp: Number(item.tdp) || defaultTdp,
+              specs: item.specs || 'Chính hãng',
+              image: item.image || item.image_url || fallbackImg,
+              slug: item.slug || '',
             },
-            quantity: 1,
+            quantity: item.quantity || 1,
           };
         }
         return slot;
       }));
 
-      setNotice(`🎉 Đã áp dụng thành công ${preset.title} (${preset.budgetLabel}) vào PC Builder!`);
+      const title = preset.title || 'Cấu hình đề xuất';
+      const budget = preset.budgetLabel ? ` (${preset.budgetLabel})` : '';
+      setNotice(`🎉 Đã nạp thành công cấu hình "${title}"${budget} vào PC Builder!`);
       setTimeout(() => setNotice(null), 5000);
     };
 
@@ -615,9 +663,37 @@ export default function BuildPcPage() {
 
   // ── Share Build Code Logic ──────────────────────────────────────────────
   const generateBuildCode = (): string => {
-    const selectedSlots = components
-      .filter(s => s.selected !== null)
-      .map(s => ({
+    const selectedSlots = components.filter(s => s.selected !== null);
+    if (selectedSlots.length === 0) return '';
+    try {
+      const buildData: BuildCodeData = {
+        title: buildTitleInput.trim() || 'Cấu hình từ PC Builder',
+        category: 'Gaming',
+        price: totalPrice,
+        description: 'Cấu hình được tùy biến trên công cụ PCHub PC Builder',
+        authorName: 'Thành viên PCHub',
+        cpu: components.find(s => s.key === 'cpu')?.selected?.name || '',
+        cpuPrice: components.find(s => s.key === 'cpu')?.selected?.price || 0,
+        gpu: components.find(s => s.key === 'gpu')?.selected?.name || '',
+        gpuPrice: components.find(s => s.key === 'gpu')?.selected?.price || 0,
+        ram: components.find(s => s.key === 'ram')?.selected?.name || '',
+        ramPrice: components.find(s => s.key === 'ram')?.selected?.price || 0,
+        mainboard: components.find(s => s.key === 'mainboard')?.selected?.name || '',
+        mainboardPrice: components.find(s => s.key === 'mainboard')?.selected?.price || 0,
+        ssd: components.find(s => s.key === 'storage')?.selected?.name || '',
+        ssdPrice: components.find(s => s.key === 'storage')?.selected?.price || 0,
+        psu: components.find(s => s.key === 'psu')?.selected?.name || '',
+        psuPrice: components.find(s => s.key === 'psu')?.selected?.price || 0,
+        case: components.find(s => s.key === 'case')?.selected?.name || '',
+        casePrice: components.find(s => s.key === 'case')?.selected?.price || 0,
+        cooler: components.find(s => s.key === 'cooling')?.selected?.name || '',
+        coolerPrice: components.find(s => s.key === 'cooling')?.selected?.price || 0,
+        aiScore: 100,
+      };
+      return encodeBuildToCode(buildData);
+    } catch {
+      // Fallback to legacy slots
+      const slots = selectedSlots.map(s => ({
         k: s.key,
         id: s.selected!.id,
         n: s.selected!.name,
@@ -628,18 +704,103 @@ export default function BuildPcPage() {
         sl: s.selected!.slug || '',
         q: s.quantity,
       }));
-    if (selectedSlots.length === 0) return '';
-    const payload = JSON.stringify({ v: 1, ts: Date.now(), slots: selectedSlots });
-    try {
+      const payload = JSON.stringify({ v: 1, ts: Date.now(), slots });
       return btoa(unescape(encodeURIComponent(payload)));
-    } catch {
-      return btoa(payload);
     }
   };
 
   const importBuildFromCode = (code: string): boolean => {
+    if (!code || !code.trim()) return false;
+    const clean = code.trim();
+
+    // 1. First try modern PCB-... or Community Build Code
     try {
-      const decoded = decodeURIComponent(escape(atob(code.trim())));
+      const decodedBuild = decodeCodeToBuild(clean);
+      if (decodedBuild && (decodedBuild.cpu || decodedBuild.gpu || decodedBuild.title)) {
+        const buildSlots: Record<string, any> = {
+          cpu: decodedBuild.cpu ? {
+            name: decodedBuild.cpu,
+            price: decodedBuild.cpuPrice || Math.round((decodedBuild.price || 0) * 0.25),
+            tdp: 125,
+            image: '/images/cpu-box.jpg'
+          } : null,
+          gpu: decodedBuild.gpu ? {
+            name: decodedBuild.gpu,
+            price: decodedBuild.gpuPrice || Math.round((decodedBuild.price || 0) * 0.45),
+            tdp: 250,
+            image: '/images/gpu-strix.jpg'
+          } : null,
+          ram: decodedBuild.ram ? {
+            name: decodedBuild.ram,
+            price: decodedBuild.ramPrice || Math.round((decodedBuild.price || 0) * 0.08),
+            tdp: 15,
+            image: '/images/ram-rgb.jpg'
+          } : null,
+          mainboard: decodedBuild.mainboard ? {
+            name: decodedBuild.mainboard,
+            price: decodedBuild.mainboardPrice || Math.round((decodedBuild.price || 0) * 0.1),
+            tdp: 40,
+            image: '/images/cat-mainboard.jpg'
+          } : null,
+          storage: decodedBuild.ssd ? {
+            name: decodedBuild.ssd,
+            price: decodedBuild.ssdPrice || Math.round((decodedBuild.price || 0) * 0.05),
+            tdp: 10,
+            image: '/images/ssd-nvme.jpg'
+          } : null,
+          psu: decodedBuild.psu ? {
+            name: decodedBuild.psu,
+            price: decodedBuild.psuPrice || Math.round((decodedBuild.price || 0) * 0.04),
+            tdp: 0,
+            image: '/images/cat-psu.jpg'
+          } : null,
+          case: decodedBuild.case ? {
+            name: decodedBuild.case,
+            price: decodedBuild.casePrice || Math.round((decodedBuild.price || 0) * 0.03),
+            tdp: 0,
+            image: '/images/hero-pc.jpg'
+          } : null,
+          cooling: decodedBuild.cooler ? {
+            name: decodedBuild.cooler,
+            price: decodedBuild.coolerPrice || Math.round((decodedBuild.price || 0) * 0.02),
+            tdp: 15,
+            image: '/images/hero-pc.jpg'
+          } : null,
+        };
+
+        setComponents(prev => prev.map(slot => {
+          let item = buildSlots[slot.key];
+          if (!item && slot.key === 'storage') item = buildSlots['ssd'];
+          if (!item && slot.key === 'cooling') item = buildSlots['cooler'];
+          if (item && item.name) {
+            const fallbackImg = CATEGORY_DEFAULT_IMAGE[slot.key] || '/images/cpu-box.jpg';
+            return {
+              ...slot,
+              selected: {
+                id: `imp-${slot.key}-${Date.now()}`,
+                name: item.name,
+                price: Number(item.price) || 0,
+                tdp: item.tdp || (slot.key === 'gpu' ? 250 : slot.key === 'cpu' ? 125 : 20),
+                specs: 'Chính hãng',
+                image: item.image || fallbackImg,
+                slug: '',
+              },
+              quantity: 1,
+            };
+          }
+          return { ...slot, selected: null, quantity: 1 };
+        }));
+
+        setAiReport(null);
+        return true;
+      }
+    } catch (e) {
+      console.warn('decodeCodeToBuild import error:', e);
+    }
+
+    // 2. Try legacy base64 format { v: 1, ts: ..., slots: [...] }
+    try {
+      const decoded = decodeURIComponent(escape(atob(clean)));
       const parsed = JSON.parse(decoded);
       if (!parsed || !Array.isArray(parsed.slots)) return false;
       setComponents(prev => prev.map(slot => {
@@ -650,11 +811,11 @@ export default function BuildPcPage() {
             selected: {
               id: found.id,
               name: found.n,
-              price: found.p,
-              tdp: found.t,
-              specs: found.sp,
-              image: found.img,
-              slug: found.sl,
+              price: Number(found.p) || 0,
+              tdp: Number(found.t) || 20,
+              specs: found.sp || '',
+              image: found.img || (CATEGORY_DEFAULT_IMAGE[slot.key] || '/images/cpu-box.jpg'),
+              slug: found.sl || '',
             },
             quantity: found.q || 1,
           };

@@ -1475,3 +1475,148 @@ export function toggleSaveCommunityBuildId(buildId: string): boolean {
     return false;
   }
 }
+
+// ==========================================
+// BUILD CODE (MÃ CẤU HÌNH TỰ CHỨA DỮ LIỆU)
+// ==========================================
+
+export interface BuildCodeData {
+  id?: string;
+  title: string;
+  category: CommunityCategory;
+  price: number;
+  description?: string;
+  authorName?: string;
+  cpu: string;
+  cpuPrice?: number;
+  gpu: string;
+  gpuPrice?: number;
+  ram: string;
+  ramPrice?: number;
+  mainboard?: string;
+  mainboardPrice?: number;
+  ssd?: string;
+  ssdPrice?: number;
+  psu?: string;
+  psuPrice?: number;
+  case?: string;
+  casePrice?: number;
+  cooler?: string;
+  coolerPrice?: number;
+  aiScore?: number;
+}
+
+export function encodeBuildToCode(data: BuildCodeData | CommunityBuild): string {
+  try {
+    const isBuild = 'parts' in data;
+    const compact = {
+      t: isBuild ? data.title : data.title,
+      c: isBuild ? data.category : data.category,
+      p: isBuild ? data.price : (data.price || 0),
+      cpu: isBuild ? (data.parts.cpu?.name || '') : (data.cpu || ''),
+      gpu: isBuild ? (data.parts.gpu?.name || '') : (data.gpu || ''),
+      ram: isBuild ? (data.parts.ram?.name || '') : (data.ram || ''),
+      mb: isBuild ? (data.parts.mainboard?.name || '') : (data.mainboard || ''),
+      ssd: isBuild ? (data.parts.ssd?.name || '') : (data.ssd || ''),
+      psu: isBuild ? (data.parts.psu?.name || '') : (data.psu || ''),
+      cs: isBuild ? (data.parts.case?.name || '') : (data.case || ''),
+      cl: isBuild ? (data.parts.cooler?.name || '') : (data.cooler || ''),
+      d: isBuild ? (data.description || '') : (data.description || ''),
+      a: isBuild ? (data.author?.name || '') : (data.authorName || ''),
+      s: isBuild ? (data.aiCompatibility?.score || 100) : (data.aiScore || 100),
+      v: 1
+    };
+
+    const str = JSON.stringify(compact);
+    let b64: string;
+    if (typeof window !== 'undefined') {
+      b64 = btoa(encodeURIComponent(str));
+    } else {
+      b64 = Buffer.from(encodeURIComponent(str)).toString('base64');
+    }
+    const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return `PCB-${safe}`;
+  } catch (err) {
+    console.error('Failed to encode build to code:', err);
+    return '';
+  }
+}
+
+export function decodeCodeToBuild(codeString: string): BuildCodeData | null {
+  if (!codeString || typeof codeString !== 'string') return null;
+  const clean = codeString.trim();
+
+  // 1. Giải mã mã nhị phân PCB- chứa trực tiếp linh kiện
+  if (clean.startsWith('PCB-') || clean.startsWith('PCHUB-')) {
+    try {
+      const raw = clean.replace(/^(PCB-|PCHUB-)/, '');
+      let base64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+
+      let jsonStr: string;
+      if (typeof window !== 'undefined') {
+        jsonStr = decodeURIComponent(atob(base64));
+      } else {
+        jsonStr = decodeURIComponent(Buffer.from(base64, 'base64').toString());
+      }
+
+      const obj = JSON.parse(jsonStr);
+      if (obj && (obj.t || obj.cpu || obj.gpu)) {
+        return {
+          title: obj.t || 'Cấu hình chia sẻ',
+          category: (obj.c as CommunityCategory) || 'Gaming',
+          price: obj.p || 0,
+          description: obj.d || '',
+          authorName: obj.a || 'Thành viên PCHub',
+          cpu: obj.cpu || '',
+          gpu: obj.gpu || '',
+          ram: obj.ram || '',
+          mainboard: obj.mb || '',
+          ssd: obj.ssd || '',
+          psu: obj.psu || '',
+          case: obj.cs || '',
+          cooler: obj.cl || '',
+          aiScore: obj.s || 100
+        };
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Tra cứu theo ID hoặc slug cấu hình có sẵn
+  const allBuilds = typeof window !== 'undefined' ? getStoredCommunityBuilds() : INITIAL_COMMUNITY_BUILDS;
+  const found = allBuilds.find(b => b.id.toLowerCase() === clean.toLowerCase() || b.slug.toLowerCase() === clean.toLowerCase());
+  if (found) {
+    return {
+      id: found.id,
+      title: found.title,
+      category: found.category,
+      price: found.price,
+      description: found.description,
+      authorName: found.author.name,
+      cpu: found.parts.cpu?.name || '',
+      cpuPrice: found.parts.cpu?.price,
+      gpu: found.parts.gpu?.name || '',
+      gpuPrice: found.parts.gpu?.price,
+      ram: found.parts.ram?.name || '',
+      ramPrice: found.parts.ram?.price,
+      mainboard: found.parts.mainboard?.name || '',
+      mainboardPrice: found.parts.mainboard?.price,
+      ssd: found.parts.ssd?.name || '',
+      ssdPrice: found.parts.ssd?.price,
+      psu: found.parts.psu?.name || '',
+      psuPrice: found.parts.psu?.price,
+      case: found.parts.case?.name || '',
+      casePrice: found.parts.case?.price,
+      cooler: found.parts.cooler?.name || '',
+      coolerPrice: found.parts.cooler?.price,
+      aiScore: found.aiCompatibility?.score || 100
+    };
+  }
+
+  return null;
+}
+
