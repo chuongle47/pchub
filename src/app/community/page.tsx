@@ -80,6 +80,7 @@ function CommunityContent() {
   const [savedBuildIds, setSavedBuildIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [copiedToast, setCopiedToast] = useState<string | null>(null);
+  const [wpSyncInfo, setWpSyncInfo] = useState<{ connected: boolean; wpCount: number } | null>(null);
 
   // Quick Submit Modal State
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -119,10 +120,15 @@ function CommunityContent() {
           const wpIds = new Set(json.data.map((b: CommunityBuild) => b.id));
           const combined = [...localCustom.filter(b => !wpIds.has(b.id)), ...json.data];
           setBuilds(combined);
+          setWpSyncInfo({
+            connected: true,
+            wpCount: json.fromWordPressCount || 0,
+          });
         }
       })
       .catch(err => {
         console.warn('[COMMUNITY] Remote fetch failed, using local fallback:', err);
+        setWpSyncInfo({ connected: false, wpCount: 0 });
       })
       .finally(() => {
         setIsLoading(false);
@@ -528,6 +534,47 @@ function CommunityContent() {
         {/* ======================= TAB 1: BUILDS ======================= */}
         {activeTab === 'builds' && (
           <div>
+            {/* WordPress Sync Status Banner */}
+            {wpSyncInfo && (
+              <div style={{
+                marginBottom: '16px',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                background: wpSyncInfo.wpCount > 0 ? '#f0fdf4' : '#f8fafc',
+                border: `1px solid ${wpSyncInfo.wpCount > 0 ? '#bbf7d0' : '#e2e8f0'}`,
+                color: wpSyncInfo.wpCount > 0 ? '#166534' : '#475569'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                  <span style={{ fontSize: '14px' }}>{wpSyncInfo.wpCount > 0 ? '🟢' : '🌐'}</span>
+                  <span>
+                    {wpSyncInfo.wpCount > 0
+                      ? `Đang đồng bộ trực tiếp ${wpSyncInfo.wpCount} cấu hình từ hệ thống WordPress Admin (sbuy.io.vn)`
+                      : 'Đang kết nối kho dữ liệu cấu hình PCHub. Khi nạp plugin lên WordPress Admin, toàn bộ cấu hình sẽ đồng bộ thời gian thực hai chiều.'}
+                  </span>
+                </div>
+                <Link
+                  href="/community/submit"
+                  style={{
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: wpSyncInfo.wpCount > 0 ? '#15803d' : '#2563eb',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Plus size={14} /> Chia sẻ cấu hình của bạn
+                </Link>
+              </div>
+            )}
+
             {/* Filter Bar & Action Controls */}
             <div style={{
               background: '#ffffff',

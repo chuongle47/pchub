@@ -2531,3 +2531,248 @@ function pchub_rest_moderate_build( WP_REST_Request $request ) {
 	), 200 );
 }
 
+/**
+ * 12.7. TỰ ĐỘNG NẠP DỮ LIỆU CẤU HÌNH MẪU VÀO WORDPRESS (AUTO SEEDER)
+ */
+function pchub_community_seed_default_builds( $force = false ) {
+	$existing = get_posts( array(
+		'post_type'      => PCHUB_BUILD_POST_TYPE,
+		'post_status'    => array( 'publish', 'draft', 'pending' ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+	) );
+
+	if ( ! $force && ! empty( $existing ) ) {
+		return count( $existing );
+	}
+
+	$sample_builds = array(
+		array(
+			'title'       => 'Project Neon: 4K Gaming Monster',
+			'slug'        => 'project-neon-4k-gaming-monster',
+			'category'    => 'Gaming',
+			'author_name' => 'Alex Hải',
+			'author_role' => 'Enthusiast Builder',
+			'price'       => 86250000,
+			'image'       => '/images/build-neon.jpg',
+			'ai_score'    => 100,
+			'ai_summary'  => 'Hệ thống đạt chuẩn tương thích 100%. CPU i9-14900K và RTX 4090 không bị nghẽn cổ chai, nguồn 1000W đáp ứng tối ưu.',
+			'description' => 'Dàn máy mơ ước dành cho game thủ hardcore và streamer chuyên nghiệp. Thiết kế theo tông màu đen RGB đồng bộ, hỗ trợ 4K Max Settings 120+ FPS.',
+			'likes'       => 154,
+			'parts'       => array(
+				'cpu'       => array( 'name' => 'Intel Core i9-14900K (Up to 6.0GHz, 24 Nhân 32 Luồng)', 'price' => 15490000 ),
+				'gpu'       => array( 'name' => 'ASUS ROG Strix GeForce RTX 4090 24GB GDDR6X OC', 'price' => 52990000 ),
+				'ram'       => array( 'name' => 'Corsair Dominator Titanium RGB 64GB (2x32GB) DDR5 6000MHz', 'price' => 6490000 ),
+				'mainboard' => array( 'name' => 'ASUS ROG MAXIMUS Z790 HERO', 'price' => 15890000 ),
+				'ssd'       => array( 'name' => 'Samsung 990 PRO 2TB PCIe 4.0 NVMe M.2', 'price' => 4590000 ),
+				'psu'       => array( 'name' => 'Corsair RM1000x Shift 1000W 80 Plus Gold ATX 3.0', 'price' => 4990000 ),
+				'case'      => array( 'name' => 'Lian Li O11 Dynamic EVO RGB Black', 'price' => 3890000 ),
+				'cooler'    => array( 'name' => 'Tản nhiệt nước NZXT Kraken Elite 360 RGB LCD', 'price' => 6890000 ),
+			),
+		),
+		array(
+			'title'       => 'Silent Render Node - 3D/Video Edit',
+			'slug'        => 'silent-render-node-3d-video-edit',
+			'category'    => 'Workstation',
+			'author_name' => 'StudioPro VN',
+			'author_role' => 'VFX Lead',
+			'price'       => 72850000,
+			'image'       => '/images/hero-pc.jpg',
+			'ai_score'    => 100,
+			'ai_summary'  => 'Tối ưu tuyệt đối cho render Blender, Maya, Premiere Pro và DaVinci Resolve. 128GB RAM Dual/Quad Channel siêu ổn định.',
+			'description' => 'Máy trạm Workstation render 3D chuyên dụng, linh kiện cao cấp vận hành êm ái 24/7 dưới 32dB.',
+			'likes'       => 89,
+			'parts'       => array(
+				'cpu'       => array( 'name' => 'AMD Ryzen 9 7950X (Up to 5.7GHz, 16 Nhân 32 Luồng)', 'price' => 14290000 ),
+				'gpu'       => array( 'name' => 'MSI GeForce RTX 4080 Super 16GB GAMING X SLIM', 'price' => 29990000 ),
+				'ram'       => array( 'name' => 'Kingston FURY Beast Black 128GB (4x32GB) DDR5 5600MHz', 'price' => 11990000 ),
+				'mainboard' => array( 'name' => 'MSI MAG X670E TOMAHAWK WIFI', 'price' => 8490000 ),
+				'ssd'       => array( 'name' => 'WD Black SN850X 2TB PCIe Gen4 NVMe M.2', 'price' => 4190000 ),
+				'psu'       => array( 'name' => 'Super Flower Leadex VII Platinum Pro 1000W', 'price' => 4290000 ),
+				'case'      => array( 'name' => 'Fractal Design Define 7 Solid Black Silent Case', 'price' => 4190000 ),
+				'cooler'    => array( 'name' => 'Noctua NH-D15 chromax.black Dual Tower Cooler', 'price' => 2890000 ),
+			),
+		),
+		array(
+			'title'       => 'White Aesthetic Gaming PC - RTX 4070 Ti Super',
+			'slug'        => 'white-aesthetic-gaming-pc-rtx-4070-ti-super',
+			'category'    => 'Gaming',
+			'author_name' => 'Linh Nguyễn',
+			'author_role' => 'Streamer',
+			'price'       => 48900000,
+			'image'       => '/images/build-white.jpg',
+			'ai_score'    => 98,
+			'ai_summary'  => 'Tone trắng đồng bộ 100%. Tương thích hoàn hảo giữa linh kiện và phần mềm điều khiển LED.',
+			'description' => 'Cấu hình góc máy tone trắng Pure White, hiệu năng đỉnh cao cân mượt mọi tựa game 2K/4K và livestream.',
+			'likes'       => 230,
+			'parts'       => array(
+				'cpu'       => array( 'name' => 'Intel Core i7-14700K (Up to 5.6GHz, 20 Nhân 28 Luồng)', 'price' => 10990000 ),
+				'gpu'       => array( 'name' => 'Gigabyte GeForce RTX 4070 Ti Super AERO OC 16GB', 'price' => 24490000 ),
+				'ram'       => array( 'name' => 'Corsair Vengeance RGB White 32GB (2x16GB) DDR5 6000MHz', 'price' => 3290000 ),
+				'mainboard' => array( 'name' => 'ASUS ROG STRIX B760-A GAMING WIFI White', 'price' => 5690000 ),
+				'ssd'       => array( 'name' => 'Samsung 980 PRO 1TB PCIe 4.0 NVMe M.2 White HS', 'price' => 2690000 ),
+				'psu'       => array( 'name' => 'Seasonic Focus GX-850 White 850W 80 Plus Gold', 'price' => 3890000 ),
+				'case'      => array( 'name' => 'NZXT H6 Flow RGB White Mid-Tower Case', 'price' => 3490000 ),
+				'cooler'    => array( 'name' => 'DeepCool LT720 WH 360mm Liquid Cooler White', 'price' => 3290000 ),
+			),
+		),
+		array(
+			'title'       => 'Esports Dominator - 240Hz High FPS CS2 & Valorant',
+			'slug'        => 'esports-dominator-240hz-high-fps',
+			'category'    => 'Gaming',
+			'author_name' => 'Duy Minh',
+			'author_role' => 'Semi-Pro Gamer',
+			'price'       => 26850000,
+			'image'       => '/images/hero-pc.jpg',
+			'ai_score'    => 100,
+			'ai_summary'  => 'Ryzen 7 7800X3D là chip gaming số 1 hiện tại với 3D V-Cache, đẩy FPS các game Esports lên tới 500+ FPS mượt mà.',
+			'description' => 'Vũ khí tối thượng cho game thủ FPS thi đấu chuyên nghiệp. Độ trễ 1% low cực thấp, không bao giờ drop hình.',
+			'likes'       => 112,
+			'parts'       => array(
+				'cpu'       => array( 'name' => 'AMD Ryzen 7 7800X3D (Up to 5.0GHz, 8 Nhân 16 Luồng, 96MB 3D V-Cache)', 'price' => 10290000 ),
+				'gpu'       => array( 'name' => 'ZOTAC GAMING GeForce RTX 4060 Ti 8GB Twin Edge', 'price' => 9990000 ),
+				'ram'       => array( 'name' => 'G.Skill Flare X5 32GB (2x16GB) DDR5 6000MHz AMD EXPO', 'price' => 2890000 ),
+				'mainboard' => array( 'name' => 'MSI B650M GAMING PLUS WIFI', 'price' => 3690000 ),
+				'ssd'       => array( 'name' => 'Kingston KC3000 1TB PCIe 4.0 NVMe M.2 (7000MB/s)', 'price' => 2390000 ),
+				'psu'       => array( 'name' => 'MSI MAG A750GL PCIE5 750W 80 Plus Gold', 'price' => 2390000 ),
+				'case'      => array( 'name' => 'Montech AIR 100 ARGB Black Micro-ATX', 'price' => 1190000 ),
+				'cooler'    => array( 'name' => 'Thermalright Peerless Assassin 120 SE ARGB', 'price' => 890000 ),
+			),
+		),
+		array(
+			'title'       => 'Streamer Pro Studio - Dual Monitor Ready',
+			'slug'        => 'streamer-pro-studio-dual-monitor',
+			'category'    => 'Streaming',
+			'author_name' => 'Gia Huy',
+			'author_role' => 'Content Creator',
+			'price'       => 38600000,
+			'image'       => '/images/hero-pc.jpg',
+			'ai_score'    => 96,
+			'ai_summary'  => 'Card RTX 4070 Super tích hợp dual AV1 encoder giúp livestream và ghi hình song song với độ nét cao không ảnh hưởng FPS.',
+			'description' => 'Cấu hình thiết kế tối ưu cho Streamer vừa livestream 1080p60 vừa chơi game đồ họa cao và chạy OBS đa luồng.',
+			'likes'       => 95,
+			'parts'       => array(
+				'cpu'       => array( 'name' => 'Intel Core i5-14600K (Up to 5.3GHz, 14 Nhân 20 Luồng)', 'price' => 7890000 ),
+				'gpu'       => array( 'name' => 'Colorful iGame GeForce RTX 4070 Super Ultra W OC 12GB', 'price' => 17490000 ),
+				'ram'       => array( 'name' => 'TeamGroup T-Force Delta RGB 32GB (2x16GB) DDR5 6000MHz', 'price' => 2990000 ),
+				'mainboard' => array( 'name' => 'Gigabyte Z790 GAMING X AX DDR5', 'price' => 5890000 ),
+				'ssd'       => array( 'name' => 'Kingston NV2 1TB PCIe 4.0 NVMe M.2', 'price' => 1650000 ),
+				'psu'       => array( 'name' => 'Corsair RM750e 750W 80 Plus Gold ATX 3.0', 'price' => 2890000 ),
+				'case'      => array( 'name' => 'Corsair 4000D Airflow Black Mid-Tower', 'price' => 1990000 ),
+				'cooler'    => array( 'name' => 'DeepCool AK620 Digital Black Dual Tower', 'price' => 1690000 ),
+			),
+		),
+		array(
+			'title'       => 'Budget King Gaming PC - Quốc Dân 15 Triệu',
+			'slug'        => 'budget-king-gaming-pc-15m',
+			'category'    => 'Budget',
+			'author_name' => 'Hoàng Long',
+			'author_role' => 'Student Builder',
+			'price'       => 15490000,
+			'image'       => '/images/hero-pc.jpg',
+			'ai_score'    => 100,
+			'ai_summary'  => 'Cấu hình quốc dân tối ưu tỉ lệ P/P (Hiệu năng / Giá tiền) cao nhất. Chiến mượt FIFA, LOL, Valorant, GTA V, Genshin Impact.',
+			'description' => 'Dàn PC quốc dân ngon bổ rẻ dành cho học sinh, sinh viên với mức đầu tư hợp lý nhất.',
+			'likes'       => 340,
+			'parts'       => array(
+				'cpu'       => array( 'name' => 'Intel Core i5-12400F (Up to 4.4GHz, 6 Nhân 12 Luồng)', 'price' => 2890000 ),
+				'gpu'       => array( 'name' => 'Colorful GeForce RTX 3060 NB DUO 12G V2 L-V', 'price' => 7190000 ),
+				'ram'       => array( 'name' => 'Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz', 'price' => 990000 ),
+				'mainboard' => array( 'name' => 'ASUS PRIME B760M-K D4', 'price' => 2490000 ),
+				'ssd'       => array( 'name' => 'Kingston NV2 500GB PCIe 4.0 NVMe M.2', 'price' => 990000 ),
+				'psu'       => array( 'name' => 'Antec CSK650 650W 80 Plus Bronze', 'price' => 1190000 ),
+				'case'      => array( 'name' => 'Xigmatek NYX Air 3F (Kèm 3 Fan RGB)', 'price' => 690000 ),
+				'cooler'    => array( 'name' => 'Jonsbo CR-1000 EVO RGB Black', 'price' => 350000 ),
+			),
+		),
+	);
+
+	$seeded_count = 0;
+	foreach ( $sample_builds as $item ) {
+		$existing_post = get_page_by_path( $item['slug'], OBJECT, PCHUB_BUILD_POST_TYPE );
+		if ( $existing_post ) continue;
+
+		$post_id = wp_insert_post( array(
+			'post_type'    => PCHUB_BUILD_POST_TYPE,
+			'post_title'   => $item['title'],
+			'post_name'    => $item['slug'],
+			'post_content' => $item['description'],
+			'post_status'  => 'publish',
+		) );
+
+		if ( $post_id && ! is_wp_error( $post_id ) ) {
+			update_post_meta( $post_id, '_pchub_status', 'approved' );
+			update_post_meta( $post_id, '_pchub_category', $item['category'] );
+			update_post_meta( $post_id, '_pchub_author_name', $item['author_name'] );
+			update_post_meta( $post_id, '_pchub_author_role', $item['author_role'] );
+			update_post_meta( $post_id, '_pchub_price', $item['price'] );
+			update_post_meta( $post_id, '_pchub_ai_score', $item['ai_score'] );
+			update_post_meta( $post_id, '_pchub_ai_summary', $item['ai_summary'] );
+			update_post_meta( $post_id, '_pchub_description', $item['description'] );
+			update_post_meta( $post_id, '_pchub_likes', $item['likes'] );
+			update_post_meta( $post_id, '_pchub_comments_count', 0 );
+			update_post_meta( $post_id, '_pchub_image', $item['image'] );
+			update_post_meta( $post_id, '_pchub_parts', $item['parts'] );
+			$seeded_count++;
+		}
+	}
+
+	return $seeded_count;
+}
+
+/**
+ * Xử lý nạp dữ liệu mẫu khi Admin bấm nút hoặc khi chưa có bài nào
+ */
+add_action( 'admin_init', 'pchub_community_check_auto_seed' );
+function pchub_community_check_auto_seed() {
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+
+	// Khi bấm nút Nạp cấu hình mẫu
+	if ( isset( $_GET['pchub_action'] ) && 'seed_builds' === $_GET['pchub_action'] ) {
+		check_admin_referer( 'pchub_seed_builds_nonce' );
+		$count = pchub_community_seed_default_builds( true );
+		wp_safe_redirect( admin_url( 'edit.php?post_type=' . PCHUB_BUILD_POST_TYPE . '&pchub_seeded=' . $count ) );
+		exit;
+	}
+
+	// Tự động nạp lần đầu nếu cơ sở dữ liệu Cộng đồng chưa có bài nào
+	global $pagenow;
+	if ( 'edit.php' === $pagenow && isset( $_GET['post_type'] ) && PCHUB_BUILD_POST_TYPE === $_GET['post_type'] ) {
+		$total = wp_count_posts( PCHUB_BUILD_POST_TYPE )->publish + wp_count_posts( PCHUB_BUILD_POST_TYPE )->draft;
+		if ( 0 === $total && ! isset( $_GET['pchub_seeded'] ) ) {
+			pchub_community_seed_default_builds( false );
+		}
+	}
+}
+
+/**
+ * Thông báo & Nút nạp dữ liệu mẫu trên thanh Admin
+ */
+add_action( 'admin_notices', 'pchub_community_admin_notices' );
+function pchub_community_admin_notices() {
+	global $pagenow, $post_type;
+	if ( 'edit.php' !== $pagenow || PCHUB_BUILD_POST_TYPE !== $post_type ) return;
+
+	if ( isset( $_GET['pchub_seeded'] ) ) {
+		$count = (int) $_GET['pchub_seeded'];
+		printf(
+			'<div class="notice notice-success is-dismissible"><p><strong>🎉 Thành công!</strong> Đã nạp %d cấu hình PC mẫu chất lượng cao vào hệ thống Cộng đồng WordPress. Dữ liệu này đã sẵn sàng để website Next.js kết nối và hiển thị!</p></div>',
+			$count
+		);
+	}
+
+	$seed_url = wp_nonce_url( admin_url( 'edit.php?post_type=' . PCHUB_BUILD_POST_TYPE . '&pchub_action=seed_builds' ), 'pchub_seed_builds_nonce' );
+	?>
+	<div class="notice notice-info" style="border-left-color:#2563eb;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;">
+		<div>
+			<strong style="color:#1d4ed8;">⚡ Quản trị dữ liệu Cộng đồng PC:</strong>
+			<span>Hệ thống cho phép nạp nhanh các cấu hình PC mẫu (kèm linh kiện, hình ảnh, điểm AI) từ Next.js vào WordPress.</span>
+		</div>
+		<a href="<?php echo esc_url( $seed_url ); ?>" class="button button-primary" style="background:#2563eb;border-color:#1d4ed8;font-weight:700;">
+			⚡ Nạp cấu hình mẫu vào WordPress
+		</a>
+	</div>
+	<?php
+}
+
+

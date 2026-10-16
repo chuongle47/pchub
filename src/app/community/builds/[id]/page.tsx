@@ -60,6 +60,22 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         .slice(0, 3);
       setSimilarBuilds(similar.length > 0 ? similar : allBuilds.filter(b => b.id !== found.id).slice(0, 3));
     }
+
+    // Đồng bộ trực tiếp từ WordPress REST API nếu cấu hình được quản lý trên WordPress
+    fetch(`/api/community/builds/${encodeURIComponent(resolvedParams.id)}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data) {
+          const wpBuild = json.data;
+          setBuild(wpBuild);
+          setLikesCount(wpBuild.likes);
+          setIsLiked(getLikedBuildIds().includes(wpBuild.id));
+          setIsSaved(getSavedCommunityBuildIds().includes(wpBuild.id));
+        }
+      })
+      .catch(err => {
+        console.warn('Could not fetch single build from WordPress API:', err);
+      });
   }, [resolvedParams.id]);
 
   const showToast = (msg: string) => {
