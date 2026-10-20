@@ -1941,7 +1941,7 @@ function pchub_build_status_render( $post ) {
 	<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 		<p style="margin-bottom:6px;"><strong>Trạng thái kiểm duyệt:</strong></p>
 		<select name="_pchub_status" style="width:100%;padding:6px;font-weight:700;border-radius:6px;">
-			<option value="pending" <?php selected( $status, 'pending' ); ?>>⏳ Chờ duyệt (Pending)</option>
+			<option value="pending" <?php selected( $status, 'pending' ); ?>> Chờ duyệt (Pending)</option>
 			<option value="approved" <?php selected( $status, 'approved' ); ?>>✔ Đã duyệt (Approved - Hiển thị trên web)</option>
 			<option value="rejected" <?php selected( $status, 'rejected' ); ?>>✖ Từ chối (Rejected)</option>
 		</select>
@@ -1971,14 +1971,14 @@ function pchub_build_status_render( $post ) {
 
 function pchub_build_details_render( $post ) {
 	$parts = array(
-		'cpu'       => array( 'label' => '1. Vi xử lý (CPU)', 'icon' => '🔲' ),
-		'gpu'       => array( 'label' => '2. Card đồ họa (VGA/GPU)', 'icon' => '🎮' ),
-		'ram'       => array( 'label' => '3. Bộ nhớ RAM', 'icon' => '⚡' ),
-		'mainboard' => array( 'label' => '4. Bo mạch chủ (Mainboard)', 'icon' => '🖲️' ),
-		'ssd'       => array( 'label' => '5. Ổ cứng (SSD/HDD)', 'icon' => '💾' ),
-		'psu'       => array( 'label' => '6. Nguồn máy tính (PSU)', 'icon' => '🔌' ),
-		'case'      => array( 'label' => '7. Vỏ case', 'icon' => '📦' ),
-		'cooler'    => array( 'label' => '8. Tản nhiệt (Cooler)', 'icon' => '❄️' ),
+		'cpu'       => array( 'label' => '1. Vi xử lý (CPU)', 'icon' => '' ),
+		'gpu'       => array( 'label' => '2. Card đồ họa (VGA/GPU)', 'icon' => '' ),
+		'ram'       => array( 'label' => '3. Bộ nhớ RAM', 'icon' => '' ),
+		'mainboard' => array( 'label' => '4. Bo mạch chủ (Mainboard)', 'icon' => '' ),
+		'ssd'       => array( 'label' => '5. Ổ cứng (SSD/HDD)', 'icon' => '' ),
+		'psu'       => array( 'label' => '6. Nguồn máy tính (PSU)', 'icon' => '' ),
+		'case'      => array( 'label' => '7. Vỏ case', 'icon' => '' ),
+		'cooler'    => array( 'label' => '8. Tản nhiệt (Cooler)', 'icon' => '' ),
 	);
 
 	$raw_parts = get_post_meta( $post->ID, '_pchub_parts', true );
@@ -2004,7 +2004,7 @@ function pchub_build_details_render( $post ) {
 	<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 		<div style="background:#f1f5f9;border-radius:10px;padding:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
 			<div>
-				<span style="font-size:14px;font-weight:700;color:#0f172a;">💰 Tổng chi phí linh kiện:</span>
+				<span style="font-size:14px;font-weight:700;color:#0f172a;"> Tổng chi phí linh kiện:</span>
 				<span id="pchub-total-display" style="font-size:18px;font-weight:900;color:#2563eb;margin-left:8px;">
 					<?php echo number_format_i18n( $total_price ); ?> ₫
 				</span>
@@ -2182,7 +2182,7 @@ function pchub_build_to_api_format( $post ) {
 		),
 		'parts'           => $final_parts,
 		'price'           => $price > 0 ? $price : array_sum( array_column( $final_parts, 'price' ) ),
-		'performanceNote' => '💡 Cấu hình ' . $category . ' do ' . $author_name . ' chia sẻ, được cộng đồng PCHub đánh giá cao.',
+		'performanceNote' => ' Cấu hình ' . $category . ' do ' . $author_name . ' chia sẻ, được cộng đồng PCHub đánh giá cao.',
 		'fpsBenchmarks'   => array(
 			array( 'game' => 'Valorant / CS2', 'res1080p' => 280, 'res1440p' => 190, 'res4k' => 110, 'settings' => 'High' ),
 			array( 'game' => 'Cyberpunk 2077', 'res1080p' => 105, 'res1440p' => 70, 'res4k' => 42, 'settings' => 'Ultra DLSS' ),
