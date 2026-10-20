@@ -1,19 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Copy, Edit3, Plus, Share2, Trash2, SlidersHorizontal, Monitor, CheckCircle2 } from 'lucide-react';
+import { Copy, Edit3, Plus, Share2, Trash2, SlidersHorizontal, Monitor, CheckCircle2, Clock } from 'lucide-react';
+import { getStoredCommunityBuilds, CommunityBuild } from '@/data/community-data';
 
-type Build = { id: string; name: string; purpose: 'Gaming' | 'Streaming'; price: number; parts: string; updated: string; image: string; status: string };
+type Build = { id: string; name: string; purpose: 'Gaming' | 'Streaming'; price: number; parts: string; updated: string; image: string; status: string; moderationStatus?: 'pending' | 'approved' | 'rejected' };
 
 const BUILDS: Build[] = [
-  { id: 'build-01', name: 'My Gaming Beast Build 2026', purpose: 'Gaming', price: 55820000, parts: 'i9-14900K · RTX 4090 · 64GB DDR5', updated: '20/08/2026', image: '/images/hero-pc.jpg', status: 'Tương thích 100%' },
-  { id: 'build-02', name: 'Streaming Setup 2026', purpose: 'Streaming', price: 68990000, parts: 'Ryzen 9 7950X · RTX 4080 · 64GB DDR5', updated: '12/08/2026', image: '/images/build-neon.jpg', status: 'Tương thích 100%' },
+  { id: 'build-01', name: 'My Gaming Beast Build 2026', purpose: 'Gaming', price: 55820000, parts: 'i9-14900K · RTX 4090 · 64GB DDR5', updated: '20/08/2026', image: '/images/hero-pc.jpg', status: 'Tương thích 100%', moderationStatus: 'approved' },
+  { id: 'build-02', name: 'Streaming Setup 2026', purpose: 'Streaming', price: 68990000, parts: 'Ryzen 9 7950X · RTX 4080 · 64GB DDR5', updated: '12/08/2026', image: '/images/build-neon.jpg', status: 'Tương thích 100%', moderationStatus: 'approved' },
 ];
 
 export default function MyBuildsPage() {
   const [filter, setFilter] = useState<'all' | Build['purpose']>('all');
-  const [builds, setBuilds] = useState(BUILDS);
+  const [builds, setBuilds] = useState<Build[]>(BUILDS);
+
+  useEffect(() => {
+    try {
+      const stored = getStoredCommunityBuilds();
+      const customOnes = stored.filter(b => b.id.startsWith('custom-'));
+      if (customOnes.length > 0) {
+        const mapped: Build[] = customOnes.map(b => ({
+          id: b.id,
+          name: b.title,
+          purpose: b.category === 'Streaming' ? 'Streaming' : 'Gaming',
+          price: b.price,
+          parts: `${b.parts.cpu?.name || 'CPU'} · ${b.parts.gpu?.name || 'GPU'} · ${b.parts.ram?.name || 'RAM'}`,
+          updated: b.createdAt || 'Hôm nay',
+          image: b.image || '/images/hero-pc.jpg',
+          status: b.status === 'pending' ? '⏳ Đang chờ duyệt' : '✔ Đã duyệt công khai',
+          moderationStatus: b.status,
+        }));
+        setBuilds([...mapped, ...BUILDS]);
+      }
+    } catch (e) {
+      console.warn('Failed to load custom builds in account:', e);
+    }
+  }, []);
   const visibleBuilds = filter === 'all' ? builds : builds.filter(build => build.purpose === filter);
 
   return (

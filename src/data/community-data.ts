@@ -67,7 +67,7 @@ export interface CommunityBuild {
   likes: number;
   commentsCount: number;
   createdAt: string;
-  status: 'approved' | 'pending';
+  status: 'approved' | 'pending' | 'rejected';
   description: string;
   tags: string[];
 }
@@ -1391,6 +1391,24 @@ export function saveCommunityBuild(newBuild: CommunityBuild): boolean {
     return true;
   } catch (err) {
     console.error('Failed to save community build:', err);
+    return false;
+  }
+}
+
+export function updateCommunityBuildStatus(buildId: string, status: 'approved' | 'rejected'): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_BUILDS_KEY);
+    const existing: CommunityBuild[] = raw ? JSON.parse(raw) : [];
+    const index = existing.findIndex(b => b.id === buildId || b.slug === buildId);
+    if (index !== -1) {
+      existing[index].status = status;
+      localStorage.setItem(LOCAL_STORAGE_BUILDS_KEY, JSON.stringify(existing));
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Failed to update build status in localStorage:', err);
     return false;
   }
 }

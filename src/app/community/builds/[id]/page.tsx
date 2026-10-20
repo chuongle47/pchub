@@ -510,10 +510,48 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                   <Layers size={17} color="#2563eb" />
                   Mở trong Build PC để tùy biến
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const code = encodeBuildToCode(build);
+                    navigator.clipboard.writeText(code);
+                    showToast('🔑 Đã sao chép Mã Cấu Hình (Build Code) chứa toàn bộ linh kiện!');
+                  }}
+                  style={{
+                    background: '#eff6ff',
+                    border: '1.5px solid #bfdbfe',
+                    borderRadius: '10px',
+                    padding: '11px 18px',
+                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#dbeafe')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#eff6ff')}
+                  title="Sao chép Mã Cấu Hình để chia sẻ với bạn bè"
+                >
+                  <Key size={16} />
+                  Sao chép Mã build để chia sẻ
+                </button>
               </div>
 
               {/* Like / Save / Share bar */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-around',
+                paddingTop: '12px',
+                borderTop: '1px solid #e2e8f0',
+                gap: '8px',
+                flexWrap: 'wrap'
+              }}>
                 <button
                   type="button"
                   onClick={handleLike}
@@ -522,12 +560,17 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '6px',
                     fontSize: '13px',
                     fontWeight: 700,
                     color: isLiked ? '#ef4444' : '#64748b',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    transition: 'background 0.15s'
                   }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Heart size={16} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : '#64748b'} />
                   {likesCount} Thích
@@ -541,41 +584,20 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '6px',
                     fontSize: '13px',
                     fontWeight: 700,
                     color: isSaved ? '#2563eb' : '#64748b',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    transition: 'background 0.15s'
                   }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Bookmark size={16} fill={isSaved ? '#2563eb' : 'none'} color={isSaved ? '#2563eb' : '#64748b'} />
                   {isSaved ? 'Đã lưu' : 'Lưu'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const code = encodeBuildToCode(build);
-                    navigator.clipboard.writeText(code);
-                    showToast('🔑 Đã sao chép Mã Cấu Hình (Build Code) chứa toàn bộ linh kiện!');
-                  }}
-                  style={{
-                    background: '#eff6ff',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: '8px',
-                    padding: '4px 10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    color: '#2563eb',
-                    cursor: 'pointer'
-                  }}
-                  title="Sao chép Mã Cấu Hình để chia sẻ với bạn bè"
-                >
-                  <Key size={14} />
-                  Mã build
                 </button>
 
                 <button
@@ -586,12 +608,17 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '6px',
                     fontSize: '13px',
                     fontWeight: 700,
                     color: '#64748b',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    transition: 'background 0.15s'
                   }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Share2 size={16} />
                   Chia sẻ
