@@ -252,43 +252,279 @@ export default function NewsDetailPage({ params }: { params: Promise<{ slug: str
             fontSize: '15.5px',
             lineHeight: '1.8',
             color: '#1e293b',
+            fontFamily: "var(--font-primary), 'Inter', -apple-system, sans-serif",
           }}>
-            {post.content.split('\n\n').map((paragraph, index) => {
-              if (paragraph.startsWith('## ')) {
-                return (
-                  <h2 key={index} style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '32px 0 14px' }}>
-                    {paragraph.replace('## ', '')}
-                  </h2>
-                );
+            {(() => {
+              // Parse inline formatting (bold, code, italic)
+              const renderInline = (text: string) => {
+                const parts: React.ReactNode[] = [];
+                // Regex for **bold**, `code`, *italic*
+                const regex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
+                let lastIndex = 0;
+                let match;
+
+                while ((match = regex.exec(text)) !== null) {
+                  if (match.index > lastIndex) {
+                    parts.push(text.substring(lastIndex, match.index));
+                  }
+                  const token = match[0];
+                  if (token.startsWith('**') && token.endsWith('**')) {
+                    parts.push(
+                      <strong key={match.index} style={{ fontWeight: 700, color: '#0f172a' }}>
+                        {token.slice(2, -2)}
+                      </strong>
+                    );
+                  } else if (token.startsWith('`') && token.endsWith('`')) {
+                    parts.push(
+                      <code key={match.index} style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '13px', color: '#2563eb', fontFamily: 'monospace' }}>
+                        {token.slice(1, -1)}
+                      </code>
+                    );
+                  } else if (token.startsWith('*') && token.endsWith('*')) {
+                    parts.push(
+                      <em key={match.index} style={{ fontStyle: 'italic', color: '#475569' }}>
+                        {token.slice(1, -1)}
+                      </em>
+                    );
+                  }
+                  lastIndex = regex.lastIndex;
+                }
+                if (lastIndex < text.length) {
+                  parts.push(text.substring(lastIndex));
+                }
+                return parts.length > 0 ? parts : text;
+              };
+
+              // Parse markdown line by line into structured elements
+              const lines = post.content.split(/\r?\n/);
+              const blocks: React.ReactNode[] = [];
+              let i = 0;
+
+              while (i < lines.length) {
+                const line = lines[i].trim();
+
+                if (!line) {
+                  i++;
+                  continue;
+                }
+
+                // 1. Heading 2 (##)
+                if (line.startsWith('## ')) {
+                  const headingText = line.replace(/^##\s*/, '');
+                  blocks.push(
+                    <h2 key={`h2-${i}`} style={{
+                      fontSize: '22px',
+                      fontWeight: 800,
+                      color: '#0f172a',
+                      margin: '36px 0 16px',
+                      lineHeight: '1.4',
+                      fontFamily: "var(--font-primary)"
+                    }}>
+                      {renderInline(headingText)}
+                    </h2>
+                  );
+                  i++;
+                  continue;
+                }
+
+                // 2. Heading 3 (###)
+                if (line.startsWith('### ')) {
+                  const headingText = line.replace(/^###\s*/, '');
+                  blocks.push(
+                    <h3 key={`h3-${i}`} style={{
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: '#1d4ed8',
+                      margin: '26px 0 12px',
+                      lineHeight: '1.4',
+                      fontFamily: "var(--font-primary)"
+                    }}>
+                      {renderInline(headingText)}
+                    </h3>
+                  );
+                  i++;
+                  continue;
+                }
+
+                // 3. Horizontal divider
+                if (line === '---' || line === '***') {
+                  blocks.push(
+                    <hr key={`hr-${i}`} style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '32px 0' }} />
+                  );
+                  i++;
+                  continue;
+                }
+
+                // 4. Blockquotes (> ...)
+                if (line.startsWith('> ')) {
+                  const quoteLines: string[] = [];
+                  while (i < lines.length && lines[i].trim().startsWith('>')) {
+                    quoteLines.push(lines[i].trim().replace(/^>\s*/, ''));
+                    i++;
+                  }
+                  blocks.push(
+                    <blockquote key={`quote-${i}`} style={{
+                      margin: '20px 0',
+                      padding: '14px 20px',
+                      background: '#f8fafc',
+                      borderLeft: '4px solid #3b82f6',
+                      borderRadius: '0 10px 10px 0',
+                      color: '#475569',
+                      fontStyle: 'italic',
+                      lineHeight: '1.8',
+                      fontFamily: "var(--font-primary)"
+                    }}>
+                      {renderInline(quoteLines.join(' '))}
+                    </blockquote>
+                  );
+                  continue;
+                }
+
+                // 5. Markdown Table Detection
+                if (line.startsWith('|')) {
+                  const tableLines: string[] = [];
+                  while (i < lines.length && lines[i].trim().startsWith('|')) {
+                    tableLines.push(lines[i].trim());
+                    i++;
+                  }
+                  if (tableLines.length >= 2) {
+                    const parseCells = (rowStr: string) => rowStr.split('|').slice(1, -1).map(c => c.trim());
+                    const headerCells = parseCells(tableLines[0]);
+                    const dataRows = tableLines.slice(1).filter(r => r.replace(/[\s|:-]/g, '').length > 0);
+
+                    blocks.push(
+                      <div key={`table-wrapper-${i}`} style={{
+                        overflowX: 'auto',
+                        margin: '24px 0 32px',
+                        borderRadius: '12px',
+                        border: '1px solid #cbd5e1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                      }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          fontFamily: "var(--font-primary)"
+                        }}>
+                          <thead>
+                            <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                              {headerCells.map((th, thIdx) => (
+                                <th key={thIdx} style={{ padding: '12px 16px', fontWeight: 700, color: '#0f172a' }}>
+                                  {renderInline(th)}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dataRows.map((row, rIdx) => {
+                              const cells = parseCells(row);
+                              return (
+                                <tr key={rIdx} style={{
+                                  background: rIdx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                                  borderBottom: rIdx === dataRows.length - 1 ? 'none' : '1px solid #e2e8f0',
+                                }}>
+                                  {cells.map((td, tdIdx) => (
+                                    <td key={tdIdx} style={{ padding: '12px 16px', color: '#334155' }}>
+                                      {renderInline(td)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  }
+                  continue;
+                }
+
+                // 6. Unordered Lists (- or *)
+                if (line.startsWith('- ') || line.startsWith('* ')) {
+                  const items: string[] = [];
+                  while (i < lines.length && (lines[i].trim().startsWith('- ') || lines[i].trim().startsWith('* '))) {
+                    items.push(lines[i].trim().replace(/^[-*]\s+/, ''));
+                    i++;
+                  }
+                  blocks.push(
+                    <ul key={`ul-${i}`} style={{
+                      paddingLeft: '22px',
+                      margin: '14px 0 22px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}>
+                      {items.map((item, idx) => (
+                        <li key={idx} style={{ color: '#334155', lineHeight: '1.8', fontFamily: "var(--font-primary)" }}>
+                          {renderInline(item)}
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                  continue;
+                }
+
+                // 7. Ordered Lists (1. 2. 3.)
+                if (/^\d+\.\s/.test(line)) {
+                  const items: string[] = [];
+                  while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+                    items.push(lines[i].trim().replace(/^\d+\.\s+/, ''));
+                    i++;
+                  }
+                  blocks.push(
+                    <ol key={`ol-${i}`} style={{
+                      paddingLeft: '24px',
+                      margin: '14px 0 22px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}>
+                      {items.map((item, idx) => (
+                        <li key={idx} style={{ color: '#334155', lineHeight: '1.8', fontFamily: "var(--font-primary)" }}>
+                          {renderInline(item)}
+                        </li>
+                      ))}
+                    </ol>
+                  );
+                  continue;
+                }
+
+                // 8. Regular paragraph
+                const paraLines: string[] = [];
+                while (
+                  i < lines.length &&
+                  lines[i].trim() &&
+                  !lines[i].trim().startsWith('## ') &&
+                  !lines[i].trim().startsWith('### ') &&
+                  !lines[i].trim().startsWith('- ') &&
+                  !lines[i].trim().startsWith('* ') &&
+                  !/^\d+\.\s/.test(lines[i].trim()) &&
+                  !lines[i].trim().startsWith('|') &&
+                  !lines[i].trim().startsWith('> ') &&
+                  lines[i].trim() !== '---' &&
+                  lines[i].trim() !== '***'
+                ) {
+                  paraLines.push(lines[i].trim());
+                  i++;
+                }
+
+                if (paraLines.length > 0) {
+                  blocks.push(
+                    <p key={`p-${i}`} style={{
+                      margin: '0 0 18px',
+                      color: '#334155',
+                      lineHeight: '1.85',
+                      fontFamily: "var(--font-primary)"
+                    }}>
+                      {renderInline(paraLines.join(' '))}
+                    </p>
+                  );
+                }
               }
-              if (paragraph.startsWith('### ')) {
-                return (
-                  <h3 key={index} style={{ fontSize: '17px', fontWeight: 800, color: '#1e40af', margin: '24px 0 10px' }}>
-                    {paragraph.replace('### ', '')}
-                  </h3>
-                );
-              }
-              if (paragraph.startsWith('- ')) {
-                const items = paragraph.split('\n- ');
-                return (
-                  <ul key={index} style={{ paddingLeft: '20px', margin: '12px 0 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {items.map((item, i) => (
-                      <li key={i} style={{ color: '#334155' }}>
-                        {item.replace(/^- /, '')}
-                      </li>
-                    ))}
-                  </ul>
-                );
-              }
-              if (paragraph.startsWith('---')) {
-                return <hr key={index} style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '28px 0' }} />;
-              }
-              return (
-                <p key={index} style={{ margin: '0 0 16px', color: '#334155' }}>
-                  {paragraph}
-                </p>
-              );
-            })}
+
+              return blocks;
+            })()}
           </div>
 
           {/* Tags */}

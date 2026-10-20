@@ -112,8 +112,16 @@ html {
 }
 
 /* Enforce ONE unified primary font everywhere without component override */
-html, body, button, input, select, textarea, optgroup, option, label {
+*, *::before, *::after {
+  font-family: inherit;
+}
+
+html, body, button, input, select, textarea, optgroup, option, label, p, span, div, a, li, th, td, strong, b, em, i, blockquote, h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-primary) !important;
+}
+
+code, kbd, samp, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
 body {

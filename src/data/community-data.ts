@@ -1161,10 +1161,12 @@ Nhiều người dùng thường mắc sai lầm khi dồn hết tiền vào Car
 Cuộc đua giữa Intel và AMD chưa bao giờ hạ nhiệt. Trong năm 2026, cả hai gã khổng lồ đều mang đến những bước nhảy vọt về tiến trình sản xuất và hiệu năng trí tuệ nhân tạo (NPU).
 
 ## 1. AMD Ryzen 9000 Series (Kiến trúc Zen 5)
+
 - **Điểm mạnh**: Tiến trình TSMC 4nm siêu tiết kiệm điện năng. Nhiệt độ mát hơn đáng kể so với thế hệ trước (giảm từ 7-10°C). Tương thích trọn vẹn với socket AM5 kéo dài đến 2027+.
 - **Hiệu năng đơn nhân**: Tăng trung bình 16% IPC, giúp các tựa game như CS2, Valorant đạt mức khung hình cực đại.
 
 ## 2. Intel Core Ultra Series (Kiến trúc Arrow Lake)
+
 - **Điểm mạnh**: Loại bỏ hoàn toàn Hyper-Threading truyền thống để tối ưu hiệu năng P-Core và E-Core thế hệ mới. Tích hợp nhân xử lý AI NPU mạnh mẽ cho các tác vụ Copilot và xử lý ảnh thông minh.
 - **Tiêu thụ điện năng**: Mức TDP tối đa đã được kiểm soát chặt chẽ ở ngưỡng 250W, không còn tình trạng quá nhiệt đột ngột như thế hệ 14.
 
@@ -1179,6 +1181,7 @@ Cuộc đua giữa Intel và AMD chưa bao giờ hạ nhiệt. Trong năm 2026, 
 | **Đa nhiệm & Nén file** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 ## Kết luận
+
 Nếu bạn ưu tiên sự mát mẻ, tiết kiệm điện và khả năng nâng cấp sau này mà không cần thay mainboard, **AMD Ryzen 9000** là sự lựa chọn không thể tuyệt vời hơn. Còn nếu bạn làm việc đa tác vụ hỗn hợp, sáng tạo nội dung và yêu cầu tính ổn định của nền tảng Intel, **Core Ultra** sẽ làm bạn hài lòng.
     `,
     readingMinutes: 7,
