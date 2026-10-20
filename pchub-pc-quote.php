@@ -1527,10 +1527,21 @@ function pchub_community_register_cpt() {
 		'has_archive'        => false,
 		'rewrite'            => array( 'slug' => 'community-build' ),
 		'capability_type'    => 'post',
-		'show_in_rest'       => true,
+		'show_in_rest'       => false,
 	);
 
 	register_post_type( PCHUB_BUILD_POST_TYPE, $args );
+}
+
+/**
+ * Tắt Gutenberg để hiển thị đầy đủ Metabox Chi tiết cấu hình & Linh kiện
+ */
+add_filter( 'use_block_editor_for_post_type', 'pchub_community_disable_block_editor', 10, 2 );
+function pchub_community_disable_block_editor( $use_block_editor, $post_type ) {
+	if ( PCHUB_BUILD_POST_TYPE === $post_type ) {
+		return false;
+	}
+	return $use_block_editor;
 }
 
 /**
@@ -1698,13 +1709,36 @@ function pchub_community_column_content( $column, $post_id ) {
 
 		case 'quick_mod':
 			$nonce = wp_create_nonce( 'pchub_mod_nonce_' . $post_id );
+			$raw_parts = get_post_meta( $post_id, '_pchub_parts', true );
+			if ( ! is_array( $raw_parts ) ) $raw_parts = array();
+			$ai_summary  = get_post_meta( $post_id, '_pchub_ai_summary', true ) ?: 'Đạt chuẩn tương thích phần cứng.';
+			$desc        = get_post_meta( $post_id, '_pchub_description', true ) ?: get_post_field( 'post_content', $post_id );
+			$title       = get_the_title( $post_id );
+
+			$data_payload = htmlspecialchars( wp_json_encode( array(
+				'id'          => $post_id,
+				'title'       => $title,
+				'image'       => $img_url ?: '/images/hero-pc.jpg',
+				'author'      => $author_name ?: 'Thành viên PCHub',
+				'category'    => $category,
+				'price'       => number_format_i18n( $price ) . ' ₫',
+				'ai_score'    => (int) $ai_score,
+				'ai_summary'  => $ai_summary,
+				'description' => $desc,
+				'status'      => $status,
+				'parts'       => $raw_parts,
+				'edit_url'    => get_edit_post_link( $post_id, 'raw' ),
+			) ), ENT_QUOTES, 'UTF-8' );
+
 			printf(
-				'<div class="pchub-quick-mod-wrap" data-id="%d" data-nonce="%s" style="display:flex;gap:4px;">
-					<button type="button" class="button button-small pchub-mod-btn pchub-mod-approve" data-status="approved" title="Duyệt cho phép hiển thị" style="background:#16a34a;color:#fff;border-color:#15803d;">✔ Duyệt</button>
-					<button type="button" class="button button-small pchub-mod-btn pchub-mod-reject" data-status="rejected" title="Từ chối cấu hình này" style="color:#dc2626;border-color:#fca5a5;">✖ Bỏ</button>
+				'<div class="pchub-quick-mod-wrap" data-id="%d" data-nonce="%s" data-build="%s" style="display:flex;gap:4px;flex-wrap:wrap;">
+					<button type="button" class="button button-small pchub-view-details-btn" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;font-weight:700;">👁️ Chi tiết</button>
+					<button type="button" class="button button-small pchub-mod-btn pchub-mod-approve" data-status="approved" title="Duyệt cho phép hiển thị" style="background:#16a34a;color:#fff;border-color:#15803d;font-weight:600;">✔ Duyệt</button>
+					<button type="button" class="button button-small pchub-mod-btn pchub-mod-reject" data-status="rejected" title="Từ chối cấu hình này" style="color:#dc2626;border-color:#fca5a5;font-weight:600;">✖ Bỏ</button>
 				</div>',
 				$post_id,
-				esc_attr( $nonce )
+				esc_attr( $nonce ),
+				$data_payload
 			);
 			break;
 	}
@@ -1887,7 +1921,9 @@ function pchub_community_admin_scripts() {
 				if (res && res.success) {
 					var $row = $('#post-' + postId);
 					$row.find('.column-moderation').html(res.data.status_html);
-					$wrap.html('<span style="color:#16a34a;font-size:11px;font-weight:700;">' + (targetStatus === 'approved' ? '✔ Đã duyệt' : '✖ Đã từ chối') + '</span>');
+					$wrap.find('.pchub-mod-btn').remove();
+					$wrap.append('<span style="color:#16a34a;font-size:11px;font-weight:700;margin-left:4px;">' + (targetStatus === 'approved' ? '✔ Đã duyệt' : '✖ Đã từ chối') + '</span>');
+					$('#pchub-detail-modal').fadeOut(150);
 				} else {
 					alert((res && res.data && res.data.message) ? res.data.message : 'Có lỗi xảy ra.');
 					$wrap.find('button').prop('disabled', false).css('opacity', '1');
@@ -1897,8 +1933,82 @@ function pchub_community_admin_scripts() {
 				$wrap.find('button').prop('disabled', false).css('opacity', '1');
 			});
 		});
+
+		// Modal Xem chi tiết cấu hình trực tiếp trong WordPress Admin
+		$(document).on('click', '.pchub-view-details-btn', function(e) {
+			e.preventDefault();
+			var $wrap = $(this).closest('.pchub-quick-mod-wrap');
+			var b = $wrap.data('build');
+			if (!b) return;
+
+			var partsHtml = '';
+			var partLabels = {
+				'cpu': '1. Vi xử lý (CPU)',
+				'gpu': '2. Card đồ họa (VGA)',
+				'ram': '3. Bộ nhớ RAM',
+				'mainboard': '4. Bo mạch chủ',
+				'ssd': '5. Ổ cứng (SSD)',
+				'psu': '6. Nguồn máy tính (PSU)',
+				'case': '7. Vỏ case',
+				'cooler': '8. Tản nhiệt'
+			};
+
+			$.each(partLabels, function(key, label) {
+				var p = (b.parts && b.parts[key]) ? b.parts[key] : {};
+				var pName = p.name || 'Chưa chọn';
+				var pPrice = p.price ? new Intl.NumberFormat('vi-VN').format(p.price) + ' ₫' : '—';
+				partsHtml += '<div style="background:#f8fafc;padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0;">' +
+					'<div style="font-size:11.5px;color:#64748b;font-weight:700;">' + label + '</div>' +
+					'<div style="font-size:13px;font-weight:700;color:#0f172a;margin-top:2px;">' + pName + '</div>' +
+					'<div style="font-size:12px;color:#2563eb;font-weight:600;margin-top:2px;">' + pPrice + '</div>' +
+				'</div>';
+			});
+
+			var modalContent = 
+				'<div style="display:flex;gap:18px;margin-bottom:16px;border-bottom:1px solid #e2e8f0;padding-bottom:16px;">' +
+					'<img src="' + b.image + '" style="width:140px;height:100px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;" />' +
+					'<div style="flex:1;">' +
+						'<div style="font-size:18px;font-weight:800;color:#0f172a;">' + b.title + '</div>' +
+						'<div style="font-size:13px;color:#64748b;margin-top:4px;">Người chia sẻ: <strong style="color:#1e293b;">' + b.author + '</strong> | Phân loại: <span style="font-weight:700;color:#2563eb;">' + b.category + '</span></div>' +
+						'<div style="font-size:16px;font-weight:900;color:#d97706;margin-top:6px;">💰 Tổng ngân sách: ' + b.price + '</div>' +
+					'</div>' +
+				'</div>' +
+				'<h4 style="margin:0 0 10px;font-size:14px;color:#1e293b;">🛠️ Danh sách 8 linh kiện chi tiết:</h4>' +
+				'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' + partsHtml + '</div>' +
+				'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:14px;">' +
+					'<div style="font-weight:700;color:#166534;font-size:13px;">🤖 Đánh giá tương thích AI: ' + b.ai_score + '/100</div>' +
+					'<div style="font-size:12px;color:#15803d;margin-top:4px;">' + b.ai_summary + '</div>' +
+				'</div>' +
+				(b.description ? '<div style="margin-bottom:16px;"><strong style="font-size:13px;color:#334155;">💬 Chia sẻ từ người đăng:</strong><div style="font-size:13px;color:#475569;margin-top:4px;background:#f8fafc;padding:10px;border-radius:8px;">' + b.description + '</div></div>' : '') +
+				'<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:14px;margin-top:16px;">' +
+					'<a href="' + b.edit_url + '" class="button button-secondary" style="font-weight:600;">📝 Mở màn hình sửa nâng cao</a>' +
+					'<div style="display:flex;gap:8px;">' +
+						'<button type="button" class="button button-primary pchub-mod-btn pchub-mod-approve" data-status="approved" style="background:#16a34a;border-color:#15803d;font-weight:700;">✔ Duyệt bài này</button>' +
+						'<button type="button" class="button pchub-mod-btn pchub-mod-reject" data-status="rejected" style="color:#dc2626;border-color:#fca5a5;font-weight:600;">✖ Từ chối</button>' +
+					'</div>' +
+				'</div>';
+
+			$('#pchub-detail-modal-body').html(modalContent);
+			$('#pchub-detail-modal').data('id', b.id).data('nonce', $wrap.data('nonce')).fadeIn(150);
+		});
+
+		$(document).on('click', '#pchub-detail-modal-close, #pchub-detail-modal-backdrop', function() {
+			$('#pchub-detail-modal').fadeOut(150);
+		});
 	});
 	</script>
+
+	<!-- Modal Backdrop & Box -->
+	<div id="pchub-detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;">
+		<div id="pchub-detail-modal-backdrop" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);"></div>
+		<div style="position:relative;background:#fff;max-width:760px;width:90%;margin:50px auto;border-radius:14px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.25);max-height:85vh;overflow-y:auto;">
+			<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">
+				<h3 style="margin:0;font-size:16px;font-weight:800;color:#0f172a;">👁️ Chi tiết Cấu hình PC Cộng đồng</h3>
+				<button type="button" id="pchub-detail-modal-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;font-weight:700;">✕</button>
+			</div>
+			<div id="pchub-detail-modal-body"></div>
+		</div>
+	</div>
 	<?php
 }
 
@@ -1991,6 +2101,7 @@ function pchub_build_details_render( $post ) {
 	if ( '' === $ai_score ) $ai_score = 100;
 	$ai_summary  = get_post_meta( $post->ID, '_pchub_ai_summary', true ) ?: 'Hệ thống AI đánh giá các linh kiện tương thích tối ưu, công suất nguồn và chuẩn socket ăn khớp hoàn toàn.';
 	$desc        = get_post_meta( $post->ID, '_pchub_description', true ) ?: $post->post_content;
+	$img_url     = get_the_post_thumbnail_url( $post->ID, 'large' ) ?: get_post_meta( $post->ID, '_pchub_image', true );
 	?>
 	<style>
 		.pchub-parts-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
@@ -2002,6 +2113,21 @@ function pchub_build_details_render( $post ) {
 	</style>
 
 	<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+
+		<!-- Build Photo Preview & Link -->
+		<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:16px;">
+			<?php if ( $img_url ) : ?>
+				<img src="<?php echo esc_url( $img_url ); ?>" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;background:#fff;" />
+			<?php else : ?>
+				<div style="width:120px;height:90px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:32px;">🖥️</div>
+			<?php endif; ?>
+			<div style="flex:1;">
+				<label style="font-weight:700;font-size:13px;color:#0f172a;display:block;margin-bottom:4px;">🖼️ Hình ảnh thực tế cấu hình PC:</label>
+				<input type="text" name="_pchub_image" value="<?php echo esc_attr( $img_url ); ?>" placeholder="URL ảnh hoặc chọn tải ảnh bên dưới..." style="width:100%;padding:6px 10px;border-radius:6px;font-size:13px;" />
+				<p style="margin:4px 0 0;font-size:11.5px;color:#64748b;">Ảnh này hiển thị trên trang chủ cộng đồng và chi tiết cấu hình.</p>
+			</div>
+		</div>
+
 		<div style="background:#f1f5f9;border-radius:10px;padding:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
 			<div>
 				<span style="font-size:14px;font-weight:700;color:#0f172a;"> Tổng chi phí linh kiện:</span>
@@ -2084,6 +2210,9 @@ function pchub_community_save_meta( $post_id, $post ) {
 		return;
 	}
 
+	if ( isset( $_POST['_pchub_image'] ) ) {
+		update_post_meta( $post_id, '_pchub_image', sanitize_text_field( $_POST['_pchub_image'] ) );
+	}
 	if ( isset( $_POST['_pchub_status'] ) ) {
 		update_post_meta( $post_id, '_pchub_status', sanitize_text_field( $_POST['_pchub_status'] ) );
 	}
@@ -2360,6 +2489,10 @@ function pchub_rest_create_community_build( WP_REST_Request $request ) {
 	update_post_meta( $post_id, '_pchub_description', $description );
 	update_post_meta( $post_id, '_pchub_likes', 1 );
 	update_post_meta( $post_id, '_pchub_comments_count', 0 );
+
+	if ( ! empty( $params['image'] ) ) {
+		update_post_meta( $post_id, '_pchub_image', sanitize_text_field( $params['image'] ) );
+	}
 
 	if ( ! empty( $ai_report['score'] ) ) {
 		update_post_meta( $post_id, '_pchub_ai_score', (int) $ai_report['score'] );

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Plus, Sparkles, Check, ArrowLeft, ShieldCheck, 
-  AlertCircle, Zap, Cpu, Layers, HardDrive, Box, Fan, DollarSign, Key, Copy, CheckCheck
+  AlertCircle, Zap, Cpu, Layers, HardDrive, Box, Fan, DollarSign, Key, Copy, CheckCheck,
+  Upload, Image as ImageIcon, Trash2, Camera
 } from 'lucide-react';
 import { 
   CommunityBuild, CommunityCategory, 
@@ -41,7 +42,38 @@ export default function SubmitBuildPage() {
     casePrice: '',
     cooler: '',
     coolerPrice: '',
+    image: '',
   });
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn tệp hình ảnh hợp lệ (JPG, PNG, WebP)!');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Dung lượng ảnh tối đa 5MB. Vui lòng chọn ảnh nhẹ hơn!');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setForm(prev => ({ ...prev, image: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const PRESET_BUILD_IMAGES = [
+    { label: '🎮 Gaming RGB', url: '/images/build-neon.jpg' },
+    { label: '⚪ Tone Trắng', url: '/images/build-white.jpg' },
+    { label: '🖥️ Workstation', url: '/images/hero-pc.jpg' },
+    { label: '⚡ Quốc Dân', url: '/images/cat-case.jpg' },
+  ];
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isAiChecking, setIsAiChecking] = useState(false);
@@ -125,7 +157,7 @@ export default function SubmitBuildPage() {
       slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       title: form.title,
       category: form.category,
-      image: '/images/hero-pc.jpg',
+      image: form.image || '/images/hero-pc.jpg',
       author: {
         name: authUser?.name || 'Thành viên PCHub',
         avatar: (authUser?.name || 'T').charAt(0).toUpperCase(),
@@ -485,6 +517,129 @@ export default function SubmitBuildPage() {
                 <option value="Streaming">Streaming (Livestream game & Sáng tạo nội dung)</option>
                 <option value="Budget">Budget (Tiết kiệm ngân sách / Học sinh sinh viên)</option>
               </select>
+            </div>
+
+            {/* Build Image Upload & Preset Picker */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13.5px', fontWeight: 800, color: '#1e293b', marginBottom: '6px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Camera size={16} color="#2563eb" /> Hình ảnh cấu hình PC / Dàn máy
+                </span>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                  (Tải ảnh thực tế từ thiết bị hoặc chọn mẫu)
+                </span>
+              </label>
+
+              {form.image ? (
+                <div style={{
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '1.5px solid #93c5fd',
+                  background: '#eff6ff',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px'
+                }}>
+                  <img 
+                    src={form.image} 
+                    alt="Build Preview" 
+                    style={{ width: '100px', height: '75px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #bfdbfe', background: '#fff' }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Check size={16} color="#16a34a" /> Đã chọn hình ảnh cấu hình
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                      Ảnh này sẽ được dùng làm ảnh đại diện trên website PCHub và lưu trữ vào hệ thống.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, image: '' }))}
+                    style={{
+                      background: '#fee2e2',
+                      color: '#dc2626',
+                      border: '1px solid #fecaca',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Trash2 size={14} /> Gỡ ảnh
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label style={{
+                    border: '2px dashed #cbd5e1',
+                    borderRadius: '12px',
+                    padding: '20px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    background: '#f8fafc',
+                    transition: 'all 0.15s ease'
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      style={{ display: 'none' }}
+                    />
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Upload size={20} />
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e40af' }}>
+                      Tải lên hình ảnh dàn máy PC từ máy tính hoặc điện thoại
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>
+                      Hỗ trợ định dạng JPG, PNG, WebP (Dung lượng tối đa 5MB)
+                    </div>
+                  </label>
+
+                  {/* Quick Presets */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Hoặc chọn ảnh dàn máy mẫu:</span>
+                    {PRESET_BUILD_IMAGES.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, image: preset.url }))}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          padding: '4px 10px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#334155',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Components Grid */}
