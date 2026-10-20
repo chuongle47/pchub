@@ -7,7 +7,7 @@ import {
   Heart, Search, Plus, Sparkles, MessageSquare, 
   Cpu, Layers, Eye, Share2, ThumbsUp, Filter, 
   ArrowUpDown, Check, Bookmark, BookOpen, Clock, 
-  User, ArrowRight, X, AlertCircle, Zap, ShieldCheck,
+  User, ArrowRight, X, AlertCircle, Zap,
   Key, Copy, CheckCheck
 } from 'lucide-react';
 import { 
@@ -15,8 +15,7 @@ import {
   INITIAL_COMMUNITY_BUILDS, INITIAL_COMMUNITY_POSTS,
   getStoredCommunityBuilds, getLikedBuildIds, toggleLikeBuildId,
   getSavedCommunityBuildIds, toggleSaveCommunityBuildId, saveCommunityBuild,
-  encodeBuildToCode, decodeCodeToBuild, BuildCodeData,
-  updateCommunityBuildStatus
+  encodeBuildToCode, decodeCodeToBuild, BuildCodeData
 } from '@/data/community-data';
 import { useAuthStore } from '@/lib/store';
 
@@ -223,32 +222,6 @@ function CommunityContent() {
     setTimeout(() => setCopiedToast(null), 3000);
   };
 
-  // Quick Moderation Action (Approve / Reject)
-  const handleModerateBuild = async (e: React.MouseEvent, buildId: string, targetStatus: 'approved' | 'rejected') => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    // Optimistic local state update
-    setBuilds(prev => prev.map(b => b.id === buildId ? { ...b, status: targetStatus } : b));
-    updateCommunityBuildStatus(buildId, targetStatus);
-
-    // Sync to backend & WordPress
-    try {
-      await fetch(`/api/community/builds/${buildId}/moderate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: targetStatus }),
-      });
-    } catch (err) {
-      console.warn('Failed to sync moderation to backend:', err);
-    }
-
-    if (targetStatus === 'approved') {
-      showToast('🎉 Đã phê duyệt cấu hình và đăng lên cộng đồng thành công!');
-    } else {
-      showToast('Đã từ chối cấu hình.');
-    }
-  };
 
   // Open in Build PC
   const handleLoadCommunityBuild = (e: React.MouseEvent, b: CommunityBuild) => {
@@ -340,33 +313,12 @@ function CommunityContent() {
     router.push('/build-pc');
   };
 
-  // Pending builds count
-  const pendingCount = useMemo(() => {
-    return builds.filter(b => b.status === 'pending').length;
-  }, [builds]);
-
-  // Dynamic Categories including Moderation Tab
-  const dynamicBuildCategories = useMemo(() => {
-    const list = [...BUILD_CATEGORIES];
-    if (pendingCount > 0) {
-      list.push({ id: 'PENDING', label: `⏳ Chờ duyệt (${pendingCount})` });
-    }
-    return list;
-  }, [pendingCount]);
-
-  // Filtered Builds
+  // Filtered Builds: Chỉ hiển thị các cấu hình đã được phê duyệt công khai
   const filteredBuilds = useMemo(() => {
-    let list = [...builds];
+    let list = builds.filter(b => b.status === 'approved');
 
-    // Filter by Category or Moderation Queue
-    if (activeCategory === 'PENDING') {
-      list = list.filter(b => b.status === 'pending');
-    } else {
-      // In regular public categories: only show approved builds, or builds submitted by current user
-      list = list.filter(b => b.status === 'approved' || (authUser?.name && b.author?.name === authUser.name));
-      if (activeCategory !== 'ALL') {
-        list = list.filter(b => b.category.toLowerCase() === activeCategory.toLowerCase());
-      }
+    if (activeCategory !== 'ALL') {
+      list = list.filter(b => b.category.toLowerCase() === activeCategory.toLowerCase());
     }
 
     // Filter by Search Query
@@ -835,9 +787,8 @@ function CommunityContent() {
               }}>
                 {/* Category Pills (Horizontal scroll on mobile) */}
                 <div className="touch-scroll-row no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                  {dynamicBuildCategories.map(cat => {
+                  {BUILD_CATEGORIES.map(cat => {
                     const isActive = activeCategory === cat.id;
-                    const isPendingTab = cat.id === 'PENDING';
                     return (
                       <button
                         key={cat.id}
@@ -849,15 +800,9 @@ function CommunityContent() {
                           fontSize: '13px',
                           fontWeight: isActive ? 700 : 600,
                           border: '1.5px solid',
-                          background: isActive 
-                            ? (isPendingTab ? '#d97706' : '#2563eb') 
-                            : (isPendingTab ? '#fef3c7' : '#ffffff'),
-                          color: isActive 
-                            ? '#ffffff' 
-                            : (isPendingTab ? '#b45309' : '#475569'),
-                          borderColor: isActive 
-                            ? (isPendingTab ? '#d97706' : '#2563eb') 
-                            : (isPendingTab ? '#fde68a' : '#e2e8f0'),
+                          background: isActive ? '#2563eb' : '#ffffff',
+                          color: isActive ? '#ffffff' : '#475569',
+                          borderColor: isActive ? '#2563eb' : '#e2e8f0',
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',
@@ -900,91 +845,6 @@ function CommunityContent() {
                 </div>
               </div>
             </div>
-
-            {/* Admin Moderation Hub Banner */}
-            {pendingCount > 0 && (
-              <div style={{
-                background: 'linear-gradient(135deg, #eff6ff 0%, #fef3c7 100%)',
-                border: '1.5px solid #fde68a',
-                borderRadius: '16px',
-                padding: '16px 20px',
-                marginBottom: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '14px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '10px',
-                    background: '#d97706',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 10px rgba(217, 119, 6, 0.3)'
-                  }}>
-                    <ShieldCheck size={22} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
-                      🛡️ Khu vực Duyệt bài Cộng đồng ({pendingCount} bài đang chờ duyệt)
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#475569', marginTop: '2px' }}>
-                      Các bài viết do thành viên gửi sẽ ở chế độ chờ duyệt. Quản trị viên bấm <strong>"Duyệt bài"</strong> trực tiếp bên dưới để xuất bản công khai lên website!
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleCategoryChange(activeCategory === 'PENDING' ? 'ALL' : 'PENDING')}
-                    style={{
-                      background: activeCategory === 'PENDING' ? '#0f172a' : '#2563eb',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '8px 16px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Clock size={14} />
-                    {activeCategory === 'PENDING' ? 'Quay lại tất cả bài' : `Xem ${pendingCount} bài chờ duyệt`}
-                  </button>
-                  <a
-                    href="https://sbuy.io.vn/wp-admin/edit.php?post_type=pchub_build"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      background: '#ffffff',
-                      color: '#334155',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      padding: '8px 14px',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    ⚙️ WordPress Admin ↗
-                  </a>
-                </div>
-              </div>
-            )}
 
             {/* Skeleton Loading State */}
             {isLoading ? (
@@ -1181,22 +1041,6 @@ function CommunityContent() {
                           </button>
                         </div>
 
-                        {/* Status tag if pending */}
-                        {b.status === 'pending' && (
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '10px',
-                            left: '12px',
-                            background: '#fef3c7',
-                            color: '#b45309',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            padding: '3px 8px',
-                            borderRadius: '4px'
-                          }}>
-                            ⏳ Đang chờ duyệt
-                          </div>
-                        )}
                       </div>
 
                       {/* Card Body */}
@@ -1385,69 +1229,6 @@ function CommunityContent() {
                             </Link>
                           </div>
                         </div>
-
-                        {/* Quick Moderation Action Bar for Pending Builds */}
-                        {b.status === 'pending' && (
-                          <div style={{
-                            marginTop: '12px',
-                            padding: '10px 12px',
-                            background: '#fffbeb',
-                            border: '1.5px solid #fde68a',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '8px',
-                            flexWrap: 'wrap'
-                          }}>
-                            <span style={{ fontSize: '12px', fontWeight: 800, color: '#b45309', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              ⏳ Chờ kiểm duyệt
-                            </span>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button
-                                type="button"
-                                onClick={(e) => handleModerateBuild(e, b.id, 'approved')}
-                                style={{
-                                  background: '#16a34a',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  padding: '5px 12px',
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)'
-                                }}
-                                title="Phê duyệt bài viết"
-                              >
-                                <Check size={13} /> Duyệt bài
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleModerateBuild(e, b.id, 'rejected')}
-                                style={{
-                                  background: '#fee2e2',
-                                  color: '#dc2626',
-                                  border: '1px solid #fecaca',
-                                  padding: '5px 8px',
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="Từ chối bài này"
-                              >
-                                <X size={13} /> Từ chối
-                              </button>
-                            </div>
-                          </div>
-                        )}
 
                       </div>
                     </div>
