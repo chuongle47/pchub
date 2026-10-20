@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     if (status) wpUrl.searchParams.set('status', status);
 
     let wpBuilds: CommunityBuild[] = [];
+    let wpFetched = false;
     try {
       const res = await fetch(wpUrl.toString(), {
         next: { revalidate: 30 },
@@ -23,36 +24,29 @@ export async function GET(req: Request) {
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
-          wpBuilds = json.data;
+          wpBuilds = json.data.filter((b: CommunityBuild) => b.status === 'approved');
+          wpFetched = true;
         }
       }
     } catch (wpErr) {
-      console.warn('[COMMUNITY API] WP fetch failed or timed out, using fallback:', wpErr);
+      console.warn('[COMMUNITY API] WP fetch failed or timed out:', wpErr);
     }
 
-    // Merge WP builds with initial static builds (avoid duplicates by id/slug)
-    const seenIds = new Set(wpBuilds.map(b => b.id));
-    const merged = [...wpBuilds];
-
-    for (const initBuild of INITIAL_COMMUNITY_BUILDS) {
-      if (!seenIds.has(initBuild.id) && !seenIds.has(initBuild.slug)) {
-        merged.push(initBuild);
-        seenIds.add(initBuild.id);
-      }
-    }
+    // Chỉ trả về các cấu hình đã được Admin duyệt từ WordPress
+    const finalBuilds = wpFetched ? wpBuilds : [];
 
     return NextResponse.json({
       success: true,
-      total: merged.length,
-      data: merged,
+      total: finalBuilds.length,
+      data: finalBuilds,
       fromWordPressCount: wpBuilds.length,
     });
   } catch (error) {
     console.error('[COMMUNITY API] Error:', error);
     return NextResponse.json({
       success: true,
-      total: INITIAL_COMMUNITY_BUILDS.length,
-      data: INITIAL_COMMUNITY_BUILDS,
+      total: 0,
+      data: [],
       fromWordPressCount: 0,
     });
   }

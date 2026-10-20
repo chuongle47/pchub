@@ -144,11 +144,9 @@ function CommunityContent() {
 
   const authUser = useAuthStore(s => s.user);
 
-  // Read stored builds & fetch approved builds from WordPress on client mount
+  // Fetch approved builds from WordPress on client mount
   useEffect(() => {
     setIsLoading(true);
-    // Instant local cache display
-    setBuilds(getStoredCommunityBuilds());
     setLikedBuildIds(getLikedBuildIds());
     setSavedBuildIds(getSavedCommunityBuildIds());
 
@@ -156,15 +154,15 @@ function CommunityContent() {
     fetch('/api/community/builds?status=approved')
       .then(res => res.json())
       .then(json => {
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const localCustom = getStoredCommunityBuilds().filter(b => b.id.startsWith('custom-'));
-          const wpIds = new Set(json.data.map((b: CommunityBuild) => b.id));
-          const combined = [...localCustom.filter(b => !wpIds.has(b.id)), ...json.data];
-          setBuilds(combined);
+        if (json.success && Array.isArray(json.data)) {
+          setBuilds(json.data);
+        } else {
+          setBuilds([]);
         }
       })
       .catch(err => {
-        console.warn('[COMMUNITY] Remote fetch failed, using local fallback:', err);
+        console.warn('[COMMUNITY] Remote fetch failed:', err);
+        setBuilds([]);
       })
       .finally(() => {
         setIsLoading(false);

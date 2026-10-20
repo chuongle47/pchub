@@ -813,7 +813,7 @@ ${formData.notes || 'Không có ghi chú thêm'}
                     justifyContent: 'space-between',
                     padding: '12px 16px',
                     borderRadius: '10px',
-                    background: '#700a29',
+                    background: '#00c853',
                     color: '#ffffff',
                     textDecoration: 'none',
                     fontWeight: 700,

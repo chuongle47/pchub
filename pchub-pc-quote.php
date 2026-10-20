@@ -1873,6 +1873,11 @@ function pchub_ajax_quick_moderate_build() {
 				'ID'          => $post_id,
 				'post_status' => 'publish',
 			) );
+		} else {
+			wp_update_post( array(
+				'ID'          => $post_id,
+				'post_status' => 'draft',
+			) );
 		}
 
 		$status_html = array(
@@ -2214,7 +2219,17 @@ function pchub_community_save_meta( $post_id, $post ) {
 		update_post_meta( $post_id, '_pchub_image', sanitize_text_field( $_POST['_pchub_image'] ) );
 	}
 	if ( isset( $_POST['_pchub_status'] ) ) {
-		update_post_meta( $post_id, '_pchub_status', sanitize_text_field( $_POST['_pchub_status'] ) );
+		$new_status = sanitize_text_field( $_POST['_pchub_status'] );
+		update_post_meta( $post_id, '_pchub_status', $new_status );
+		$target_post_status = ( 'approved' === $new_status ) ? 'publish' : 'draft';
+		if ( get_post_status( $post_id ) !== $target_post_status ) {
+			remove_action( 'save_post_' . PCHUB_BUILD_POST_TYPE, 'pchub_community_save_meta', 10 );
+			wp_update_post( array(
+				'ID'          => $post_id,
+				'post_status' => $target_post_status,
+			) );
+			add_action( 'save_post_' . PCHUB_BUILD_POST_TYPE, 'pchub_community_save_meta', 10, 2 );
+		}
 	}
 	if ( isset( $_POST['_pchub_category'] ) ) {
 		update_post_meta( $post_id, '_pchub_category', sanitize_text_field( $_POST['_pchub_category'] ) );
@@ -2854,7 +2869,7 @@ function pchub_community_seed_default_builds( $force = false ) {
 }
 
 /**
- * Xử lý nạp dữ liệu mẫu khi Admin bấm nút hoặc khi chưa có bài nào
+ * Xử lý nạp hoặc xóa dữ liệu mẫu khi Admin bấm nút
  */
 add_action( 'admin_init', 'pchub_community_check_auto_seed' );
 function pchub_community_check_auto_seed() {
@@ -2868,18 +2883,50 @@ function pchub_community_check_auto_seed() {
 		exit;
 	}
 
-	// Tự động nạp lần đầu nếu cơ sở dữ liệu Cộng đồng chưa có bài nào
-	global $pagenow;
-	if ( 'edit.php' === $pagenow && isset( $_GET['post_type'] ) && PCHUB_BUILD_POST_TYPE === $_GET['post_type'] ) {
-		$total = wp_count_posts( PCHUB_BUILD_POST_TYPE )->publish + wp_count_posts( PCHUB_BUILD_POST_TYPE )->draft;
-		if ( 0 === $total && ! isset( $_GET['pchub_seeded'] ) ) {
-			pchub_community_seed_default_builds( false );
+	// Khi bấm nút Xóa sạch tất cả cấu hình mẫu
+	if ( isset( $_GET['pchub_action'] ) && 'delete_sample_builds' === $_GET['pchub_action'] ) {
+		check_admin_referer( 'pchub_delete_sample_nonce' );
+		$sample_slugs = array(
+			'project-neon-4k-gaming-monster',
+			'silent-render-node-3d-video-edit',
+			'white-aesthetic-gaming-pc-rtx-4070-ti-super',
+			'esports-dominator-240hz-high-fps',
+			'streamer-pro-studio-dual-monitor',
+			'budget-king-gaming-pc-15m',
+		);
+		$deleted_count = 0;
+		foreach ( $sample_slugs as $slug ) {
+			$found = get_posts( array(
+				'post_type'      => PCHUB_BUILD_POST_TYPE,
+				'name'           => $slug,
+				'post_status'    => array( 'publish', 'draft', 'pending', 'trash' ),
+				'posts_per_page' => 1,
+			) );
+			if ( ! empty( $found ) ) {
+				wp_delete_post( $found[0]->ID, true );
+				$deleted_count++;
+			}
 		}
+
+		$more_samples = get_posts( array(
+			'post_type'      => PCHUB_BUILD_POST_TYPE,
+			'post_status'    => array( 'publish', 'draft', 'pending', 'trash' ),
+			'posts_per_page' => -1,
+			'meta_key'       => '_pchub_is_sample',
+			'meta_value'     => '1',
+		) );
+		foreach ( $more_samples as $ms ) {
+			wp_delete_post( $ms->ID, true );
+			$deleted_count++;
+		}
+
+		wp_safe_redirect( admin_url( 'edit.php?post_type=' . PCHUB_BUILD_POST_TYPE . '&pchub_deleted_samples=' . $deleted_count ) );
+		exit;
 	}
 }
 
 /**
- * Thông báo & Nút nạp dữ liệu mẫu trên thanh Admin
+ * Thông báo & Nút nạp / xóa dữ liệu mẫu trên thanh Admin
  */
 add_action( 'admin_notices', 'pchub_community_admin_notices' );
 function pchub_community_admin_notices() {
@@ -2889,21 +2936,35 @@ function pchub_community_admin_notices() {
 	if ( isset( $_GET['pchub_seeded'] ) ) {
 		$count = (int) $_GET['pchub_seeded'];
 		printf(
-			'<div class="notice notice-success is-dismissible"><p><strong>🎉 Thành công!</strong> Đã nạp %d cấu hình PC mẫu chất lượng cao vào hệ thống Cộng đồng WordPress. Dữ liệu này đã sẵn sàng để website Next.js kết nối và hiển thị!</p></div>',
+			'<div class="notice notice-success is-dismissible"><p><strong>🎉 Thành công!</strong> Đã nạp %d cấu hình PC mẫu vào hệ thống Cộng đồng WordPress.</p></div>',
 			$count
 		);
 	}
 
-	$seed_url = wp_nonce_url( admin_url( 'edit.php?post_type=' . PCHUB_BUILD_POST_TYPE . '&pchub_action=seed_builds' ), 'pchub_seed_builds_nonce' );
+	if ( isset( $_GET['pchub_deleted_samples'] ) ) {
+		$count = (int) $_GET['pchub_deleted_samples'];
+		printf(
+			'<div class="notice notice-success is-dismissible"><p><strong>✔ Đã xóa thành công!</strong> Đã dọn dẹp và xóa vĩnh viễn %d cấu hình mẫu khỏi cơ sở dữ liệu WordPress.</p></div>',
+			$count
+		);
+	}
+
+	$seed_url   = wp_nonce_url( admin_url( 'edit.php?post_type=' . PCHUB_BUILD_POST_TYPE . '&pchub_action=seed_builds' ), 'pchub_seed_builds_nonce' );
+	$delete_url = wp_nonce_url( admin_url( 'edit.php?post_type=' . PCHUB_BUILD_POST_TYPE . '&pchub_action=delete_sample_builds' ), 'pchub_delete_sample_nonce' );
 	?>
-	<div class="notice notice-info" style="border-left-color:#2563eb;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;">
+	<div class="notice notice-info" style="border-left-color:#2563eb;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;flex-wrap:wrap;gap:10px;">
 		<div>
-			<strong style="color:#1d4ed8;">⚡ Quản trị dữ liệu Cộng đồng PC:</strong>
-			<span>Hệ thống cho phép nạp nhanh các cấu hình PC mẫu (kèm linh kiện, hình ảnh, điểm AI) từ Next.js vào WordPress.</span>
+			<strong style="color:#1d4ed8;">⚡ Quản lý cấu hình Cộng đồng PC:</strong>
+			<span>Chỉ các cấu hình có trạng thái <strong>✔ Đã duyệt</strong> mới được hiển thị công khai trên website. Các cấu hình <strong>✖ Từ chối</strong> hoặc <strong>⏳ Chờ duyệt</strong> sẽ ở dạng Bản nháp (Draft) và bị ẩn hoàn toàn khỏi người dùng.</span>
 		</div>
-		<a href="<?php echo esc_url( $seed_url ); ?>" class="button button-primary" style="background:#2563eb;border-color:#1d4ed8;font-weight:700;">
-			⚡ Nạp cấu hình mẫu vào WordPress
-		</a>
+		<div style="display:flex;gap:8px;">
+			<a href="<?php echo esc_url( $delete_url ); ?>" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn toàn bộ các cấu hình mẫu này không?');" class="button" style="color:#b91c1c;border-color:#fca5a5;background:#fef2f2;font-weight:700;">
+				🗑️ Xóa toàn bộ dữ liệu mẫu
+			</a>
+			<a href="<?php echo esc_url( $seed_url ); ?>" class="button button-secondary" style="font-weight:600;">
+				⚡ Nạp cấu hình mẫu
+			</a>
+		</div>
 	</div>
 	<?php
 }

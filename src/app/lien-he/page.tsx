@@ -248,7 +248,7 @@ export default function ContactPage() {
             const isPhone = btn.type === 'phone';
             const isZalo = btn.type === 'zalo';
             const isMessenger = btn.type === 'messenger';
-            const btnColor = btn.color || (isPhone ? '#700a29' : isMessenger ? '#0084ff' : '#0068ff');
+            const btnColor = btn.color || (isPhone ? '#00c853' : isMessenger ? '#0084ff' : '#0068ff');
             
             return (
               <div key={btn.id || btn.type} style={{

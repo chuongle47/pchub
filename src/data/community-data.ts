@@ -1370,14 +1370,14 @@ const LOCAL_STORAGE_LIKES_KEY = 'pchub_community_liked_ids_v2';
 const LOCAL_STORAGE_SAVED_BUILDS_KEY = 'pchub_community_saved_build_ids_v2';
 
 export function getStoredCommunityBuilds(): CommunityBuild[] {
-  if (typeof window === 'undefined') return INITIAL_COMMUNITY_BUILDS;
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_BUILDS_KEY);
-    if (!raw) return INITIAL_COMMUNITY_BUILDS;
+    if (!raw) return [];
     const customBuilds: CommunityBuild[] = JSON.parse(raw);
-    return [...customBuilds, ...INITIAL_COMMUNITY_BUILDS];
+    return customBuilds.filter(b => b.status === 'approved');
   } catch {
-    return INITIAL_COMMUNITY_BUILDS;
+    return [];
   }
 }
 
