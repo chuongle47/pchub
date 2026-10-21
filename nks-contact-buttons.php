@@ -209,7 +209,11 @@ function ncb_sync_to_nextjs( $old_value, $new_value ) {
 	}
 
 	$payload = wp_json_encode( array(
-		'buttons' => $buttons,
+		'success'  => true,
+		'enabled'  => ! empty( $new_value['enabled'] ),
+		'position' => isset( $new_value['position'] ) ? $new_value['position'] : 'right',
+		'buttons'  => $buttons,
+		'settings' => $new_value,
 	) );
 
 	// Ping Next.js local & production endpoints
@@ -377,6 +381,183 @@ function ncb_page() {
 			<?php submit_button( 'Save Changes' ); ?>
 		</form>
 	</div>
+	<?php
+}
+
+/* -------------------------------------------------------------------------
+ * Frontend Rendering for WordPress Theme (outside website)
+ * ---------------------------------------------------------------------- */
+add_action( 'wp_footer', 'ncb_render_frontend' );
+
+function ncb_render_frontend() {
+	if ( is_admin() ) {
+		return;
+	}
+	$o = ncb_get();
+	if ( empty( $o['enabled'] ) ) {
+		return;
+	}
+
+	// Exclude pages check
+	if ( ! empty( $o['exclude'] ) ) {
+		$exclude_ids = array_filter( array_map( 'absint', explode( ',', $o['exclude'] ) ) );
+		$current_id  = get_queried_object_id();
+		if ( $current_id && in_array( $current_id, $exclude_ids, true ) ) {
+			return;
+		}
+	}
+
+	$buttons = array();
+	$types   = ncb_types();
+	if ( ! empty( $o['buttons'] ) && is_array( $o['buttons'] ) ) {
+		foreach ( $o['buttons'] as $b ) {
+			if ( empty( $b['enabled'] ) || '' === trim( $b['value'] ?? '' ) ) {
+				continue;
+			}
+			$type      = $b['type'];
+			$label     = ! empty( $b['label'] ) ? $b['label'] : ( isset( $types[ $type ] ) ? $types[ $type ]['label'] : ucfirst( $type ) );
+			$color     = ! empty( $b['color'] ) ? $b['color'] : ( isset( $types[ $type ] ) ? $types[ $type ]['color'] : '#2563eb' );
+			$buttons[] = array(
+				'type'       => $type,
+				'label'      => $label,
+				'value'      => $b['value'],
+				'href'       => ncb_url( $type, $b['value'] ),
+				'color'      => $color,
+				'openNewTab' => ! empty( $b['new_tab'] ),
+			);
+		}
+	}
+
+	if ( empty( $buttons ) ) {
+		return;
+	}
+
+	$is_left    = ( 'left' === ( $o['position'] ?? 'right' ) );
+	$is_square  = ( 'square' === ( $o['shape'] ?? 'round' ) );
+	$size       = max( 36, min( 90, (int) ( $o['size'] ?? 52 ) ) );
+	$bottom     = (int) ( $o['bottom'] ?? 20 );
+	$side       = (int) ( $o['side'] ?? 16 );
+	$radius     = $is_square ? max( 8, round( $size * 0.22 ) ) . 'px' : '50%';
+	$main_color = ! empty( $o['main_color'] ) ? $o['main_color'] : '#e11d48';
+	$pulse      = ! empty( $o['pulse'] );
+	$tooltip    = ! empty( $o['tooltip'] );
+	$scroll_top = ! empty( $o['scroll_top'] );
+	$devices    = $o['devices'] ?? 'all';
+	$delay      = (int) ( $o['delay'] ?? 0 );
+	$z_index    = (int) ( $o['z_index'] ?? 9999 );
+	?>
+	<style>
+		.ncb-frontend-container {
+			position: fixed;
+			<?php echo $is_left ? 'left: ' . $side . 'px; right: auto;' : 'right: ' . $side . 'px; left: auto;'; ?>
+			bottom: <?php echo $bottom; ?>px;
+			z-index: <?php echo $z_index; ?>;
+			display: flex;
+			flex-direction: column;
+			align-items: <?php echo $is_left ? 'flex-start' : 'flex-end'; ?>;
+			gap: 10px;
+			font-family: inherit;
+			pointer-events: auto;
+		}
+		<?php if ( 'desktop' === $devices ) : ?>
+			@media (max-width: 768px) { .ncb-frontend-container { display: none !important; } }
+		<?php elseif ( 'mobile' === $devices ) : ?>
+			@media (min-width: 769px) { .ncb-frontend-container { display: none !important; } }
+		<?php endif; ?>
+		.ncb-btn {
+			position: relative;
+			width: <?php echo $size; ?>px;
+			height: <?php echo $size; ?>px;
+			border-radius: <?php echo $radius; ?>;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #fff !important;
+			text-decoration: none !important;
+			box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+			border: 2.5px solid #fff;
+			transition: transform 0.2s ease;
+		}
+		.ncb-btn:hover { transform: scale(1.08); color: #fff !important; }
+		.ncb-btn-tooltip {
+			position: absolute;
+			<?php echo $is_left ? 'left: calc(100% + 12px); right: auto;' : 'right: calc(100% + 12px); left: auto;'; ?>
+			top: 50%;
+			transform: translateY(-50%);
+			background: rgba(15,23,42,0.92);
+			color: #fff;
+			padding: 5px 12px;
+			border-radius: 9999px;
+			font-size: 12px;
+			font-weight: 600;
+			white-space: nowrap;
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.2s;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+		}
+		.ncb-btn:hover .ncb-btn-tooltip { opacity: 1; }
+		.ncb-scroll-top {
+			background: <?php echo esc_attr( $main_color ); ?>;
+			width: <?php echo max( 36, round( $size * 0.85 ) ); ?>px;
+			height: <?php echo max( 36, round( $size * 0.85 ) ); ?>px;
+			border-radius: <?php echo $radius; ?>;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			color: #fff;
+			cursor: pointer;
+			border: 2px solid #fff;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+			font-size: 14px;
+			font-weight: bold;
+		}
+	</style>
+	<div class="ncb-frontend-container" id="ncb-widget" style="<?php echo ( $delay > 0 ) ? 'display:none;' : ''; ?>">
+		<?php foreach ( $buttons as $b ) : ?>
+			<a href="<?php echo esc_url( $b['href'] ); ?>" class="ncb-btn" style="background: <?php echo esc_attr( $b['color'] ); ?>;" <?php echo $b['openNewTab'] ? 'target="_blank" rel="noopener"' : ''; ?> title="<?php echo esc_attr( $b['label'] . ': ' . $b['value'] ); ?>">
+				<?php if ( $tooltip ) : ?>
+					<span class="ncb-btn-tooltip"><?php echo esc_html( $b['label'] . ': ' . $b['value'] ); ?></span>
+				<?php endif; ?>
+				<span style="font-size: <?php echo max( 16, round( $size * 0.44 ) ); ?>px; font-weight: bold; line-height: 1;">
+					<?php
+					switch ( $b['type'] ) {
+						case 'phone': echo '📞'; break;
+						case 'zalo': echo '💬'; break;
+						case 'messenger': echo '⚡'; break;
+						case 'email': echo '✉️'; break;
+						case 'sms': echo '📱'; break;
+						case 'map': echo '📍'; break;
+						case 'telegram': echo '✈️'; break;
+						case 'whatsapp': echo '🟢'; break;
+						default: echo '🔗'; break;
+					}
+					?>
+				</span>
+			</a>
+		<?php endforeach; ?>
+		<?php if ( $scroll_top ) : ?>
+			<div class="ncb-scroll-top" id="ncb-scroll-top" title="Lên đầu trang" onclick="window.scrollTo({top:0,behavior:'smooth'});">▲</div>
+		<?php endif; ?>
+	</div>
+	<script>
+		(function(){
+			<?php if ( $delay > 0 ) : ?>
+			setTimeout(function(){
+				var w = document.getElementById('ncb-widget');
+				if (w) w.style.display = 'flex';
+			}, <?php echo $delay * 1000; ?>);
+			<?php endif; ?>
+			<?php if ( $scroll_top ) : ?>
+			window.addEventListener('scroll', function(){
+				var st = document.getElementById('ncb-scroll-top');
+				if (st) {
+					st.style.display = (window.pageYOffset > 220) ? 'flex' : 'none';
+				}
+			});
+			<?php endif; ?>
+		})();
+	</script>
 	<?php
 }
 

@@ -1,6 +1,6 @@
 export interface ContactButton {
   id: string;
-  type: 'phone' | 'zalo' | 'messenger';
+  type: 'phone' | 'zalo' | 'messenger' | 'telegram' | 'whatsapp' | 'email' | 'sms' | 'map' | 'link' | string;
   label: string;
   sublabel: string;
   value: string;
@@ -22,10 +22,49 @@ export interface Showroom {
   directionUrl: string;
 }
 
+export interface ContactSettings {
+  enabled: boolean;
+  position: 'left' | 'right';
+  bottom: number;
+  side: number;
+  size: number;
+  shape: 'round' | 'square';
+  layout: 'list' | 'expand';
+  main_color: string;
+  pulse: boolean;
+  tooltip: boolean;
+  devices: 'all' | 'desktop' | 'mobile';
+  delay: number;
+  scroll_top: boolean;
+  mobile_bar: boolean;
+  z_index: number;
+  exclude?: string;
+}
+
+export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
+  enabled: true,
+  position: 'left',
+  bottom: 20,
+  side: 16,
+  size: 52,
+  shape: 'round',
+  layout: 'list',
+  main_color: '#e11d48',
+  pulse: true,
+  tooltip: true,
+  devices: 'all',
+  delay: 0,
+  scroll_top: true,
+  mobile_bar: false,
+  z_index: 9999,
+  exclude: '',
+};
+
 // Cấu hình đồng bộ chính xác với WordPress "Floating Contact Buttons" mới nhất
 export const CONTACT_CONFIG = {
   enabled: true,
-  position: 'right' as const, // 'Góc phải'
+  position: 'left' as const, // 'Góc trái'
+  settings: DEFAULT_CONTACT_SETTINGS,
   hotline: '0322323233',
   hotlineDisplay: '0322 323 233',
   zalo: '0333333333',
