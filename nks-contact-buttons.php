@@ -450,7 +450,7 @@ function ncb_render_frontend() {
 		.ncb-frontend-container {
 			position: fixed;
 			<?php echo $is_left ? 'left: ' . $side . 'px; right: auto;' : 'right: ' . $side . 'px; left: auto;'; ?>
-			bottom: <?php echo $bottom; ?>px;
+			bottom: <?php echo $is_left ? $bottom : ( $bottom + 68 ); ?>px;
 			z-index: <?php echo $z_index; ?>;
 			display: flex;
 			flex-direction: column;

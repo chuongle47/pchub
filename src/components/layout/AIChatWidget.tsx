@@ -222,7 +222,7 @@ export default function AIChatWidget() {
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 999,
+            zIndex: 10000,
             background: 'rgba(15, 23, 42, 0.45)',
             backdropFilter: 'blur(5px)',
             display: 'flex',

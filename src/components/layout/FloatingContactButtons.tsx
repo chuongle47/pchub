@@ -177,6 +177,12 @@ export default function FloatingContactButtons() {
   const borderRadius = isSquare ? `${Math.max(8, Math.round(btnSize * 0.22))}px` : '50%';
   const mainColor = settings.main_color || '#e11d48';
 
+  // Khi ở bên phải, tự động nâng container lên trên nút Chat AI (nút Chat AI ở bottom: 22px, cao 54px -> đỉnh ở 76px)
+  // để các nút liên hệ và nút Chat AI xếp dọc hoàn hảo, không bao giờ che khuất nhau!
+  const desktopBottom = isLeft
+    ? `${settings.bottom}px`
+    : `calc(${settings.bottom}px + 68px)`;
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -211,8 +217,8 @@ export default function FloatingContactButtons() {
         .pchub-floating-contact-container {
           position: fixed;
           ${isLeft ? `left: ${settings.side}px; right: auto;` : `right: ${settings.side}px; left: auto;`}
-          bottom: ${settings.bottom}px;
-          z-index: ${settings.z_index || 9999};
+          bottom: ${desktopBottom};
+          z-index: ${settings.z_index || 999};
           display: flex;
           flex-direction: column;
           align-items: ${isLeft ? 'flex-start' : 'flex-end'};
@@ -403,7 +409,7 @@ export default function FloatingContactButtons() {
           ` : `
             .pchub-floating-contact-container {
               ${isLeft ? 'left: 14px !important;' : 'right: 14px !important;'}
-              bottom: calc(${Math.max(20, settings.bottom)}px + env(safe-area-inset-bottom, 0px)) !important;
+              bottom: calc(${Math.max(76, settings.bottom + 58)}px + env(safe-area-inset-bottom, 0px)) !important;
             }
 
             .pchub-floating-contact-stack {
@@ -427,8 +433,8 @@ export default function FloatingContactButtons() {
           position: 'fixed',
           left: isLeft ? `${settings.side}px` : 'auto',
           right: isLeft ? 'auto' : `${settings.side}px`,
-          bottom: `${settings.bottom}px`,
-          zIndex: settings.z_index || 9999,
+          bottom: desktopBottom,
+          zIndex: settings.z_index || 999,
           alignItems: isLeft ? 'flex-start' : 'flex-end',
         }}
         role="complementary"
