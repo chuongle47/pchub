@@ -8,6 +8,7 @@ import {
   FileText, Loader2, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { CONTACT_CONFIG } from '@/lib/contactConfig';
+import { decodeCodeToBuild } from '@/data/community-data';
 
 interface DraftPart {
   category: string;
@@ -41,12 +42,23 @@ export default function BaoGiaPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [buildCodeInput, setBuildCodeInput] = useState('');
+  const [showCodeInputBox, setShowCodeInputBox] = useState(false);
+  const [codeNotice, setCodeNotice] = useState<string | null>(null);
 
-  // Check if there are draft build parts in localStorage from /build-pc
+  // Check if there are draft build parts in localStorage or URL from /build-pc
   useEffect(() => {
     try {
-      // 1. Check URL query config
       const searchParams = new URLSearchParams(window.location.search);
+
+      // Check URL query code (Build Code)
+      const codeParam = searchParams.get('code') || searchParams.get('build_code');
+      if (codeParam) {
+        handleApplyBuildCode(codeParam);
+        return;
+      }
+
+      // 1. Check URL query config
       const configParam = searchParams.get('config') || searchParams.get('pc_config');
       if (configParam) {
         const parsed = JSON.parse(decodeURIComponent(configParam));
@@ -110,6 +122,82 @@ export default function BaoGiaPage() {
       components: summary + (prev.components ? `\n\n${prev.components}` : ''),
       notes: prev.notes ? prev.notes : `Tổng dự toán linh kiện tạm tính: ${draftTotal.toLocaleString('vi-VN')} ₫`
     }));
+  };
+
+  const handleApplyBuildCode = (codeStr?: string) => {
+    const raw = (codeStr || buildCodeInput).trim();
+    if (!raw) {
+      setCodeNotice('❌ Vui lòng nhập hoặc dán mã cấu hình (Build Code)!');
+      return;
+    }
+
+    // 1. Giải mã bằng decodeCodeToBuild
+    const decoded = decodeCodeToBuild(raw);
+    if (decoded) {
+      const parts: { cat: string; name: string; price: number; qty: number }[] = [];
+      if (decoded.cpu) parts.push({ cat: 'CPU - Bộ Vi Xử Lý', name: decoded.cpu, price: 0, qty: 1 });
+      if (decoded.mainboard) parts.push({ cat: 'Mainboard - Bo Mạch Chủ', name: decoded.mainboard, price: 0, qty: 1 });
+      if (decoded.ram) parts.push({ cat: 'RAM - Bộ Nhớ Trong', name: decoded.ram, price: 0, qty: 1 });
+      if (decoded.gpu) parts.push({ cat: 'VGA - Card Màn Hình', name: decoded.gpu, price: 0, qty: 1 });
+      if (decoded.ssd) parts.push({ cat: 'SSD - Ổ Cứng Lưu Trữ', name: decoded.ssd, price: 0, qty: 1 });
+      if (decoded.psu) parts.push({ cat: 'Nguồn Máy Tính (PSU)', name: decoded.psu, price: 0, qty: 1 });
+      if (decoded.case) parts.push({ cat: 'Vỏ Case Máy Tính', name: decoded.case, price: 0, qty: 1 });
+      if (decoded.cooler) parts.push({ cat: 'Tản Nhiệt (Cooling)', name: decoded.cooler, price: 0, qty: 1 });
+
+      if (parts.length > 0) {
+        setStructuredItems(parts);
+        const summary = parts.map(p => `- ${p.cat}: ${p.name}`).join('\n');
+        setFormData(prev => ({
+          ...prev,
+          components: summary,
+          purpose: decoded.category ? `${decoded.category} (${decoded.title || 'PC Build'})` : prev.purpose,
+          budget: decoded.price ? `${(decoded.price / 1000000).toFixed(0)} triệu` : prev.budget,
+        }));
+        setCodeNotice(`✅ Đã nạp thành công ${parts.length} linh kiện từ mã cấu hình!`);
+        setTimeout(() => {
+          setCodeNotice(null);
+          setShowCodeInputBox(false);
+          setBuildCodeInput('');
+        }, 2000);
+        return;
+      }
+    }
+
+    // 2. Thử giải mã định dạng Base64 legacy
+    try {
+      const clean = raw.replace(/^PCHUB:/, '');
+      const jsonStr = decodeURIComponent(escape(atob(clean)));
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && Array.isArray(parsed.slots)) {
+        const parts: { cat: string; name: string; price: number; qty: number }[] = [];
+        parsed.slots.forEach((s: any) => {
+          if (s.n) {
+            parts.push({
+              cat: s.k ? s.k.toUpperCase() : 'Linh kiện',
+              name: s.n,
+              price: Number(s.p) || 0,
+              qty: s.q || 1,
+            });
+          }
+        });
+        if (parts.length > 0) {
+          setStructuredItems(parts);
+          const summary = parts.map(p => `- ${p.cat}: ${p.name} (${p.price ? p.price.toLocaleString('vi-VN') + ' ₫' : ''})`).join('\n');
+          setFormData(prev => ({ ...prev, components: summary }));
+          setCodeNotice(`✅ Đã nạp thành công ${parts.length} linh kiện từ mã cấu hình!`);
+          setTimeout(() => {
+            setCodeNotice(null);
+            setShowCodeInputBox(false);
+            setBuildCodeInput('');
+          }, 2000);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    setCodeNotice('❌ Mã cấu hình không hợp lệ hoặc không thể giải mã.');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -660,17 +748,99 @@ ${formData.notes || 'Không có ghi chú thêm'}
 
                 {/* 3. Chi tiết cấu hình */}
                 <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
                     <legend style={{ fontSize: '14px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.4px', margin: 0 }}>
                       3. Cấu hình linh kiện mong muốn
                     </legend>
-                    <Link
-                      href="/build-pc"
-                      style={{ fontSize: '12.5px', color: '#2563eb', textDecoration: 'none', fontWeight: 700 }}
-                    >
-                      Mở công cụ Build PC →
-                    </Link>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCodeInputBox(v => !v)}
+                        style={{
+                          background: showCodeInputBox ? '#eff6ff' : '#f8fafc',
+                          color: '#2563eb',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                        }}
+                      >
+                        🔗 {showCodeInputBox ? 'Đóng ô nhập mã' : 'Nhập mã Build Code'}
+                      </button>
+                      <Link
+                        href="/build-pc"
+                        style={{ fontSize: '12.5px', color: '#2563eb', textDecoration: 'none', fontWeight: 700 }}
+                      >
+                        Mở công cụ Build PC →
+                      </Link>
+                    </div>
                   </div>
+
+                  {/* Khung nhập mã cấu hình (Build Code) */}
+                  {showCodeInputBox && (
+                    <div style={{
+                      background: '#f8fafc',
+                      border: '1.5px dashed #93c5fd',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      marginBottom: '12px',
+                    }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#1e3a8a', marginBottom: '6px' }}>
+                        Dán mã cấu hình (Build Code từ tool Build PC) vào đây:
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          placeholder="Ví dụ: PCB-eyJ... hoặc PCHUB-..."
+                          value={buildCodeInput}
+                          onChange={e => setBuildCodeInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleApplyBuildCode(); } }}
+                          style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '13px',
+                            fontFamily: 'monospace',
+                            outline: 'none',
+                            background: '#fff'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleApplyBuildCode()}
+                          style={{
+                            background: '#2563eb',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            fontSize: '12.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                        >
+                          Nạp linh kiện
+                        </button>
+                      </div>
+                      {codeNotice && (
+                        <div style={{
+                          marginTop: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: codeNotice.startsWith('✅') ? '#16a34a' : '#dc2626'
+                        }}>
+                          {codeNotice}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <textarea
                     rows={5}
