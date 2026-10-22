@@ -206,6 +206,31 @@ async function runTestSuite() {
   assert('Menu điều hướng Navbar có liên kết riêng đến /bao-gia và /lien-he', navbarFile.includes('/bao-gia') && navbarFile.includes('/lien-he'));
 
   // -------------------------------------------------------------
+  // TEST GROUP 10: Kiểm thử Flash Sale Plugin & Đồng bộ Trang chủ
+  // -------------------------------------------------------------
+  console.log('\n\x1b[33m[10/10] Kiểm thử Plugin Flash Sale & Hiển thị Trang chủ\x1b[0m');
+  const flashSalePluginFile = fs.readFileSync(path.resolve('pchub-flash-sale.php'), 'utf-8');
+  assert('Plugin pchub-flash-sale.php đăng ký REST API pchub/v1/flash-sale', flashSalePluginFile.includes('pchub/v1') && flashSalePluginFile.includes('/flash-sale'));
+
+  const flashSaleApiFile = fs.readFileSync(path.resolve('src/app/api/flash-sale/route.ts'), 'utf-8');
+  assert('API /api/flash-sale tồn tại và kết nối REST API WordPress', flashSaleApiFile.includes('/wp-json/pchub/v1/flash-sale'));
+
+  const flashSaleSectionFile = fs.readFileSync(path.resolve('src/components/home/FlashSaleSection.tsx'), 'utf-8');
+  assert('FlashSaleSection ưu tiên tải sản phẩm từ /api/flash-sale', flashSaleSectionFile.includes('/api/flash-sale') && flashSaleSectionFile.includes('setTargetEndTime'));
+
+  try {
+    const fsRes = await fetch(`${baseUrl}/wp-json/pchub/v1/flash-sale`);
+    assert('Truy vấn trực tiếp REST API Flash Sale từ WordPress thành công', fsRes.ok);
+    if (fsRes.ok) {
+      const fsData = await fsRes.json();
+      assert('WordPress trả về danh sách sản phẩm Flash Sale hợp lệ', Array.isArray(fsData.products) && fsData.products.length > 0);
+      assert('Flash Sale có thông tin thời gian kết thúc hoặc đếm ngược', Boolean(fsData.active_end_time || fsData.seconds_left));
+    }
+  } catch (err) {
+    assert('Truy vấn trực tiếp REST API Flash Sale từ WordPress thành công', false, err.message);
+  }
+
+  // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ
   // -------------------------------------------------------------
   console.log('\n\x1b[36m=======================================================');

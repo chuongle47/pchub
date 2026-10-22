@@ -35,6 +35,14 @@ function calculateTimeRemaining(targetEndTime?: string | Date | number): TimerSt
   let target: Date;
   if (targetEndTime) {
     target = new Date(targetEndTime);
+    const diff = target.getTime() - now.getTime();
+    if (diff <= 0) {
+      return { hours: 0, minutes: 0, seconds: 0, isEnded: true };
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    return { hours, minutes, seconds, isEnded: false };
   } else {
     // 2-hour rolling Flash Sale session (e.g. 0-2h, 2-4h, 4-6h, 6-8h, 8-10h, 10-12h, 12-14h, 14-16h, 16-18h, 18-20h, 20-22h, 22-24h)
     const currentHour = now.getHours();
@@ -46,55 +54,84 @@ function calculateTimeRemaining(targetEndTime?: string | Date | number): TimerSt
     } else {
       target.setHours(nextSessionHour, 0, 0, 0);
     }
+    const diff = target.getTime() - now.getTime();
+    if (diff <= 0) {
+      return { hours: 1, minutes: 59, seconds: 59, isEnded: false };
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    return { hours, minutes, seconds, isEnded: false };
   }
-
-  const diff = target.getTime() - now.getTime();
-  if (diff <= 0) {
-    return { hours: 1, minutes: 59, seconds: 59, isEnded: false };
-  }
-
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff / (1000 * 60)) % 60);
-  const seconds = Math.floor((diff / 1000) % 60);
-  return { hours, minutes, seconds, isEnded: false };
 }
 
 export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}) {
   const [products, setProducts] = useState<FlashProduct[]>([]);
+  const [targetEndTime, setTargetEndTime] = useState<string | Date | number | undefined>(endTime);
 
   // Real-time Countdown Timer state with live values, avoiding --:--:--
-  const [timer, setTimer] = useState<TimerState>(() => calculateTimeRemaining(endTime));
+  const [timer, setTimer] = useState<TimerState>(() => calculateTimeRemaining(targetEndTime));
 
   useEffect(() => {
-    setTimer(calculateTimeRemaining(endTime));
+    setTimer(calculateTimeRemaining(targetEndTime));
     const interval = setInterval(() => {
-      setTimer(calculateTimeRemaining(endTime));
+      setTimer(calculateTimeRemaining(targetEndTime));
     }, 1000);
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, [targetEndTime]);
 
   useEffect(() => {
     async function loadFlashProducts() {
       try {
+        // 1. Ưu tiên tải sản phẩm từ Plugin WordPress Flash Sale (/api/flash-sale)
+        const fsRes = await fetch('/api/flash-sale', { cache: 'no-store' });
+        if (fsRes.ok) {
+          const fsData = await fsRes.json();
+          if (fsData && Array.isArray(fsData.products) && fsData.products.length > 0) {
+            const mappedFs: FlashProduct[] = fsData.products.map((p: any) => {
+              const price = Number(p.sale_price || p.price);
+              const orig = Number(p.regular_price || p.originalPrice || 0);
+              const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
+              const discount = Number(p.discount_percent) || (originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 15);
+
+              return {
+                id: String(p.id),
+                name: p.name,
+                category: p.category || (p.name.toLowerCase().includes('loa') ? 'Loa máy tính' : p.name.toLowerCase().includes('chuột') ? 'Chuột Gaming' : 'Linh kiện PC'),
+                brand: p.brand || (p.name.includes('Logitech') ? 'Logitech' : p.name.includes('Edifier') ? 'Edifier' : p.name.includes('Razer') ? 'Razer' : undefined),
+                price,
+                originalPrice,
+                discount: discount > 0 ? discount : 15,
+                image: p.image || '/images/cpu-box.jpg',
+                slug: p.slug || String(p.id)
+              };
+            });
+
+            setProducts(mappedFs);
+
+            if (fsData.active_end_time && !endTime) {
+              setTargetEndTime(fsData.active_end_time);
+            }
+            return;
+          }
+        }
+
+        // 2. Dự phòng: Nếu WordPress không trả về sản phẩm flash sale, tải sản phẩm giảm giá từ kho
         const res = await fetch('/api/products?limit=50');
         const data = await res.json();
         if (data.products && data.products.length > 0) {
-          // Lọc các sản phẩm trong API có giảm giá (badge 'sale' hoặc có giá gốc cao hơn giá bán)
           const onSaleProducts = data.products.filter((p: any) => 
             p.badge === 'sale' || 
             (p.original_price && Number(p.original_price) > Number(p.price)) ||
             (p.originalPrice && Number(p.originalPrice) > Number(p.price))
           );
 
-          // Ưu tiên chọn các sản phẩm giảm giá từ API trước, nếu chưa đủ 4 sản phẩm thì bổ sung các sản phẩm khác
           const otherProducts = data.products.filter((p: any) => !onSaleProducts.some((s: any) => s.id === p.id));
           const selected = [...onSaleProducts, ...otherProducts].slice(0, 4);
 
           const mapped: FlashProduct[] = selected.map((p: any) => {
             const price = Number(p.price);
             const orig = Number(p.original_price || p.originalPrice || 0);
-
-            // Calculation based on real original price or realistic discount
             const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
             const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
 
@@ -117,7 +154,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
       }
     }
     loadFlashProducts();
-  }, []);
+  }, [endTime]);
 
   return (
     <section className="home-flash-sale" style={{ background: '#ffffff', padding: '24px 0', scrollMarginTop: '100px' }}>

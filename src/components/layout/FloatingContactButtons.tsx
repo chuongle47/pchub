@@ -102,7 +102,17 @@ function RenderButtonIcon({ type, size }: { type: string; size: number }) {
 }
 
 export default function FloatingContactButtons() {
-  const [settings, setSettings] = useState<ContactSettings>(DEFAULT_CONTACT_SETTINGS);
+  const [settings, setSettings] = useState<ContactSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedPos = localStorage.getItem('pchub_contact_position');
+        if (cachedPos === 'left' || cachedPos === 'right') {
+          return { ...DEFAULT_CONTACT_SETTINGS, position: cachedPos };
+        }
+      } catch {}
+    }
+    return DEFAULT_CONTACT_SETTINGS;
+  });
   const [buttons, setButtons] = useState<ContactButton[]>(
     CONTACT_CONFIG.buttons.filter(b => b.enabled && b.value && b.value.trim().length > 0)
   );
@@ -118,19 +128,28 @@ export default function FloatingContactButtons() {
           if (Array.isArray(data.buttons)) {
             setButtons(data.buttons);
           }
+          let newPos: 'left' | 'right' | null = null;
           if (data.settings && typeof data.settings === 'object') {
+            newPos = data.settings.position === 'left' ? 'left' : 'right';
             setSettings(prev => ({
               ...prev,
               ...data.settings,
               enabled: typeof data.settings.enabled !== 'undefined' ? Boolean(data.settings.enabled) : prev.enabled,
-              position: data.settings.position === 'left' ? 'left' : 'right',
+              position: newPos || 'right',
             }));
           } else if (data.position || typeof data.enabled !== 'undefined') {
+            newPos = data.position === 'left' ? 'left' : 'right';
             setSettings(prev => ({
               ...prev,
-              position: data.position === 'left' ? 'left' : (data.position === 'right' ? 'right' : prev.position),
+              position: newPos || prev.position,
               enabled: typeof data.enabled !== 'undefined' ? Boolean(data.enabled) : prev.enabled,
             }));
+          }
+
+          if (newPos && typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('pchub_contact_position', newPos);
+            } catch {}
           }
         }
       })
@@ -223,7 +242,7 @@ export default function FloatingContactButtons() {
           flex-direction: column;
           align-items: ${isLeft ? 'flex-start' : 'flex-end'};
           pointer-events: auto;
-          transition: left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
+          transition: bottom 0.25s ease;
         }
 
         /* Device visibility filters */

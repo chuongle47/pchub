@@ -43,7 +43,7 @@ export interface ContactSettings {
 
 export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   enabled: true,
-  position: 'left',
+  position: 'right',
   bottom: 20,
   side: 16,
   size: 52,
@@ -63,7 +63,7 @@ export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
 // Cấu hình đồng bộ chính xác với WordPress "Floating Contact Buttons" mới nhất
 export const CONTACT_CONFIG = {
   enabled: true,
-  position: 'left' as const, // 'Góc trái'
+  position: 'right' as const, // 'Góc phải'
   settings: DEFAULT_CONTACT_SETTINGS,
   hotline: '0322323233',
   hotlineDisplay: '0322 323 233',

@@ -409,12 +409,16 @@ final class PCHub_Flash_Sale_Manager {
 			$img_id = $product->get_image_id();
 			$thumb  = $img_id ? wp_get_attachment_image_url( $img_id, 'medium' ) : wc_placeholder_img_src();
 
+			$cats = function_exists( 'wc_get_product_category_list' ) ? wc_get_product_category_list( $product->get_id() ) : '';
+			$cat_text = $cats ? wp_strip_all_tags( $cats ) : '';
+
 			$items[] = array(
 				'id'                      => $product->get_id(),
 				'name'                    => $product->get_name(),
 				'slug'                    => $product->get_slug(),
 				'sku'                     => $product->get_sku() ? $product->get_sku() : '—',
 				'image'                   => $thumb,
+				'category'                => $cat_text,
 				'regular_price'           => $regular,
 				'sale_price'              => $sale,
 				'formatted_regular_price' => wc_price( $regular ),
