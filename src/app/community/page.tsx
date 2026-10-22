@@ -596,10 +596,10 @@ function CommunityContent() {
             fontWeight: 700,
             marginBottom: '12px'
           }}>
-            <Sparkles size={14} /> PCHub Hub & Cộng Đồng Phần Cứng
+            <Sparkles size={14} /> PCHub — Góc Build PC
           </div>
           <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', marginBottom: '10px', letterSpacing: '-0.5px' }}>
-            Cộng Đồng & Tri Thức PC
+            Góc Build PC
           </h1>
           <p style={{ fontSize: '14.5px', color: '#64748b', maxWidth: '680px', margin: '0 auto', lineHeight: '1.6' }}>
             Khám phá hàng trăm bộ PC cấu hình chuẩn được chia sẻ và thẩm định bởi AI, cùng kho kiến thức hướng dẫn chuyên sâu từ chuyên gia phần cứng.
