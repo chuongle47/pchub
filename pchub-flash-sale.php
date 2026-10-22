@@ -1,16 +1,19 @@
 <?php
 /**
  * Plugin Name: PCHub - Flash Sale Manager
+ * Plugin URI: https://sbuy.io.vn
  * Description: Quản lý chương trình Flash Sale cho sản phẩm WooCommerce. Hỗ trợ tìm kiếm & chọn nhiều sản phẩm, đặt giảm giá theo % hoặc giá cố định, hẹn giờ tự động bật/tắt, và cung cấp REST API cho website Next.js.
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author: PCHub Team
+ * Author URI: https://sbuy.io.vn
  * Text Domain: pchub-flash
- * Requires Plugins: woocommerce
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+if ( ! class_exists( 'PCHub_Flash_Sale_Manager' ) ) :
 
 final class PCHub_Flash_Sale_Manager {
 
@@ -1556,5 +1559,18 @@ final class PCHub_Flash_Sale_Manager {
 		<?php
 	}
 }
+endif;
 
-new PCHub_Flash_Sale_Manager();
+if ( class_exists( 'PCHub_Flash_Sale_Manager' ) ) {
+	if ( ! function_exists( 'pchub_flash_sale_init' ) ) {
+		function pchub_flash_sale_init() {
+			static $instance = null;
+			if ( null === $instance ) {
+				$instance = new PCHub_Flash_Sale_Manager();
+			}
+			return $instance;
+		}
+	}
+	pchub_flash_sale_init();
+}
+
