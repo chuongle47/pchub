@@ -37,6 +37,7 @@ export default function BaoGiaPage() {
 
   const [draftParts, setDraftParts] = useState<DraftPart[]>([]);
   const [draftTotal, setDraftTotal] = useState<number>(0);
+  const [structuredItems, setStructuredItems] = useState<{ cat: string; name: string; price: number; qty: number }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -98,6 +99,12 @@ export default function BaoGiaPage() {
   const handleUseDraftComponents = () => {
     if (draftParts.length === 0) return;
     const summary = draftParts.map(p => `- ${p.category}: ${p.name} (${p.price.toLocaleString('vi-VN')} ₫)`).join('\n');
+    setStructuredItems(draftParts.map(p => ({
+      cat: p.category,
+      name: p.name,
+      price: Number(p.price) || 0,
+      qty: 1,
+    })));
     setFormData(prev => ({
       ...prev,
       components: summary + (prev.components ? `\n\n${prev.components}` : ''),
@@ -152,6 +159,7 @@ ${formData.notes || 'Không có ghi chú thêm'}
           timeline: formData.timeline,
           services: formData.services,
           components: formData.components || '',
+          items: structuredItems,
           notes: formData.notes || '',
           subject: `[BÁO GIÁ PC] ${formData.purpose} (${formData.budget} - SL: ${formData.quantity} bộ)`,
           message: compiledMessage,

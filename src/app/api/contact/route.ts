@@ -49,6 +49,7 @@ export async function POST(req: Request) {
           budget: body.budget || '',
           quantity: body.quantity || 1,
           components: body.components || message,
+          items: Array.isArray(body.items) ? body.items : [],
           ticketId,
         }),
         signal: AbortSignal.timeout(4000),

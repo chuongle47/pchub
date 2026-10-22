@@ -128,6 +128,174 @@ function pchub_quote_parse_message_details( $content ) {
 	return $info;
 }
 
+/**
+ * TỰ ĐỘNG BÓC TÁCH LINH KIỆN TỪ CHUỖI VĂN BẢN VÀ TÌM KIẾM SẢN PHẨM WOOCOMMERCE
+ */
+function pchub_quote_smart_parse_components( $content ) {
+	if ( empty( $content ) ) {
+		return array();
+	}
+
+	$category_map = array(
+		'CPU - Bộ Vi Xử Lý'       => '/\b(cpu|chip|vi\s*xử\s*lý|bộ\s*vi\s*xử\s*lý|intel\s*core|amd\s*ryzen|i3|i5|i7|i9|ryzen\s*[3579])\b/iu',
+		'Mainboard - Bo Mạch Chủ' => '/\b(main|mainboard|bo\s*mạch|motherboard|b760|z790|b650|b550|a620|h610|x670|z690|h510)\b/iu',
+		'RAM - Bộ Nhớ Trong'      => '/\b(ram|bộ\s*nhớ|ddr4|ddr5|corsair\s*vengeance|kingston\s*fury)\b/iu',
+		'VGA - Card Màn Hình'     => '/\b(vga|card|gpu|đồ\s*họa|rtx|gtx|geforce|radeon|rx\s*\d{4})\b/iu',
+		'SSD - Ổ Cứng Lưu Trữ'    => '/\b(ssd|hdd|ổ\s*cứng|nvme|m\.?2|hard\s*drive|samsung\s*9|kingston\s*nv)\b/iu',
+		'Nguồn Máy Tính (PSU)'    => '/\b(psu|nguồn|power|watt|\d+w\b|cooler\s*master|corsair\s*cv|deepcool\s*pk)\b/iu',
+		'Vỏ Case Máy Tính'        => '/\b(case|vỏ\s*case|thùng\s*máy|chassis|xigmatek|nzxt|montech|mik)\b/iu',
+		'Tản Nhiệt (Cooling)'     => '/\b(tản|cooler|tản\s*nước|tản\s*khí|aio|thermalright|deepcool|id-cooling)\b/iu',
+		'Màn Hình Máy Tính'       => '/\b(màn|màn\s*hình|monitor|display|144hz|165hz|240hz|ips)\b/iu',
+		'Bàn Phím & Chuột'        => '/\b(phím|chuột|tai\s*nghe|keyboard|mouse|headset)\b/iu',
+	);
+
+	$lines = preg_split( '/\r\n|\r|\n/', $content );
+	$items = array();
+	$assigned_cats = array();
+
+	// Lọc các dòng liên quan đến cấu hình nếu chuỗi chứa cả block thông tin
+	$in_components_block = false;
+	$candidate_lines     = array();
+
+	foreach ( $lines as $raw_line ) {
+		$l = trim( $raw_line );
+		if ( empty( $l ) ) {
+			continue;
+		}
+
+		if ( strpos( $l, '--- CHI TIẾT CẤU HÌNH YÊU CẦU ---' ) !== false ) {
+			$in_components_block = true;
+			continue;
+		}
+		if ( $in_components_block && strpos( $l, '---' ) === 0 ) {
+			$in_components_block = false;
+			continue;
+		}
+
+		if ( $in_components_block ) {
+			$candidate_lines[] = $l;
+		} else {
+			// Bỏ qua các dòng tiêu đề thông tin chung
+			if ( preg_match( '/^(---|\bCông ty|\bMã số thuế|\bĐịa chỉ|\bMục đích|\bMức ngân sách|\bSố lượng máy|\bThời gian cần|\bDịch vụ kèm|\bGhi chú)/iu', $l ) ) {
+				continue;
+			}
+			$candidate_lines[] = $l;
+		}
+	}
+
+	foreach ( $candidate_lines as $trimmed ) {
+		if ( strpos( $trimmed, '(Chưa điền cấu hình cụ thể' ) !== false ) {
+			continue;
+		}
+
+		$matched_cat = '';
+		$spec_text   = $trimmed;
+
+		// 1. Phân tích nếu dòng có tiền tố như "- CPU: Core i5 13400F" hoặc "VGA: RTX 4060"
+		if ( preg_match( '/^[-*•\d.\s]*([^:]+):\s*(.*)$/u', $trimmed, $m ) ) {
+			$prefix = trim( $m[1] );
+			$rest   = trim( $m[2] );
+
+			foreach ( $category_map as $cat_name => $pattern ) {
+				if ( preg_match( $pattern, $prefix ) ) {
+					$matched_cat = $cat_name;
+					$spec_text   = $rest;
+					break;
+				}
+			}
+		}
+
+		// 2. Nếu chưa nhận diện được qua tiền tố, quét từ khóa trên toàn bộ dòng
+		if ( ! $matched_cat ) {
+			foreach ( $category_map as $cat_name => $pattern ) {
+				if ( preg_match( $pattern, $trimmed ) ) {
+					if ( ! in_array( $cat_name, $assigned_cats, true ) || in_array( $cat_name, array( 'RAM - Bộ Nhớ Trong', 'SSD - Ổ Cứng Lưu Trữ' ), true ) ) {
+						$matched_cat = $cat_name;
+						$spec_text   = preg_replace( '/^[-*•\d.\s]+/', '', $trimmed );
+						break;
+					}
+				}
+			}
+		}
+
+		if ( ! $matched_cat || empty( $spec_text ) ) {
+			continue;
+		}
+
+		// Bóc tách giá tiền nếu có kèm trong ngoặc: "(5.290.000 ₫)" hoặc "(5tr2)"
+		$extracted_price = 0;
+		if ( preg_match( '/\(([0-9.,]+)\s*[₫đk]?\)/iu', $spec_text, $pm ) ) {
+			$raw_p = str_replace( array( '.', ',' ), '', $pm[1] );
+			$extracted_price = (float) $raw_p;
+			if ( $extracted_price < 1000 && $extracted_price > 0 ) {
+				$extracted_price *= 1000;
+			}
+			$spec_text = trim( str_replace( $pm[0], '', $spec_text ) );
+		}
+
+		// Bóc tách số lượng: "x2", "2 thanh", "SL: 2"
+		$qty = 1;
+		if ( preg_match( '/\b(x\s*(\d+)|\b(\d+)\s*thanh|\bsl:?\s*(\d+))\b/iu', $spec_text, $qm ) ) {
+			$qty = max( 1, (int) ( ! empty( $qm[2] ) ? $qm[2] : ( ! empty( $qm[3] ) ? $qm[3] : $qm[4] ) ) );
+			$spec_text = trim( preg_replace( '/\b(x\s*\d+|\b\d+\s*thanh|\bsl:?\s*\d+)\b/iu', '', $spec_text ) );
+		} elseif ( 'RAM - Bộ Nhớ Trong' === $matched_cat && preg_match( '/2x[0-9]+gb/iu', $spec_text ) ) {
+			$qty = 2;
+		}
+
+		// Tách từ khóa tìm kiếm (bỏ các từ nối như "hoặc Ryzen...")
+		$search_kw = trim( preg_replace( '/^[-*•\s]+/', '', $spec_text ) );
+		$parts_opt = preg_split( '/\b(hoặc|or|\/)\b/iu', $search_kw );
+		if ( ! empty( $parts_opt[0] ) ) {
+			$search_kw = trim( $parts_opt[0] );
+		}
+
+		$product_name  = $spec_text;
+		$product_price = $extracted_price;
+		$product_id    = 0;
+
+		// Truy vấn kho WooCommerce tìm sản phẩm tương ứng nếu có
+		if ( function_exists( 'wc_get_products' ) && ! empty( $search_kw ) ) {
+			$clean_kw = preg_replace( '/[^\p{L}\p{N}\s]/u', ' ', $search_kw );
+			$words    = array_filter( explode( ' ', $clean_kw ) );
+			
+			if ( ! empty( $words ) ) {
+				$short_kw = implode( ' ', array_slice( $words, 0, 4 ) );
+				$found = wc_get_products( array(
+					'status' => 'publish',
+					'limit'  => 1,
+					's'      => $short_kw,
+				) );
+
+				if ( empty( $found ) && count( $words ) >= 2 ) {
+					$found = wc_get_products( array(
+						'status' => 'publish',
+						'limit'  => 1,
+						's'      => implode( ' ', array_slice( $words, 0, 2 ) ),
+					) );
+				}
+
+				if ( ! empty( $found ) ) {
+					$p_obj = reset( $found );
+					$product_name  = $p_obj->get_name();
+					$product_price = (float) $p_obj->get_price();
+					$product_id    = $p_obj->get_id();
+				}
+			}
+		}
+
+		$items[] = array(
+			'cat'        => $matched_cat,
+			'name'       => $product_name,
+			'qty'        => $qty,
+			'price'      => $product_price,
+			'product_id' => $product_id,
+		);
+		$assigned_cats[] = $matched_cat;
+	}
+
+	return $items;
+}
+
 /* -------------------------------------------------------------------------
  * 2. TỰ ĐỘNG BẮT YÊU CẦU TỪ CONTACT FORM 7 (CF7)
  * ---------------------------------------------------------------------- */
@@ -198,6 +366,12 @@ function pchub_quote_capture_cf7_submission( $contact_form ) {
 		update_post_meta( $post_id, '_pchub_status', 'new' );
 		update_post_meta( $post_id, '_pchub_source', 'Contact Form 7' );
 		update_post_meta( $post_id, '_pchub_created_at', current_time( 'mysql' ) );
+
+		// Tự động phân tích và điền sẵn linh kiện vào bảng dự toán
+		$cf7_items = pchub_quote_smart_parse_components( $message );
+		if ( ! empty( $cf7_items ) ) {
+			update_post_meta( $post_id, '_pchub_items', $cf7_items );
+		}
 	}
 }
 
@@ -282,6 +456,34 @@ function pchub_rest_create_quote( WP_REST_Request $request ) {
 	update_post_meta( $post_id, '_pchub_status', 'new' );
 	update_post_meta( $post_id, '_pchub_source', 'Website Next.js' );
 	update_post_meta( $post_id, '_pchub_created_at', current_time( 'mysql' ) );
+
+	// TỰ ĐỘNG GHI NHẬN LINH KIỆN VÀO BẢNG DỰ TOÁN (_pchub_items)
+	$incoming_items = isset( $params['items'] ) && is_array( $params['items'] ) ? $params['items'] : array();
+	$final_items    = array();
+
+	// 1. Nếu có mảng items gửi sang từ Tool Build PC
+	if ( ! empty( $incoming_items ) ) {
+		foreach ( $incoming_items as $it ) {
+			if ( is_array( $it ) && ! empty( $it['name'] ) ) {
+				$final_items[] = array(
+					'cat'        => sanitize_text_field( $it['cat'] ?? 'Linh kiện' ),
+					'name'       => sanitize_text_field( $it['name'] ?? '' ),
+					'qty'        => max( 1, (int) ( $it['qty'] ?? 1 ) ),
+					'price'      => max( 0, (float) ( $it['price'] ?? 0 ) ),
+					'product_id' => absint( $it['product_id'] ?? $it['id'] ?? 0 ),
+				);
+			}
+		}
+	}
+
+	// 2. Nếu khách không dùng Tool Build PC mà gõ chữ tự do -> Kích hoạt Smart Auto-Parser!
+	if ( empty( $final_items ) && ( ! empty( $components ) || ! empty( $message ) ) ) {
+		$final_items = pchub_quote_smart_parse_components( $components ? $components : $message );
+	}
+
+	if ( ! empty( $final_items ) ) {
+		update_post_meta( $post_id, '_pchub_items', $final_items );
+	}
 
 	return new WP_REST_Response( array(
 		'success'   => true,
@@ -451,6 +653,42 @@ function pchub_ajax_get_wc_products() {
 }
 
 /* -------------------------------------------------------------------------
+ * 4.1. AJAX: QUÉT VÀ TỰ ĐỘNG ĐIỀN BẢNG LINH KIỆN TỪ VĂN BẢN YÊU CẦU
+ * ---------------------------------------------------------------------- */
+add_action( 'wp_ajax_pchub_quote_auto_parse_items', 'pchub_ajax_quote_auto_parse_items' );
+function pchub_ajax_quote_auto_parse_items() {
+	check_ajax_referer( 'pchub_quote_ajax_nonce', 'nonce' );
+
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		wp_send_json_error( array( 'message' => 'Bạn không có quyền thực hiện thao tác này.' ) );
+	}
+
+	$post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+	$content = isset( $_POST['content'] ) ? sanitize_textarea_field( wp_unslash( $_POST['content'] ) ) : '';
+
+	if ( empty( $content ) && $post_id > 0 ) {
+		$components = get_post_meta( $post_id, '_pchub_components', true );
+		$post       = get_post( $post_id );
+		$content    = $components ?: ( $post ? $post->post_content : '' );
+	}
+
+	if ( empty( $content ) ) {
+		wp_send_json_error( array( 'message' => 'Nội dung yêu cầu cấu hình đang trống.' ) );
+	}
+
+	$parsed = pchub_quote_smart_parse_components( $content );
+
+	if ( empty( $parsed ) ) {
+		wp_send_json_error( array( 'message' => 'Không tìm thấy dòng cấu hình nào phù hợp để bóc tách.' ) );
+	}
+
+	wp_send_json_success( array(
+		'items'   => $parsed,
+		'message' => sprintf( 'Đã tự động bóc tách thành công %d linh kiện!', count( $parsed ) ),
+	) );
+}
+
+/* -------------------------------------------------------------------------
  * 5. TÙY BIẾN CỘT TRONG TRANG QUẢN TRỊ ADMIN (POST LIST TABLE)
  * ---------------------------------------------------------------------- */
 add_filter( 'manage_' . PCHUB_QUOTE_POST_TYPE . '_posts_columns', 'pchub_quote_custom_columns' );
@@ -582,17 +820,35 @@ function pchub_quote_render_metabox( $post ) {
 	if ( 1 === $quantity && $parsed['quantity'] > 1 ) $quantity = $parsed['quantity'];
 
 	$items = get_post_meta( $post->ID, '_pchub_items', true );
-	if ( ! is_array( $items ) || empty( $items ) ) {
-		$items = array(
-			array( 'cat' => 'CPU - Bộ Vi Xử Lý',      'name' => '', 'qty' => 1, 'price' => 0 ),
-			array( 'cat' => 'Mainboard - Bo Mạch Chủ', 'name' => '', 'qty' => 1, 'price' => 0 ),
-			array( 'cat' => 'RAM - Bộ Nhớ Trong',      'name' => '', 'qty' => 2, 'price' => 0 ),
-			array( 'cat' => 'VGA - Card Màn Hình',     'name' => '', 'qty' => 1, 'price' => 0 ),
-			array( 'cat' => 'SSD - Ổ Cứng Lưu Trữ',   'name' => '', 'qty' => 1, 'price' => 0 ),
-			array( 'cat' => 'Nguồn Máy Tính (PSU)',   'name' => '', 'qty' => 1, 'price' => 0 ),
-			array( 'cat' => 'Vỏ Case Máy Tính',        'name' => '', 'qty' => 1, 'price' => 0 ),
-			array( 'cat' => 'Tản Nhiệt (Cooling)',     'name' => '', 'qty' => 1, 'price' => 0 ),
-		);
+	$all_empty = true;
+	if ( is_array( $items ) && ! empty( $items ) ) {
+		foreach ( $items as $it ) {
+			if ( ! empty( $it['name'] ) ) {
+				$all_empty = false;
+				break;
+			}
+		}
+	} else {
+		$items = array();
+	}
+
+	// Nếu chưa có linh kiện hoặc toàn bộ dòng đều rỗng tên, thử tự động quét từ $components hoặc post_content
+	if ( $all_empty ) {
+		$parsed_items = pchub_quote_smart_parse_components( $components ?: $post->post_content );
+		if ( ! empty( $parsed_items ) ) {
+			$items = $parsed_items;
+		} elseif ( empty( $items ) ) {
+			$items = array(
+				array( 'cat' => 'CPU - Bộ Vi Xử Lý',      'name' => '', 'qty' => 1, 'price' => 0 ),
+				array( 'cat' => 'Mainboard - Bo Mạch Chủ', 'name' => '', 'qty' => 1, 'price' => 0 ),
+				array( 'cat' => 'RAM - Bộ Nhớ Trong',      'name' => '', 'qty' => 2, 'price' => 0 ),
+				array( 'cat' => 'VGA - Card Màn Hình',     'name' => '', 'qty' => 1, 'price' => 0 ),
+				array( 'cat' => 'SSD - Ổ Cứng Lưu Trữ',   'name' => '', 'qty' => 1, 'price' => 0 ),
+				array( 'cat' => 'Nguồn Máy Tính (PSU)',   'name' => '', 'qty' => 1, 'price' => 0 ),
+				array( 'cat' => 'Vỏ Case Máy Tính',        'name' => '', 'qty' => 1, 'price' => 0 ),
+				array( 'cat' => 'Tản Nhiệt (Cooling)',     'name' => '', 'qty' => 1, 'price' => 0 ),
+			);
+		}
 	}
 
 	$categories_list = array(
@@ -729,9 +985,12 @@ function pchub_quote_render_metabox( $post ) {
 
 		<!-- BẢNG DỰ TOÁN CẤU HÌNH PC -->
 		<div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-			<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+			<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
 				<h3 style="margin:0; font-size:15px; color:#0f172a;">Bảng dự toán cấu hình PC (Cho 01 bộ máy)</h3>
-				<button type="button" class="button" onclick="pchubAddRow()">➕ Thêm dòng linh kiện</button>
+				<div style="display:flex; gap:8px;">
+					<button type="button" class="button" id="pchub-btn-autoparse" onclick="pchubAutoParseItems()" style="background:#0f172a; color:#fff; border-color:#0f172a; font-weight:700;">⚡ Quét & Tự động điền linh kiện từ yêu cầu</button>
+					<button type="button" class="button" onclick="pchubAddRow()">➕ Thêm dòng linh kiện</button>
+				</div>
 			</div>
 
 			<table class="pchub-table-items" id="pchub-items-table">
@@ -865,30 +1124,83 @@ function pchub_quote_render_metabox( $post ) {
 			document.getElementById('pchub-grand-total').innerText = grandTotal.toLocaleString('vi-VN') + ' đ';
 		}
 
-		function pchubAddRow() {
+		function pchubAddRowWithData(cat, name, qty, price) {
 			var tbody = document.getElementById('pchub-items-tbody');
-			var newIndex = tbody.querySelectorAll('tr').length + '_' + Date.now();
+			var newIndex = tbody.querySelectorAll('tr').length + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 			var tr = document.createElement('tr');
 			tr.setAttribute('data-index', newIndex);
 
 			var catOptions = <?php echo json_encode( $categories_list ); ?>;
 			var catHtml = '';
 			catOptions.forEach(function(c) {
-				catHtml += '<option value="' + c + '">' + c + '</option>';
+				var sel = (c === cat) ? ' selected' : '';
+				catHtml += '<option value="' + c + '"' + sel + '>' + c + '</option>';
 			});
+
+			qty = parseInt(qty) || 1;
+			price = parseFloat(price) || 0;
+			var lineTotal = qty * price;
 
 			tr.innerHTML = '<td><select name="pchub_items[' + newIndex + '][cat]" class="pchub-row-cat" style="width:100%; font-weight:600;">' + catHtml + '</select></td>' +
 				'<td><div style="display:flex; gap:6px; align-items:center;">' +
-				'<input type="text" name="pchub_items[' + newIndex + '][name]" value="" class="pchub-row-name" style="flex:1;" placeholder="Gõ tên hoặc bấm chọn từ kho...">' +
+				'<input type="text" name="pchub_items[' + newIndex + '][name]" value="' + (name ? String(name).replace(/"/g, '&quot;') : '') + '" class="pchub-row-name" style="flex:1;" placeholder="Gõ tên hoặc bấm chọn từ kho...">' +
 				'<button type="button" class="pchub-btn-pick" onclick="pchubOpenPicker(this)">🔍 Chọn kho</button>' +
 				'</div></td>' +
-				'<td style="text-align:center;"><input type="number" min="1" class="pchub-row-qty" name="pchub_items[' + newIndex + '][qty]" value="1" style="width:55px; text-align:center;" onchange="pchubCalcTotal()"></td>' +
-				'<td style="text-align:right;"><input type="number" min="0" step="1000" class="pchub-row-price" name="pchub_items[' + newIndex + '][price]" value="0" style="width:100%; text-align:right;" onchange="pchubCalcTotal()"></td>' +
-				'<td style="text-align:right; font-weight:700;" class="pchub-row-total">0 đ</td>' +
+				'<td style="text-align:center;"><input type="number" min="1" class="pchub-row-qty" name="pchub_items[' + newIndex + '][qty]" value="' + qty + '" style="width:55px; text-align:center;" onchange="pchubCalcTotal()"></td>' +
+				'<td style="text-align:right;"><input type="number" min="0" step="1000" class="pchub-row-price" name="pchub_items[' + newIndex + '][price]" value="' + price + '" style="width:100%; text-align:right;" onchange="pchubCalcTotal()"></td>' +
+				'<td style="text-align:right; font-weight:700;" class="pchub-row-total">' + lineTotal.toLocaleString('vi-VN') + ' đ</td>' +
 				'<td style="text-align:center;"><button type="button" class="pchub-del-btn" onclick="pchubDeleteRow(this)" title="Xóa dòng">✕</button></td>';
 
 			tbody.appendChild(tr);
+		}
+
+		function pchubAddRow() {
+			pchubAddRowWithData('CPU - Bộ Vi Xử Lý', '', 1, 0);
 			pchubCalcTotal();
+		}
+
+		function pchubAutoParseItems() {
+			var tbody = document.getElementById('pchub-items-tbody');
+			var rows = tbody.querySelectorAll('tr');
+			var hasFilled = false;
+			rows.forEach(function(r) {
+				var nameInput = r.querySelector('.pchub-row-name');
+				if (nameInput && nameInput.value.trim() !== '') {
+					hasFilled = true;
+				}
+			});
+
+			if (hasFilled && !confirm('Bảng linh kiện đang có dữ liệu. Bạn có chắc muốn quét lại từ yêu cầu khách hàng và ghi đè tự động không?')) {
+				return;
+			}
+
+			var btn = document.getElementById('pchub-btn-autoparse');
+			var oldText = btn.innerText;
+			btn.innerText = '⚡ Đang quét WooCommerce...';
+			btn.disabled = true;
+
+			jQuery.post(ajaxurl, {
+				action: 'pchub_quote_auto_parse_items',
+				nonce: '<?php echo esc_js( $ajax_nonce ); ?>',
+				post_id: <?php echo (int) $post->ID; ?>
+			}, function(res) {
+				btn.innerText = oldText;
+				btn.disabled = false;
+				if (res && res.success && res.data && res.data.items && res.data.items.length > 0) {
+					tbody.innerHTML = '';
+					res.data.items.forEach(function(item) {
+						pchubAddRowWithData(item.cat, item.name, item.qty, item.price);
+					});
+					pchubCalcTotal();
+					alert('✅ ' + (res.data.message || 'Đã tự động điền bảng linh kiện thành công!'));
+				} else {
+					alert('⚠️ ' + (res && res.data ? res.data.message : 'Không tìm thấy linh kiện nào để bóc tách.'));
+				}
+			}).fail(function() {
+				btn.innerText = oldText;
+				btn.disabled = false;
+				alert('❌ Lỗi kết nối tới máy chủ khi bóc tách linh kiện.');
+			});
 		}
 
 		function pchubDeleteRow(btn) {
@@ -1098,10 +1410,11 @@ add_action( 'save_post_' . PCHUB_QUOTE_POST_TYPE, function ( $post_id ) {
 		foreach ( wp_unslash( $_POST['pchub_items'] ) as $it ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			if ( is_array( $it ) ) {
 				$sanitized_items[] = array(
-					'cat'   => sanitize_text_field( $it['cat'] ?? '' ),
-					'name'  => sanitize_text_field( $it['name'] ?? '' ),
-					'qty'   => max( 1, (int) ( $it['qty'] ?? 1 ) ),
-					'price' => max( 0, (float) ( $it['price'] ?? 0 ) ),
+					'cat'        => sanitize_text_field( $it['cat'] ?? '' ),
+					'name'       => sanitize_text_field( $it['name'] ?? '' ),
+					'qty'        => max( 1, (int) ( $it['qty'] ?? 1 ) ),
+					'price'      => max( 0, (float) ( $it['price'] ?? 0 ) ),
+					'product_id' => isset( $it['product_id'] ) ? (int) $it['product_id'] : 0,
 				);
 			}
 		}
