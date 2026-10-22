@@ -213,6 +213,35 @@ export default function BuildPcPage() {
     }
   }, []);
 
+  // Auto-save selected parts to localStorage for /bao-gia synchronization
+  useEffect(() => {
+    try {
+      const selectedSlots = components.filter(s => s.selected !== null);
+      if (selectedSlots.length > 0) {
+        const slotsObj: Record<string, any> = {};
+        components.forEach(slot => {
+          if (slot.selected) {
+            slotsObj[slot.key] = {
+              category: slot.category,
+              quantity: slot.quantity || 1,
+              selected: {
+                id: slot.selected.id,
+                name: slot.selected.name,
+                price: slot.selected.price,
+                tdp: slot.selected.tdp,
+                specs: slot.selected.specs,
+                image: slot.selected.image,
+              }
+            };
+          }
+        });
+        localStorage.setItem('pchub_build_slots', JSON.stringify(slotsObj));
+      }
+    } catch {
+      // ignore
+    }
+  }, [components]);
+
   // Listen for AI Preset application (from AI Advisor Chat, Community, etc.)
   useEffect(() => {
     const applyAiPreset = (preset: any) => {
@@ -2019,6 +2048,29 @@ export default function BuildPcPage() {
                 Thêm tất cả vào giỏ hàng
               </button>
 
+              <Link
+                href="/bao-gia"
+                style={{
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '10px',
+                  padding: '11px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(15,23,42,0.25)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <FileText size={16} color="#38bdf8" />
+                Gửi Yêu Cầu Báo Giá Dàn PC Này
+              </Link>
+
               <div style={{ position: 'relative' }}>
                 <button
                   type="button"
@@ -2360,7 +2412,64 @@ export default function BuildPcPage() {
               {/* Instruction note */}
               <div style={{ marginTop: '16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#92400e', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '16px', lineHeight: 1 }}>💡</span>
-                <span>Người nhận mã có thể truy cập <strong>Build PC → Nhập mã</strong> để tải lại toàn bộ cấu hình này (linh kiện, số lượng) ngay lập tức.</span>
+                <div>
+                  <strong>Mã cấu hình dùng để làm gì?</strong>
+                  <div style={{ marginTop: '3px', color: '#78350f' }}>
+                    Mã này dùng để lưu trữ hoặc gửi cho bạn bè / tư vấn viên. Người nhận chỉ cần bấm nút <strong>"Nhập mã"</strong> trên trang Build PC là sẽ nạp lại đầy đủ 100% linh kiện đã chọn mà không cần chọn lại từ đầu.
+                  </div>
+                </div>
+              </div>
+
+              {/* In PDF hoặc Gửi Báo Giá Ngay */}
+              <div style={{ marginTop: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>Bạn muốn xuất file bảng giá hoặc gửi báo giá?</div>
+                  <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>Không cần copy mã, bạn có thể in ngay bản PDF chuẩn A4 hoặc gửi sang form báo giá của shop:</div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowShareCodeModal(false);
+                      handlePrintPdf();
+                    }}
+                    style={{
+                      background: '#16a34a',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <Printer size={14} />
+                    In PDF Báo Giá A4
+                  </button>
+                  <Link
+                    href="/bao-gia"
+                    onClick={() => setShowShareCodeModal(false)}
+                    style={{
+                      background: '#0f172a',
+                      color: '#fff',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <FileText size={14} color="#38bdf8" />
+                    Gửi Báo Giá Đến Shop
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
