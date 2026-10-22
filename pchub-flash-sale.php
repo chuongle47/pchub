@@ -305,10 +305,10 @@ final class PCHub_Flash_Sale_Manager {
 			'sale_price'           => $sale_price,
 			'sale_price_formatted' => number_format( $sale_price, 0, ',', '.' ) . ' ₫',
 			'discount_percent'     => $pct,
-			'start_formatted'      => wp_date( 'd/m/Y H:i', $from ),
-			'end_formatted'        => wp_date( 'd/m/Y H:i', $to ),
-			'start_local'          => wp_date( 'Y-m-d\TH:i', $from ),
-			'end_local'            => wp_date( 'Y-m-d\TH:i', $to ),
+			'start_formatted'      => function_exists( 'wp_date' ) ? wp_date( 'd/m/Y H:i', $from ) : date_i18n( 'd/m/Y H:i', $from ),
+			'end_formatted'        => function_exists( 'wp_date' ) ? wp_date( 'd/m/Y H:i', $to ) : date_i18n( 'd/m/Y H:i', $to ),
+			'start_local'          => function_exists( 'wp_date' ) ? wp_date( 'Y-m-d\TH:i', $from ) : gmdate( 'Y-m-d\TH:i', $from ),
+			'end_local'            => function_exists( 'wp_date' ) ? wp_date( 'Y-m-d\TH:i', $to ) : gmdate( 'Y-m-d\TH:i', $to ),
 			'status'               => $status,
 			'status_label'         => $status_label,
 			'status_color'         => $status_color,
@@ -538,10 +538,10 @@ final class PCHub_Flash_Sale_Manager {
 				'discount_percent'        => $pct,
 				'start_ts'                => $from_ts,
 				'end_ts'                  => $to_ts,
-				'start_formatted'         => wp_date( 'd/m/Y H:i', $from_ts ),
-				'end_formatted'           => wp_date( 'd/m/Y H:i', $to_ts ),
-				'start_local'             => wp_date( 'Y-m-d\TH:i', $from_ts ),
-				'end_local'               => wp_date( 'Y-m-d\TH:i', $to_ts ),
+				'start_formatted'         => function_exists( 'wp_date' ) ? wp_date( 'd/m/Y H:i', $from_ts ) : date_i18n( 'd/m/Y H:i', $from_ts ),
+				'end_formatted'           => function_exists( 'wp_date' ) ? wp_date( 'd/m/Y H:i', $to_ts ) : date_i18n( 'd/m/Y H:i', $to_ts ),
+				'start_local'             => function_exists( 'wp_date' ) ? wp_date( 'Y-m-d\TH:i', $from_ts ) : gmdate( 'Y-m-d\TH:i', $from_ts ),
+				'end_local'               => function_exists( 'wp_date' ) ? wp_date( 'Y-m-d\TH:i', $to_ts ) : gmdate( 'Y-m-d\TH:i', $to_ts ),
 				'status'                  => $status,
 				'status_label'            => $status_label,
 				'status_color'            => $status_color,
@@ -1559,18 +1559,8 @@ final class PCHub_Flash_Sale_Manager {
 		<?php
 	}
 }
-endif;
 
-if ( class_exists( 'PCHub_Flash_Sale_Manager' ) ) {
-	if ( ! function_exists( 'pchub_flash_sale_init' ) ) {
-		function pchub_flash_sale_init() {
-			static $instance = null;
-			if ( null === $instance ) {
-				$instance = new PCHub_Flash_Sale_Manager();
-			}
-			return $instance;
-		}
-	}
-	pchub_flash_sale_init();
+new PCHub_Flash_Sale_Manager();
 }
+
 
