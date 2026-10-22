@@ -7,7 +7,7 @@ import { useCartStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
 import { getProductOriginalPrice, resolveProductOriginalPrice } from '@/lib/product-ui';
 
-interface FlashProduct {
+export interface FlashProduct {
   id: string;
   name: string;
   category: string;
@@ -19,55 +19,40 @@ interface FlashProduct {
   slug: string;
 }
 
-interface FlashSaleSectionProps {
+export interface FlashSaleSectionProps {
   endTime?: string | Date | number;
+  initialData?: any;
 }
 
-interface TimerState {
-  hours: number;
-  minutes: number;
-  seconds: number;
-  isEnded: boolean;
+export function mapFlashProducts(rawList: any[]): FlashProduct[] {
+  return rawList.map((p: any) => {
+    const price = Number(p.sale_price || p.price);
+    const orig = Number(p.regular_price || p.originalPrice || 0);
+    const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
+    const discount = Number(p.discount_percent) || (originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 15);
+
+    return {
+      id: String(p.id),
+      name: p.name,
+      category: p.category || (p.name.toLowerCase().includes('loa') ? 'Loa máy tính' : p.name.toLowerCase().includes('chuột') ? 'Chuột Gaming' : p.name.toLowerCase().includes('case') ? 'Vỏ Case' : p.name.toLowerCase().includes('ram') ? 'RAM' : 'Linh kiện PC'),
+      brand: p.brand || (p.name.includes('Logitech') ? 'Logitech' : p.name.includes('Edifier') ? 'Edifier' : p.name.includes('Razer') ? 'Razer' : p.name.includes('NZXT') ? 'NZXT' : p.name.includes('Corsair') ? 'Corsair' : undefined),
+      price,
+      originalPrice,
+      discount: discount > 0 ? discount : 15,
+      image: p.image || '/images/cpu-box.jpg',
+      slug: p.slug || String(p.id),
+    };
+  });
 }
 
-function calculateTimeRemaining(targetEndTime?: string | Date | number): TimerState {
-  const now = new Date();
-  let target: Date;
-  if (targetEndTime) {
-    target = new Date(targetEndTime);
-    const diff = target.getTime() - now.getTime();
-    if (diff <= 0) {
-      return { hours: 0, minutes: 0, seconds: 0, isEnded: true };
-    }
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
-    return { hours, minutes, seconds, isEnded: false };
-  } else {
-    // 2-hour rolling Flash Sale session (e.g. 0-2h, 2-4h, 4-6h, 6-8h, 8-10h, 10-12h, 12-14h, 14-16h, 16-18h, 18-20h, 20-22h, 22-24h)
-    const currentHour = now.getHours();
-    const nextSessionHour = currentHour + (2 - (currentHour % 2));
-    target = new Date(now);
-    if (nextSessionHour >= 24) {
-      target.setDate(target.getDate() + 1);
-      target.setHours(0, 0, 0, 0);
-    } else {
-      target.setHours(nextSessionHour, 0, 0, 0);
-    }
-    const diff = target.getTime() - now.getTime();
-    if (diff <= 0) {
-      return { hours: 1, minutes: 59, seconds: 59, isEnded: false };
-    }
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
-    return { hours, minutes, seconds, isEnded: false };
-  }
-}
+export default function FlashSaleSection({ endTime, initialData }: FlashSaleSectionProps = {}) {
+  const initialProducts = initialData && Array.isArray(initialData.products) && initialData.products.length > 0
+    ? mapFlashProducts(initialData.products)
+    : [];
+  const initialEnd = initialData?.active_end_time || endTime;
 
-export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}) {
-  const [products, setProducts] = useState<FlashProduct[]>([]);
-  const [targetEndTime, setTargetEndTime] = useState<string | Date | number | undefined>(endTime);
+  const [products, setProducts] = useState<FlashProduct[]>(initialProducts);
+  const [targetEndTime, setTargetEndTime] = useState<string | Date | number | undefined>(initialEnd);
 
   // Real-time Countdown Timer state with live values, avoiding --:--:--
   const [timer, setTimer] = useState<TimerState>(() => calculateTimeRemaining(targetEndTime));
@@ -88,25 +73,7 @@ export default function FlashSaleSection({ endTime }: FlashSaleSectionProps = {}
         if (fsRes.ok) {
           const fsData = await fsRes.json();
           if (fsData && Array.isArray(fsData.products) && fsData.products.length > 0) {
-            const mappedFs: FlashProduct[] = fsData.products.map((p: any) => {
-              const price = Number(p.sale_price || p.price);
-              const orig = Number(p.regular_price || p.originalPrice || 0);
-              const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
-              const discount = Number(p.discount_percent) || (originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 15);
-
-              return {
-                id: String(p.id),
-                name: p.name,
-                category: p.category || (p.name.toLowerCase().includes('loa') ? 'Loa máy tính' : p.name.toLowerCase().includes('chuột') ? 'Chuột Gaming' : 'Linh kiện PC'),
-                brand: p.brand || (p.name.includes('Logitech') ? 'Logitech' : p.name.includes('Edifier') ? 'Edifier' : p.name.includes('Razer') ? 'Razer' : undefined),
-                price,
-                originalPrice,
-                discount: discount > 0 ? discount : 15,
-                image: p.image || '/images/cpu-box.jpg',
-                slug: p.slug || String(p.id)
-              };
-            });
-
+            const mappedFs = mapFlashProducts(fsData.products);
             setProducts(mappedFs);
 
             if (fsData.active_end_time && !endTime) {

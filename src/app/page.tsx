@@ -31,14 +31,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+async function getFlashSaleData() {
+  try {
+    const wpBase = process.env.SBUY_BASE_URL || 'https://sbuy.io.vn';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(`${wpBase}/wp-json/pchub/v1/flash-sale`, {
+      signal: controller.signal,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+      next: { revalidate: 0 },
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {}
+  return null;
+}
+
+export default async function HomePage() {
+  const flashSaleData = await getFlashSaleData();
+
   return (
     <>
       {/* 1. HERO SLIDER — Full width auto-play */}
       <HeroSlider />
 
       {/* 2. FLASH SALE — compact product strip */}
-      <FlashSaleSection />
+      <FlashSaleSection initialData={flashSaleData} />
 
       {/* 3. BRANDS — partner strip */}
       <BrandStrip />
