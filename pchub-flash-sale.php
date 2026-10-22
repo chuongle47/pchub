@@ -989,6 +989,7 @@ final class PCHub_Flash_Sale_Manager {
 								</tr>
 							</thead>
 							<tbody>
+								<?php foreach ( $products as $p ) : ?>
 									<tr id="pchub-fs-row-<?php echo esc_attr( $p['id'] ); ?>">
 										<td>
 											<img src="<?php echo esc_url( $p['image'] ); ?>" alt="" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;display:block;">
