@@ -250,7 +250,7 @@ final class PCHub_Flash_Sale_Manager {
 		}
 
 		try {
-			$tz   = wp_timezone();
+			$tz   = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'Asia/Ho_Chi_Minh' );
 			$df   = new DateTime( str_replace( 'T', ' ', $date_from_raw ), $tz );
 			$dt   = new DateTime( str_replace( 'T', ' ', $date_to_raw ), $tz );
 			$from = $df->getTimestamp();
@@ -340,7 +340,7 @@ final class PCHub_Flash_Sale_Manager {
 
 		// Convert local datetime to UTC timestamps using site timezone
 		try {
-			$tz   = wp_timezone();
+			$tz   = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'Asia/Ho_Chi_Minh' );
 			$df   = new DateTime( str_replace( 'T', ' ', $date_from_raw ), $tz );
 			$dt   = new DateTime( str_replace( 'T', ' ', $date_to_raw ), $tz );
 			$from = $df->getTimestamp();
@@ -423,39 +423,47 @@ final class PCHub_Flash_Sale_Manager {
 	}
 
 	public function rest_get_flash_sale() {
-		$now   = time();
-		$items = $this->get_flash_sale_products_data();
+		try {
+			$now   = time();
+			$items = $this->get_flash_sale_products_data();
 
-		$active_products = array();
-		$upcoming_products = array();
+			$active_products = array();
+			$upcoming_products = array();
 
-		foreach ( $items as $it ) {
-			if ( 'active' === $it['status'] ) {
-				$active_products[] = $it;
-			} elseif ( 'upcoming' === $it['status'] ) {
-				$upcoming_products[] = $it;
+			foreach ( $items as $it ) {
+				if ( 'active' === $it['status'] ) {
+					$active_products[] = $it;
+				} elseif ( 'upcoming' === $it['status'] ) {
+					$upcoming_products[] = $it;
+				}
 			}
-		}
 
-		// Xác định thời gian kết thúc của phiên gần nhất
-		$current_end = 0;
-		if ( ! empty( $active_products ) ) {
-			$ends = array_column( $active_products, 'end_ts' );
-			$current_end = min( $ends );
-		}
+			// Xác định thời gian kết thúc của phiên gần nhất
+			$current_end = 0;
+			if ( ! empty( $active_products ) ) {
+				$ends = array_column( $active_products, 'end_ts' );
+				$current_end = min( $ends );
+			}
 
-		return rest_ensure_response( array(
-			'success'           => true,
-			'server_time'       => $now,
-			'server_time_iso'   => wp_date( 'c', $now ),
-			'timezone'          => wp_timezone_string(),
-			'has_active'        => ! empty( $active_products ),
-			'seconds_left'      => $current_end > $now ? ( $current_end - $now ) : 0,
-			'active_end_time'   => $current_end ? wp_date( 'c', $current_end ) : null,
-			'products'          => ! empty( $active_products ) ? $active_products : $upcoming_products,
-			'active_products'   => $active_products,
-			'upcoming_products' => $upcoming_products,
-		) );
+			$tz_string = function_exists( 'wp_timezone_string' ) ? wp_timezone_string() : get_option( 'timezone_string', 'Asia/Ho_Chi_Minh' );
+			$time_iso  = function_exists( 'wp_date' ) ? wp_date( 'c', $now ) : gmdate( 'c', $now );
+			$end_iso   = $current_end ? ( function_exists( 'wp_date' ) ? wp_date( 'c', $current_end ) : gmdate( 'c', $current_end ) ) : null;
+
+			return rest_ensure_response( array(
+				'success'           => true,
+				'server_time'       => $now,
+				'server_time_iso'   => $time_iso,
+				'timezone'          => $tz_string,
+				'has_active'        => ! empty( $active_products ),
+				'seconds_left'      => $current_end > $now ? ( $current_end - $now ) : 0,
+				'active_end_time'   => $end_iso,
+				'products'          => ! empty( $active_products ) ? $active_products : $upcoming_products,
+				'active_products'   => $active_products,
+				'upcoming_products' => $upcoming_products,
+			) );
+		} catch ( Throwable $e ) {
+			return new WP_Error( 'pchub_fs_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
 	}
 
 	private function get_flash_sale_products_data() {
@@ -488,12 +496,31 @@ final class PCHub_Flash_Sale_Manager {
 
 			$from = $product->get_date_on_sale_from();
 			$to   = $product->get_date_on_sale_to();
-			if ( ! $from || ! $to ) {
+			if ( empty( $from ) || empty( $to ) ) {
 				continue;
 			}
 
-			$from_ts = $from->getTimestamp();
-			$to_ts   = $to->getTimestamp();
+			$from_ts = 0;
+			if ( is_object( $from ) && method_exists( $from, 'getTimestamp' ) ) {
+				$from_ts = $from->getTimestamp();
+			} elseif ( is_numeric( $from ) ) {
+				$from_ts = (int) $from;
+			} elseif ( is_string( $from ) ) {
+				$from_ts = strtotime( $from );
+			}
+
+			$to_ts = 0;
+			if ( is_object( $to ) && method_exists( $to, 'getTimestamp' ) ) {
+				$to_ts = $to->getTimestamp();
+			} elseif ( is_numeric( $to ) ) {
+				$to_ts = (int) $to;
+			} elseif ( is_string( $to ) ) {
+				$to_ts = strtotime( $to );
+			}
+
+			if ( ! $from_ts || ! $to_ts ) {
+				continue;
+			}
 
 			if ( $now < $from_ts ) {
 				$status       = 'upcoming';
@@ -563,8 +590,8 @@ final class PCHub_Flash_Sale_Manager {
 		$products  = $this->get_flash_sale_products_data();
 		$nonce     = wp_create_nonce( self::NONCE_ACTION );
 		$ajax_url  = admin_url( 'admin-ajax.php' );
-		$now_local = wp_date( 'Y-m-d\TH:i' );
-		$default_end = wp_date( 'Y-m-d\TH:i', time() + 2 * HOUR_IN_SECONDS );
+		$now_local   = function_exists( 'wp_date' ) ? wp_date( 'Y-m-d\TH:i' ) : gmdate( 'Y-m-d\TH:i' );
+		$default_end = function_exists( 'wp_date' ) ? wp_date( 'Y-m-d\TH:i', time() + 2 * HOUR_IN_SECONDS ) : gmdate( 'Y-m-d\TH:i', time() + 2 * HOUR_IN_SECONDS );
 		?>
 		<div class="wrap pchub-fs-app">
 			<style>
@@ -996,8 +1023,8 @@ final class PCHub_Flash_Sale_Manager {
 												data-regular="<?php echo esc_attr( $p['regular_price'] ); ?>" 
 												data-sale="<?php echo esc_attr( $p['sale_price'] ); ?>" 
 												data-pct="<?php echo esc_attr( $p['discount_percent'] ); ?>" 
-												data-from="<?php echo esc_attr( ! empty( $p['start_local'] ) ? $p['start_local'] : wp_date( 'Y-m-d\TH:i', $p['start_ts'] ) ); ?>" 
-												data-to="<?php echo esc_attr( ! empty( $p['end_local'] ) ? $p['end_local'] : wp_date( 'Y-m-d\TH:i', $p['end_ts'] ) ); ?>" 
+												data-from="<?php echo esc_attr( $p['start_local'] ); ?>" 
+												data-to="<?php echo esc_attr( $p['end_local'] ); ?>" 
 												title="Chỉnh sửa giá Flash Sale và thời gian">Chỉnh sửa</a>
 											<span style="color:#cbd5e1;">|</span>
 											<?php if ( 'active' === $p['status'] || 'upcoming' === $p['status'] ) : ?>
