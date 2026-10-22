@@ -27,6 +27,7 @@ final class PCHub_Flash_Sale_Manager {
 		add_action( 'wp_ajax_pchub_fs_search_products', array( $this, 'ajax_search_products' ) );
 		add_action( 'wp_ajax_pchub_fs_remove_sale', array( $this, 'ajax_remove_sale' ) );
 		add_action( 'wp_ajax_pchub_fs_end_sale', array( $this, 'ajax_end_sale' ) );
+		add_action( 'wp_ajax_pchub_fs_update_product_sale', array( $this, 'ajax_update_product_sale' ) );
 
 		// Scheduled sales hook verification
 		add_action( 'init', array( $this, 'ensure_scheduled_sales_hook' ) );
@@ -214,6 +215,105 @@ final class PCHub_Flash_Sale_Manager {
 	}
 
 	/* =========================================================================
+	 * AJAX: CẬP NHẬT GIÁ VÀ THỜI GIAN FLASH SALE CHO TỪNG SẢN PHẨM
+	 * ====================================================================== */
+	public function ajax_update_product_sale() {
+		check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => 'Không đủ quyền thực hiện thao tác.' ), 403 );
+		}
+
+		$pid = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
+		$product = wc_get_product( $pid );
+		if ( ! $product ) {
+			wp_send_json_error( array( 'message' => 'Không tìm thấy sản phẩm.' ) );
+		}
+
+		$regular = floatval( $product->get_regular_price() );
+		if ( $regular <= 0 ) {
+			wp_send_json_error( array( 'message' => 'Sản phẩm này chưa có giá gốc hợp lệ.' ) );
+		}
+
+		$sale_price = isset( $_POST['sale_price'] ) ? floatval( $_POST['sale_price'] ) : 0;
+		$sale_price = round( $sale_price / 1000 ) * 1000;
+
+		if ( $sale_price <= 0 || $sale_price >= $regular ) {
+			wp_send_json_error( array( 'message' => 'Giá Flash Sale phải lớn hơn 0 và nhỏ hơn giá gốc (' . number_format( $regular, 0, ',', '.' ) . ' ₫).' ) );
+		}
+
+		$date_from_raw = isset( $_POST['date_from'] ) ? sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) : '';
+		$date_to_raw   = isset( $_POST['date_to'] ) ? sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) : '';
+
+		if ( empty( $date_from_raw ) || empty( $date_to_raw ) ) {
+			wp_send_json_error( array( 'message' => 'Vui lòng chọn thời gian bắt đầu và kết thúc.' ) );
+		}
+
+		try {
+			$tz   = wp_timezone();
+			$df   = new DateTime( str_replace( 'T', ' ', $date_from_raw ), $tz );
+			$dt   = new DateTime( str_replace( 'T', ' ', $date_to_raw ), $tz );
+			$from = $df->getTimestamp();
+			$to   = $dt->getTimestamp();
+		} catch ( Exception $e ) {
+			$from = strtotime( $date_from_raw );
+			$to   = strtotime( $date_to_raw );
+		}
+
+		if ( ! $from || ! $to || $to <= $from ) {
+			wp_send_json_error( array( 'message' => 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu.' ) );
+		}
+
+		$product->set_sale_price( (string) $sale_price );
+		$product->set_date_on_sale_from( gmdate( 'Y-m-d H:i:s', $from ) );
+		$product->set_date_on_sale_to( gmdate( 'Y-m-d H:i:s', $to ) );
+		$product->update_meta_data( '_pchub_is_flash_sale', '1' );
+		$product->update_meta_data( '_pchub_fs_discount_type', 'fixed' );
+		$product->update_meta_data( '_pchub_fs_discount_value', $sale_price );
+		$product->save();
+
+		if ( function_exists( 'wc_scheduled_sales' ) ) {
+			wc_scheduled_sales();
+		}
+
+		$now = time();
+		if ( $now < $from ) {
+			$status       = 'upcoming';
+			$status_label = 'Sắp diễn ra';
+			$status_color = '#2563eb';
+			$status_bg    = '#dbeafe';
+		} elseif ( $now >= $from && $now < $to ) {
+			$status       = 'active';
+			$status_label = 'Đang diễn ra';
+			$status_color = '#16a34a';
+			$status_bg    = '#dcfce7';
+		} else {
+			$status       = 'ended';
+			$status_label = 'Đã kết thúc';
+			$status_color = '#64748b';
+			$status_bg    = '#f1f5f9';
+		}
+
+		$pct = round( ( $regular - $sale_price ) / $regular * 100 );
+
+		wp_send_json_success( array(
+			'message'              => 'Đã cập nhật giá và thời gian Flash Sale thành công!',
+			'id'                   => $pid,
+			'regular_price'        => $regular,
+			'sale_price'           => $sale_price,
+			'sale_price_formatted' => number_format( $sale_price, 0, ',', '.' ) . ' ₫',
+			'discount_percent'     => $pct,
+			'start_formatted'      => wp_date( 'd/m/Y H:i', $from ),
+			'end_formatted'        => wp_date( 'd/m/Y H:i', $to ),
+			'start_local'          => wp_date( 'Y-m-d\TH:i', $from ),
+			'end_local'            => wp_date( 'Y-m-d\TH:i', $to ),
+			'status'               => $status,
+			'status_label'         => $status_label,
+			'status_color'         => $status_color,
+			'status_bg'            => $status_bg,
+		) );
+	}
+
+	/* =========================================================================
 	 * LƯU CẤU HÌNH FLASH SALE MỚI CHO CÁC SẢN PHẨM ĐÃ CHỌN
 	 * ====================================================================== */
 	public function handle_save() {
@@ -267,17 +367,26 @@ final class PCHub_Flash_Sale_Manager {
 			}
 
 			$sale_price = 0;
-			if ( 'percent' === $discount_type ) {
-				$pct        = min( 99, max( 1, $discount_value ) );
-				$sale_price = $regular * ( 1 - ( $pct / 100 ) );
-			} elseif ( 'amount' === $discount_type ) {
-				$sale_price = max( 1000, $regular - $discount_value );
-			} else { // fixed
-				$sale_price = $discount_value;
+			// Kiểm tra nếu có giá Flash Sale riêng được nhập cho sản phẩm này
+			if ( isset( $_POST['custom_sale_prices'][ $pid ] ) && '' !== trim( $_POST['custom_sale_prices'][ $pid ] ) ) {
+				$custom_p = floatval( $_POST['custom_sale_prices'][ $pid ] );
+				if ( $custom_p > 0 && $custom_p < $regular ) {
+					$sale_price = round( $custom_p / 1000 ) * 1000;
+				}
 			}
 
-			// Làm tròn số tiền đến hàng nghìn đồng
-			$sale_price = round( $sale_price / 1000 ) * 1000;
+			if ( ! $sale_price ) {
+				if ( 'percent' === $discount_type ) {
+					$pct        = min( 99, max( 1, $discount_value ) );
+					$sale_price = $regular * ( 1 - ( $pct / 100 ) );
+				} elseif ( 'amount' === $discount_type ) {
+					$sale_price = max( 1000, $regular - $discount_value );
+				} else { // fixed
+					$sale_price = $discount_value;
+				}
+				$sale_price = round( $sale_price / 1000 ) * 1000;
+			}
+
 			if ( $sale_price >= $regular || $sale_price <= 0 ) {
 				continue;
 			}
@@ -428,6 +537,8 @@ final class PCHub_Flash_Sale_Manager {
 				'end_ts'                  => $to_ts,
 				'start_formatted'         => wp_date( 'd/m/Y H:i', $from_ts ),
 				'end_formatted'           => wp_date( 'd/m/Y H:i', $to_ts ),
+				'start_local'             => wp_date( 'Y-m-d\TH:i', $from_ts ),
+				'end_local'               => wp_date( 'Y-m-d\TH:i', $to_ts ),
 				'status'                  => $status,
 				'status_label'            => $status_label,
 				'status_color'            => $status_color,
@@ -618,8 +729,82 @@ final class PCHub_Flash_Sale_Manager {
 					display: inline-block;
 				}
 				.pchub-fs-action-link:hover { background: #fee2e2; color: #b91c1c; }
-				.pchub-fs-end-link { color: #2563eb; }
-				.pchub-fs-end-link:hover { background: #dbeafe; color: #1d4ed8; }
+				.pchub-fs-end-link { color: #d97706; }
+				.pchub-fs-end-link:hover { background: #fef3c7; color: #b45309; }
+				.pchub-fs-edit-link { color: #2563eb; }
+				.pchub-fs-edit-link:hover { background: #dbeafe; color: #1d4ed8; }
+
+				/* Modal Backdrop & Dialog */
+				.pchub-fs-modal-backdrop {
+					position: fixed;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					background: rgba(15, 23, 42, 0.65);
+					backdrop-filter: blur(4px);
+					z-index: 999999;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 16px;
+					box-sizing: border-box;
+					animation: modalFadeIn 0.2s ease;
+				}
+				@keyframes modalFadeIn {
+					from { opacity: 0; }
+					to { opacity: 1; }
+				}
+				.pchub-fs-modal-dialog {
+					background: #ffffff;
+					border-radius: 14px;
+					box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+					width: 100%;
+					max-width: 580px;
+					max-height: 90vh;
+					overflow-y: auto;
+					padding: 24px;
+					box-sizing: border-box;
+					animation: modalSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+				}
+				@keyframes modalSlideUp {
+					from { transform: translateY(16px) scale(0.98); opacity: 0; }
+					to { transform: translateY(0) scale(1); opacity: 1; }
+				}
+				.pchub-fs-modal-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding-bottom: 14px;
+					border-bottom: 1px solid #f1f5f9;
+				}
+				.pchub-fs-modal-close {
+					background: #f1f5f9;
+					border: none;
+					width: 32px;
+					height: 32px;
+					border-radius: 50%;
+					font-size: 20px;
+					line-height: 1;
+					color: #64748b;
+					cursor: pointer;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					transition: all 0.15s ease;
+				}
+				.pchub-fs-modal-close:hover {
+					background: #fee2e2;
+					color: #dc2626;
+				}
+				.pchub-fs-modal-footer {
+					display: flex;
+					align-items: center;
+					justify-content: flex-end;
+					gap: 10px;
+					padding-top: 16px;
+					border-top: 1px solid #f1f5f9;
+				}
 			</style>
 
 			<!-- Header -->
@@ -776,7 +961,6 @@ final class PCHub_Flash_Sale_Manager {
 								</tr>
 							</thead>
 							<tbody>
-								<?php foreach ( $products as $p ) : ?>
 									<tr id="pchub-fs-row-<?php echo esc_attr( $p['id'] ); ?>">
 										<td>
 											<img src="<?php echo esc_url( $p['image'] ); ?>" alt="" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;display:block;">
@@ -789,22 +973,32 @@ final class PCHub_Flash_Sale_Manager {
 										<td style="color:#64748b;font-family:monospace;"><?php echo esc_html( $p['sku'] ); ?></td>
 										<td style="text-decoration:line-through;color:#64748b;"><?php echo esc_html( number_format( $p['regular_price'], 0, ',', '.' ) . ' ₫' ); ?></td>
 										<td>
-											<strong style="color:#dc2626;font-size:15px;"><?php echo esc_html( number_format( $p['sale_price'], 0, ',', '.' ) . ' ₫' ); ?></strong>
-											<?php if ( $p['discount_percent'] > 0 ) : ?>
-												<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;">-<?php echo esc_html( $p['discount_percent'] ); ?>%</span>
-											<?php endif; ?>
+											<strong class="pchub-fs-sale-val" style="color:#dc2626;font-size:15px;"><?php echo esc_html( number_format( $p['sale_price'], 0, ',', '.' ) . ' ₫' ); ?></strong>
+											<span class="pchub-fs-pct-badge" style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;<?php echo $p['discount_percent'] > 0 ? '' : 'display:none;'; ?>">-<?php echo esc_html( $p['discount_percent'] ); ?>%</span>
 										</td>
 										<td style="font-size:12.5px;color:#334155;line-height:1.4;">
-											<div>Bắt đầu: <strong><?php echo esc_html( $p['start_formatted'] ); ?></strong></div>
-											<div>Kết thúc: <strong><?php echo esc_html( $p['end_formatted'] ); ?></strong></div>
+											<div>Bắt đầu: <strong class="pchub-fs-start-val"><?php echo esc_html( $p['start_formatted'] ); ?></strong></div>
+											<div>Kết thúc: <strong class="pchub-fs-end-val"><?php echo esc_html( $p['end_formatted'] ); ?></strong></div>
 										</td>
 										<td>
 											<span class="pchub-fs-status-pill" style="color:<?php echo esc_attr( $p['status_color'] ); ?>;background:<?php echo esc_attr( $p['status_bg'] ); ?>;">
 												<span class="pchub-fs-dot <?php echo esc_attr( $p['status'] ); ?>"></span>
-												<?php echo esc_html( $p['status_label'] ); ?>
+												<span class="pchub-fs-status-text"><?php echo esc_html( $p['status_label'] ); ?></span>
 											</span>
 										</td>
 										<td style="text-align:right;white-space:nowrap;">
+											<a href="#" class="pchub-fs-action-link pchub-fs-edit-link" 
+												data-id="<?php echo esc_attr( $p['id'] ); ?>" 
+												data-name="<?php echo esc_attr( $p['name'] ); ?>" 
+												data-sku="<?php echo esc_attr( $p['sku'] ); ?>" 
+												data-img="<?php echo esc_url( $p['image'] ); ?>" 
+												data-regular="<?php echo esc_attr( $p['regular_price'] ); ?>" 
+												data-sale="<?php echo esc_attr( $p['sale_price'] ); ?>" 
+												data-pct="<?php echo esc_attr( $p['discount_percent'] ); ?>" 
+												data-from="<?php echo esc_attr( ! empty( $p['start_local'] ) ? $p['start_local'] : wp_date( 'Y-m-d\TH:i', $p['start_ts'] ) ); ?>" 
+												data-to="<?php echo esc_attr( ! empty( $p['end_local'] ) ? $p['end_local'] : wp_date( 'Y-m-d\TH:i', $p['end_ts'] ) ); ?>" 
+												title="Chỉnh sửa giá Flash Sale và thời gian">Chỉnh sửa</a>
+											<span style="color:#cbd5e1;">|</span>
 											<?php if ( 'active' === $p['status'] || 'upcoming' === $p['status'] ) : ?>
 												<a href="#" class="pchub-fs-action-link pchub-fs-end-link" data-id="<?php echo esc_attr( $p['id'] ); ?>" title="Kết thúc ngay lập tức">Kết thúc ngay</a>
 												<span style="color:#cbd5e1;">|</span>
@@ -817,6 +1011,97 @@ final class PCHub_Flash_Sale_Manager {
 						</table>
 					</div>
 				<?php endif; ?>
+			</div>
+
+			<!-- Modal Chỉnh sửa Flash Sale cho từng sản phẩm -->
+			<div id="pchub-fs-edit-modal" class="pchub-fs-modal-backdrop" style="display:none;">
+				<div class="pchub-fs-modal-dialog">
+					<div class="pchub-fs-modal-header">
+						<div style="display:flex;align-items:center;gap:10px;">
+							<div style="background:#eff6ff;color:#2563eb;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">✏️</div>
+							<div>
+								<h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">Chỉnh sửa Flash Sale</h3>
+								<p style="margin:2px 0 0;font-size:12px;color:#64748b;">Điều chỉnh giá sale và khung giờ diễn ra riêng cho sản phẩm này.</p>
+							</div>
+						</div>
+						<button type="button" class="pchub-fs-modal-close" id="pchub-fs-modal-close-btn">&times;</button>
+					</div>
+
+					<form id="pchub-fs-modal-form">
+						<input type="hidden" id="modal-product-id" value="">
+						<input type="hidden" id="modal-regular-raw" value="">
+
+						<!-- Product Mini Info Card -->
+						<div style="display:flex;align-items:center;gap:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin:16px 0 20px;">
+							<img id="modal-product-img" src="" alt="" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;flex-shrink:0;">
+							<div style="min-width:0;flex:1;">
+								<div id="modal-product-name" style="font-weight:700;font-size:14px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+								<div style="font-size:12px;color:#64748b;margin-top:2px;">
+									<span>SKU: <strong id="modal-product-sku"></strong></span>
+									<span style="margin:0 6px;">·</span>
+									<span>Giá gốc: <strong id="modal-product-regular" style="color:#0f172a;"></strong></span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Price & Discount Group -->
+						<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+							<div class="pchub-fs-field">
+								<label for="modal-sale-price">Giá Flash Sale (₫) <span style="color:#ef4444;">*</span></label>
+								<input type="number" id="modal-sale-price" min="1000" step="1000" required placeholder="VD: 312000">
+							</div>
+							<div class="pchub-fs-field">
+								<label for="modal-discount-pct">Phần trăm giảm (%)</label>
+								<input type="number" id="modal-discount-pct" min="1" max="99" step="any" placeholder="VD: 65">
+							</div>
+						</div>
+
+						<!-- Quick discount pills in modal -->
+						<div style="margin-bottom:18px;">
+							<span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;margin-bottom:6px;">Mức giảm nhanh:</span>
+							<div class="pchub-fs-pills" id="modal-discount-pills">
+								<button type="button" class="pchub-fs-pill" data-pct="10">-10%</button>
+								<button type="button" class="pchub-fs-pill" data-pct="20">-20%</button>
+								<button type="button" class="pchub-fs-pill" data-pct="30">-30%</button>
+								<button type="button" class="pchub-fs-pill" data-pct="50">-50%</button>
+								<button type="button" class="pchub-fs-pill" data-pct="65">-65%</button>
+								<button type="button" class="pchub-fs-pill" data-pct="70">-70%</button>
+							</div>
+						</div>
+
+						<!-- Time schedule -->
+						<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+							<div class="pchub-fs-field">
+								<label for="modal-date-from">Thời gian bắt đầu <span style="color:#ef4444;">*</span></label>
+								<input type="datetime-local" id="modal-date-from" required>
+							</div>
+							<div class="pchub-fs-field">
+								<label for="modal-date-to">Thời gian kết thúc <span style="color:#ef4444;">*</span></label>
+								<input type="datetime-local" id="modal-date-to" required>
+							</div>
+						</div>
+
+						<!-- Quick duration pills in modal -->
+						<div style="margin-bottom:24px;">
+							<span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;margin-bottom:6px;">Cộng nhanh thời gian kết thúc:</span>
+							<div class="pchub-fs-pills" id="modal-time-pills">
+								<button type="button" class="pchub-fs-pill" data-hours="2">+2 giờ</button>
+								<button type="button" class="pchub-fs-pill" data-hours="4">+4 giờ</button>
+								<button type="button" class="pchub-fs-pill" data-hours="8">+8 giờ</button>
+								<button type="button" class="pchub-fs-pill" data-hours="24">+24 giờ</button>
+								<button type="button" class="pchub-fs-pill" data-hours="72">3 ngày</button>
+								<button type="button" class="pchub-fs-pill" data-hours="168">7 ngày</button>
+							</div>
+						</div>
+
+						<div class="pchub-fs-modal-footer">
+							<button type="button" class="button button-large" id="pchub-fs-modal-cancel-btn">Hủy bỏ</button>
+							<button type="submit" class="pchub-fs-submit-btn" id="pchub-fs-modal-save-btn" style="padding:10px 22px !important;font-size:14px !important;">
+								<span id="modal-save-icon">💾</span> <span id="modal-save-text">Lưu thay đổi</span>
+							</button>
+						</div>
+					</form>
+				</div>
 			</div>
 		</div>
 
@@ -858,8 +1143,11 @@ final class PCHub_Flash_Sale_Manager {
 
 				$.each(selectedProducts, function (id, p) {
 					var reg = parseFloat(p.regular_price) || 0;
+					var customSale = p.custom_sale_price || '';
 					var previewSale = 0;
-					if (discountVal > 0 && reg > 0) {
+					if (customSale && parseFloat(customSale) > 0) {
+						previewSale = parseFloat(customSale);
+					} else if (discountVal > 0 && reg > 0) {
 						if (discountType === 'percent') {
 							previewSale = Math.round(reg * (1 - (discountVal / 100)) / 1000) * 1000;
 						} else if (discountType === 'amount') {
@@ -872,20 +1160,28 @@ final class PCHub_Flash_Sale_Manager {
 					var previewHtml = '';
 					if (previewSale > 0 && previewSale < reg) {
 						var pct = Math.round((reg - previewSale) / reg * 100);
-						previewHtml = ' <span style="color:#16a34a;font-weight:700;margin-left:8px;">➜ Giá sale dự kiến: ' + fmtMoney(previewSale) + ' (-' + pct + '%)</span>';
+						previewHtml = ' <span style="color:#16a34a;font-weight:700;margin-left:8px;">➜ Giá sale: ' + fmtMoney(previewSale) + ' (-' + pct + '%)</span>';
 					}
 
-					var $item = $('<div class="pchub-fs-selected-item"></div>');
-					var $left = $('<div style="display:flex;align-items:center;gap:10px;min-width:0;"></div>');
+					var $item = $('<div class="pchub-fs-selected-item" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"></div>');
+					var $left = $('<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;"></div>');
 					$left.append('<img src="' + p.thumb + '" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0;">');
 					$left.append('<div><div style="font-weight:600;font-size:13.5px;color:#0f172a;">' + p.name + '</div><div style="font-size:12px;color:#64748b;">SKU: ' + p.sku + ' · Giá gốc: <strong>' + fmtMoney(reg) + '</strong>' + previewHtml + '</div></div>');
+
+					var $right = $('<div style="display:flex;align-items:center;gap:8px;"></div>');
+					var $customInp = $('<input type="number" step="1000" name="custom_sale_prices[' + id + ']" placeholder="Giá riêng (tùy chọn)..." title="Nhập giá Flash Sale riêng cho sản phẩm này (để trống nếu áp dụng theo công thức chung)" style="width:145px;height:30px!important;line-height:30px!important;padding:0 8px!important;font-size:12px!important;border:1px solid #cbd5e1!important;border-radius:6px!important;background:#fff;" value="' + customSale + '">');
+					$customInp.on('input', function () {
+						p.custom_sale_price = $(this).val();
+					});
+					$right.append($customInp);
 
 					var $btn = $('<button type="button" class="pchub-fs-remove-chip">✕ Xóa</button>').on('click', function () {
 						delete selectedProducts[id];
 						updateSelectedDisplay();
 					});
+					$right.append($btn);
 
-					$item.append($left).append($btn);
+					$item.append($left).append($right);
 					$selectedList.append($item);
 				});
 			}
@@ -1064,6 +1360,194 @@ final class PCHub_Flash_Sale_Manager {
 						location.reload();
 					} else {
 						alert(res && res.data && res.data.message ? res.data.message : 'Có lỗi xảy ra.');
+					}
+				});
+			});
+
+			/* =================================================================
+			 * MODAL: CHỈNH SỬA FLASH SALE TỪNG SẢN PHẨM (GIÁ SALE & THỜI GIAN)
+			 * =============================================================== */
+			function closeEditModal() {
+				$('#pchub-fs-edit-modal').fadeOut(150);
+			}
+
+			$('#pchub-fs-modal-close-btn, #pchub-fs-modal-cancel-btn').on('click', function (e) {
+				e.preventDefault();
+				closeEditModal();
+			});
+
+			$('#pchub-fs-edit-modal').on('click', function (e) {
+				if ($(e.target).is('#pchub-fs-edit-modal')) {
+					closeEditModal();
+				}
+			});
+
+			$(document).on('keydown', function (e) {
+				if (e.key === 'Escape' && $('#pchub-fs-edit-modal').is(':visible')) {
+					closeEditModal();
+				}
+			});
+
+			// Open modal on click "Chỉnh sửa"
+			$(document).on('click', '.pchub-fs-edit-link', function (e) {
+				e.preventDefault();
+				var $btn = $(this);
+				var id   = $btn.data('id');
+				var name = $btn.data('name');
+				var sku  = $btn.data('sku') || '—';
+				var img  = $btn.data('img') || '';
+				var reg  = parseFloat($btn.data('regular')) || 0;
+				var sale = parseFloat($btn.data('sale')) || 0;
+				var pct  = parseInt($btn.data('pct'), 10) || 0;
+				var from = $btn.data('from') || '';
+				var to   = $btn.data('to') || '';
+
+				$('#modal-product-id').val(id);
+				$('#modal-regular-raw').val(reg);
+				$('#modal-product-name').text(name);
+				$('#modal-product-sku').text(sku);
+				$('#modal-product-img').attr('src', img);
+				$('#modal-product-regular').text(fmtMoney(reg));
+
+				$('#modal-sale-price').val(sale > 0 ? sale : '');
+				$('#modal-discount-pct').val(pct > 0 ? pct : '');
+
+				$('#modal-date-from').val(from);
+				$('#modal-date-to').val(to);
+
+				$('#pchub-fs-edit-modal').fadeIn(150, function () {
+					$('#modal-sale-price').focus();
+				});
+			});
+
+			// Link sale price input -> discount %
+			$('#modal-sale-price').on('input', function () {
+				var reg  = parseFloat($('#modal-regular-raw').val()) || 0;
+				var sale = parseFloat($(this).val()) || 0;
+				if (reg > 0 && sale > 0 && sale < reg) {
+					var pct = Math.round((reg - sale) / reg * 100);
+					$('#modal-discount-pct').val(pct);
+				} else {
+					$('#modal-discount-pct').val('');
+				}
+			});
+
+			// Link discount % input -> sale price
+			$('#modal-discount-pct').on('input', function () {
+				var reg = parseFloat($('#modal-regular-raw').val()) || 0;
+				var pct = parseFloat($(this).val()) || 0;
+				if (reg > 0 && pct > 0 && pct < 100) {
+					var sale = Math.round(reg * (1 - (pct / 100)) / 1000) * 1000;
+					$('#modal-sale-price').val(sale);
+				}
+			});
+
+			// Modal quick discount pills
+			$('#modal-discount-pills .pchub-fs-pill').on('click', function (e) {
+				e.preventDefault();
+				var pct = parseFloat($(this).data('pct')) || 0;
+				$('#modal-discount-pct').val(pct).trigger('input');
+			});
+
+			// Modal quick time pills
+			$('#modal-time-pills .pchub-fs-pill').on('click', function (e) {
+				e.preventDefault();
+				var hours = parseInt($(this).data('hours'), 10);
+				var fromVal = $('#modal-date-from').val();
+				var baseDate = fromVal ? new Date(fromVal) : new Date();
+				if (isNaN(baseDate.getTime())) baseDate = new Date();
+
+				var endDate = new Date(baseDate.getTime() + hours * 3600000);
+				var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+				var formatDt = function(d) {
+					return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+				};
+				$('#modal-date-to').val(formatDt(endDate));
+			});
+
+			// Modal form submit
+			$('#pchub-fs-modal-form').on('submit', function (e) {
+				e.preventDefault();
+				var id   = $('#modal-product-id').val();
+				var reg  = parseFloat($('#modal-regular-raw').val()) || 0;
+				var sale = parseFloat($('#modal-sale-price').val()) || 0;
+				var from = $('#modal-date-from').val();
+				var to   = $('#modal-date-to').val();
+
+				if (sale <= 0) {
+					alert('Vui lòng nhập giá Flash Sale lớn hơn 0!');
+					$('#modal-sale-price').focus();
+					return false;
+				}
+
+				if (reg > 0 && sale >= reg) {
+					alert('Giá Flash Sale (' + fmtMoney(sale) + ') phải nhỏ hơn giá gốc (' + fmtMoney(reg) + ')!');
+					$('#modal-sale-price').focus();
+					return false;
+				}
+
+				if (!from || !to) {
+					alert('Vui lòng chọn thời gian bắt đầu và kết thúc!');
+					return false;
+				}
+
+				var $saveBtn = $('#pchub-fs-modal-save-btn');
+				var origSaveHtml = $saveBtn.html();
+				$saveBtn.prop('disabled', true).html('<span>⏳</span> Đang lưu...');
+
+				$.ajax({
+					url: ajaxUrl,
+					method: 'POST',
+					data: {
+						action: 'pchub_fs_update_product_sale',
+						product_id: id,
+						sale_price: sale,
+						date_from: from,
+						date_to: to,
+						nonce: nonce
+					},
+					success: function (res) {
+						$saveBtn.prop('disabled', false).html(origSaveHtml);
+						if (res && res.success && res.data) {
+							var d = res.data;
+							var $row = $('#pchub-fs-row-' + id);
+							if ($row.length) {
+								$row.find('.pchub-fs-sale-val').text(d.sale_price_formatted);
+								var $badge = $row.find('.pchub-fs-pct-badge');
+								if (d.discount_percent > 0) {
+									$badge.text('-' + d.discount_percent + '%').show();
+								} else {
+									$badge.hide();
+								}
+
+								$row.find('.pchub-fs-start-val').text(d.start_formatted);
+								$row.find('.pchub-fs-end-val').text(d.end_formatted);
+
+								var $pill = $row.find('.pchub-fs-status-pill');
+								$pill.css({ color: d.status_color, background: d.status_bg });
+								$pill.html('<span class="pchub-fs-dot ' + d.status + '"></span> <span class="pchub-fs-status-text">' + d.status_label + '</span>');
+
+								// Update edit button data attributes
+								var $editBtn = $row.find('.pchub-fs-edit-link');
+								$editBtn.data('sale', d.sale_price);
+								$editBtn.data('pct', d.discount_percent);
+								$editBtn.data('from', d.start_local);
+								$editBtn.data('to', d.end_local);
+
+								// Visual pulse animation on updated row
+								$row.css('transition', 'background 0.3s ease').css('background', '#dcfce7');
+								setTimeout(function () {
+									$row.css('background', '');
+								}, 1600);
+							}
+							closeEditModal();
+						} else {
+							alert(res && res.data && res.data.message ? res.data.message : 'Có lỗi xảy ra khi cập nhật.');
+						}
+					},
+					error: function () {
+						$saveBtn.prop('disabled', false).html(origSaveHtml);
+						alert('Lỗi kết nối máy chủ khi lưu.');
 					}
 				});
 			});
