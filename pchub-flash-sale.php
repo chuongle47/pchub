@@ -13,8 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'PCHub_Flash_Sale_Manager' ) ) :
-
 final class PCHub_Flash_Sale_Manager {
 
 	const NONCE_ACTION = 'pchub_fs_admin_nonce';
@@ -1561,6 +1559,6 @@ final class PCHub_Flash_Sale_Manager {
 }
 
 new PCHub_Flash_Sale_Manager();
-}
+
 
 
