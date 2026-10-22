@@ -45,6 +45,48 @@ export function mapFlashProducts(rawList: any[]): FlashProduct[] {
   });
 }
 
+export interface TimerState {
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isEnded: boolean;
+}
+
+export function calculateTimeRemaining(targetEndTime?: string | Date | number): TimerState {
+  const now = new Date();
+  let target: Date;
+  if (targetEndTime) {
+    target = new Date(targetEndTime);
+    const diff = target.getTime() - now.getTime();
+    if (diff <= 0) {
+      return { hours: 0, minutes: 0, seconds: 0, isEnded: true };
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    return { hours, minutes, seconds, isEnded: false };
+  } else {
+    // 2-hour rolling Flash Sale session
+    const currentHour = now.getHours();
+    const nextSessionHour = currentHour + (2 - (currentHour % 2));
+    target = new Date(now);
+    if (nextSessionHour >= 24) {
+      target.setDate(target.getDate() + 1);
+      target.setHours(0, 0, 0, 0);
+    } else {
+      target.setHours(nextSessionHour, 0, 0, 0);
+    }
+    const diff = target.getTime() - now.getTime();
+    if (diff <= 0) {
+      return { hours: 1, minutes: 59, seconds: 59, isEnded: false };
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    return { hours, minutes, seconds, isEnded: false };
+  }
+}
+
 export default function FlashSaleSection({ endTime, initialData }: FlashSaleSectionProps = {}) {
   const initialProducts = initialData && Array.isArray(initialData.products) && initialData.products.length > 0
     ? mapFlashProducts(initialData.products)
