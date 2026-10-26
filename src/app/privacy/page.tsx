@@ -21,7 +21,7 @@ export default function PrivacyPage() {
       }}>
         <div style={{ marginBottom: '24px' }}>
           <Link
-            href="/register"
+            href="/login"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
               marginBottom: '16px'
             }}
           >
-            <ArrowLeft size={16} /> Quay lại trang Đăng ký
+            <ArrowLeft size={16} /> Quay lại trang Đăng nhập
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{

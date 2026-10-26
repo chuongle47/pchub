@@ -376,12 +376,27 @@ function LoginForm() {
           </>
         )}
 
-        {/* Footer Link */}
-        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: '#64748b' }}>
-          Chưa có tài khoản?{' '}
-          <Link href="/register" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>
-            Đăng ký miễn phí
-          </Link>
+        {/* Footer Link (Hidden while registration is not available) */}
+        {false && (
+          <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: '#64748b' }}>
+            Chưa có tài khoản?{' '}
+            <Link href="/register" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>
+              Đăng ký miễn phí
+            </Link>
+          </div>
+        )}
+
+        <div style={{
+          textAlign: 'center',
+          marginTop: '20px',
+          fontSize: '12px',
+          color: '#64748b',
+          background: '#f8fafc',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0'
+        }}>
+          🔒 Tính năng đăng ký tài khoản mới hiện đang tạm ngừng để nâng cấp hệ thống.
         </div>
 
       </div>

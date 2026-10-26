@@ -280,6 +280,8 @@ async function runTestSuite() {
   assert('Hồ sơ cá nhân đã ẩn Tab Xác thực CCCD / OCR chưa xử lý backend', profileFile.includes('SHOW_CCCD_TAB = false'));
   assert('Trang Đăng nhập đã ẩn các nút đăng nhập MXH chưa xử lý', loginFile.includes('false &&') && loginFile.includes('HOẶC ĐĂNG NHẬP VỚI'));
   assert('Trang Đăng ký đã ẩn các nút đăng ký MXH chưa xử lý', regFile.includes('false &&') && regFile.includes('HOẶC ĐĂNG KÝ VỚI'));
+  assert('Trang Đăng ký đã ẩn form tạo tài khoản do backend chưa hoàn thiện', regFile.includes('SHOW_REGISTER_FORM = false'));
+  assert('Trang Đăng nhập đã ẩn liên kết đăng ký tài khoản chưa sử dụng được', loginFile.includes('false &&') && loginFile.includes('Đăng ký miễn phí'));
 
   // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ

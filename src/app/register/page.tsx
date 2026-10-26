@@ -145,6 +145,9 @@ export default function RegisterPage() {
     }
   };
 
+  // Chức năng đăng ký tài khoản chưa xử lý backend - tạm thời ẩn
+  const SHOW_REGISTER_FORM = false;
+
   return (
     <div style={{
       background: '#edf0f5',
@@ -160,24 +163,102 @@ export default function RegisterPage() {
         borderRadius: '16px',
         width: '100%',
         maxWidth: '460px',
-        padding: '40px 44px',
+        padding: '40px 36px',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
       }}>
-        
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 style={{
-            fontSize: '26px',
-            fontWeight: 800,
-            color: '#0f172a',
-            marginBottom: '8px'
-          }}>
-            Tạo tài khoản mới 🎉
-          </h1>
-          <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: '1.5' }}>
-            Đăng ký để trải nghiệm mua sắm linh kiện PC tuyệt vời
-          </p>
-        </div>
+        {!SHOW_REGISTER_FORM ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: '#eff6ff',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '20px'
+            }}>
+              <Lock size={30} />
+            </div>
+
+            <h1 style={{
+              fontSize: '22px',
+              fontWeight: 800,
+              color: '#0f172a',
+              marginBottom: '10px'
+            }}>
+              Đăng ký tài khoản tạm đóng
+            </h1>
+
+            <p style={{
+              fontSize: '13.5px',
+              color: '#64748b',
+              lineHeight: '1.6',
+              marginBottom: '24px'
+            }}>
+              Hệ thống đăng ký tài khoản mới hiện đang tạm ngừng để nâng cấp và hoàn thiện tính năng. Quý khách vui lòng đăng nhập bằng tài khoản sẵn có hoặc tiếp tục mua sắm không cần đăng ký.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <Link
+                href="/login"
+                style={{
+                  background: 'var(--color-primary, #2563eb)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 20px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                Đăng nhập ngay <ArrowRight size={16} />
+              </Link>
+
+              <Link
+                href="/"
+                style={{
+                  background: '#f8fafc',
+                  color: '#334155',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '12px 20px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                  transition: 'background 0.2s'
+                }}
+              >
+                Về Trang chủ
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h1 style={{
+                fontSize: '26px',
+                fontWeight: 800,
+                color: '#0f172a',
+                marginBottom: '8px'
+              }}>
+                Tạo tài khoản mới 🎉
+              </h1>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: '1.5' }}>
+                Đăng ký để trải nghiệm mua sắm linh kiện PC tuyệt vời
+              </p>
+            </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -548,6 +629,8 @@ export default function RegisterPage() {
             Đăng nhập ngay
           </Link>
         </div>
+          </>
+        )}
 
       </div>
     </div>
