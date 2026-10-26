@@ -306,6 +306,44 @@ function saveWishlistForUser(userKey: string | null, ids: string[]) {
   } catch {}
 }
 
+function showWishlistLoginPrompt() {
+  if (typeof window === 'undefined') return;
+  let toast = document.getElementById('pchub-wishlist-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'pchub-wishlist-toast';
+    toast.style.cssText = `
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      animation: fadeInDown 0.25s ease;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `
+    <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#ef4444;border-radius:50%;color:white;font-size:12px;">♥</span>
+    <span>Vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích!</span>
+    <a href="/login?next=${encodeURIComponent(window.location.pathname)}" style="margin-left:6px;padding:4px 10px;background:#2563eb;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:700;">Đăng nhập</a>
+  `;
+  setTimeout(() => {
+    if (toast && toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 4000);
+}
+
 interface WishlistStore {
   ids: string[];
   addWishlist: (id: string) => boolean;
@@ -333,10 +371,7 @@ export const useWishlistStore = create<WishlistStore>()((set, get) => ({
   addWishlist: (id) => {
     const key = getActiveWishlistUserKey();
     if (!key) {
-      if (typeof window !== 'undefined') {
-        alert('Vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích!');
-        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
-      }
+      showWishlistLoginPrompt();
       return false;
     }
     const newIds = Array.from(new Set([...get().ids, id]));
@@ -355,10 +390,7 @@ export const useWishlistStore = create<WishlistStore>()((set, get) => ({
   toggleWishlist: (id) => {
     const key = getActiveWishlistUserKey();
     if (!key) {
-      if (typeof window !== 'undefined') {
-        alert('Vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích!');
-        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
-      }
+      showWishlistLoginPrompt();
       return false;
     }
     const exists = get().ids.includes(id);
