@@ -38,6 +38,8 @@ import { saveUserToDatabase } from '@/lib/user-service';
 
 type ActiveTab = 'info' | 'password' | 'avatar' | 'cccd';
 
+const SHOW_CCCD_TAB = false;
+
 export default function ProfilePage() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
@@ -1006,29 +1008,31 @@ export default function ProfilePage() {
           <span>Cập nhật Avatar</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('cccd')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            borderRadius: '10px 10px 0 0',
-            fontSize: '13.5px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            border: 'none',
-            borderBottom: activeTab === 'cccd' ? '3px solid #2563eb' : '3px solid transparent',
-            background: activeTab === 'cccd' ? '#eff6ff' : 'transparent',
-            color: activeTab === 'cccd' ? '#2563eb' : '#64748b',
-            transition: 'all 0.15s ease',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <CreditCard size={16} />
-          <span>Cập nhật CCCD</span>
-        </button>
+        {SHOW_CCCD_TAB && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('cccd')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px 10px 0 0',
+              fontSize: '13.5px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: 'none',
+              borderBottom: activeTab === 'cccd' ? '3px solid #2563eb' : '3px solid transparent',
+              background: activeTab === 'cccd' ? '#eff6ff' : 'transparent',
+              color: activeTab === 'cccd' ? '#2563eb' : '#64748b',
+              transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <CreditCard size={16} />
+            <span>Cập nhật CCCD</span>
+          </button>
+        )}
       </div>
 
       {/* Global Alert */}
@@ -1770,7 +1774,7 @@ export default function ProfilePage() {
         )}
 
         {/* ================= TAB 4: UPDATE CCCD (nks/user/updateCccd) ================= */}
-        {activeTab === 'cccd' && (
+        {SHOW_CCCD_TAB && activeTab === 'cccd' && (
           <form onSubmit={handleUpdateCccd} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

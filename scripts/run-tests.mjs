@@ -274,6 +274,13 @@ async function runTestSuite() {
   assert('FAVORITE-006: Danh sách yêu thích được phân lập lưu trữ riêng theo tài khoản', storeFile.includes('getActiveWishlistUserKey') && storeFile.includes('syncUserWishlist'));
   assert('FAVORITE-011: Chặn người dùng chưa đăng nhập thả tim và yêu cầu đăng nhập', storeFile.includes('Vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích!'));
 
+  // Hidden Unprocessed Features Check
+  const accountSidebarFile = fs.readFileSync(path.resolve('src/components/account/AccountSidebar.tsx'), 'utf-8');
+  assert('Menu Tài khoản đã ẩn các mục chưa xử lý (Bảo hành, AI Chat, Thông báo)', !accountSidebarFile.includes('/tai-khoan/bao-hanh') && !accountSidebarFile.includes('/tai-khoan/lich-su-ai') && !accountSidebarFile.includes('/tai-khoan/thong-bao'));
+  assert('Hồ sơ cá nhân đã ẩn Tab Xác thực CCCD / OCR chưa xử lý backend', profileFile.includes('SHOW_CCCD_TAB = false'));
+  assert('Trang Đăng nhập đã ẩn các nút đăng nhập MXH chưa xử lý', loginFile.includes('false &&') && loginFile.includes('HOẶC ĐĂNG NHẬP VỚI'));
+  assert('Trang Đăng ký đã ẩn các nút đăng ký MXH chưa xử lý', regFile.includes('false &&') && regFile.includes('HOẶC ĐĂNG KÝ VỚI'));
+
   // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ
   // -------------------------------------------------------------
