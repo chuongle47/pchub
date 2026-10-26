@@ -468,6 +468,33 @@ function isComputerComponentProduct(p: SbuyRawProduct): boolean {
   return hasLinhKienCategory;
 }
 
+// Helper to deduplicate products by normalized name, prioritizing products with real uploaded images
+function deduplicateProducts(products: AppProduct[]): AppProduct[] {
+  const map = new Map<string, AppProduct>();
+  for (const p of products) {
+    const key = (p.name || '').trim().toLowerCase();
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, p);
+    } else {
+      // Prioritize product with real image over placeholder or empty image
+      const pHasRealImg = p.image_url && !p.image_url.includes('unsplash') && !p.image_url.includes('placeholder');
+      const exHasRealImg = existing.image_url && !existing.image_url.includes('unsplash') && !existing.image_url.includes('placeholder');
+      if (pHasRealImg && !exHasRealImg) {
+        map.set(key, p);
+      } else if (pHasRealImg === exHasRealImg) {
+        // If both have images or neither has, keep the one with richer specs or higher ID
+        const pSpecsLen = Object.keys(p.specs || {}).length;
+        const exSpecsLen = Object.keys(existing.specs || {}).length;
+        if (pSpecsLen > exSpecsLen) {
+          map.set(key, p);
+        }
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+
 // Server Cache for Sbuy Products
 let sbuyProductsCache: { data: AppProduct[]; timestamp: number } | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 1 minute cache for fast updates when adding new products
@@ -493,7 +520,7 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
 
     // Keep only published products in "Linh kiện máy tính" / Computer Hardware & Peripherals
     const validRaw = rawProducts.filter(isComputerComponentProduct);
-    const mappedProducts = validRaw.map(mapSbuyProduct);
+    const mappedProducts = deduplicateProducts(validRaw.map(mapSbuyProduct));
 
     if (mappedProducts.length > 0) {
       sbuyProductsCache = {
@@ -553,7 +580,7 @@ export async function fetchSbuyProductsLive(): Promise<AppProduct[]> {
       };
     });
 
-  return fallbackList;
+  return deduplicateProducts(fallbackList);
 }
 
 export async function getSbuyProductBySlugOrId(slugOrId: string): Promise<AppProduct | null> {

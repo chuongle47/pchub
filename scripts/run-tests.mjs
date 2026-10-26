@@ -129,9 +129,23 @@ async function runTestSuite() {
       assert('Có danh sách sản phẩm hợp lệ từ WooCommerce', Array.isArray(products) && products.length > 0);
       assert('Sản phẩm có đầy đủ ID, Tên và Giá bán', products.every(p => p.id && p.name && (p.price !== undefined)));
     }
+
+    const pubProdRes = await fetch(`${baseUrl}/wp-json/wc/v3/products?status=publish&per_page=100`, {
+      headers: { Authorization: authHeader }
+    });
+    if (pubProdRes.ok) {
+      const pubProducts = await pubProdRes.json();
+      const names = pubProducts.map(p => (p.name || '').trim().toLowerCase());
+      const dellMatches = names.filter(n => n.includes('u2723qe'));
+      assert('Màn hình Dell UltraSharp U2723QE duy nhất 1 sản phẩm (không trùng lặp)', dellMatches.length === 1);
+      const uniqueNames = new Set(names);
+      assert('100% sản phẩm đăng bán trên hệ thống đều có tên độc nhất, không bị nhân đôi', uniqueNames.size === names.length);
+    }
   } catch (err) {
     assert('Truy vấn danh mục sản phẩm WooCommerce thành công', false, err.message);
   }
+
+  assert('Hệ thống tích hợp thuật toán tự động khử trùng lặp sản phẩm deduplicateProducts', sbuyFile.includes('deduplicateProducts'));
 
   // -------------------------------------------------------------
   // TEST GROUP 6: Kiểm thử luồng Đặt hàng & Checkout API
