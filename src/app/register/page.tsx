@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowRight, User, Mail, Lock, Sparkles, Copy, Check, ShieldCheck } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -73,9 +74,46 @@ export default function RegisterPage() {
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    try {
+      setLoading(true);
+      setError('');
+      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
+      const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+        },
+      });
+      if (oauthErr) {
+        setError(`Không thể kết nối đến ${provider}: ${oauthErr.message}`);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      setError(`Lỗi xác thực ${provider}: ${err.message || 'Vui lòng thử lại.'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const emailTrimmed = (formData.email || '').trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailTrimmed)) {
+      setError('Email không đúng định dạng');
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 8) {
+      setError('Mật khẩu phải có tối thiểu 8 ký tự');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Mật khẩu xác nhận không khớp');
@@ -226,7 +264,7 @@ export default function RegisterPage() {
                   }
                 }}
                 required
-                minLength={6}
+                minLength={8}
                 style={{
                   width: '100%',
                   padding: '11px 38px 11px 42px',
@@ -271,7 +309,7 @@ export default function RegisterPage() {
                   }
                 }}
                 required
-                minLength={6}
+                minLength={8}
                 style={{
                   width: '100%',
                   padding: '11px 38px 11px 42px',
@@ -446,6 +484,8 @@ export default function RegisterPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
           <button 
             type="button"
+            onClick={() => handleSocialLogin('google')}
+            disabled={loading}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -458,7 +498,7 @@ export default function RegisterPage() {
               fontWeight: 600,
               color: '#334155',
               background: '#fff',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s'
             }}
           >
@@ -473,6 +513,8 @@ export default function RegisterPage() {
           
           <button 
             type="button"
+            onClick={() => handleSocialLogin('facebook')}
+            disabled={loading}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -485,7 +527,7 @@ export default function RegisterPage() {
               fontWeight: 600,
               color: '#334155',
               background: '#fff',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s'
             }}
           >

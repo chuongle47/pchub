@@ -240,7 +240,7 @@ export default function CategoryDropdownMenu({ variant = 'dark' }: CategoryDropd
             }}
           >
             <Link
-              href="/danh-muc/tat-ca"
+              href="/search"
               onClick={() => setIsOpen(false)}
               style={{
                 fontSize: '12px',

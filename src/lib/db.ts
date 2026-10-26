@@ -125,7 +125,7 @@ export async function getBrands(categoryId?: string): Promise<Brand[]> {
   const brandMap = new Map<string, { id: string; name: string; slug: string; count: number }>();
 
   products.forEach(p => {
-    if (categoryId) {
+    if (categoryId && categoryId !== 'tat-ca' && categoryId !== 'all') {
       const isCatMatch = p.category_id === categoryId || p.category_slug === categoryId;
       if (!isCatMatch) return;
     }
@@ -169,12 +169,13 @@ export async function getProducts(filter: ProductsFilter) {
   const limitNum = parseInt(limit as any, 10) || 16;
   const brandIds = brand_id ? brand_id.split(',').filter(Boolean).map(x => x.toLowerCase()) : [];
 
-  const categoryMatch = category_id
+  const isAllCategory = !category_id || category_id === 'tat-ca' || category_id === 'all';
+  const categoryMatch = !isAllCategory
     ? STANDARD_CATEGORIES.find(c => c.id === category_id || c.slug === category_id)
     : undefined;
 
   let filtered = allProducts.filter(p => {
-    if (category_id) {
+    if (!isAllCategory) {
       const matchCat = p.category_id === category_id ||
         p.category_slug === category_id ||
         (categoryMatch && (p.category_id === categoryMatch.id || p.category_slug === categoryMatch.slug));

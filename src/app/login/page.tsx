@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { normalizeUser } from '@/lib/auth';
 import { CompanyApiService } from '@/lib/auth-api';
+import { supabase } from '@/lib/supabase';
 
 function encodeUserToken(user: object): string {
   const encoded = encodeURIComponent(JSON.stringify(user));
@@ -59,11 +60,42 @@ function LoginForm() {
       .catch(err => console.error('Error loading remembered emails:', err));
   }, []);
 
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    try {
+      setError('');
+      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
+      const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+        },
+      });
+      if (oauthErr) {
+        setError(`Không thể kết nối đến ${provider}: ${oauthErr.message}`);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      setError(`Lỗi xác thực ${provider}: ${err.message || 'Vui lòng thử lại.'}`);
+    }
+  };
+
   const completeLogin = async (loginEmail: string, loginPassword: string) => {
     const result = await CompanyApiService.login(loginEmail, loginPassword);
 
     if (!result.success || !result.token) {
-      setError(result.message || 'Đăng nhập không thành công.');
+      let friendlyMsg = result.message || 'Đăng nhập không thành công.';
+      const msgLower = (result.message || '').toLowerCase();
+      if (
+        msgLower.includes('unauthorized') ||
+        msgLower.includes('unauthenticated') ||
+        msgLower.includes('invalid credentials')
+      ) {
+        friendlyMsg = 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.';
+      }
+      setError(friendlyMsg);
       return false;
     }
 
@@ -289,6 +321,7 @@ function LoginForm() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
           <button 
             type="button"
+            onClick={() => handleSocialLogin('google')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -316,6 +349,7 @@ function LoginForm() {
           
           <button 
             type="button"
+            onClick={() => handleSocialLogin('facebook')}
             style={{
               display: 'flex',
               alignItems: 'center',

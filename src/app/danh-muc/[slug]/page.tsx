@@ -33,6 +33,9 @@ const SORT_OPTIONS = [
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  if (slug === 'tat-ca' || slug === 'all') {
+    redirect('/search');
+  }
   redirect(`/search?category=${encodeURIComponent(slug)}`);
   const query = await searchParams;
   const categories = await getCategories();

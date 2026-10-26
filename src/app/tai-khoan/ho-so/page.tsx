@@ -108,7 +108,13 @@ export default function ProfilePage() {
       }
       
       // Email & Phone
-      setEmail(nksUser.email ?? user.email ?? '');
+      const savedEmail = typeof window !== 'undefined' ? (localStorage.getItem('pchub-user-email') || (() => {
+        try {
+          const extra = JSON.parse(localStorage.getItem('pchub-profile-extra') || '{}');
+          return extra.email;
+        } catch { return ''; }
+      })()) : '';
+      setEmail(savedEmail || nksUser.email || user.email || '');
       setPhone(nksUser.phone ?? user.phone ?? '');
       
       // Birthday
@@ -188,12 +194,43 @@ export default function ProfilePage() {
     const fullName = `${firstName} ${lastName}`.trim();
     const genderMap: Record<string, number> = { 'Nam': 0, 'Nữ': 1, 'Khác': 2 };
 
+    const emailTrimmed = email.trim();
+    if (emailTrimmed) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        showNotification('error', 'Email không đúng định dạng. Vui lòng nhập địa chỉ email hợp lệ.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    const phoneTrimmed = phone.trim();
+    if (phoneTrimmed) {
+      const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+      if (!phoneRegex.test(phoneTrimmed)) {
+        showNotification('error', 'Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09).');
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (birthday) {
+      const bDate = new Date(birthday);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (isNaN(bDate.getTime()) || bDate > today) {
+        showNotification('error', 'Ngày sinh không hợp lệ. Ngày sinh không được lớn hơn ngày hiện tại.');
+        setLoading(false);
+        return;
+      }
+    }
+
     const payload = {
       firstname: firstName,
       lastname: lastName,
       name: fullName,
-      phone,
-      email,
+      phone: phoneTrimmed,
+      email: emailTrimmed,
       dob: birthday,
       gender: genderMap[gender] ?? 0,
     };
@@ -206,21 +243,24 @@ export default function ProfilePage() {
         name: fullName,
         firstname: firstName,
         lastname: lastName,
-        phone,
-        email,
+        phone: phoneTrimmed,
+        email: emailTrimmed,
         dob: birthday,
         gender: genderMap[gender] ?? 0,
       });
 
-      localStorage.setItem('pchub-profile-extra', JSON.stringify({ birthday, gender }));
+      localStorage.setItem('pchub-profile-extra', JSON.stringify({ birthday, gender, email: emailTrimmed }));
+      if (emailTrimmed) {
+        localStorage.setItem('pchub-user-email', emailTrimmed);
+      }
 
-      if (email) {
+      if (emailTrimmed) {
         await saveUserToDatabase({
-          email,
+          email: emailTrimmed,
           name: fullName,
           first_name: firstName,
           last_name: lastName,
-          phone,
+          phone: phoneTrimmed,
           dob: birthday,
           gender,
         });
@@ -230,11 +270,14 @@ export default function ProfilePage() {
       if (token) {
         const freshProfile = await CompanyApiService.getProfile(token);
         if (freshProfile.success && freshProfile.user) {
+          if (emailTrimmed) {
+            freshProfile.user.email = emailTrimmed;
+          }
           syncLocalUserState(freshProfile.user);
         }
       }
 
-      showNotification('success', res.message || 'Cập nhật thông tin tài khoản thành công!');
+      showNotification('success', 'Cập nhật thông tin tài khoản thành công!');
     } else {
       showNotification('error', res.message || 'Cập nhật thông tin thất bại từ máy chủ NKS.');
     }
@@ -1163,6 +1206,7 @@ export default function ProfilePage() {
                 <input 
                   type="date" 
                   value={birthday} 
+                  max={new Date().toISOString().split('T')[0]}
                   onChange={e => setBirthday(e.target.value)}
                   style={{
                     width: '100%',

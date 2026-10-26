@@ -83,9 +83,13 @@ async function postApi(endpoint: string, data: Record<string, any> = {}, token?:
       result.success !== false;
 
     if (!isSuccess) {
+      let rawMsg = result.message || result.error || result.msg || result.data?.message || `Lỗi từ máy chủ NKS (Mã HTTP: ${response.status})`;
+      if (typeof rawMsg === 'string' && (rawMsg.toLowerCase().includes('unauthorized') || response.status === 401)) {
+        rawMsg = 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.';
+      }
       return {
         success: false,
-        message: result.message || result.error || result.msg || result.data?.message || `Lỗi từ máy chủ NKS (Mã HTTP: ${response.status})`,
+        message: rawMsg,
         data: result,
         status: response.status,
       };
@@ -125,9 +129,14 @@ export const CompanyApiService = {
       }
     }
 
+    let failureMsg = res.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản.';
+    if (typeof failureMsg === 'string' && (failureMsg.toLowerCase().includes('unauthorized') || failureMsg.toLowerCase().includes('unauthenticated'))) {
+      failureMsg = 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.';
+    }
+
     return {
       success: false as const,
-      message: res.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản.',
+      message: failureMsg,
     };
   },
 

@@ -7,7 +7,8 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const category_id = searchParams.get('category_id') || searchParams.get('category') || undefined;
+    const rawCategory = searchParams.get('category_id') || searchParams.get('category') || undefined;
+    const category_id = (rawCategory === 'tat-ca' || rawCategory === 'all') ? undefined : rawCategory;
     const brand_id = searchParams.get('brand_id') || undefined;
     const search = searchParams.get('search') || undefined;
     const slug = searchParams.get('slug') || undefined;

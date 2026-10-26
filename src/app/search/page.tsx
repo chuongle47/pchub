@@ -32,7 +32,8 @@ function SearchContent() {
   const searchParams = useSearchParams();
 
   const urlSearch = searchParams?.get('search') || searchParams?.get('q') || '';
-  const urlCategory = searchParams?.get('category') || searchParams?.get('category_id') || '';
+  const rawCategory = searchParams?.get('category') || searchParams?.get('category_id') || '';
+  const urlCategory = (rawCategory === 'tat-ca' || rawCategory === 'all') ? '' : rawCategory;
   const urlBrand = searchParams?.get('brand') || searchParams?.get('brand_id') || '';
   const urlMinPrice = searchParams?.get('min_price') || '';
   const urlMaxPrice = searchParams?.get('max_price') || '';
@@ -123,7 +124,9 @@ function SearchContent() {
         const paramsObj = new URLSearchParams();
 
         if (urlSearch) paramsObj.set('search', urlSearch);
-        if (selectedCategory) paramsObj.set('category_id', selectedCategory);
+        if (selectedCategory && selectedCategory !== 'tat-ca' && selectedCategory !== 'all') {
+          paramsObj.set('category_id', selectedCategory);
+        }
         if (selectedBrands.length > 0) paramsObj.set('brand_id', selectedBrands.join(','));
         if (appliedMinPrice) paramsObj.set('min_price', appliedMinPrice);
         if (appliedMaxPrice) paramsObj.set('max_price', appliedMaxPrice);
@@ -529,10 +532,10 @@ function SearchContent() {
                     padding: '8px 10px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: selectedCategory === '' ? '#eff6ff' : 'transparent',
-                    color: selectedCategory === '' ? '#2563eb' : '#475569',
+                    background: (!selectedCategory || selectedCategory === 'tat-ca' || selectedCategory === 'all') ? '#eff6ff' : 'transparent',
+                    color: (!selectedCategory || selectedCategory === 'tat-ca' || selectedCategory === 'all') ? '#2563eb' : '#475569',
                     fontSize: '13px',
-                    fontWeight: selectedCategory === '' ? 700 : 500,
+                    fontWeight: (!selectedCategory || selectedCategory === 'tat-ca' || selectedCategory === 'all') ? 700 : 500,
                     textAlign: 'left',
                     cursor: 'pointer',
                   }}
@@ -807,7 +810,7 @@ function SearchContent() {
                   </span>
                 )}
 
-                {selectedCategory && (
+                {selectedCategory && selectedCategory !== 'tat-ca' && selectedCategory !== 'all' && (
                   <span style={{
                     background: '#ffffff',
                     border: '1px solid #cbd5e1',

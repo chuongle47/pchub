@@ -151,9 +151,17 @@ export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       user: null,
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        set({ user });
+        if (typeof window !== 'undefined') {
+          useWishlistStore.getState().syncUserWishlist(user ? (user.id || user.email) : null);
+        }
+      },
       logout: () => {
         set({ user: null });
+        if (typeof window !== 'undefined') {
+          useWishlistStore.getState().clearWishlist();
+        }
         document.cookie =
           'pchub-user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie =
@@ -264,36 +272,113 @@ export const useUIStore = create<UIStore>()((set) => ({
 }));
 
 // ==================== WISHLIST STORE ====================
-interface WishlistStore {
-  ids: string[];
-  addWishlist: (id: string) => void;
-  removeWishlist: (id: string) => void;
-  toggleWishlist: (id: string) => void;
-  toggle: (id: string) => void;
+function getActiveWishlistUserKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const authStorage = localStorage.getItem('pchub-auth');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      const user = parsed.state?.user;
+      if (user?.id || user?.email) {
+        return String(user.id || user.email).toLowerCase().trim();
+      }
+    }
+  } catch {}
+  return null;
 }
 
-export const useWishlistStore = create<WishlistStore>()(
-  persist(
-    (set, get) => ({
-      ids: [],
-      addWishlist: (id) => set({ ids: [...get().ids, id] }),
-      removeWishlist: (id) =>
-        set({ ids: get().ids.filter((item) => item !== id) }),
-      toggleWishlist: (id) => {
-        const exists = get().ids.includes(id);
-        if (exists) {
-          get().removeWishlist(id);
-        } else {
-          get().addWishlist(id);
-        }
-      },
-      toggle: (id) => {
-        get().toggleWishlist(id);
-      },
-    }),
-    { name: 'pchub-wishlist' }
-  )
-);
+function loadWishlistForUser(userKey: string | null): string[] {
+  if (!userKey || typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(`pchub-wishlist-${userKey}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function saveWishlistForUser(userKey: string | null, ids: string[]) {
+  if (!userKey || typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`pchub-wishlist-${userKey}`, JSON.stringify(ids));
+  } catch {}
+}
+
+interface WishlistStore {
+  ids: string[];
+  addWishlist: (id: string) => boolean;
+  removeWishlist: (id: string) => void;
+  toggleWishlist: (id: string) => boolean;
+  toggle: (id: string) => boolean;
+  syncUserWishlist: (userKey?: string | null) => void;
+  clearWishlist: () => void;
+}
+
+export const useWishlistStore = create<WishlistStore>()((set, get) => ({
+  ids: [],
+  syncUserWishlist: (userKey) => {
+    const key = userKey ? String(userKey).toLowerCase().trim() : getActiveWishlistUserKey();
+    if (!key) {
+      set({ ids: [] });
+      return;
+    }
+    const userIds = loadWishlistForUser(key);
+    set({ ids: userIds });
+  },
+  clearWishlist: () => {
+    set({ ids: [] });
+  },
+  addWishlist: (id) => {
+    const key = getActiveWishlistUserKey();
+    if (!key) {
+      if (typeof window !== 'undefined') {
+        alert('Vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích!');
+        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+      }
+      return false;
+    }
+    const newIds = Array.from(new Set([...get().ids, id]));
+    set({ ids: newIds });
+    saveWishlistForUser(key, newIds);
+    return true;
+  },
+  removeWishlist: (id) => {
+    const key = getActiveWishlistUserKey();
+    const newIds = get().ids.filter((item) => item !== id);
+    set({ ids: newIds });
+    if (key) {
+      saveWishlistForUser(key, newIds);
+    }
+  },
+  toggleWishlist: (id) => {
+    const key = getActiveWishlistUserKey();
+    if (!key) {
+      if (typeof window !== 'undefined') {
+        alert('Vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích!');
+        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+      }
+      return false;
+    }
+    const exists = get().ids.includes(id);
+    if (exists) {
+      get().removeWishlist(id);
+      return false;
+    } else {
+      return get().addWishlist(id);
+    }
+  },
+  toggle: (id) => {
+    return get().toggleWishlist(id);
+  },
+}));
+
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    useWishlistStore.getState().syncUserWishlist();
+  }, 0);
+}
 
 // ==================== ORDER STORE ====================
 interface OrderStore {
