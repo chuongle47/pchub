@@ -28,16 +28,18 @@ type Message = {
 
 const INITIAL_MESSAGE: Message = {
   from: 'ai',
-  text: 'Xin chào! Mình là **PCHub AI Advisor** 🤖\nMình hỗ trợ tư vấn chọn CPU, VGA, RAM, Mainboard, nguồn PSU & build cấu hình PC tối ưu theo ngân sách của bạn. Bạn đang cần hỗ trợ gì nhé?',
+  text: 'Xin chào! Mình là **PCHub AI Advisor** 🤖\n' +
+    'Mình hỗ trợ tư vấn chọn linh kiện theo **Thương hiệu** (Logitech, Dell, Samsung, Asus, MSI, Kingston...) và **Mức giá / Ngân sách** (dưới 500k, 1 - 2 triệu, dưới 15 triệu...), cũng như build trọn bộ PC tối ưu theo nhu cầu của bạn. Bạn đang cần tìm sản phẩm gì nhé?',
 };
 
 const QUICK_QUESTIONS = [
+  '🐭 Chuột Logitech dưới 500k',
+  '🖥️ Màn hình Dell dưới 15 triệu',
+  '🎧 Tai nghe Rapoo / Sony tầm 1 triệu',
+  '⌨️ Bàn phím cơ giá rẻ dưới 1 triệu',
   '💡 Tư vấn PC gaming 20 - 25 triệu',
-  '⚡ RTX 4070 Ti SUPER chọn PSU mấy Watt?',
-  '🖥️ Mainboard Z790 khác B760 thế nào?',
-  '💾 Nên chọn RAM DDR4 hay DDR5?',
-  '🎮 Build PC chơi Black Myth Wukong 2K',
-  '🎨 Cấu hình đồ họa & Edit video 4K 30 triệu',
+  '⚡ VGA RTX 4060 tầm 8 - 10 triệu',
+  '💾 RAM Kingston DDR5 32GB',
 ];
 
 export default function AIChatWidget() {
@@ -471,34 +473,62 @@ export default function AIChatWidget() {
                       </div>
                     )}
 
-                    {message.from === 'ai' && index > 0 && (
-                      <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleApplyBuild(message.text, message.products)}
-                          style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '10px 16px',
-                            fontSize: '13px',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <Sparkles size={15} />
-                          <span>⚡ Áp Dụng Cấu Hình Này Vào PC Builder →</span>
-                        </button>
-                      </div>
-                    )}
+                    {message.from === 'ai' && index > 0 && (() => {
+                      const txt = (message.text || '').toLowerCase();
+                      let isBuild = false;
+                      if (message.products && message.products.length >= 2) {
+                        const pcSlots = new Set<string>();
+                        for (const p of message.products) {
+                          const cat = ((p.category_slug || '') + ' ' + (p.category_name || '')).toLowerCase();
+                          const n = (p.name || '').toLowerCase();
+                          if (cat.includes('cpu') || n.includes('intel core') || n.includes('ryzen')) pcSlots.add('cpu');
+                          if (cat.includes('gpu') || cat.includes('vga') || n.includes('rtx ') || n.includes('gtx ') || n.includes('rx ') || n.includes('radeon')) pcSlots.add('gpu');
+                          if (cat.includes('main') || n.includes('bo mạch') || n.includes('b760') || n.includes('z790') || n.includes('b650') || n.includes('a620')) pcSlots.add('main');
+                          if (cat.includes('ram') || n.includes('ddr4') || n.includes('ddr5')) pcSlots.add('ram');
+                          if (cat.includes('psu') || n.includes('nguồn máy tính')) pcSlots.add('psu');
+                          if (cat.includes('case') || n.includes('vỏ case')) pcSlots.add('case');
+                          if (cat.includes('cooling') || n.includes('tản nhiệt')) pcSlots.add('cooling');
+                          if (cat.includes('ssd') || cat.includes('storage') || n.includes('ổ cứng')) pcSlots.add('storage');
+                        }
+                        if (pcSlots.size >= 2) isBuild = true;
+                      }
+                      if (!isBuild) {
+                        const hasBuildKeywords = txt.includes('cấu hình') || txt.includes('build pc') || txt.includes('dàn pc') || txt.includes('bộ pc');
+                        const hasHardwareKeywords = (txt.includes('cpu') || txt.includes('vi xử lý')) && (txt.includes('main') || txt.includes('vga') || txt.includes('card đồ họa') || txt.includes('ram'));
+                        if (hasBuildKeywords && hasHardwareKeywords) isBuild = true;
+                      }
+
+                      if (!isBuild) return null;
+
+                      return (
+                        <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleApplyBuild(message.text, message.products)}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '10px 16px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <Sparkles size={15} />
+                            <span>⚡ Áp Dụng Cấu Hình Này Vào PC Builder →</span>
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

@@ -298,6 +298,27 @@ async function runTestSuite() {
   assert('Trang Đăng nhập đã ẩn liên kết đăng ký tài khoản chưa sử dụng được', loginFile.includes('false &&') && loginFile.includes('Đăng ký miễn phí'));
 
   // -------------------------------------------------------------
+  // [12/12] KIỂM THỬ TÍNH NĂNG TƯ VẤN AI (BRAND & BUDGET ADVISOR)
+  // -------------------------------------------------------------
+  console.log('\n\x1b[34m[12/12] Kiểm thử AI Advisor: Tư vấn theo Thương hiệu, Mức giá & Danh mục linh kiện\x1b[0m');
+  const aiParserFile = fs.readFileSync(path.resolve('src/lib/ai-query-parser.ts'), 'utf-8');
+  assert('Module ai-query-parser tồn tại và hỗ trợ trích xuất Thương hiệu & Ngân sách', aiParserFile.includes('parseUserHardwareIntent') && aiParserFile.includes('KNOWN_BRANDS_CONFIG'));
+  assert('Hỗ trợ nhận diện các thương hiệu phổ biến (Logitech, Dell, Samsung, Asus, MSI, Rapoo...)', aiParserFile.includes('logitech') && aiParserFile.includes('dell') && aiParserFile.includes('samsung') && aiParserFile.includes('asus') && aiParserFile.includes('rapoo'));
+  assert('Hỗ trợ trích xuất ngân sách đa dạng (k, nghìn, tr, triệu, tầm, dưới, từ...đến...)', aiParserFile.includes('parseAmount') && aiParserFile.includes('triệu'));
+
+  const geminiFile = fs.readFileSync(path.resolve('src/lib/gemini.ts'), 'utf-8');
+  assert('Gemini AI Advisor tích hợp phân tích intent và gợi ý linh kiện phù hợp với Thương hiệu & Giá', geminiFile.includes('parseUserHardwareIntent') && geminiFile.includes('getSmartLocalAdvisorReply'));
+  assert('Tối ưu hóa phản hồi: Không ép khuôn mẫu 5 bước PC Build vào các câu hỏi phụ kiện đơn lẻ (chuột, bàn phím, màn hình)', geminiFile.includes('intent.isPcBuild') && geminiFile.includes('intent.category'));
+
+  const aiChatRouteFile = fs.readFileSync(path.resolve('src/app/api/ai/chat/route.ts'), 'utf-8');
+  assert('API /api/ai/chat chấm điểm và ưu tiên sản phẩm đúng Thương hiệu (+250) và đúng Ngân sách', aiChatRouteFile.includes('intent.brand') && aiChatRouteFile.includes('intent.maxPrice'));
+  assert('API /api/ai/chat trả về danh sách sản phẩm theo đúng danh mục người dùng hỏi thay vì ép full dàn PC', aiChatRouteFile.includes("intent.category && intent.category !== 'pc_build'"));
+
+  const aiChatWidgetFile = fs.readFileSync(path.resolve('src/components/layout/AIChatWidget.tsx'), 'utf-8');
+  assert('Giao diện Chatbot có câu hỏi mẫu tư vấn theo Thương hiệu & Ngân sách', aiChatWidgetFile.includes('Chuột Logitech dưới 500k') && aiChatWidgetFile.includes('Màn hình Dell'));
+  assert('Nút "Áp dụng cấu hình vào PC Builder" chỉ hiển thị khi có đề xuất cấu hình PC thực sự', aiChatWidgetFile.includes('isBuild') && aiChatWidgetFile.includes('pcSlots'));
+
+  // -------------------------------------------------------------
   // TỔNG KẾT KẾT QUẢ KIỂM THỬ
   // -------------------------------------------------------------
   console.log('\n\x1b[36m=======================================================');
