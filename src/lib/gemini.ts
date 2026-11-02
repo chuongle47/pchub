@@ -115,9 +115,10 @@ ${catalogContext}
 `;
 
   const candidateModels = [
-    'gemini-1.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-pro',
+    'gemini-flash-lite-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.6-flash',
   ];
 
   const contents = [
@@ -142,7 +143,7 @@ ${catalogContext}
             maxOutputTokens: 2048,
           }
         }),
-        signal: AbortSignal.timeout(20000)
+        signal: AbortSignal.timeout(8000)
       });
 
       if (!response.ok) {
@@ -251,13 +252,13 @@ function getSmartLocalAdvisorReply(
   const catalogItems: ParsedCatalogItem[] = catalogLines.map(parseCatalogLine);
 
   // =========================================================================
-  // CASE 1: Specific Component or Peripheral (Mouse, Keyboard, Monitor, Headset...)
+  // CASE 1: Specific Component / Peripheral / Laptop
   // =========================================================================
   if (intent.category && intent.category !== 'pc_build' && catalogItems.length > 0) {
     const catNameLower = (intent.categoryName || '').toLowerCase();
     
     // Filter by category
-    let pool = catalogItems.filter(item => {
+    const pool = catalogItems.filter(item => {
       const pCat = item.category.toLowerCase();
       const pName = item.name.toLowerCase();
       if (intent.category === 'monitor') return pCat.includes('màn') || pName.includes('màn') || pName.includes('monitor');
@@ -265,6 +266,7 @@ function getSmartLocalAdvisorReply(
       if (intent.category === 'keyboard') return pCat.includes('bàn phím') || pName.includes('bàn phím') || pName.includes('phím') || pName.includes('keyboard');
       if (intent.category === 'headset') return pCat.includes('tai nghe') || pName.includes('tai nghe') || pName.includes('headset') || pName.includes('headphone');
       if (intent.category === 'speaker') return pCat.includes('loa') || pName.includes('loa') || pName.includes('speaker');
+      if (intent.category === 'laptop') return pCat.includes('laptop') || pName.includes('laptop') || pName.includes('máy tính xách tay');
       if (intent.category === 'cpu') return pCat.includes('cpu') || pName.includes('cpu') || pName.includes('intel') || pName.includes('ryzen');
       if (intent.category === 'gpu') return pCat.includes('vga') || pCat.includes('gpu') || pName.includes('rtx') || pName.includes('gtx') || pName.includes('card');
       if (intent.category === 'ram') return pCat.includes('ram') || pName.includes('ram') || pName.includes('ddr4') || pName.includes('ddr5');
@@ -283,31 +285,41 @@ function getSmartLocalAdvisorReply(
       brandMatchedPool = pool.filter(p => p.brand.toLowerCase() === bLower || p.name.toLowerCase().includes(bLower));
     }
 
-    // Check price filter on the brand-matched pool (or general pool)
-    const baseFilterPool = brandMatchedPool.length > 0 ? brandMatchedPool : pool;
-    let priceMatched = baseFilterPool;
+    // Price Filtering Logic
+    let priceMatched: ParsedCatalogItem[] = [];
+    let isExceededBudget = false;
 
     if (intent.maxPrice) {
-      const maxLimit = intent.maxPrice * 1.1; // 10% tolerance
-      const filtered = baseFilterPool.filter(p => p.priceNum > 0 && p.priceNum <= maxLimit);
-      if (filtered.length > 0) priceMatched = filtered;
+      const maxLimit = intent.maxPrice * 1.05; // 5% tolerance
+      priceMatched = brandMatchedPool.filter(p => p.priceNum > 0 && p.priceNum <= maxLimit);
+      
+      // If brand specified but all items of this brand exceed max budget
+      if (priceMatched.length === 0 && intent.brand && brandMatchedPool.length > 0) {
+        isExceededBudget = true;
+        // Find alternative items within budget from other brands in this category
+        priceMatched = pool.filter(p => p.priceNum > 0 && p.priceNum <= maxLimit);
+      } else if (priceMatched.length === 0) {
+        priceMatched = brandMatchedPool.slice(0, 3);
+      }
     } else if (intent.minPrice) {
-      const minLimit = intent.minPrice * 0.9;
-      const filtered = baseFilterPool.filter(p => p.priceNum >= minLimit);
-      if (filtered.length > 0) priceMatched = filtered;
+      const minLimit = intent.minPrice * 0.95;
+      priceMatched = brandMatchedPool.filter(p => p.priceNum >= minLimit);
+      if (priceMatched.length === 0) priceMatched = brandMatchedPool.slice(0, 3);
     } else if (intent.targetPrice) {
       const target = intent.targetPrice;
-      priceMatched = [...baseFilterPool].sort((a, b) => Math.abs(a.priceNum - target) - Math.abs(b.priceNum - target));
+      priceMatched = [...brandMatchedPool].sort((a, b) => Math.abs(a.priceNum - target) - Math.abs(b.priceNum - target));
+    } else {
+      priceMatched = brandMatchedPool;
     }
 
-    // Sort order
+    // Sorting
     if (intent.isBudget) {
       priceMatched = [...priceMatched].sort((a, b) => (a.priceNum || 999999999) - (b.priceNum || 999999999));
     } else if (intent.isPremium) {
       priceMatched = [...priceMatched].sort((a, b) => b.priceNum - a.priceNum);
     }
 
-    // Deduplicate by clean name
+    // Deduplicate
     const uniqueMap = new Map<string, ParsedCatalogItem>();
     priceMatched.forEach(item => {
       const cleanKey = item.name.toLowerCase().trim();
@@ -318,36 +330,61 @@ function getSmartLocalAdvisorReply(
     const finalItems = Array.from(uniqueMap.values()).slice(0, 4);
 
     if (finalItems.length > 0) {
-      let titleDetails = intent.categoryName;
-      if (intent.brand) titleDetails += ` · Hãng **${intent.brand}**`;
-      if (intent.maxPrice) titleDetails += ` · Mức giá: **dưới ${intent.maxPrice.toLocaleString('vi-VN')}₫**`;
-      else if (intent.minPrice) titleDetails += ` · Mức giá: **từ ${intent.minPrice.toLocaleString('vi-VN')}₫**`;
-      else if (intent.targetPrice) titleDetails += ` · Tầm giá: **~${intent.targetPrice.toLocaleString('vi-VN')}₫**`;
+      let titleCriteria = intent.categoryName;
+      if (intent.brand) titleCriteria += ` · Thương hiệu **${intent.brand}**`;
+      if (intent.maxPrice) titleCriteria += ` · Mức giá: **dưới ${intent.maxPrice.toLocaleString('vi-VN')}₫**`;
+      else if (intent.minPrice) titleCriteria += ` · Mức giá: **từ ${intent.minPrice.toLocaleString('vi-VN')}₫**`;
+      else if (intent.targetPrice) titleCriteria += ` · Tầm giá: **~${intent.targetPrice.toLocaleString('vi-VN')}₫**`;
 
-      let reply = `🎯 **PCHub AI Advisor — Tư vấn theo yêu cầu:**\n` +
-        `• **Tiêu chí**: ${titleDetails}\n\n` +
-        `🛒 **Các sản phẩm phù hợp nhất đang có sẵn tại PCHub:**\n\n`;
+      let reply = `Chào bạn! Mình là **PCHub AI Advisor** 🤖\n\n` +
+        `Dưới đây là tư vấn chuyên sâu theo tiêu chí của bạn: ${titleCriteria}\n\n`;
+
+      if (isExceededBudget && intent.brand) {
+        const lowestBrandItem = [...brandMatchedPool].sort((a, b) => a.priceNum - b.priceNum)[0];
+        reply += `⚠️ **Lưu ý về ngân sách**: Trong kho hàng PCHub hiện tại, các dòng **${intent.categoryName}** từ thương hiệu **${intent.brand}** có mức giá khởi điểm từ **${lowestBrandItem.priceStr}** (mẫu *${lowestBrandItem.name}*).\n` +
+          `Tuy nhiên, để đảm bảo tiêu chí ngân sách **dưới ${intent.maxPrice?.toLocaleString('vi-VN')}₫**, PCHub xin đề xuất các lựa chọn có hiệu năng tương đương cực tốt sau đây:\n\n`;
+      } else {
+        reply += `📊 **Đánh giá tổng quan phân khúc & thương hiệu:**\n`;
+        if (intent.brand === 'Logitech') {
+          reply += `• **Logitech** là thương hiệu hàng đầu thế giới về thiết bị ngoại vi, nổi tiếng với độ bền cao, cảm biến quang học chuẩn xác và phần mềm Logitech G HUB trực quan.\n`;
+        } else if (intent.brand === 'Dell') {
+          reply += `• **Dell** luôn đứng số 1 về độ bền và chất lượng hiển thị chuẩn màu (đặc biệt dòng UltraSharp tấm nền IPS cao cấp), bảo hành chính hãng đổi mới tận nơi.\n`;
+        } else if (intent.brand === 'Samsung') {
+          reply += `• **Samsung** sở hữu công nghệ tấm nền vượt trội, độ tương phản sâu và dòng màn hình cong Odyssey cực kỳ ấn tượng cho giải trí và gaming.\n`;
+        } else if (intent.brand === 'Sony') {
+          reply += `• **Sony** là biểu tượng âm thanh cao cấp với chất âm chi tiết, công nghệ phục hồi âm DSEE và thời lượng pin vượt trội lên tới 50 giờ.\n`;
+        } else if (intent.brand === 'Rapoo') {
+          reply += `• **Rapoo** là thương hiệu có chỉ số P/P (hiệu năng trên giá thành) tốt nhất phân khúc phổ thông, phím cơ và chuột gõ êm, độ bền switch cao.\n`;
+        } else if (intent.brand === 'Asus' || intent.brand === 'MSI' || intent.brand === 'Gigabyte') {
+          reply += `• **${intent.brand}** sở hữu hệ thống tản nhiệt linh kiện tối ưu, dàn phase điện VRM bền bỉ và độ ổn định cao khi chạy tải nặng liên tục.\n`;
+        } else {
+          reply += `• Các sản phẩm trong phân khúc này tại PCHub đều là hàng chính hãng 100%, bảo hành từ 12 đến 36 tháng.\n`;
+        }
+        reply += `\n🛒 **Danh sách sản phẩm đề xuất tối ưu nhất:**\n\n`;
+      }
 
       finalItems.forEach((item, idx) => {
         reply += `${idx + 1}. **${item.name}**\n` +
           `   • **Giá bán**: **${item.priceStr || 'Liên hệ'}**\n` +
           `   • **Hãng sản xuất**: ${item.brand}\n`;
         if (item.specsStr) {
-          reply += `   • **Thông số**: ${item.specsStr}\n`;
+          reply += `   • **Thông số nổi bật**: ${item.specsStr}\n`;
         }
         reply += `\n`;
       });
 
-      reply += `💡 **Gợi ý chọn mua**: Quý khách có thể bấm trực tiếp vào thẻ sản phẩm bên dưới để xem chi tiết thông số kỹ thuật và đặt hàng nhanh chóng!`;
+      reply += `💡 **Lời khuyên chọn mua từ chuyên gia:**\n` +
+        `• Bạn có thể bấm trực tiếp vào thẻ sản phẩm bên dưới để xem hình ảnh thực tế, thông số kỹ thuật chi tiết hoặc bấm **Thêm vào giỏ hàng** để đặt mua nhanh chóng!\n` +
+        `• Nếu bạn cần tư vấn thêm về mục đích cụ thể (ví dụ: chơi game FPS/MOBA, làm đồ họa hay gõ văn phòng yên tĩnh), hãy nhắn cho mình biết nhé!`;
+
       return reply;
     } else if (intent.brand && brandMatchedPool.length === 0 && pool.length > 0) {
-      // Brand not available in this category, offer alternatives
       const altItems = pool.slice(0, 3);
       return `💡 **PCHub AI Advisor xin thông tin:**\n` +
         `Hiện tại trong kho hàng PCHub chưa có sẵn dòng ${intent.categoryName || 'sản phẩm'} từ thương hiệu **${intent.brand}**.\n\n` +
         `Tuy nhiên, PCHub xin gợi ý các dòng ${intent.categoryName || 'linh kiện'} chất lượng hàng đầu cùng phân khúc đang có sẵn:\n\n` +
         altItems.map((item, idx) => `${idx + 1}. **${item.name}** — **${item.priceStr}** (${item.brand})`).join('\n') +
-        `\n\n👉 Bạn hãy tham khảo các sản phẩm bên dưới nhé!`;
+        `\n\n👉 Bạn hãy tham khảo các sản phẩm hiển thị bên dưới nhé!`;
     }
   }
 
@@ -359,24 +396,25 @@ function getSmartLocalAdvisorReply(
     const brandProducts = catalogItems.filter(p => p.brand.toLowerCase() === bLower || p.name.toLowerCase().includes(bLower));
 
     if (brandProducts.length > 0) {
-      // Deduplicate
       const uniqueBrand = new Map<string, ParsedCatalogItem>();
       brandProducts.forEach(item => uniqueBrand.set(item.name.toLowerCase(), item));
       const topBrand = Array.from(uniqueBrand.values()).slice(0, 5);
 
-      return `🏷️ **PCHub AI Advisor — Các sản phẩm từ thương hiệu ${intent.brand}:**\n\n` +
-        `PCHub hiện là đại lý phân phối chính hãng các sản phẩm **${intent.brand}** với chế độ bảo hành 12 - 36 tháng:\n\n` +
+      return `🏷️ **PCHub AI Advisor — Tư vấn sản phẩm thương hiệu ${intent.brand}:**\n\n` +
+        `PCHub hiện là đối tác phân phối chính hãng các sản phẩm **${intent.brand}** tại Việt Nam với chế độ bảo hành 12 - 36 tháng 1 đổi 1:\n\n` +
         topBrand.map((item, idx) => `${idx + 1}. **${item.name}** — **${item.priceStr}** [${item.category}]`).join('\n') +
-        `\n\n👉 Bạn có thể click vào sản phẩm bên dưới để xem chi tiết và đặt hàng!`;
+        `\n\n💡 Bạn có thể nêu mức giá dự kiến (ví dụ: *"dưới 1 triệu"*, *"tầm 5 - 10 triệu"*) hoặc danh mục cụ thể (chuột, bàn phím, màn hình) để mình lọc chính xác nhất nhé!`;
     }
   }
 
   // =========================================================================
   // CASE 3: Full PC Build with Budget (e.g. "Build PC gaming 20 triệu")
   // =========================================================================
-  const budget = intent.targetPrice ? intent.targetPrice / 1000000 : null;
-  if ((intent.isPcBuild || budget !== null) && catalogItems.length > 0) {
-    const budgetVal = budget || 20;
+  const lowerMsg = message.toLowerCase();
+  const isRealPcBuild = intent.isPcBuild || lowerMsg.includes('build') || lowerMsg.includes('cấu hình') || lowerMsg.includes('dàn pc') || lowerMsg.includes('bộ máy tính') || (lowerMsg.includes('pc') && (lowerMsg.includes('triệu') || lowerMsg.includes('tr')));
+
+  if (isRealPcBuild && catalogItems.length > 0) {
+    const budgetVal = intent.targetPrice ? (intent.targetPrice / 1000000).toFixed(0) : '20';
 
     const cpus = catalogItems.filter(p => p.name.toLowerCase().includes('cpu') || p.name.toLowerCase().includes('intel') || p.name.toLowerCase().includes('ryzen'));
     const gpus = catalogItems.filter(p => p.name.toLowerCase().includes('vga') || p.name.toLowerCase().includes('rtx') || p.name.toLowerCase().includes('gtx') || p.name.toLowerCase().includes('card'));
@@ -393,36 +431,31 @@ function getSmartLocalAdvisorReply(
       return `**${fallbackName}** — **${fallbackPrice}**`;
     };
 
-    return `📌 **Cấu hình PC đề xuất từ PCHub AI Advisor (~${budgetVal} Triệu VNĐ):**
-- **Nhu cầu**: Gaming, Thiết kế đồ họa & Đa nhiệm mượt mà
-- **Tiêu chí**: 100% linh kiện chính hãng, tương thích socket, nguồn đủ đệm tải an toàn
-
-🛒 **Danh sách linh kiện tối ưu trong tầm giá:**
-1. **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000₫')} — *10 nhân 16 luồng, hiệu năng đa nhân mạnh mẽ.*
-2. **Mainboard**: ${getFormattedItem(mains, 'Mainboard B760M DDR4/DDR5', '2.890.000₫')} — *VRM ổn định, hỗ trợ M.2 PCIe 4.0.*
-3. **VGA**: ${getFormattedItem(gpus, 'NVIDIA GeForce RTX 4060 8GB', '8.490.000₫')} — *Cân mượt các tựa game AAA ở độ phân giải FHD/2K, hỗ trợ DLSS 3.*
-4. **RAM**: ${getFormattedItem(rams, 'Kingston FURY Beast 16GB (2x8GB)', '990.000₫')} — *Chạy kênh đôi Dual Channel kích hoạt tối đa băng thông.*
-5. **SSD**: ${getFormattedItem(ssds, 'SSD NVMe PCIe 500GB Gen4', '990.000₫')} — *Tốc độ đọc >3500MB/s giúp nạp game và Windows cực nhanh.*
-6. **Nguồn PSU**: ${getFormattedItem(psus, 'Nguồn 650W 80 Plus Bronze', '1.190.000₫')} — *Công suất thực đảm bảo hệ thống vận hành bền bỉ 24/7.*
-7. **Case & Tản**: ${getFormattedItem(cases, 'Case Mid-Tower Kính Cường Lực', '750.000₫')} — *Luồng gió đối lưu thông thoáng.*
-
-⚙️ **Đánh giá tương thích**:
-- Socket CPU & Mainboard: Khớp 100%.
-- Công suất tiêu thụ tối đa (Peak TDP): ~320W -> Nguồn 650W đệm tải an toàn >50%.
-- Kích thước VGA lắp vừa mọi case Mid-Tower tiêu chuẩn.
-
-👉 Bạn có thể bấm nút **⚡ Áp Dụng Cấu Hình Này Vào PC Builder** bên dưới để tinh chỉnh chi tiết!`;
+    return `📌 **Cấu hình PC đề xuất từ PCHub AI Advisor (~${budgetVal} Triệu VNĐ):**\n` +
+      `- **Mục đích**: Gaming mượt mà, Làm việc đa nhiệm & Thiết kế đồ họa\n` +
+      `- **Tiêu chuẩn**: 100% linh kiện chính hãng, tương thích socket, nguồn đủ đệm tải an toàn\n\n` +
+      `🛒 **Bảng cấu hình linh kiện tối ưu:**\n` +
+      `1. **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000₫')} — *10 nhân 16 luồng, đa nhiệm mượt mà.*\n` +
+      `2. **Mainboard**: ${getFormattedItem(mains, 'Mainboard B760M DDR5', '2.890.000₫')} — *VRM ổn định, hỗ trợ M.2 PCIe 4.0 tốc độ cao.*\n` +
+      `3. **VGA**: ${getFormattedItem(gpus, 'NVIDIA GeForce RTX 4060 8GB', '8.490.000₫')} — *Chiến tốt các tựa game AAA ở thiết lập High/Ultra, hỗ trợ DLSS 3.*\n` +
+      `4. **RAM**: ${getFormattedItem(rams, 'Kingston FURY Beast 16GB DDR5', '1.290.000₫')} — *Băng thông cao, mở hàng chục tab trình duyệt không lo tràn RAM.*\n` +
+      `5. **SSD**: ${getFormattedItem(ssds, 'SSD NVMe PCIe 500GB Gen4', '990.000₫')} — *Tốc độ đọc >3500MB/s giúp nạp game và Windows cực nhanh.*\n` +
+      `6. **Nguồn PSU**: ${getFormattedItem(psus, 'Nguồn 650W 80 Plus Bronze', '1.190.000₫')} — *Công suất thực, ổn định dòng điện lâu dài.*\n` +
+      `7. **Case**: ${getFormattedItem(cases, 'Case Mid-Tower Kính Cường Lực', '750.000₫')} — *Mặt lưới thoáng khí, luồng gió mát mẻ.*\n\n` +
+      `⚙️ **Đánh giá tương thích**: Socket khớp 100%, nguồn 650W đệm tải an toàn >40%, kích thước card lắp vừa vặn trong case.\n\n` +
+      `👉 Bạn có thể bấm nút **⚡ Áp Dụng Cấu Hình Này Vào PC Builder** bên dưới để tinh chỉnh chi tiết từng linh kiện nhé!`;
   }
 
   // =========================================================================
   // CASE 4: Fallback General Search or Friendly Guidance
   // =========================================================================
-  return `💡 **PCHub AI Advisor xin chào bạn!**\n` +
-    `Mình có thể hỗ trợ tư vấn chuyên sâu theo các tiêu chí:\n` +
-    `• **Theo mức giá**: ví dụ *"chuột dưới 500k"*, *"màn hình dưới 5 triệu"*, *"tai nghe tầm 1 triệu"*\n` +
-    `• **Theo thương hiệu**: ví dụ *"chuột Logitech"*, *"màn hình Dell"*, *"tai nghe Sony / HyperX"*\n` +
-    `• **Build PC trọn bộ**: ví dụ *"Build PC gaming 15 - 20 triệu"*, *"Cấu hình đồ họa 25 triệu"*\n\n` +
-    `👉 Bạn hãy nhập nhu cầu hoặc ngân sách cụ thể để mình hỗ trợ tốt nhất nhé!`;
+  return `💡 **Xin chào! Mình là PCHub AI Advisor — Trợ lý tư vấn phần cứng chuyên nghiệp 🤖**\n\n` +
+    `Mình có thể hỗ trợ giải đáp và tư vấn chi tiết cho bạn theo:\n` +
+    `• **Mức giá & Ngân sách**: *"chuột dưới 500k"*, *"màn hình dưới 15 triệu"*, *"tai nghe tầm 1 triệu"*\n` +
+    `• **Thương hiệu chính hãng**: *"chuột Logitech"*, *"màn hình Dell"*, *"tai nghe Sony / Rapoo"*, *"VGA Asus / MSI"*\n` +
+    `• **Nhu cầu sử dụng**: chơi game FPS, MOBA, làm đồ họa, văn phòng yên tĩnh hay học tập\n` +
+    `• **Build PC trọn bộ**: *"build PC gaming 15 - 20 triệu"*, *"PC văn phòng 8 triệu"*\n\n` +
+    `👉 Bạn hãy cho mình biết mức ngân sách hoặc sản phẩm bạn đang quan tâm nhé!`;
 }
 
 

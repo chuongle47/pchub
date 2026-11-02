@@ -1,9 +1,9 @@
 'use client';
 
 import { FormEvent, useState, useRef, useEffect } from 'react';
-import { Bot, ChevronDown, MessageCircle, Send, X, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { Bot, ChevronDown, MessageCircle, Send, X, Loader2, Sparkles, RefreshCw, ShoppingCart, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useUIStore } from '@/lib/store';
+import { useUIStore, useCartStore } from '@/lib/store';
 import { matchPresetKeyFromText, AI_BUILD_PRESETS, reconcileBuildComponents } from '@/lib/buildPresets';
 
 type RecommendedProduct = {
@@ -28,27 +28,34 @@ type Message = {
 
 const INITIAL_MESSAGE: Message = {
   from: 'ai',
-  text: 'Xin chào! Mình là **PCHub AI Advisor** 🤖\n' +
-    'Mình hỗ trợ tư vấn chọn linh kiện theo **Thương hiệu** (Logitech, Dell, Samsung, Asus, MSI, Kingston...) và **Mức giá / Ngân sách** (dưới 500k, 1 - 2 triệu, dưới 15 triệu...), cũng như build trọn bộ PC tối ưu theo nhu cầu của bạn. Bạn đang cần tìm sản phẩm gì nhé?',
+  text: 'Xin chào! Mình là **PCHub AI Advisor** 🤖\n\n' +
+    'Mình là chuyên gia tư vấn công nghệ chuyên sâu, sẵn sàng hỗ trợ bạn:\n' +
+    '• **Tư vấn theo Mức giá / Ngân sách**: *"chuột dưới 500k"*, *"màn hình dưới 15 triệu"*, *"tai nghe tầm 1 triệu"*\n' +
+    '• **Tư vấn theo Thương hiệu chính hãng**: **Logitech**, **Dell**, **Samsung**, **Asus**, **MSI**, **Sony**, **Rapoo**, **HyperX**, **Kingston**...\n' +
+    '• **Tư vấn theo Nhu cầu sử dụng**: Chơi game (FPS/MOBA/AAA), Thiết kế đồ họa 2D/3D, Dựng phim 4K hay Văn phòng yên tĩnh\n' +
+    '• **Xây dựng cấu hình PC trọn bộ**: Cân bằng hiệu năng trên giá thành (P/P) và đảm bảo 100% tương thích phần cứng.\n\n' +
+    '👉 Bạn đang cần tìm sản phẩm hoặc ngân sách nào nhé?',
 };
 
 const QUICK_QUESTIONS = [
   '🐭 Chuột Logitech dưới 500k',
   '🖥️ Màn hình Dell dưới 15 triệu',
-  '🎧 Tai nghe Rapoo / Sony tầm 1 triệu',
-  '⌨️ Bàn phím cơ giá rẻ dưới 1 triệu',
-  '💡 Tư vấn PC gaming 20 - 25 triệu',
+  '🎧 Tai nghe Sony tầm 1 triệu',
+  '⌨️ Bàn phím cơ dưới 1 triệu',
   '⚡ VGA RTX 4060 tầm 8 - 10 triệu',
-  '💾 RAM Kingston DDR5 32GB',
+  '🎮 Build PC Gaming 15 - 20 triệu',
+  '💼 Cấu hình PC Văn phòng 8 - 10 triệu',
 ];
 
 export default function AIChatWidget() {
   const router = useRouter();
   const open = useUIStore(state => state.isChatOpen);
   const setOpen = useUIStore(state => state.setChatOpen);
+  const addItemToCart = useCartStore(state => state.addItem);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const [addedId, setAddedId] = useState<string | null>(null);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -65,6 +72,23 @@ export default function AIChatWidget() {
 
   const handleClearChat = () => {
     setMessages([INITIAL_MESSAGE]);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, prod: RecommendedProduct) => {
+    e.stopPropagation();
+    addItemToCart({
+      id: prod.id,
+      name: prod.name,
+      price: prod.price || 0,
+      originalPrice: prod.original_price,
+      image: prod.image_url,
+      slug: prod.slug,
+      category: prod.category_name,
+      brand: prod.brand_name,
+      quantity: 1,
+    });
+    setAddedId(prod.id);
+    setTimeout(() => setAddedId(null), 2000);
   };
 
   const handleApplyBuild = (text: string, products?: RecommendedProduct[]) => {
@@ -464,9 +488,42 @@ export default function AIChatWidget() {
                                   {prod.price ? `${prod.price.toLocaleString('vi-VN')}₫` : 'Liên hệ'}
                                 </div>
                               </div>
-                              <span style={{ fontSize: '10px', fontWeight: 800, color: '#2563eb', background: '#eff6ff', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 }}>
-                                Xem →
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleAddToCart(e, prod)}
+                                  title="Thêm nhanh vào giỏ hàng"
+                                  style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: addedId === prod.id ? '#16a34a' : '#2563eb',
+                                    background: addedId === prod.id ? '#dcfce7' : '#eff6ff',
+                                    border: addedId === prod.id ? '1px solid #86efac' : '1px solid #bfdbfe',
+                                    padding: '4px 7px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                >
+                                  {addedId === prod.id ? (
+                                    <>
+                                      <Check size={12} />
+                                      <span>Đã thêm</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShoppingCart size={12} />
+                                      <span>+ Giỏ</span>
+                                    </>
+                                  )}
+                                </button>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569', background: '#f1f5f9', padding: '4px 7px', borderRadius: '6px' }}>
+                                  Xem →
+                                </span>
+                              </div>
                             </div>
                           ))}
                         </div>

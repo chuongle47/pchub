@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { askGeminiPCHubAdvisor } from '@/lib/gemini';
 import { getProducts } from '@/lib/db';
 import { getProductImage } from '@/lib/product-ui';
-import { parseUserHardwareIntent } from '@/lib/ai-query-parser';
+import { parseUserHardwareIntent, KNOWN_BRANDS_CONFIG } from '@/lib/ai-query-parser';
 
 export async function POST(request: NextRequest) {
   try {
@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
         else if (intent.category === 'psu' && (pCat.includes('nguồn') || pName.includes('nguồn') || pName.includes('psu'))) isCatMatch = true;
         else if (intent.category === 'case' && (pCat.includes('case') || pName.includes('case') || pName.includes('vỏ'))) isCatMatch = true;
         else if (intent.category === 'cooling' && (pCat.includes('tản') || pName.includes('tản') || pName.includes('cooling'))) isCatMatch = true;
+        else if (intent.category === 'laptop' && (pCat.includes('laptop') || pName.includes('laptop') || pName.includes('máy tính xách tay'))) isCatMatch = true;
 
         if (isCatMatch) {
           score += 200;
@@ -141,7 +142,9 @@ export async function POST(request: NextRequest) {
       // 2. Brand Matching Boost
       if (intent.brand) {
         const bLower = intent.brand.toLowerCase();
-        if (pName.includes(bLower) || pBrand.includes(bLower)) {
+        const brandObj = KNOWN_BRANDS_CONFIG.find(k => k.name.toLowerCase() === bLower || k.slug === intent.brandSlug);
+        const matchesBrand = pName.includes(bLower) || pBrand.includes(bLower) || (brandObj && brandObj.keywords.some(kw => pName.includes(kw)));
+        if (matchesBrand) {
           score += 250;
         } else {
           score -= 80;
@@ -150,16 +153,16 @@ export async function POST(request: NextRequest) {
 
       // 3. Price Matching Boost / Penalization
       if (price > 0) {
-        if (intent.maxPrice && price > intent.maxPrice * 1.1) {
-          score -= 400; // Do not show products exceeding user max budget
+        if (intent.maxPrice && price > intent.maxPrice * 1.05) {
+          score -= 600; // Strictly exclude products exceeding user max budget
         } else if (intent.maxPrice && price <= intent.maxPrice) {
-          score += 80;
+          score += 150;
         }
 
-        if (intent.minPrice && price < intent.minPrice * 0.9) {
+        if (intent.minPrice && price < intent.minPrice * 0.95) {
           score -= 400;
         } else if (intent.minPrice && price >= intent.minPrice) {
-          score += 60;
+          score += 80;
         }
 
         if (intent.targetPrice) {

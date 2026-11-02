@@ -2,7 +2,7 @@
 // Extracts Category, Brand, Price limits, and User Intent from natural language
 
 export interface ParsedUserIntent {
-  category?: 'cpu' | 'gpu' | 'ram' | 'storage' | 'mainboard' | 'psu' | 'case' | 'cooling' | 'monitor' | 'keyboard' | 'mouse' | 'headset' | 'speaker' | 'pc_build';
+  category?: 'cpu' | 'gpu' | 'ram' | 'storage' | 'mainboard' | 'psu' | 'case' | 'cooling' | 'monitor' | 'keyboard' | 'mouse' | 'headset' | 'speaker' | 'laptop' | 'pc_build';
   categoryName?: string;
   brand?: string;
   brandSlug?: string;
@@ -44,6 +44,7 @@ export const CATEGORY_KEYWORDS_CONFIG = [
   { key: 'keyboard' as const, name: 'Bàn phím', words: ['bàn phím cơ', 'bàn phím gaming', 'bàn phím', 'keyboard', 'phím cơ', 'phím'] },
   { key: 'headset' as const, name: 'Tai nghe', words: ['tai nghe không dây', 'tai nghe gaming', 'tai nghe', 'headphone', 'headset'] },
   { key: 'speaker' as const, name: 'Loa máy tính', words: ['loa bluetooth', 'loa máy tính', 'loa vi tính', 'loa', 'speaker'] },
+  { key: 'laptop' as const, name: 'Laptop', words: ['laptop gaming', 'laptop văn phòng', 'laptop', 'máy tính xách tay'] },
   { key: 'cpu' as const, name: 'CPU - Vi xử lý', words: ['bộ vi xử lý', 'vi xử lý', 'cpu', 'chip'] },
   { key: 'gpu' as const, name: 'Card màn hình (VGA)', words: ['card màn hình', 'card đồ họa', 'vga', 'gpu', 'geforce', 'rtx', 'gtx', 'radeon'] },
   { key: 'ram' as const, name: 'RAM - Bộ nhớ trong', words: ['bộ nhớ trong', 'thanh ram', 'ram'] },
@@ -58,7 +59,7 @@ function parseAmount(numStr: string, unit: string): number | null {
   const val = parseFloat(numStr.replace(/,/g, '.'));
   if (isNaN(val)) return null;
   if (unit === 'k' || unit === 'nghìn' || unit === 'ngàn') return val * 1000;
-  if (unit === 'tr' || unit === 'triệu' || unit === 'm') return val * 1000000;
+  if (unit === 'tr' || unit === 'triệu' || unit === 'm' || unit === 'củ') return val * 1000000;
   return val;
 }
 
