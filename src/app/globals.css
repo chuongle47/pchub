@@ -142,7 +142,32 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-primary) !important;
   font-weight: 700;
   line-height: var(--line-height-tight);
+}
+
+:root:not(.dark) h1:not([class*="text-"]),
+:root:not(.dark) h2:not([class*="text-"]),
+:root:not(.dark) h3:not([class*="text-"]),
+:root:not(.dark) h4:not([class*="text-"]),
+:root:not(.dark) h5:not([class*="text-"]),
+:root:not(.dark) h6:not([class*="text-"]) {
   color: var(--color-text-primary);
+}
+
+.dark {
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-bg-page: #020617;
+  --color-bg-surface: #0f172a;
+}
+
+.dark h1:not([class*="text-"]),
+.dark h2:not([class*="text-"]),
+.dark h3:not([class*="text-"]),
+.dark h4:not([class*="text-"]),
+.dark h5:not([class*="text-"]),
+.dark h6:not([class*="text-"]) {
+  color: #f8fafc;
 }
 
 h1 { font-size: var(--font-size-3xl); font-weight: 800; }

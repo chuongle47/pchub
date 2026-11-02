@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Newspaper, ArrowRight } from 'lucide-react';
 
@@ -14,7 +14,7 @@ interface BlogPost {
   date: string;
 }
 
-const BLOG_POSTS: BlogPost[] = [
+const FALLBACK_POSTS: BlogPost[] = [
   {
     id: 'bp1',
     slug: 'review-rtx-4070-ti-super',
@@ -45,6 +45,34 @@ const BLOG_POSTS: BlogPost[] = [
 ];
 
 export default function BlogSection() {
+  const [posts, setPosts] = useState<BlogPost[]>(FALLBACK_POSTS);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const res = await fetch('/api/posts?limit=3');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.posts) && data.posts.length > 0) {
+            const mapped: BlogPost[] = data.posts.map((p: any) => ({
+              id: p.id,
+              slug: p.slug,
+              title: p.title,
+              excerpt: p.excerpt || (p.content ? p.content.slice(0, 140) + '...' : ''),
+              thumbnail: p.cover_url || '/images/hero-pc.jpg',
+              category: p.type === 'guide' ? 'HƯỚNG DẪN' : p.type === 'review' ? 'ĐÁNH GIÁ' : 'TIN TỨC',
+              date: new Date(p.published_at || p.created_at).toLocaleDateString('vi-VN'),
+            }));
+            setPosts(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi tải bài viết từ Supabase:', err);
+      }
+    }
+    fetchPosts();
+  }, []);
+
   return (
     <section className="home-blog" style={{ background: '#ffffff', padding: '32px 0 40px' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
@@ -54,20 +82,20 @@ export default function BlogSection() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Newspaper size={22} style={{ color: '#2563eb' }} />
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-              Bài viết & Đánh giá
+              Bài viết & Tin công nghệ
             </h2>
           </div>
-          <Link href="/community" className="view-all-btn">
+          <Link href="/blog" className="view-all-btn">
             Xem tất cả <ArrowRight size={14} />
           </Link>
         </div>
 
         {/* 3 Column Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-          {BLOG_POSTS.map(post => (
+          {posts.map(post => (
             <Link
               key={post.id}
-              href={`/community`}
+              href={`/blog/${post.slug}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <article style={{
@@ -105,40 +133,59 @@ export default function BlogSection() {
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
+                      display: 'block',
                       transition: 'transform 0.3s ease',
                     }}
-                    onError={e => { e.currentTarget.src = '/images/gpu-white.jpg'; }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
                   />
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: '18px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  {/* Category Tag & Date */}
+                <div style={{
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                }}>
+                  {/* Category & Date */}
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '11px',
+                    justifyContent: 'space-between',
                     marginBottom: '8px',
                   }}>
                     <span style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
                       color: '#2563eb',
-                      fontWeight: 800,
-                      letterSpacing: '0.5px',
+                      background: '#eff6ff',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
                     }}>
                       {post.category}
                     </span>
-                    <span style={{ color: '#cbd5e1' }}>|</span>
-                    <span style={{ color: '#94a3b8' }}>{post.date}</span>
+                    <span style={{
+                      fontSize: '12px',
+                      color: '#94a3b8',
+                    }}>
+                      {post.date}
+                    </span>
                   </div>
 
                   {/* Title */}
                   <h3 style={{
-                    fontSize: '14.5px',
+                    fontSize: '15px',
                     fontWeight: 700,
                     color: '#0f172a',
-                    lineHeight: '1.45',
-                    margin: 0,
+                    lineHeight: '1.4',
+                    margin: '0 0 8px 0',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -147,41 +194,40 @@ export default function BlogSection() {
                     {post.title}
                   </h3>
 
-                  {/* Excerpt Description */}
+                  {/* Excerpt */}
                   <p style={{
-                    fontSize: '12.5px',
+                    fontSize: '13px',
                     color: '#64748b',
-                    lineHeight: '1.6',
-                    marginTop: '8px',
-                    marginBottom: '12px',
+                    lineHeight: '1.5',
+                    margin: '0 0 16px 0',
                     display: '-webkit-box',
-                    WebkitLineClamp: 2,
+                    WebkitLineClamp: 3,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
-                    flex: 1,
+                    flexGrow: 1,
                   }}>
                     {post.excerpt}
                   </p>
 
                   {/* Read More Link */}
                   <div style={{
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    color: '#2563eb',
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#2563eb',
                     marginTop: 'auto',
                   }}>
-                    Đọc bài viết →
+                    Đọc tiếp <ArrowRight size={14} />
                   </div>
                 </div>
               </article>
             </Link>
           ))}
         </div>
+
       </div>
     </section>
   );
 }
-

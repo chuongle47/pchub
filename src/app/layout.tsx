@@ -1,10 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import BottomNav from '@/components/layout/BottomNav';
-import { Providers } from './providers';
-import { Suspense } from 'react';
+import StorefrontShell from '@/components/layout/StorefrontShell';
 
 export const viewport = {
   width: 'device-width',
@@ -14,7 +10,7 @@ export const viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://pchub-iota.vercel.app'),
-  title: 'PCHub — Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
+  title: 'PCHub – Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
   description: 'Mua linh kiện máy tính CPU GPU RAM SSD chính hãng. AI tư vấn build PC, kiểm tra tương thích miễn phí. Bảo hành 36 tháng.',
   keywords: ['so sanh linh kien', 'pc builder', 'xay dung cau hinh', 'cpu', 'gpu', 'pchub'],
   authors: [{ name: 'PCHub Technology' }],
@@ -26,20 +22,20 @@ export const metadata: Metadata = {
     locale: 'vi_VN',
     url: 'https://pchub-iota.vercel.app',
     siteName: 'PCHub',
-    title: 'PCHub — Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
+    title: 'PCHub – Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
     description: 'Mua linh kiện máy tính CPU GPU RAM SSD chính hãng. AI tư vấn build PC, kiểm tra tương thích miễn phí. Bảo hành 36 tháng.',
     images: [
       {
         url: '/images/hero-bg.jpg',
         width: 1200,
         height: 630,
-        alt: 'PCHub — Linh kiện PC và PC Builder AI',
+        alt: 'PCHub – Linh kiện PC và PC Builder AI',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PCHub — Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
+    title: 'PCHub – Linh kiện PC chính hãng | AI tư vấn tương thích 24/7',
     description: 'Mua linh kiện máy tính CPU GPU RAM SSD chính hãng. AI tư vấn build PC, kiểm tra tương thích miễn phí. Bảo hành 36 tháng.',
     images: ['/images/hero-bg.jpg'],
   },
@@ -72,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning className="dark">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -86,17 +82,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
-      <body suppressHydrationWarning style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
-        <Providers>
-          <Suspense fallback={<div style={{ height: '88px', background: '#0f172a' }} />}>
-            <Header />
-          </Suspense>
-          <main style={{ flex: 1 }}>
-            {children}
-          </main>
-          <Footer />
-          <BottomNav />
-        </Providers>
+      <body suppressHydrationWarning className="bg-slate-950 font-sans text-slate-100 min-h-screen">
+        <StorefrontShell>{children}</StorefrontShell>
       </body>
     </html>
   );

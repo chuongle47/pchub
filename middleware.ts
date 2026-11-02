@@ -1,28 +1,19 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-const protectedRoutes = ['/tai-khoan'];
-const authRoutes = ['/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'];
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const nksToken = request.cookies.get('nks_token')?.value;
-  const pchubToken = request.cookies.get('pchub-token')?.value;
-  const isAuthenticated = Boolean(nksToken || pchubToken);
-
-  if (authRoutes.some(route => pathname.startsWith(route)) && isAuthenticated) {
-    return NextResponse.redirect(new URL('/tai-khoan', request.url));
-  }
-
-  if (protectedRoutes.some(route => pathname.startsWith(route)) && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('next', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
 }
 
 export const config = {
-  matcher: ['/tai-khoan/:path*', '/login', '/register', '/dang-nhap', '/dang-ky', '/forgot-password'],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images, icons, fonts, public static assets
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
