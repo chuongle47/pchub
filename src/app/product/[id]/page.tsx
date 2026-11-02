@@ -5,6 +5,9 @@ import { getProductBySlugOrId, getProducts } from '@/lib/db';
 import ProductDetailView from '@/components/product/ProductDetailView';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

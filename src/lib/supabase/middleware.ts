@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { isStaff, type UserRole } from '../permissions';
 
+const DEFAULT_SUPABASE_URL = 'https://nlalyoyazlgsimzudtxw.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sYWx5b3lhemxnc2ltenVkdHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMjI3MTEsImV4cCI6MjEwMzg5ODcxMX0.u1XILt3xFd3FM9ZZhRRz6b2G0ckGOYabwumjDEC9F08';
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -9,8 +12,8 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://nlalyoyazlgsimzudtxw.supabase.co';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
