@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_COMMUNITY_BUILDS, CommunityBuild } from '@/data/community-data';
+import { createClient } from '@/lib/supabase/server';
+import { INITIAL_COMMUNITY_BUILDS } from '@/data/community-data';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(
   req: Request,
@@ -9,26 +11,39 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const wpBase = process.env.SBUY_BASE_URL || 'https://sbuy.io.vn';
+    const supabase = await createClient();
 
-    // 1. Try fetching directly from WordPress REST API
-    try {
-      const res = await fetch(`${wpBase}/wp-json/pchub/v1/community/builds/${encodeURIComponent(id)}`, {
-        next: { revalidate: 15 },
-        signal: AbortSignal.timeout(4000),
+    // 1. Tìm trong Supabase community_builds
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let query = supabase.from('community_builds').select('*');
+    if (isUuid) {
+      query = query.eq('id', id);
+    } else {
+      query = query.eq('id', id);
+    }
+
+    const { data: b, error } = await query.maybeSingle();
+
+    if (b) {
+      // Tăng view bất đồng bộ
+      supabase.from('community_builds').update({ views: (b.views || 0) + 1 }).eq('id', b.id).then();
+
+      return NextResponse.json({
+        success: true,
+        source: 'supabase',
+        data: {
+          id: b.id,
+          title: b.title,
+          description: b.description || '',
+          author: b.author_name || 'Thành viên PCHub',
+          totalPrice: Number(b.total_price || 0),
+          components: b.items || [],
+          likes: b.likes || 0,
+          views: (b.views || 0) + 1,
+          status: b.status,
+          date: new Date(b.created_at).toLocaleDateString('vi-VN'),
+        },
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data) {
-          return NextResponse.json({
-            success: true,
-            source: 'wordpress',
-            data: json.data,
-          });
-        }
-      }
-    } catch (wpErr) {
-      console.warn('[COMMUNITY DETAIL API] WP fetch error:', wpErr);
     }
 
     // 2. Fallback to local static builds

@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[PCHub AI Chat Endpoint Error]:', err);
     return NextResponse.json({
-      reply: 'Hệ thống AI Advisor đang kết nối dữ liệu Sbuy API. Bạn có thể thử lại hoặc xem các sản phẩm trên website!',
+      reply: 'Hệ thống AI Advisor đang bận xử lý dữ liệu linh kiện PCHub. Bạn có thể thử lại sau giây lát hoặc xem các sản phẩm trên website!',
       error: err.message
     }, { status: 500 });
   }

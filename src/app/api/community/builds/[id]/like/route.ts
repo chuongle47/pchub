@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(
   req: Request,
@@ -6,29 +10,26 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await req.json().catch(() => ({}));
+    const supabase = await createClient();
 
-    const wpBase = process.env.SBUY_BASE_URL || 'https://sbuy.io.vn';
-    let wpLikes = null;
+    const { data: b } = await supabase
+      .from('community_builds')
+      .select('likes')
+      .eq('id', id)
+      .maybeSingle();
 
-    try {
-      const res = await fetch(`${wpBase}/wp-json/pchub/v1/community/builds/${encodeURIComponent(id)}/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(4000),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        wpLikes = json.likes;
-      }
-    } catch (err) {
-      console.warn('[COMMUNITY LIKE API] Forward to WP failed:', err);
+    let newLikes = (b?.likes || 0) + 1;
+
+    if (b) {
+      await supabase
+        .from('community_builds')
+        .update({ likes: newLikes })
+        .eq('id', id);
     }
 
     return NextResponse.json({
       success: true,
-      likes: wpLikes,
+      likes: newLikes,
     });
   } catch (error) {
     return NextResponse.json({ success: false }, { status: 500 });

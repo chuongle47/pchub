@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import ProductCard from '@/components/shop/ProductCard';
-import { getProductOriginalPrice, resolveProductOriginalPrice } from '@/lib/product-ui';
 
 export interface FlashProduct {
   id: string;
@@ -27,19 +26,19 @@ export interface FlashSaleSectionProps {
 export function mapFlashProducts(rawList: any[]): FlashProduct[] {
   return rawList.map((p: any) => {
     const price = Number(p.sale_price || p.price);
-    const orig = Number(p.regular_price || p.originalPrice || 0);
+    const orig = Number(p.original_price || p.originalPrice || 0);
     const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
-    const discount = Number(p.discount_percent) || (originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 15);
+    const discount = Number(p.discount_percent) || (originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 12);
 
     return {
       id: String(p.id),
       name: p.name,
-      category: p.category || (p.name.toLowerCase().includes('loa') ? 'Loa máy tính' : p.name.toLowerCase().includes('chuột') ? 'Chuột Gaming' : p.name.toLowerCase().includes('case') ? 'Vỏ Case' : p.name.toLowerCase().includes('ram') ? 'RAM' : 'Linh kiện PC'),
-      brand: p.brand || (p.name.includes('Logitech') ? 'Logitech' : p.name.includes('Edifier') ? 'Edifier' : p.name.includes('Razer') ? 'Razer' : p.name.includes('NZXT') ? 'NZXT' : p.name.includes('Corsair') ? 'Corsair' : undefined),
+      category: p.category?.name || p.category || p.category_name || 'Linh kiện PC',
+      brand: p.brand?.name || p.brand || p.brand_name || undefined,
       price,
       originalPrice,
-      discount: discount > 0 ? discount : 15,
-      image: p.image || '/images/cpu-box.jpg',
+      discount: discount > 0 ? discount : 12,
+      image: (p.images && p.images[0]) || p.image || '/images/cpu-box.jpg',
       slug: p.slug || String(p.id),
     };
   });
@@ -96,7 +95,7 @@ export default function FlashSaleSection({ endTime, initialData }: FlashSaleSect
   const [products, setProducts] = useState<FlashProduct[]>(initialProducts);
   const [targetEndTime, setTargetEndTime] = useState<string | Date | number | undefined>(initialEnd);
 
-  // Real-time Countdown Timer state with live values, avoiding --:--:--
+  // Real-time Countdown Timer state with live values
   const [timer, setTimer] = useState<TimerState>(() => calculateTimeRemaining(targetEndTime));
 
   useEffect(() => {
@@ -110,7 +109,7 @@ export default function FlashSaleSection({ endTime, initialData }: FlashSaleSect
   useEffect(() => {
     async function loadFlashProducts() {
       try {
-        // 1. Ưu tiên tải sản phẩm từ Plugin WordPress Flash Sale (/api/flash-sale)
+        // Tải sản phẩm Flash Sale từ Supabase (/api/flash-sale)
         const fsRes = await fetch('/api/flash-sale', { cache: 'no-store' });
         if (fsRes.ok) {
           const fsData = await fsRes.json();
@@ -121,49 +120,18 @@ export default function FlashSaleSection({ endTime, initialData }: FlashSaleSect
             if (fsData.active_end_time && !endTime) {
               setTargetEndTime(fsData.active_end_time);
             }
-            return;
           }
         }
-
-        // 2. Dự phòng: Nếu WordPress không trả về sản phẩm flash sale, tải sản phẩm giảm giá từ kho
-        const res = await fetch('/api/products?limit=50');
-        const data = await res.json();
-        if (data.products && data.products.length > 0) {
-          const onSaleProducts = data.products.filter((p: any) => 
-            p.badge === 'sale' || 
-            (p.original_price && Number(p.original_price) > Number(p.price)) ||
-            (p.originalPrice && Number(p.originalPrice) > Number(p.price))
-          );
-
-          const otherProducts = data.products.filter((p: any) => !onSaleProducts.some((s: any) => s.id === p.id));
-          const selected = [...onSaleProducts, ...otherProducts].slice(0, 4);
-
-          const mapped: FlashProduct[] = selected.map((p: any) => {
-            const price = Number(p.price);
-            const orig = Number(p.original_price || p.originalPrice || 0);
-            const originalPrice = orig > price ? orig : Math.round((price * 1.15) / 10000) * 10000;
-            const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
-
-            return {
-              id: p.id,
-              name: p.name,
-              category: p.category_name || 'Linh kiện PC',
-              brand: p.brand_name || p.brand || undefined,
-              price,
-              originalPrice,
-              discount: discount > 0 ? discount : 12,
-              image: p.image_url || '/images/cpu-box.jpg',
-              slug: p.slug
-            };
-          });
-          setProducts(mapped);
-        }
       } catch (err) {
-        console.error('Failed to load flash sale products:', err);
+        console.error('Failed to load Supabase flash sale products:', err);
       }
     }
     loadFlashProducts();
   }, [endTime]);
+
+  if (!products || products.length === 0) {
+    return null;
+  }
 
   return (
     <section className="home-flash-sale" style={{ background: '#ffffff', padding: '24px 0', scrollMarginTop: '100px' }}>
@@ -368,7 +336,7 @@ export default function FlashSaleSection({ endTime, initialData }: FlashSaleSect
 
         {/* Product Cards Grid */}
         <div className="home-grid-4">
-          {products.map(p => (
+          {products.slice(0, 4).map(p => (
             <ProductCard
               key={p.id}
               id={p.id}

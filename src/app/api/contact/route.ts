@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +16,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Phone format check (Vietnamese phone regex)
     const phoneClean = phone.replace(/\s+/g, '');
     if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(phoneClean)) {
       return NextResponse.json(
@@ -26,57 +29,62 @@ export async function POST(req: Request) {
       ? (body.ticketId || `BG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`)
       : `PCHUB-CONTACT-${Date.now().toString().slice(-6)}`;
 
-    // Log contact/quotation ticket for backend admin / email notification
-    console.log(`[PCHUB ${isQuote ? 'BÁO GIÁ PC' : 'CONTACT'}] New ticket ${ticketId} from ${name} (${phoneClean}, ${email || 'No email'}): [${subject || 'Tư vấn chung'}]`);
+    const supabase = await createClient();
 
-    // Sync to WordPress REST API so it immediately shows up in WordPress Admin ("Báo giá PC")
-    let wpSynced = false;
-    try {
-      const wpUrl = process.env.SBUY_BASE_URL || 'https://sbuy.io.vn';
-      const wpRes = await fetch(`${wpUrl}/wp-json/pchub/v1/quote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phoneClean,
-          email: (email || '').trim(),
-          subject: subject || (isQuote ? 'Yêu cầu báo giá PC' : 'Liên hệ tư vấn'),
-          message,
-          company: body.company || '',
-          tax: body.tax || '',
-          address: body.address || '',
-          purpose: body.purpose || '',
-          budget: body.budget || '',
-          quantity: body.quantity || 1,
-          components: body.components || message,
-          items: Array.isArray(body.items) ? body.items : [],
-          ticketId,
-        }),
-        signal: AbortSignal.timeout(4000),
+    // 1. Lưu vào bảng contacts trên Supabase
+    const { error: contactError } = await supabase
+      .from('contacts')
+      .insert({
+        name: name.trim(),
+        phone: phoneClean,
+        email: email ? email.trim() : null,
+        subject: subject || (isQuote ? 'Yêu cầu báo giá PC' : 'Liên hệ tư vấn'),
+        message: message.trim(),
+        status: 'unread',
       });
 
-      if (wpRes.ok) {
-        wpSynced = true;
-        console.log(`[PCHUB SYNC] Successfully synced quote ${ticketId} to WordPress (${wpUrl})`);
-      } else {
-        console.warn(`[PCHUB SYNC] WordPress response ${wpRes.status} for ticket ${ticketId}`);
+    if (contactError) {
+      console.error('Lỗi lưu contact Supabase:', contactError);
+    }
+
+    // 2. Nếu là báo giá PC, lưu vào bảng quotes trên Supabase để admin xử lý tại /admin/quotes
+    if (isQuote) {
+      const { data: quote, error: quoteError } = await supabase
+        .from('quotes')
+        .insert({
+          code: ticketId,
+          customer_name: name.trim(),
+          phone: phoneClean,
+          email: email ? email.trim() : null,
+          total: Number(body.budget || 0),
+          status: 'pending',
+          note: `Mục đích: ${body.purpose || 'Không ghi rõ'}\nNội dung: ${message}`,
+        })
+        .select('id')
+        .single();
+
+      if (quote && Array.isArray(body.items) && body.items.length > 0) {
+        const quoteItems = body.items.map((it: any) => ({
+          quote_id: quote.id,
+          name_snapshot: it.name || it.productName || 'Linh kiện',
+          price_snapshot: Number(it.price || 0),
+          quantity: Number(it.quantity || 1),
+        }));
+        await supabase.from('quote_items').insert(quoteItems);
       }
-    } catch (wpErr) {
-      console.warn(`[PCHUB SYNC] Could not push to WordPress immediately (will store locally):`, wpErr);
     }
 
     return NextResponse.json({
       success: true,
-      message: isQuote 
-        ? 'Gửi yêu cầu báo giá thành công! Chuyên viên PCHub đã tiếp nhận và sẽ liên hệ qua Zalo / SĐT trong 15-30 phút.'
-        : 'Cảm ơn bạn đã liên hệ! Đội ngũ tư vấn PCHub sẽ phản hồi trong vòng 15-30 phút làm việc.',
       ticketId,
-      wpSynced,
+      message: isQuote 
+        ? `Yêu cầu báo giá của bạn đã được tiếp nhận (Mã: ${ticketId}). Đội ngũ kỹ thuật PCHub sẽ gửi bảng báo giá chi tiết qua Zalo/Email trong vòng 15-30 phút!`
+        : `Cảm ơn bạn! Yêu cầu hỗ trợ (Mã: ${ticketId}) đã được gửi thành công. Chúng tôi sẽ liên hệ lại với bạn sớm nhất.`,
     });
-  } catch (error) {
-    console.error('Contact submit error:', error);
+  } catch (error: any) {
+    console.error('Error handling contact/quote:', error);
     return NextResponse.json(
-      { success: false, message: 'Có lỗi xảy ra khi gửi tin nhắn. Vui lòng liên hệ hotline 0322 323 233.' },
+      { success: false, message: 'Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại sau.' },
       { status: 500 }
     );
   }
