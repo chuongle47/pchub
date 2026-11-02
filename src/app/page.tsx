@@ -62,7 +62,6 @@ async function getFlashSaleData() {
             name,
             slug,
             price,
-            original_price,
             images,
             category:categories(name),
             brand:brands(name)
@@ -76,7 +75,7 @@ async function getFlashSaleData() {
             const p = Array.isArray(item.product) ? item.product[0] : item.product;
             if (!p) return null;
             const salePrice = Number(item.sale_price || p.price);
-            const originalPrice = Number(p.original_price || p.price);
+            const originalPrice = Number(p.price);
             return {
               id: p.id,
               name: p.name,
@@ -84,7 +83,7 @@ async function getFlashSaleData() {
               brand: p.brand?.name,
               price: salePrice,
               originalPrice: originalPrice > salePrice ? originalPrice : Math.round(salePrice * 1.15),
-              discount: originalPrice > salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 15,
+              discount: originalPrice > salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 12,
               image: p.images?.[0] || '/images/cpu-box.jpg',
               slug: p.slug,
             };
@@ -103,7 +102,7 @@ async function getFlashSaleData() {
     // Fallback: Lấy sản phẩm có sale_price hoặc hot từ Supabase
     const { data: fallbackProducts } = await supabase
       .from('products')
-      .select('id, name, slug, price, sale_price, original_price, images, category:categories(name), brand:brands(name)')
+      .select('id, name, slug, price, sale_price, images, category:categories(name), brand:brands(name)')
       .eq('is_active', true)
       .not('sale_price', 'is', null)
       .gt('sale_price', 0)
@@ -115,7 +114,7 @@ async function getFlashSaleData() {
         name: 'Flash Sale Hôm Nay',
         products: fallbackProducts.map((p: any) => {
           const salePrice = Number(p.sale_price);
-          const originalPrice = Number(p.original_price || p.price);
+          const originalPrice = Number(p.price);
           return {
             id: p.id,
             name: p.name,
@@ -123,7 +122,7 @@ async function getFlashSaleData() {
             brand: p.brand?.name,
             price: salePrice,
             originalPrice: originalPrice > salePrice ? originalPrice : Math.round(salePrice * 1.15),
-            discount: originalPrice > salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 15,
+            discount: originalPrice > salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 12,
             image: p.images?.[0] || '/images/cpu-box.jpg',
             slug: p.slug,
           };

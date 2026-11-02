@@ -38,7 +38,6 @@ export async function GET() {
             name,
             slug,
             price,
-            original_price,
             images,
             specs,
             category:categories(name),
@@ -54,10 +53,10 @@ export async function GET() {
             if (!p) return null;
 
             const salePrice = Number(item.sale_price || p.price);
-            const originalPrice = Number(p.original_price || p.price);
+            const originalPrice = Number(p.price);
             const discountPercent = originalPrice > salePrice 
               ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
-              : 15;
+              : 12;
 
             return {
               id: p.id,
@@ -88,7 +87,7 @@ export async function GET() {
     // 3. Fallback: Nếu chưa có chiến dịch flash sale tạo thủ công, lấy sản phẩm có sale_price hoặc hot từ bảng products Supabase
     const { data: fallbackProducts } = await supabase
       .from('products')
-      .select('id, name, slug, price, sale_price, original_price, images, category:categories(name), brand:brands(name)')
+      .select('id, name, slug, price, sale_price, images, category:categories(name), brand:brands(name)')
       .eq('is_active', true)
       .not('sale_price', 'is', null)
       .gt('sale_price', 0)
@@ -98,10 +97,10 @@ export async function GET() {
     if (fallbackProducts && fallbackProducts.length > 0) {
       const mapped = fallbackProducts.map((p: any) => {
         const salePrice = Number(p.sale_price);
-        const originalPrice = Number(p.original_price || p.price);
+        const originalPrice = Number(p.price);
         const discountPercent = originalPrice > salePrice
           ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
-          : 15;
+          : 12;
 
         return {
           id: p.id,

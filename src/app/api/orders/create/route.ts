@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      orderId: rpcResult?.code || rpcResult?.id,
+      orderId: rpcResult?.order_code || rpcResult?.code || rpcResult?.order_id || rpcResult?.id,
       order: rpcResult,
     });
   } catch (err: any) {
