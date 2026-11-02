@@ -1,10 +1,11 @@
-﻿interface OrderEmailData {
+interface OrderEmailData {
   orderCode: string;
   customerName: string;
   customerEmail: string;
   total: number;
   items: { name: string; quantity: number; price: number }[];
   shippingAddress: any;
+  paymentMethod?: string;
   status?: string;
   note?: string;
 }
