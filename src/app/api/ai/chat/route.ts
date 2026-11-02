@@ -76,7 +76,13 @@ export async function POST(request: NextRequest) {
           const stockStr = p.stock !== undefined ? ` [Tồn kho: ${p.stock}]` : '';
           let specsStr = '';
           if (p.specs && typeof p.specs === 'object') {
-            const specPairs = Object.entries(p.specs).map(([k, v]) => `${k}: ${Array.isArray(v) ? (v as any[]).join('/') : v}`);
+            const specPairs = Object.entries(p.specs).map(([k, v]) => {
+              if (k === 'core_count') return `${v} nhân`;
+              if (k === 'thread_count') return `${v} luồng`;
+              if (k === 'socket') return `Socket ${v}`;
+              if (k === 'base_clock_ghz') return `Xung cơ bản ${v}GHz`;
+              return `${k}: ${Array.isArray(v) ? (v as any[]).join('/') : v}`;
+            });
             if (specPairs.length > 0) specsStr = ` | Thông số: ${specPairs.join(', ')}`;
           }
           return `- [${cat}] ${p.name}${brand} — Giá: ${priceStr}${stockStr}${specsStr}`;

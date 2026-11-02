@@ -11,7 +11,7 @@ export default function CompareFloatingBar() {
   const { items, activeCategory, clearCompare } = useCompareStore();
 
   // Hide floating bar if already on comparison page or no items
-  if (pathname === '/so-sanh' || !items || items.length === 0) {
+  if (pathname === '/so-sanh' || pathname?.startsWith('/thanh-toan') || pathname?.startsWith('/gio-hang') || !items || items.length === 0) {
     return null;
   }
 

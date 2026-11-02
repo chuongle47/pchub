@@ -39,6 +39,7 @@ function SearchContent() {
   const urlMaxPrice = searchParams?.get('max_price') || '';
   const urlSort = searchParams?.get('sort') || 'price_asc';
   const urlPage = parseInt(searchParams?.get('page') || '1', 10);
+  const urlSale = searchParams?.get('sale') === 'true';
 
   // Search input state
   const [searchInput, setSearchInput] = useState(urlSearch);
@@ -130,6 +131,7 @@ function SearchContent() {
         if (selectedBrands.length > 0) paramsObj.set('brand_id', selectedBrands.join(','));
         if (appliedMinPrice) paramsObj.set('min_price', appliedMinPrice);
         if (appliedMaxPrice) paramsObj.set('max_price', appliedMaxPrice);
+        if (urlSale) paramsObj.set('sale', 'true');
         paramsObj.set('page', currentPage.toString());
         paramsObj.set('limit', '16');
 
@@ -175,7 +177,7 @@ function SearchContent() {
     }
 
     loadFilteredProducts();
-  }, [urlSearch, selectedCategory, selectedBrands, appliedMinPrice, appliedMaxPrice, currentPage]);
+  }, [urlSearch, urlSale, selectedCategory, selectedBrands, appliedMinPrice, appliedMaxPrice, currentPage]);
 
   // Instant In-Memory Sort Handler (Pure state update, zero router navigation or re-fetching)
   const handleSortChange = (newSort: string) => {
@@ -720,7 +722,7 @@ function SearchContent() {
               
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  {urlSearch ? `Kết quả cho "${urlSearch}"` : 'Tất cả sản phẩm'}
+                  {urlSale ? '🔥 Sản phẩm Khuyến mãi & Giảm giá' : urlSearch ? `Kết quả cho "${urlSearch}"` : 'Tất cả sản phẩm'}
                 </h2>
                 <p style={{ fontSize: '12.5px', color: '#64748b', margin: '4px 0 0 0' }}>
                   Tìm thấy <strong style={{ color: '#2563eb' }}>{pagination.total}</strong> sản phẩm phù hợp
@@ -918,7 +920,7 @@ function SearchContent() {
                   <Search size={32} />
                 </div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
-                  Không tìm thấy sản phẩm phù hợp
+                  {urlSale ? 'Hiện chưa có chương trình khuyến mãi nào' : 'Không tìm thấy sản phẩm phù hợp'}
                 </h3>
                 <p style={{ fontSize: '13.5px', color: '#64748b', maxWidth: '420px', margin: '0 auto 24px' }}>
                   Thử tìm kiếm với từ khóa khác hoặc xóa bỏ một số điều kiện lọc giá, thương hiệu hiện tại.

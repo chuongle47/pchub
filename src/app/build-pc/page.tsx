@@ -329,6 +329,40 @@ export default function BuildPcPage() {
       console.error('Error parsing pending AI preset:', e);
     }
 
+    // Check for pending component added from Product Detail (BUG-01 fix)
+    try {
+      const pendingSlotRaw = localStorage.getItem('pchub_pending_slot');
+      if (pendingSlotRaw) {
+        localStorage.removeItem('pchub_pending_slot');
+        const { slot: targetSlot, product: pendingProd } = JSON.parse(pendingSlotRaw);
+        if (targetSlot && pendingProd) {
+          setComponents(prev => prev.map(s => {
+            if (s.key === targetSlot) {
+              return {
+                ...s,
+                selected: {
+                  id: pendingProd.id,
+                  name: pendingProd.name,
+                  price: Number(pendingProd.price) || 0,
+                  tdp: Number(pendingProd.tdp) || (targetSlot === 'gpu' ? 250 : targetSlot === 'cpu' ? 125 : 20),
+                  specs: typeof pendingProd.specs === 'string' ? pendingProd.specs : 'Chính hãng',
+                  image: pendingProd.image || (CATEGORY_DEFAULT_IMAGE[targetSlot] || '/images/cat-monitor.jpg'),
+                  slug: pendingProd.slug || '',
+                },
+                quantity: 1,
+              };
+            }
+            return s;
+          }));
+          const targetSlotName = targetSlot === 'monitor' ? 'Màn Hình Gaming' : targetSlot.toUpperCase();
+          setNotice(`🎉 Đã thêm thành công "${pendingProd.name}" vào mục ${targetSlotName}!`);
+          setTimeout(() => setNotice(null), 5000);
+        }
+      }
+    } catch (e) {
+      console.error('Error applying pending slot component:', e);
+    }
+
     const handleEvent = (e: any) => {
       if (e.detail) applyAiPreset(e.detail);
     };
@@ -897,7 +931,8 @@ export default function BuildPcPage() {
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Vui lòng cho phép trình duyệt mở pop-up để xem bản in cấu hình PDF!');
+      // Fallback directly to printable /bao-gia page
+      window.location.href = '/bao-gia';
       return;
     }
 
@@ -1759,6 +1794,94 @@ export default function BuildPcPage() {
               <LinkIcon size={15} />
               Nhập mã
             </button>
+
+            {/* Export Toolbar Menu Button (BUG-02 fix) */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowExportMenu(v => !v)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  borderRadius: '9px',
+                  padding: '8px 14px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Download size={15} color="#38bdf8" />
+                Xuất file
+                <ChevronDown size={14} />
+              </button>
+
+              {showExportMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: '230px',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  boxShadow: '0 12px 30px rgba(0,0,0,0.2)',
+                  padding: '6px',
+                  zIndex: 100000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => { setShowExportMenu(false); handlePrintPdf(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 12px',
+                      border: 'none',
+                      background: 'transparent',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Printer size={15} color="#2563eb" />
+                    In / Lưu PDF Báo Giá A4
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setShowExportMenu(false); handleExportCsv(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 12px',
+                      border: 'none',
+                      background: 'transparent',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <FileSpreadsheet size={15} color="#16a34a" />
+                    Tải bảng tính Excel (.CSV)
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2168,7 +2291,7 @@ export default function BuildPcPage() {
 
       {/* Save Build Modal */}
       {showSaveModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#ffffff', borderRadius: '16px', width: '420px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Lưu cấu hình PC này</h3>
@@ -2199,7 +2322,7 @@ export default function BuildPcPage() {
 
       {/* Load Build Modal */}
       {showLoadModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#ffffff', borderRadius: '16px', width: '520px', maxWidth: '92vw', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Cấu hình đã lưu ({savedBuildsList.length})</h3>
@@ -2267,7 +2390,7 @@ export default function BuildPcPage() {
         return (
           <div
             style={{
-              position: 'fixed', inset: 0, zIndex: 600,
+              position: 'fixed', inset: 0, zIndex: 100000,
               background: 'rgba(15, 23, 42, 0.75)',
               backdropFilter: 'blur(6px)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2480,7 +2603,7 @@ export default function BuildPcPage() {
       {showImportCodeModal && (
         <div
           style={{
-            position: 'fixed', inset: 0, zIndex: 600,
+            position: 'fixed', inset: 0, zIndex: 100000,
             background: 'rgba(15, 23, 42, 0.75)',
             backdropFilter: 'blur(6px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',

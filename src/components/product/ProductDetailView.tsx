@@ -325,27 +325,65 @@ export default function ProductDetailView({ product, relatedProducts = [] }: Pro
   };
 
   const handleAddToBuilder = () => {
-    // Map category to builder slot
-    let slot = 'cpu';
-    const catLower = categoryName.toLowerCase();
-    if (catLower.includes('gpu') || catLower.includes('vga') || catLower.includes('card')) slot = 'gpu';
-    else if (catLower.includes('main') || catLower.includes('bo mạch')) slot = 'mainboard';
-    else if (catLower.includes('ram')) slot = 'ram';
-    else if (catLower.includes('ssd') || catLower.includes('hdd') || catLower.includes('ổ đĩa')) slot = 'storage';
-    else if (catLower.includes('psu') || catLower.includes('nguồn')) slot = 'psu';
-    else if (catLower.includes('case') || catLower.includes('vỏ')) slot = 'case';
+    let slot: string | null = null;
+    const catLower = (categoryName || '').toLowerCase();
+    const nameLower = (product.name || '').toLowerCase();
+    const combined = `${catLower} ${nameLower}`;
 
-    setSlot(slot, {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      category: categoryName,
-      image: imageUrl,
-      slug: product.slug
-    });
+    if (combined.includes('màn') || combined.includes('monitor')) {
+      slot = 'monitor';
+    } else if (combined.includes('tản') || combined.includes('cooling') || combined.includes('cooler') || combined.includes('aio')) {
+      slot = 'cooling';
+    } else if (combined.includes('phím') || combined.includes('chuột') || combined.includes('gear') || combined.includes('mouse') || combined.includes('keyboard')) {
+      slot = 'gear';
+    } else if (combined.includes('tai nghe') || combined.includes('headset') || combined.includes('audio') || combined.includes('loa')) {
+      slot = 'headset';
+    } else if (combined.includes('gpu') || combined.includes('vga') || combined.includes('card màn hình') || combined.includes('card đồ họa') || combined.includes('geforce') || combined.includes('radeon')) {
+      slot = 'gpu';
+    } else if (combined.includes('main') || combined.includes('bo mạch') || combined.includes('motherboard')) {
+      slot = 'mainboard';
+    } else if (combined.includes('ram') || combined.includes('bộ nhớ')) {
+      slot = 'ram';
+    } else if (combined.includes('ssd') || combined.includes('hdd') || combined.includes('ổ đĩa') || combined.includes('ổ cứng') || combined.includes('storage')) {
+      slot = 'storage';
+    } else if (combined.includes('psu') || combined.includes('nguồn') || combined.includes('power supply')) {
+      slot = 'psu';
+    } else if (combined.includes('case') || combined.includes('vỏ máy') || combined.includes('thùng máy')) {
+      slot = 'case';
+    } else if (combined.includes('cpu') || combined.includes('vi xử lý') || combined.includes('bộ xử lý') || combined.includes('core') || combined.includes('ryzen') || combined.includes('celeron') || combined.includes('xeon')) {
+      slot = 'cpu';
+    }
+
+    if (!slot) {
+      alert('Sản phẩm này không thuộc các danh mục linh kiện trong công cụ PC Builder!');
+      return;
+    }
+
+    const payload = {
+      slot,
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: categoryName,
+        type: slot,
+        image: imageUrl,
+        slug: product.slug,
+        tdp: (product.specs as any)?.tdp_watt || (slot === 'gpu' ? 250 : slot === 'cpu' ? 125 : 20),
+        specs: product.specs || 'Chính hãng',
+      }
+    };
+
+    setSlot(slot, payload.product);
+    try {
+      localStorage.setItem('pchub_pending_slot', JSON.stringify(payload));
+    } catch {}
 
     setAddedNotice(`Đã thêm vào cấu hình PC Builder (Mục ${slot.toUpperCase()})!`);
-    setTimeout(() => setAddedNotice(null), 3000);
+    setTimeout(() => {
+      setAddedNotice(null);
+      router.push('/build-pc');
+    }, 350);
   };
 
   // Convert specs object to entries

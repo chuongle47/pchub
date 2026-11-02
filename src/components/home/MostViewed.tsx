@@ -27,10 +27,37 @@ export default function MostViewed() {
   useEffect(() => {
     async function loadHotProducts() {
       try {
-        const res = await fetch('/api/products?limit=8&sort=price_desc');
+        const res = await fetch('/api/products?limit=60&sort=price_desc');
         const data = await res.json();
         if (data.products && data.products.length > 0) {
-          const mapped: HotProduct[] = data.products.map((p: any, idx: number) => {
+          // Deduplicate by distinct categories and base name to ensure rich hardware variety (VGA, CPU, Mainboard, RAM, SSD, Monitor...)
+          const seenCategories = new Set<string>();
+          const seenBaseNames = new Set<string>();
+          const diverseProducts: any[] = [];
+
+          for (const p of data.products) {
+            const cat = (p.category_name || 'Khác').toLowerCase();
+            const baseName = (p.name || '').replace(/\s*Rev\d+/i, '').trim().toLowerCase();
+            if (!seenCategories.has(cat) && !seenBaseNames.has(baseName)) {
+              seenCategories.add(cat);
+              seenBaseNames.add(baseName);
+              diverseProducts.push(p);
+            }
+            if (diverseProducts.length >= 8) break;
+          }
+
+          if (diverseProducts.length < 8) {
+            for (const p of data.products) {
+              const baseName = (p.name || '').replace(/\s*Rev\d+/i, '').trim().toLowerCase();
+              if (!seenBaseNames.has(baseName)) {
+                seenBaseNames.add(baseName);
+                diverseProducts.push(p);
+              }
+              if (diverseProducts.length >= 8) break;
+            }
+          }
+
+          const mapped: HotProduct[] = diverseProducts.map((p: any, idx: number) => {
             const price = Number(p.price);
             const origPrice = Number(p.original_price || p.originalPrice) || getProductOriginalPrice(price, p.slug);
             const discount = Math.round(((origPrice - price) / origPrice) * 100);

@@ -17,7 +17,9 @@ import { VIETNAM_PROVINCES, getWardsForProvince } from '@/data/vietnam-locations
 type CheckoutStep = 'shipping' | 'payment';
 
 const DEFAULT_SHIPPING_OPTIONS = [
-  { id: 'free_shipping', name: 'Free shipping (Miễn phí vận chuyển)', estimate: '2-4 ngày', price: 0, method_id: 'free_shipping' },
+  { id: 'standard', name: 'Giao hàng tiêu chuẩn - GHTK / GHN', estimate: '2 - 4 ngày', price: 30000, method_id: 'standard' },
+  { id: 'express', name: 'Giao hàng hỏa tốc 2H - Grab / Ahamove', estimate: 'Trong 2 giờ (Nội thành)', price: 50000, method_id: 'express' },
+  { id: 'viettel', name: 'Chuyển phát nhanh Viettel Post', estimate: '1 - 2 ngày', price: 35000, method_id: 'viettel' },
 ];
 
 const DEFAULT_PAYMENT_METHODS = [
@@ -117,7 +119,14 @@ export default function CheckoutPage() {
       .then(data => {
         if (data.success) {
           if (Array.isArray(data.shippingMethods) && data.shippingMethods.length > 0) {
-            setShippingOptions(data.shippingMethods);
+            const formattedShipping = data.shippingMethods.map((m: any) => ({
+              id: m.id,
+              name: m.name || m.label || 'Giao hàng tiêu chuẩn - GHTK',
+              estimate: m.estimate || m.desc || '2-4 ngày',
+              price: m.price ?? m.fee ?? 0,
+              method_id: m.id,
+            }));
+            setShippingOptions(formattedShipping);
             setShippingOption(data.shippingMethods[0].id);
           }
           if (Array.isArray(data.paymentGateways) && data.paymentGateways.length > 0) {
@@ -139,6 +148,7 @@ export default function CheckoutPage() {
   const [voucher, setVoucher] = useState('');
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [voucherMessage, setVoucherMessage] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Buyer information (lấy tự động từ API user/auth store)
   const [buyerForm, setBuyerForm] = useState({
@@ -260,6 +270,25 @@ export default function CheckoutPage() {
 
   const handleShippingSubmit = (e: FormEvent) => {
     e.preventDefault();
+    const vnPhoneRegex = /^(0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+    const cleanBuyerPhone = (buyerForm.phone || '').replace(/[\s.-]/g, '');
+
+    if (!vnPhoneRegex.test(cleanBuyerPhone)) {
+      setPhoneError('Số điện thoại người mua không hợp lệ. Vui lòng nhập đúng 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09).');
+      window.scrollTo({ top: 150, behavior: 'smooth' });
+      return;
+    }
+
+    if (!sameAsBuyer) {
+      const cleanReceiverPhone = (form.phone || '').replace(/[\s.-]/g, '');
+      if (!vnPhoneRegex.test(cleanReceiverPhone)) {
+        setPhoneError('Số điện thoại nhận hàng không hợp lệ. Vui lòng nhập đúng 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09).');
+        window.scrollTo({ top: 300, behavior: 'smooth' });
+        return;
+      }
+    }
+
+    setPhoneError(null);
     setStep('payment');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -501,6 +530,23 @@ export default function CheckoutPage() {
             <div className="checkout-layout-grid" style={{ alignItems: 'flex-start' }}>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                {phoneError && (
+                  <div style={{
+                    background: '#fef2f2',
+                    border: '1.5px solid #ef4444',
+                    color: '#dc2626',
+                    padding: '12px 18px',
+                    borderRadius: '10px',
+                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    ⚠️ {phoneError}
+                  </div>
+                )}
 
                 {/* 1. Buyer Info Card (Tự động lấy từ API user / Tài khoản) */}
                 <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px' }}>

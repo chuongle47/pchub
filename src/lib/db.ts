@@ -66,6 +66,7 @@ export interface ProductsFilter {
   sort?: string;
   page?: number;
   limit?: number;
+  is_sale?: boolean;
 }
 
 // 1. GET CATEGORIES FROM SUPABASE
@@ -175,6 +176,9 @@ export async function getProducts(filter: ProductsFilter) {
     }
     if (ids && ids.length > 0) {
       query = query.in('id', ids);
+    }
+    if (filter.is_sale) {
+      query = query.not('sale_price', 'is', null).gt('sale_price', 0);
     }
 
     // Price range

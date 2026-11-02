@@ -29,7 +29,7 @@ export default function Navbar() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Cart & UI Store State
-  const getItemCount = useCartStore((s) => s.getItemCount);
+  const cartItems = useCartStore((s) => s.items);
   const toggleCart = useCartStore((s) => s.toggleCart);
   const setChatOpen = useUIStore((s) => s.setChatOpen);
   const wishlistCount = useWishlistStore((s) => s.ids.length);
@@ -40,7 +40,7 @@ export default function Navbar() {
     setIsHydrated(true);
   }, []);
 
-  const cartCount = isHydrated ? getItemCount() : 0;
+  const cartCount = isHydrated ? cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
   const visibleWishlistCount = isHydrated ? wishlistCount : 0;
   const isAuthPage = pathname === '/login' || pathname === '/register';
 

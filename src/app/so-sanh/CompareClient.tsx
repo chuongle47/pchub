@@ -271,7 +271,7 @@ export default function CompareClient() {
 
   // Fetch suggestions in selector modal (supports live search & category filter)
   useEffect(() => {
-    const catToUse = modalCategory || currentCategoryParam || currentCategoryKey || activeCategory || '';
+    const catToUse = (modalCategory && modalCategory !== 'all') ? modalCategory : '';
     const timer = setTimeout(async () => {
       setModalLoading(true);
       try {
@@ -310,12 +310,16 @@ export default function CompareClient() {
               warrantyMonths: 36,
             }));
 
-          // Lock suggestions to target category key if comparing existing products
-          const targetKey = currentCategoryKey || getCompareCategoryKey(modalCategory);
-          if (targetKey) {
+          // Filter suggestions: if user explicitly selected a category tab, filter by it.
+          // If 'all', do not restrict category.
+          const effectiveKey = modalCategory && modalCategory !== 'all'
+            ? getCompareCategoryKey(modalCategory)
+            : (!modalCategory ? currentCategoryKey : null);
+
+          if (effectiveKey) {
             mapped = mapped.filter((p) => {
               const pKey = getCompareCategoryKey(p.category) || getCompareCategoryKey(p.categorySlug) || getCompareCategoryKey(p.name);
-              return pKey === targetKey;
+              return pKey === effectiveKey;
             });
           }
           setSuggestions(mapped);
@@ -331,10 +335,19 @@ export default function CompareClient() {
   }, [modalSearch, modalCategory, products, activeCategory, currentCategoryParam, currentCategoryKey, isSelectorOpen]);
 
   const handleAddProductToCompare = (slug: string, categoryName?: string, alternateId?: string) => {
-    const res = addCompare(slug, categoryName, alternateId);
+    let res = addCompare(slug, categoryName, alternateId);
     if (res && !res.success && res.categoryMismatch) {
-      alert(`Chỉ được so sánh các sản phẩm trong cùng danh mục (${res.activeCategory})!`);
-      return;
+      const confirmSwitch = window.confirm(
+        `Danh sách đang so sánh danh mục "${res.activeCategory}". Bạn có muốn chuyển sang so sánh danh mục "${categoryName}" không?`
+      );
+      if (confirmSwitch) {
+        addCompare(slug, categoryName, alternateId, true);
+        router.replace(`/so-sanh?ids=${encodeURIComponent(slug)}`);
+        setIsSelectorOpen(false);
+        return;
+      } else {
+        return;
+      }
     }
     const existingSlugs = products.map((p) => p.slug || p.id);
     if (!existingSlugs.includes(slug)) {
@@ -353,6 +366,9 @@ export default function CompareClient() {
       router.replace(`/so-sanh?ids=${encodeURIComponent(remainingSlugs.join(','))}`);
     } else {
       clearCompare();
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/so-sanh');
+      }
       router.replace('/so-sanh');
     }
   };
@@ -360,6 +376,10 @@ export default function CompareClient() {
   const handleClearAll = () => {
     clearCompare();
     setProducts([]);
+    setSpecKeys([]);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/so-sanh');
+    }
     router.replace('/so-sanh');
   };
 
@@ -1150,7 +1170,8 @@ export default function CompareClient() {
               {/* Category Quick Filter Pills */}
               <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
                 {[
-                  { label: 'Tất cả', slug: '' },
+                  { label: 'Tất cả', slug: 'all' },
+                  { label: 'Màn hình', slug: 'monitor' },
                   { label: 'CPU', slug: 'cpu' },
                   { label: 'VGA / GPU', slug: 'vga' },
                   { label: 'RAM', slug: 'ram' },

@@ -24,6 +24,7 @@ export default function CartPage() {
   const [voucherError, setVoucherError] = useState('');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [removedNotice, setRemovedNotice] = useState<string | null>(null);
+  const [voucherNotice, setVoucherNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const totalPrice = total();
   const baseShipping = totalPrice >= 500000 ? 0 : 30000;
@@ -45,7 +46,12 @@ export default function CartPage() {
 
   const applyVoucher = async () => {
     const code = voucherInput.trim().toUpperCase();
-    if (!code) { setVoucherError('Vui lòng nhập mã voucher.'); return; }
+    if (!code) {
+      setVoucherError('Vui lòng nhập mã voucher.');
+      setVoucherNotice({ type: 'error', message: 'Vui lòng nhập mã voucher.' });
+      setTimeout(() => setVoucherNotice(null), 3000);
+      return;
+    }
 
     try {
       const res = await fetch('/api/vouchers/validate', {
@@ -78,9 +84,13 @@ export default function CartPage() {
         });
         setVoucherError('');
         setVoucherInput('');
+    setVoucherNotice({ type: 'success', message: 'Mã giảm giá đã được áp dụng thành công!' });
+    setTimeout(() => setVoucherNotice(null), 4000);
         return;
       } else if (data.error) {
         setVoucherError(data.error);
+        setVoucherNotice({ type: 'error', message: data.error });
+        setTimeout(() => setVoucherNotice(null), 4000);
         return;
       }
     } catch (e) {
@@ -88,10 +98,18 @@ export default function CartPage() {
     }
 
     const found = VOUCHER_CODES[code];
-    if (!found) { setVoucherError('Mã giảm giá này lỗi'); return; }
+    if (!found) {
+      const err = 'Mã giảm giá không tồn tại hoặc đã hết hạn.';
+      setVoucherError(err);
+      setVoucherNotice({ type: 'error', message: err });
+      setTimeout(() => setVoucherNotice(null), 4000);
+      return;
+    }
     setAppliedVoucher({ code, ...found });
     setVoucherError('');
     setVoucherInput('');
+    setVoucherNotice({ type: 'success', message: 'Mã giảm giá đã được áp dụng thành công!' });
+    setTimeout(() => setVoucherNotice(null), 4000);
   };
 
   const handleRemoveItem = (id: string, name: string) => {
@@ -161,6 +179,23 @@ export default function CartPage() {
         {checkoutError && (
           <div style={{ background: '#fef2f2', border: '1.5px solid #ef4444', color: '#991b1b', padding: '12px 18px', borderRadius: '10px', marginBottom: '16px', fontSize: '13.5px', fontWeight: 700 }}>
             ⚠️ {checkoutError}
+          </div>
+        )}
+        {voucherNotice && (
+          <div style={{
+            background: voucherNotice.type === 'success' ? '#ecfdf5' : '#fef2f2',
+            border: `1.5px solid ${voucherNotice.type === 'success' ? '#10b981' : '#ef4444'}`,
+            color: voucherNotice.type === 'success' ? '#065f46' : '#991b1b',
+            padding: '12px 18px',
+            borderRadius: '10px',
+            marginBottom: '16px',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {voucherNotice.type === 'success' ? '🎉' : '❌'} {voucherNotice.message}
           </div>
         )}
 

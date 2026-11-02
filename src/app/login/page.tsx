@@ -302,7 +302,7 @@ function LoginForm() {
         </form>
 
         {/* Social Buttons (Hidden while OAuth is unprocessed) */}
-        {false && (
+        {true && (
           <>
             <div style={{
               display: 'flex',
@@ -377,7 +377,7 @@ function LoginForm() {
         )}
 
         {/* Footer Link (Hidden while registration is not available) */}
-        {false && (
+        {true && (
           <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: '#64748b' }}>
             Chưa có tài khoản?{' '}
             <Link href="/register" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>
@@ -396,7 +396,7 @@ function LoginForm() {
           borderRadius: '8px',
           border: '1px solid #e2e8f0'
         }}>
-          🔒 Tính năng đăng ký tài khoản mới hiện đang tạm ngừng để nâng cấp hệ thống.
+          💡 Đăng ký tài khoản để quản lý đơn hàng, lưu danh sách yêu thích và nhận ưu đãi bảo hành.
         </div>
 
       </div>

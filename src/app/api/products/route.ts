@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'price_asc';
     const page_str = searchParams.get('page');
     const limit_str = searchParams.get('limit');
+    const is_sale = searchParams.get('sale') === 'true' ? true : undefined;
 
     const min_price = min_price_str ? parseFloat(min_price_str) : undefined;
     const max_price = max_price_str ? parseFloat(max_price_str) : undefined;
@@ -35,7 +36,8 @@ export async function GET(request: NextRequest) {
       max_price,
       sort,
       page,
-      limit
+      limit,
+      is_sale
     });
 
     return NextResponse.json(result, {

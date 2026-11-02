@@ -17,13 +17,17 @@ export async function GET() {
     const shippingMethods = zones && zones.length > 0
       ? zones.map(z => ({
           id: z.id,
+          name: z.name,
           label: z.name,
-          fee: Number(z.base_fee),
+          estimate: '2 - 4 ngày (GHTK / GHN)',
           desc: 'Giao hàng tận nơi toàn quốc',
+          price: Number(z.base_fee),
+          fee: Number(z.base_fee),
         }))
       : [
-          { id: 'standard', label: 'Giao hàng tiêu chuẩn (Toàn quốc)', fee: 30000, desc: 'Nhận hàng từ 2 - 4 ngày' },
-          { id: 'express', label: 'Giao hàng hỏa tốc 2H (Nội thành)', fee: 50000, desc: 'Nhận hàng trong 2 giờ' },
+          { id: 'standard', name: 'Giao hàng tiêu chuẩn - GHTK / GHN', label: 'Giao hàng tiêu chuẩn - GHTK / GHN', estimate: '2 - 4 ngày', desc: 'Nhận hàng từ 2 - 4 ngày', price: 30000, fee: 30000 },
+          { id: 'express', name: 'Giao hàng hỏa tốc 2H - Grab / Ahamove', label: 'Giao hàng hỏa tốc 2H - Grab / Ahamove', estimate: 'Trong 2 giờ (Nội thành)', desc: 'Nhận hàng trong 2 giờ', price: 50000, fee: 50000 },
+          { id: 'viettel', name: 'Chuyển phát nhanh Viettel Post', label: 'Chuyển phát nhanh Viettel Post', estimate: '1 - 2 ngày', desc: 'Nhận hàng từ 1 - 2 ngày', price: 35000, fee: 35000 },
         ];
 
     // 2. Phương thức thanh toán chuẩn Supabase

@@ -209,6 +209,10 @@ export const useBuilderStore = create<BuilderStore>()(
         storage: null,
         psu: null,
         case: null,
+        cooling: null,
+        monitor: null,
+        gear: null,
+        headset: null,
       },
       setSlot: (slot, product) => {
         set({
@@ -228,6 +232,10 @@ export const useBuilderStore = create<BuilderStore>()(
             storage: null,
             psu: null,
             case: null,
+        cooling: null,
+        monitor: null,
+        gear: null,
+        headset: null,
           },
         });
       },
