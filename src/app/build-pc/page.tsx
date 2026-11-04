@@ -247,22 +247,22 @@ export default function BuildPcPage() {
     const applyAiPreset = (preset: any) => {
       if (!preset || !preset.components) return;
 
-      // Handle raw components or reconciled components
+      // Prioritize exact components from preset (AI Advisor / Community / Builder presets)
+      const presetMap = preset.components || {};
       let reconciledMap: Record<string, any> = {};
       try {
-        reconciledMap = reconcileBuildComponents(preset.components, liveSbuyProducts);
+        reconciledMap = reconcileBuildComponents(presetMap);
       } catch (err) {
-        console.warn('reconcileBuildComponents warning:', err);
-        reconciledMap = { ...preset.components };
+        reconciledMap = { ...presetMap };
       }
 
       setComponents(prev => prev.map(slot => {
-        // Find matching item by slot.key or common aliases
-        let item = reconciledMap[slot.key] ?? preset.components[slot.key];
-        if (!item && slot.key === 'storage') item = reconciledMap['ssd'] ?? preset.components['ssd'];
-        if (!item && slot.key === 'cooling') item = reconciledMap['cooler'] ?? preset.components['cooler'];
-        if (!item && slot.key === 'gpu') item = reconciledMap['vga'] ?? preset.components['vga'];
-        if (!item && slot.key === 'mainboard') item = reconciledMap['mb'] ?? preset.components['mb'];
+        // Find matching item by slot.key, giving strict priority to preset's explicit product & price
+        let item = presetMap[slot.key] ?? reconciledMap[slot.key];
+        if (!item && slot.key === 'storage') item = presetMap['ssd'] ?? reconciledMap['ssd'];
+        if (!item && slot.key === 'cooling') item = presetMap['cooler'] ?? reconciledMap['cooler'];
+        if (!item && slot.key === 'gpu') item = presetMap['vga'] ?? reconciledMap['vga'];
+        if (!item && slot.key === 'mainboard') item = presetMap['mb'] ?? reconciledMap['mb'];
 
         if (item) {
           const fallbackImg = CATEGORY_DEFAULT_IMAGE[slot.key] || '/images/cpu-box.jpg';

@@ -462,7 +462,7 @@ export const AI_BUILD_PRESETS: Record<string, BuildPreset> = {
     id: 'preset-50m',
     title: 'PC Gaming 4K & Workstation Đỉnh Cao - 50+ Triệu',
     budgetLabel: '50.000.000đ+',
-    totalPrice: 83730000,
+    totalPrice: 83720000,
     components: {
       cpu: {
         key: 'cpu',

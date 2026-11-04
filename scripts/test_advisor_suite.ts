@@ -1,5 +1,6 @@
 import { parseUserHardwareIntent } from '../src/lib/ai-query-parser';
 import { matchPresetKeyFromText, AI_BUILD_PRESETS, reconcileBuildComponents } from '../src/lib/buildPresets';
+import { extractBuildComponentsFromText } from '../src/components/layout/AIChatWidget';
 import { askGeminiPCHubAdvisor, ChatMessage } from '../src/lib/gemini';
 
 let totalTests = 0;
@@ -270,6 +271,20 @@ async function runTests() {
     return flagshipReply.text.includes(`${idx + 1}.`) && flagshipReply.text.includes(slot);
   });
   assert('AI Advisor Flagship response contains all 8 core hardware component slots (1-8)', all8SlotsPresent);
+
+  // Verify extractBuildComponentsFromText accurately parses all 8 items with exact prices
+  const extractedComps = extractBuildComponentsFromText(flagshipReply.text);
+  assert('extractBuildComponentsFromText extracts CPU with exact name and price', extractedComps.cpu?.name.includes('i9-14900K') && extractedComps.cpu?.price === 13990000);
+  assert('extractBuildComponentsFromText extracts Mainboard with exact name and price', extractedComps.mainboard?.name.includes('Z790-E') && extractedComps.mainboard?.price === 11490000);
+  assert('extractBuildComponentsFromText extracts GPU with exact name and price', extractedComps.gpu?.name.includes('RTX 4080 SUPER') && extractedComps.gpu?.price === 31490000);
+  assert('extractBuildComponentsFromText extracts RAM with exact name and price', extractedComps.ram?.name.includes('64GB') && extractedComps.ram?.price === 6290000);
+  assert('extractBuildComponentsFromText extracts Storage with exact name and price', extractedComps.storage?.name.includes('990 Pro') && extractedComps.storage?.price === 4890000);
+  assert('extractBuildComponentsFromText extracts PSU with exact name and price', extractedComps.psu?.name.includes('1000W') && extractedComps.psu?.price === 4390000);
+  assert('extractBuildComponentsFromText extracts Case with exact name and price', extractedComps.case?.name.includes('H9 Flow') && extractedComps.case?.price === 4290000);
+  assert('extractBuildComponentsFromText extracts Cooling with exact name and price', extractedComps.cooling?.name.includes('Kraken Elite 360') && extractedComps.cooling?.price === 6890000);
+
+  const totalExtractedPrice = Object.values(extractedComps).reduce((acc: number, c: any) => acc + (c.price || 0), 0);
+  assert('Total extracted price from AI Advisory text equals 83.720.000₫ exactly', totalExtractedPrice === 83720000);
 
   console.log('\n====================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (${((passedTests / totalTests) * 100).toFixed(1)}%)`);

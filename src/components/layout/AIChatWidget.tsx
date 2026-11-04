@@ -28,30 +28,39 @@ export function extractBuildComponentsFromText(text: string): Record<string, any
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Pattern matches: "1. CPU (Bộ vi xử lý): Intel Core i9-14900K... — 13.990.000₫"
-    const match = line.match(/^\d+\.\s*\*{0,2}(CPU|Mainboard|VGA|RAM|Ổ cứng|Nguồn|Vỏ Case|Tản nhiệt)[^:]*\*{0,2}:\s*\*{0,2}(.*?)\*{0,2}\s*[—–-]\s*\*{0,2}([\d\.,]+)\s*₫/i);
-    if (match) {
-      const label = match[1].toLowerCase();
-      const rawName = match[2].trim().replace(/\*+/g, '');
-      const rawPrice = match[3].replace(/[\.,]/g, '');
-      const price = parseInt(rawPrice, 10) || 0;
+    // Match line starting with slot numbering: e.g. "1. **CPU (Bộ vi xử lý)**: Intel Core i9-14900K... — 13.990.000đ"
+    const prefixMatch = line.match(/^(\d+)\.\s*\*{0,2}(CPU|Mainboard|VGA|RAM|Ổ cứng|Nguồn|Vỏ Case|Tản nhiệt)[^:]*\*{0,2}:\s*(.*)$/i);
+    if (prefixMatch) {
+      const slotRaw = prefixMatch[2].toLowerCase();
+      const rest = prefixMatch[3].trim();
 
       let key = '';
-      if (label.includes('cpu')) key = 'cpu';
-      else if (label.includes('mainboard')) key = 'mainboard';
-      else if (label.includes('vga')) key = 'gpu';
-      else if (label.includes('ram')) key = 'ram';
-      else if (label.includes('ổ cứng')) key = 'storage';
-      else if (label.includes('nguồn')) key = 'psu';
-      else if (label.includes('vỏ') || label.includes('case')) key = 'case';
-      else if (label.includes('tản')) key = 'cooling';
+      if (slotRaw.includes('cpu')) key = 'cpu';
+      else if (slotRaw.includes('mainboard')) key = 'mainboard';
+      else if (slotRaw.includes('vga')) key = 'gpu';
+      else if (slotRaw.includes('ram')) key = 'ram';
+      else if (slotRaw.includes('ổ cứng')) key = 'storage';
+      else if (slotRaw.includes('nguồn')) key = 'psu';
+      else if (slotRaw.includes('vỏ') || slotRaw.includes('case')) key = 'case';
+      else if (slotRaw.includes('tản')) key = 'cooling';
 
       if (key) {
+        // Extract price from the end of the line (e.g. "— **13.990.000₫**" or "— 13.990.000đ" or ": 13.990.000đ")
+        const priceMatch = rest.match(/(?:—|–|[-:]|\s)\s*\*{0,2}([\d\.,]+)\s*(?:₫|đ|vnđ|vnd|d)?\*{0,2}\s*$/i);
+        let name = rest;
+        let price = 0;
+        if (priceMatch && priceMatch.index !== undefined) {
+          name = rest.slice(0, priceMatch.index).trim().replace(/^[\*—–:\s]+|[\*—–:\s]+$/g, '');
+          price = parseInt(priceMatch[1].replace(/[\.,]/g, ''), 10) || 0;
+        } else {
+          name = rest.replace(/^[\*—–:\s]+|[\*—–:\s]+$/g, '');
+        }
+
         currentKey = key;
         compMap[key] = {
           key,
           id: `ai-parsed-${key}-${Date.now()}`,
-          name: rawName,
+          name: name || `Linh kiện ${key.toUpperCase()}`,
           price,
           tdp: key === 'cpu' ? 125 : key === 'gpu' ? 250 : key === 'mainboard' ? 40 : 15,
           specs: '',
