@@ -1,6 +1,8 @@
 // PCHub AI Hardware & Commercial Query Parser
 // Extracts Category, Brand, Price limits, and User Intent from natural language
 
+export type UserWorkload = 'gaming' | 'render_3d' | 'video_editing' | 'ai_dev' | 'streaming' | 'office' | 'general';
+
 export interface ParsedUserIntent {
   category?: 'cpu' | 'gpu' | 'ram' | 'storage' | 'mainboard' | 'psu' | 'case' | 'cooling' | 'monitor' | 'keyboard' | 'mouse' | 'headset' | 'speaker' | 'laptop' | 'pc_build';
   categoryName?: string;
@@ -12,6 +14,13 @@ export interface ParsedUserIntent {
   isPcBuild: boolean;
   isBudget: boolean;
   isPremium: boolean;
+  workload?: UserWorkload;
+  workloadName?: string;
+  aesthetic?: 'white' | 'black' | 'rgb';
+  customSlotChange?: {
+    slot: 'cpu' | 'gpu' | 'ram' | 'storage' | 'psu' | 'case' | 'cooling' | 'mainboard';
+    value: string;
+  };
 }
 
 export const KNOWN_BRANDS_CONFIG = [
@@ -190,6 +199,52 @@ export function parseUserHardwareIntent(query: string): ParsedUserIntent {
     maxPrice = 12000000;
   }
 
+  // 4. Detect Workload / Purpose (Tác vụ sử dụng)
+  let workload: UserWorkload | undefined = undefined;
+  let workloadName: string | undefined = undefined;
+
+  if (lower.includes('đồ họa') || lower.includes('render') || lower.includes('3d') || lower.includes('blender') || lower.includes('autocad') || lower.includes('sketchup') || lower.includes('dựng phim') || lower.includes('premiere') || lower.includes('after effect') || lower.includes('photoshop')) {
+    workload = 'render_3d';
+    workloadName = 'Thiết kế Đồ họa 2D/3D & Render / Dựng phim chuyên nghiệp';
+  } else if (lower.includes('trí tuệ nhân tạo') || lower.includes('deep learning') || lower.includes('machine learning') || lower.includes('chạy ai') || lower.includes('lập trình') || lower.includes('code') || lower.includes('docker') || lower.includes('máy ảo') || lower.includes('pytorch') || lower.includes('llm') || lower.includes('dev')) {
+    workload = 'ai_dev';
+    workloadName = 'Lập trình, Chạy AI / Deep Learning & Ảo hóa Máy ảo';
+  } else if (lower.includes('stream') || lower.includes('live') || lower.includes('vtuber') || lower.includes('obs')) {
+    workload = 'streaming';
+    workloadName = 'Live Streaming, Sáng tạo Nội dung & Gaming song song';
+  } else if (lower.includes('game') || lower.includes('gaming') || lower.includes('wukong') || lower.includes('cyberpunk') || lower.includes('fps') || lower.includes('pubg') || lower.includes('valorant') || lower.includes('cs2')) {
+    workload = 'gaming';
+    workloadName = 'Gaming AAA 2K/4K Max Setting & Esports FPS';
+  } else if (lower.includes('văn phòng') || lower.includes('kế toán') || lower.includes('học tập') || lower.includes('bán hàng') || lower.includes('excel')) {
+    workload = 'office';
+    workloadName = 'Văn phòng, Kế toán đa nhiệm & Học tập yên tĩnh';
+  }
+
+  // 5. Detect Aesthetic
+  let aesthetic: 'white' | 'black' | 'rgb' | undefined = undefined;
+  if (lower.includes('trắng') || lower.includes('white') || lower.includes('bạch mã')) aesthetic = 'white';
+  else if (lower.includes('đen') || lower.includes('black') || lower.includes('stealth')) aesthetic = 'black';
+  else if (lower.includes('bể cá') || lower.includes('rgb') || lower.includes('led')) aesthetic = 'rgb';
+
+  // 6. Detect Specific Component Modification Slot
+  let customSlotChange: { slot: 'cpu' | 'gpu' | 'ram' | 'storage' | 'psu' | 'case' | 'cooling' | 'mainboard'; value: string } | undefined = undefined;
+  if (lower.includes('chip') || lower.includes('cpu')) {
+    customSlotChange = { slot: 'cpu', value: lower.includes('amd') || lower.includes('ryzen') ? 'amd' : lower.includes('intel') ? 'intel' : 'custom' };
+  } else if (lower.includes('card') || lower.includes('vga') || lower.includes('gpu')) {
+    const gpuMatch = lower.match(/(rtx\s*\d+|rx\s*\d+|4090|4080|4070|4060|3060|3050)/);
+    customSlotChange = { slot: 'gpu', value: gpuMatch ? gpuMatch[0] : 'custom' };
+  } else if (lower.includes('ram')) {
+    const ramMatch = lower.match(/(16gb|32gb|64gb|128gb|\d+\s*gb)/);
+    customSlotChange = { slot: 'ram', value: ramMatch ? ramMatch[0] : 'custom' };
+  } else if (lower.includes('vỏ') || lower.includes('case')) {
+    customSlotChange = { slot: 'case', value: aesthetic || 'custom' };
+  } else if (lower.includes('tản') || lower.includes('cooling')) {
+    customSlotChange = { slot: 'cooling', value: lower.includes('nước') || lower.includes('aio') ? 'liquid' : 'air' };
+  } else if (lower.includes('ssd') || lower.includes('ổ cứng')) {
+    const ssdMatch = lower.match(/(1tb|2tb|4tb|500gb|\d+\s*tb)/);
+    customSlotChange = { slot: 'storage', value: ssdMatch ? ssdMatch[0] : 'custom' };
+  }
+
   return {
     category: detectedCategory,
     categoryName: detectedCategoryName,
@@ -200,6 +255,10 @@ export function parseUserHardwareIntent(query: string): ParsedUserIntent {
     targetPrice,
     isPcBuild: !!isPcBuild,
     isBudget,
-    isPremium
+    isPremium,
+    workload,
+    workloadName,
+    aesthetic,
+    customSlotChange
   };
 }

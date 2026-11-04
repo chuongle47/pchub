@@ -3,7 +3,7 @@ import { askGeminiPCHubAdvisor } from '@/lib/gemini';
 import { getProducts } from '@/lib/db';
 import { getProductImage } from '@/lib/product-ui';
 import { parseUserHardwareIntent, KNOWN_BRANDS_CONFIG } from '@/lib/ai-query-parser';
-import { matchPresetKeyFromText, AI_BUILD_PRESETS } from '@/lib/buildPresets';
+import { matchPresetKeyFromText, AI_BUILD_PRESETS, balanceSystemComponents } from '@/lib/buildPresets';
 
 export async function POST(request: NextRequest) {
   try {
@@ -348,13 +348,49 @@ export async function POST(request: NextRequest) {
     } else {
       // For PC Build queries: Prioritize components from the matched preset and dynamic catalog
       const matchedPresetKey = matchPresetKeyFromText(message, pastPresetKey);
-      const matchedPreset = AI_BUILD_PRESETS[matchedPresetKey] || AI_BUILD_PRESETS['25m'];
+      const rawPreset = AI_BUILD_PRESETS[matchedPresetKey] || AI_BUILD_PRESETS['25m'];
+      const targetGpu = (userText.match(/(rtx\s*\d+|4090|4080|4070|4060|3060)/) || [])[0];
+      const targetRam = (userText.match(/(16gb|32gb|64gb|128gb|\d+\s*gb)/) || [])[0];
+      const targetStorage = (userText.match(/(1tb|2tb|4tb|\d+\s*tb)/) || [])[0];
+      const aesthetic = userText.includes('trắng') || userText.includes('white') ? 'white' : undefined;
+      const matchedPreset = balanceSystemComponents(rawPreset, {
+        targetGpu,
+        targetRam,
+        targetStorage,
+        aesthetic,
+        workload: intent.workload,
+      });
       const presetCompList = Object.values(matchedPreset.components);
 
-      // Add preset components first
+      // Add preset components first (all 8 slots: cpu, mainboard, ram, gpu, storage, psu, case, cooling)
       presetCompList.forEach(comp => {
-        // Try to find matching real product in catalog
-        const realProd = finalProductList.find(p => (p.name || '').toLowerCase().includes(comp.name.toLowerCase().slice(0, 15)));
+        // Find matching real product in catalog with strict category isolation
+        const compNameLower = comp.name.toLowerCase();
+        const realProd = finalProductList.find(p => {
+          const pName = (p.name || '').toLowerCase();
+          const pCat = (p.category_slug || p.category_name || '').toLowerCase();
+          
+          if (comp.key === 'ram' && !pCat.includes('ram')) return false;
+          if (comp.key === 'gpu' && !pCat.includes('vga') && !pCat.includes('gpu')) return false;
+          if (comp.key === 'cpu' && !pCat.includes('cpu')) return false;
+          if (comp.key === 'mainboard' && !pCat.includes('mainboard') && !pCat.includes('bo mạch')) return false;
+          if (comp.key === 'storage' && !pCat.includes('ssd') && !pCat.includes('storage') && !pCat.includes('ổ cứng')) return false;
+          if (comp.key === 'psu' && !pCat.includes('psu') && !pCat.includes('nguồn')) return false;
+          if (comp.key === 'case' && !pCat.includes('case') && !pCat.includes('vỏ')) return false;
+          if (comp.key === 'cooling' && !pCat.includes('tản') && !pCat.includes('cooling')) return false;
+
+          // For RAM, ensure DDR generation matches (DDR5 vs DDR4)
+          if (comp.key === 'ram') {
+            const isCompD5 = compNameLower.includes('ddr5') || compNameLower.includes('d5');
+            const isPD5 = pName.includes('ddr5') || pName.includes('d5');
+            if (isCompD5 !== isPD5) return false;
+          }
+
+          // Check token overlap
+          const tokens = compNameLower.split(/[\s\-_\/,\.]+/).filter(t => t.length >= 3 && !['chính', 'hãng', 'bộ', 'nhớ', 'card', 'màn', 'hình', 'edition'].includes(t));
+          return tokens.length >= 2 && tokens.slice(0, 3).every(t => pName.includes(t));
+        });
+
         const itemToAdd = realProd || {
           id: comp.id,
           name: comp.name,
@@ -375,7 +411,7 @@ export async function POST(request: NextRequest) {
             original_price: Number(itemToAdd.original_price || itemToAdd.originalPrice || 0),
             image_url: getProductImage({ name: itemToAdd.name, category_name: itemToAdd.category_name, category_slug: itemToAdd.category_slug, brand_name: itemToAdd.brand_name, image_url: itemToAdd.image_url || itemToAdd.image }),
             category_name: itemToAdd.category_name || 'Linh kiện',
-            category_slug: itemToAdd.category_slug,
+            category_slug: itemToAdd.category_slug || comp.key,
             brand_name: itemToAdd.brand_name || 'Chính hãng',
           });
         }
@@ -403,7 +439,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const recommendedProducts = Array.from(recMap.values()).slice(0, 6);
+    const maxProducts = isBuildQuery ? 8 : 6;
+    const recommendedProducts = Array.from(recMap.values()).slice(0, maxProducts);
 
     return NextResponse.json({
       reply: advisorResult.text,

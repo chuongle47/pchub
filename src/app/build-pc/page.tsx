@@ -314,7 +314,7 @@ export default function BuildPcPage() {
 
       const title = preset.title || 'Cấu hình đề xuất';
       const budget = preset.budgetLabel ? ` (${preset.budgetLabel})` : '';
-      setNotice(`🎉 Đã nạp thành công cấu hình "${title}"${budget} vào PC Builder!`);
+      setNotice(`🎉 Đã nạp thành công toàn bộ 8/8 linh kiện cấu hình "${title}"${budget} vào PC Builder!`);
       setTimeout(() => setNotice(null), 5000);
     };
 

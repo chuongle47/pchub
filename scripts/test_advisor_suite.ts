@@ -1,5 +1,5 @@
 import { parseUserHardwareIntent } from '../src/lib/ai-query-parser';
-import { matchPresetKeyFromText, AI_BUILD_PRESETS } from '../src/lib/buildPresets';
+import { matchPresetKeyFromText, AI_BUILD_PRESETS, reconcileBuildComponents } from '../src/lib/buildPresets';
 import { askGeminiPCHubAdvisor, ChatMessage } from '../src/lib/gemini';
 
 let totalTests = 0;
@@ -207,6 +207,69 @@ async function runTests() {
   ];
   const resolvedPresetKey3 = matchPresetKeyFromText(turn3Message, resolvedPresetKey2);
   assert('Turn 3 "đổi lại chip intel" switches back to "50m" Intel', resolvedPresetKey3 === '50m');
+
+  // -----------------------------------------------------------------
+  // Test 6: System-wide Task & Workload Adaptation (Render 3D, AI, White Theme)
+  // -----------------------------------------------------------------
+  console.log('\n--- Test Group 6: System-wide Task & Workload Adaptation ---');
+  
+  // 1. Render 3D / Đồ họa
+  const renderMsg = 'build pc 35 triệu làm đồ họa và render 3d';
+  const renderIntent = parseUserHardwareIntent(renderMsg);
+  assert('Query "làm đồ họa và render 3d" detects workload = "render_3d"', renderIntent.workload === 'render_3d');
+  
+  const renderReply = await askGeminiPCHubAdvisor(renderMsg, [], dummyCatalog, renderIntent);
+  assert('Render 3D response contains workload evaluation for Blender / Premiere', renderReply.text.includes('Blender') || renderReply.text.includes('Premiere') || renderReply.text.includes('Render 3D'));
+  assert('Render 3D response provides 32GB+ RAM', renderReply.text.includes('32GB') || renderReply.text.includes('64GB'));
+
+  // 2. AI & Deep Learning
+  const aiMsg = 'cấu hình 50 triệu chạy AI deep learning';
+  const aiIntent = parseUserHardwareIntent(aiMsg);
+  assert('Query "chạy AI deep learning" detects workload = "ai_dev"', aiIntent.workload === 'ai_dev');
+  
+  const aiReply = await askGeminiPCHubAdvisor(aiMsg, [], dummyCatalog, aiIntent);
+  assert('AI Deep Learning response evaluates Tensor Cores / PyTorch / LLM', aiReply.text.includes('Tensor') || aiReply.text.includes('PyTorch') || aiReply.text.includes('AI') || aiReply.text.includes('LLM'));
+
+  // 3. System-wide GPU swap + Auto-PSU scaling to 1000W
+  const rtx4090Msg = 'muốn nâng card rtx 4090';
+  const rtx4090Reply = await askGeminiPCHubAdvisor(rtx4090Msg, historyTurn1, dummyCatalog);
+  assert('Upgrading GPU to RTX 4090 automatically scales PSU to 1000W Gold', rtx4090Reply.text.includes('RTX 4090') && rtx4090Reply.text.includes('1000W'));
+
+  // 4. Aesthetic White Theme adaptation
+  const whiteMsg = 'đổi sang case vỏ màu trắng';
+  const whiteReply = await askGeminiPCHubAdvisor(whiteMsg, historyTurn1, dummyCatalog);
+  assert('Switching to White theme adapts Case to White', whiteReply.text.includes('White') || whiteReply.text.includes('Trắng'));
+
+  // -----------------------------------------------------------------
+  // Test 7: Complete 8/8 Hardware Extraction & Builder Preset Application
+  // -----------------------------------------------------------------
+  console.log('\n--- Test Group 7: Complete 8/8 Hardware Extraction & Builder Application ---');
+  
+  // Verify 36MB cache does not wrongly match 35m
+  const specText36MB = 'CPU Intel Core i9-14900K (LGA1700, 36MB Cache, 125W-253W)';
+  const matchedKey36MB = matchPresetKeyFromText(specText36MB);
+  assert('CPU specs with 36MB cache DOES NOT falsely match 35m preset', matchedKey36MB !== '35m');
+
+  // Verify explicit million formatting
+  assert('matchPresetKeyFromText("50.000.000đ") matches 50m', matchPresetKeyFromText('50.000.000đ') === '50m');
+  assert('matchPresetKeyFromText("83.730.000đ") matches 50m', matchPresetKeyFromText('83.730.000đ') === '50m');
+
+  // Verify Z790 board preserves DDR5 RAM
+  const testComponentsZ790D5: Record<string, any> = {
+    cpu: { key: 'cpu', name: 'Intel Core i9-14900K', specs: 'LGA1700 | 125W' },
+    mainboard: { key: 'mainboard', name: 'ASUS ROG STRIX Z790-E GAMING WIFI II', specs: 'Bo Mạch Chủ' },
+    ram: { key: 'ram', name: 'G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz', price: 6290000, specs: 'DDR5 6000MHz' }
+  };
+  const reconciledZ790 = reconcileBuildComponents(testComponentsZ790D5);
+  assert('Z790 board strictly preserves DDR5 RAM (does not downgrade to DDR4)', reconciledZ790.ram.specs.includes('DDR5') && reconciledZ790.ram.price === 6290000);
+
+  // Verify AI Advisory text contains all 8 components
+  const flagshipReply = await askGeminiPCHubAdvisor('build pc cao nhất hiện tại', [], dummyCatalog);
+  const required8Slots = ['CPU', 'Mainboard', 'VGA', 'RAM', 'Ổ cứng', 'Nguồn', 'Vỏ Case', 'Tản nhiệt'];
+  const all8SlotsPresent = required8Slots.every((slot, idx) => {
+    return flagshipReply.text.includes(`${idx + 1}.`) && flagshipReply.text.includes(slot);
+  });
+  assert('AI Advisor Flagship response contains all 8 core hardware component slots (1-8)', all8SlotsPresent);
 
   console.log('\n====================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (${((passedTests / totalTests) * 100).toFixed(1)}%)`);

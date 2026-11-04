@@ -48,7 +48,7 @@ export interface ChatMessage {
  * AI PC Hardware & Product Advisor Chat Helper using Gemini API
  */
 import { parseUserHardwareIntent, ParsedUserIntent, KNOWN_BRANDS_CONFIG } from './ai-query-parser';
-import { AI_BUILD_PRESETS, matchPresetKeyFromText } from './buildPresets';
+import { AI_BUILD_PRESETS, matchPresetKeyFromText, balanceSystemComponents } from './buildPresets';
 
 export async function askGeminiPCHubAdvisor(
   message: string,
@@ -251,8 +251,41 @@ function getSmartLocalAdvisorReply(
   const intent = preParsedIntent || parseUserHardwareIntent(message);
   const lowerMsg = message.toLowerCase();
 
+  // Detect if there was an active PC build in conversation history
+  let hadPastBuild = false;
+  let pastPresetKey: string | undefined = undefined;
+  if (Array.isArray(history) && history.length > 0) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      const hText = (history[i].content || '').toLowerCase();
+      if (
+        hText.includes('cấu hình') ||
+        hText.includes('bảng cấu hình') ||
+        hText.includes('build') ||
+        hText.includes('linh kiện chi tiết') ||
+        hText.includes('đề xuất từ pchub ai advisor')
+      ) {
+        hadPastBuild = true;
+        const matched = matchPresetKeyFromText(hText);
+        if (matched) {
+          pastPresetKey = matched;
+          break;
+        }
+      }
+    }
+  }
+
+  const isComponentSwap = hadPastBuild && (
+    lowerMsg.includes('muốn') || lowerMsg.includes('đổi') || lowerMsg.includes('thay') || lowerMsg.includes('chuyển') ||
+    lowerMsg.includes('nâng') || lowerMsg.includes('hạ') || lowerMsg.includes('thêm') || lowerMsg.includes('bớt') ||
+    lowerMsg.includes('card') || lowerMsg.includes('vga') || lowerMsg.includes('gpu') || lowerMsg.includes('chip') ||
+    lowerMsg.includes('cpu') || lowerMsg.includes('ram') || lowerMsg.includes('vỏ') || lowerMsg.includes('case') ||
+    lowerMsg.includes('tản') || lowerMsg.includes('trắng') || lowerMsg.includes('white') || lowerMsg.includes('rtx') ||
+    lowerMsg.includes('amd') || lowerMsg.includes('intel')
+  );
+
   const isRealPcBuild = intent.isPcBuild ||
     intent.category === 'pc_build' ||
+    isComponentSwap ||
     lowerMsg.includes('build') ||
     lowerMsg.includes('cấu hình') ||
     lowerMsg.includes('dàn pc') ||
@@ -268,21 +301,6 @@ function getSmartLocalAdvisorReply(
   // Always prioritize full PC configuration over brand queries
   // =========================================================================
   if (isRealPcBuild) {
-    // Extract past preset key from history if available
-    let pastPresetKey: string | undefined = undefined;
-    if (Array.isArray(history) && history.length > 0) {
-      for (let i = history.length - 1; i >= 0; i--) {
-        const hText = (history[i].content || '').toLowerCase();
-        if (hText) {
-          const matched = matchPresetKeyFromText(hText);
-          if (matched) {
-            pastPresetKey = matched;
-            break;
-          }
-        }
-      }
-    }
-
     const presetKey = matchPresetKeyFromText(message, pastPresetKey);
     const preset = AI_BUILD_PRESETS[presetKey] || AI_BUILD_PRESETS['25m'];
     const comp = preset.components;
@@ -301,15 +319,40 @@ function getSmartLocalAdvisorReply(
     const isAmdRequest = lowerMsg.includes('amd') || lowerMsg.includes('ryzen');
     const isIntelRequest = lowerMsg.includes('intel') || lowerMsg.includes('core i');
 
+    // Balance full system according to user options
+    const targetGpu = (lowerMsg.match(/(rtx\s*\d+|4090|4080|4070|4060|3060)/) || [])[0];
+    const targetRam = (lowerMsg.match(/(16gb|32gb|64gb|128gb|\d+\s*gb)/) || [])[0];
+    const targetStorage = (lowerMsg.match(/(1tb|2tb|4tb|\d+\s*tb)/) || [])[0];
+    const aesthetic = lowerMsg.includes('trắng') || lowerMsg.includes('white') ? 'white' : undefined;
+    const workload = intent.workload || (
+      lowerMsg.includes('đồ họa') || lowerMsg.includes('render') || lowerMsg.includes('3d') || lowerMsg.includes('blender') || lowerMsg.includes('dựng phim') ? 'render_3d' :
+      lowerMsg.includes('ai') || lowerMsg.includes('deep learning') || lowerMsg.includes('máy ảo') || lowerMsg.includes('code') ? 'ai_dev' :
+      lowerMsg.includes('stream') ? 'streaming' :
+      lowerMsg.includes('văn phòng') ? 'office' : 'gaming'
+    );
+
+    const balancedPreset = balanceSystemComponents(preset, { targetGpu, targetRam, targetStorage, aesthetic, workload });
+    const bComp = balancedPreset.components;
+
     let swapNote = '';
     if (isAmdRequest && presetKey.includes('_amd')) {
       swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
-        `• Đã chuyển đổi CPU sang: **${comp.cpu.name}**.\n` +
-        `• Tự động đồng bộ Bo mạch chủ tương thích sang Socket **AM5 (${comp.mainboard.name})** cùng RAM DDR5 **AMD EXPO** đảm bảo 100% tương thích phần cứng!\n\n`;
+        `• Đã chuyển đổi CPU sang: **${bComp.cpu.name}**.\n` +
+        `• Tự động đồng bộ Bo mạch chủ tương thích sang Socket **AM5 (${bComp.mainboard.name})** cùng RAM DDR5 **AMD EXPO** đảm bảo 100% tương thích phần cứng!\n\n`;
     } else if (isIntelRequest && !presetKey.includes('_amd')) {
       swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
-        `• Đã chuyển đổi CPU sang: **${comp.cpu.name}**.\n` +
-        `• Tự động đồng bộ Bo mạch chủ Intel (${comp.mainboard.name})!\n\n`;
+        `• Đã chuyển đổi CPU sang: **${bComp.cpu.name}**.\n` +
+        `• Tự động đồng bộ Bo mạch chủ Intel (${bComp.mainboard.name})!\n\n`;
+    } else if (targetGpu && targetGpu.includes('4090')) {
+      swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
+        `• Đã nâng cấp Card đồ họa lên: **${bComp.gpu.name}**.\n` +
+        `• Tự động nâng cấp Nguồn lên: **${bComp.psu.name}** để đảm bảo cấp điện ổn định và an toàn tuyệt đối khi tải nặng!\n\n`;
+    } else if (aesthetic === 'white') {
+      swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
+        `• Đã chuyển đổi Vỏ Case và Tản nhiệt sang phiên bản: **Màu Trắng Tuyết (White Edition)** đồng bộ thẩm mỹ toàn hệ thống!\n\n`;
+    } else if (targetRam) {
+      swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
+        `• Đã nâng cấp dung lượng RAM lên: **${bComp.ram.name}** (${bComp.ram.specs})!\n\n`;
     }
 
     let displayTitle = preset.title;
@@ -323,24 +366,50 @@ function getSmartLocalAdvisorReply(
       ? 'Chiến mọi tựa game AAA Max Setting 4K/8K, Render 3D nặng, Dựng phim 8K & Huấn luyện AI'
       : 'Chơi game mượt mà, Làm việc đa nhiệm & Đồ họa';
 
-    return `📌 **${displayTitle} (${preset.budgetLabel}) — Đề xuất từ PCHub AI Advisor:**\n\n` +
+    // Build specific performance metrics for this workload
+    let workloadMetrics = '';
+    if (workload === 'render_3d' || workload === 'video_editing') {
+      workloadMetrics = `📊 **Đánh giá hiệu năng thực tế cho Đồ Họa & Render 3D:**\n` +
+        `• **Phần mềm chuyên dụng**: Tối ưu hóa 100% cho Premiere Pro, After Effects, DaVinci Resolve, Blender, AutoCAD, 3Ds Max và SketchUp.\n` +
+        `• **Khả năng Preview & Render**: CPU đa nhân kết hợp nhân CUDA/OptiX trên GPU giúp preview video 4K/8K thời gian thực không khựng, render khung hình 3D nhanh gấp 3.5 lần thế hệ trước.\n` +
+        `• **Độ bền khi Render 24/7**: Hệ thống tản nhiệt nước và dàn nguồn Gold đảm bảo máy chạy full-load 100% qua đêm nhiệt độ luôn dưới 72°C không lo sụt xung.\n\n`;
+    } else if (workload === 'ai_dev') {
+      workloadMetrics = `📊 **Đánh giá hiệu năng thực tế cho Lập trình, AI & Máy ảo:**\n` +
+        `• **Huấn luyện mô hình AI**: VRAM đồ họa cực lớn và nhân Tensor Cores hỗ trợ tăng tốc PyTorch, TensorFlow, vLLM và chạy mượt mô hình LLM 7B-14B local.\n` +
+        `• **Môi trường Dev & Ảo hóa**: RAM ${bComp.ram.specs} dư sức chạy đồng thời nhiều container Docker, máy ảo WSL2 và IDE nặng.\n` +
+        `• **Tốc độ đọc ghi**: Ổ cứng NVMe Gen 4 đạt >7000MB/s giúp nạp dataset khổng lồ trong tích tắc.\n\n`;
+    } else if (workload === 'streaming') {
+      workloadMetrics = `📊 **Đánh giá hiệu năng thực tế cho Live Stream & Sáng tạo nội dung:**\n` +
+        `• **Encoder NVENC phần cứng**: Stream mượt mà trên OBS Studio chuẩn 1080p60/4K lên TikTok, YouTube, Facebook không tụt 1 FPS game.\n` +
+        `• **Đa nhiệm mượt mà**: Vừa chơi game nặng, vừa mở OBS, Discord, Spotify và hàng chục tab Chrome không lo nghẽn.\n\n`;
+    } else if (workload === 'office') {
+      workloadMetrics = `📊 **Đánh giá hiệu năng thực tế cho Văn phòng & Kế toán:**\n` +
+        `• **Mát mẻ & Yên tĩnh**: Hoạt động êm ái 0dB, mở hàng chục file Excel triệu dòng cùng lúc và chuyển đổi tức thì không có độ trễ.\n\n`;
+    } else {
+      workloadMetrics = `📊 **Đánh giá hiệu năng Gaming thực tế (2K / 4K Max Setting):**\n` +
+        `• **Black Myth Wukong / Cyberpunk 2077**: Đạt 85 - 140+ FPS thiết lập Cinematic/Ultra với DLSS 3 và Frame Generation.\n` +
+        `• **Esports (CS2, Valorant, PUBG, LMHT)**: Duy trì ổn định 240 - 500+ FPS, tối ưu hóa triệt để cho màn hình tần số quét cao.\n\n`;
+    }
+
+    return `📌 **${balancedPreset.title} (${balancedPreset.budgetLabel}) — Đề xuất từ PCHub AI Advisor:**\n\n` +
       swapNote +
       `- **Mục đích**: ${displayPurpose}\n` +
-      `- **Tổng chi phí dự kiến**: **${preset.totalPrice.toLocaleString('vi-VN')}₫**\n` +
-      `- **Tiêu chuẩn**: 100% linh kiện chính hãng, tương thích socket 100%, nguồn công suất thực đệm tải an toàn >30%\n\n` +
-      `🛒 **Bảng cấu hình linh kiện chi tiết:**\n` +
-      `1. **CPU**: **${comp.cpu.name}** — **${comp.cpu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.cpu.specs}\n` +
-      `2. **Mainboard**: **${comp.mainboard.name}** — **${comp.mainboard.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.mainboard.specs}\n` +
-      `3. **VGA (Card đồ họa)**: **${comp.gpu.name}** — **${comp.gpu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.gpu.specs}\n` +
-      `4. **RAM**: **${comp.ram.name}** — **${comp.ram.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.ram.specs}\n` +
-      `5. **Ổ cứng (SSD)**: **${comp.storage.name}** — **${comp.storage.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.storage.specs}\n` +
-      `6. **Nguồn (PSU)**: **${comp.psu.name}** — **${comp.psu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.psu.specs}\n` +
-      `7. **Vỏ Case**: **${comp.case.name}** — **${comp.case.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.case.specs}\n` +
-      `8. **Tản nhiệt**: **${comp.cooling.name}** — **${comp.cooling.price > 0 ? comp.cooling.price.toLocaleString('vi-VN') + '₫' : 'Kèm theo CPU'}**\n   • *Thông số*: ${comp.cooling.specs}\n\n` +
-      `⚙️ **Đánh giá tương thích & Khả năng vận hành:**\n` +
-      `• **Socket & Chuẩn kết nối**: Khớp 100%, bus RAM và băng thông PCIe tối ưu hiệu năng tối đa.\n` +
-      `• **Điện năng & Nhiệt độ**: Hệ thống nguồn và tản nhiệt đảm bảo máy hoạt động mát mẻ, êm ái khi chạy tải nặng liên tục.\n` +
-      `• **Chính sách**: Bảo hành 24 - 36 tháng chính hãng 1 đổi 1, hỗ trợ lắp ráp và test máy miễn phí tại PCHub.\n\n` +
+      `- **Tổng chi phí dự kiến**: **${balancedPreset.totalPrice.toLocaleString('vi-VN')}₫**\n` +
+      `- **Tiêu chuẩn chất lượng**: 100% linh kiện chính hãng, tương thích socket 100%, nguồn công suất thực đệm tải an toàn >30%\n\n` +
+      workloadMetrics +
+      `🛒 **Bảng cấu hình linh kiện chi tiết toàn hệ thống:**\n` +
+      `1. **CPU (Bộ vi xử lý)**: **${bComp.cpu.name}** — **${bComp.cpu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.cpu.specs}\n` +
+      `2. **Mainboard (Bo mạch chủ)**: **${bComp.mainboard.name}** — **${bComp.mainboard.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.mainboard.specs}\n` +
+      `3. **VGA (Card đồ họa)**: **${bComp.gpu.name}** — **${bComp.gpu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.gpu.specs}\n` +
+      `4. **RAM (Bộ nhớ trong)**: **${bComp.ram.name}** — **${bComp.ram.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.ram.specs}\n` +
+      `5. **Ổ cứng (SSD NVMe)**: **${bComp.storage.name}** — **${bComp.storage.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.storage.specs}\n` +
+      `6. **Nguồn (PSU)**: **${bComp.psu.name}** — **${bComp.psu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.psu.specs}\n` +
+      `7. **Vỏ Case**: **${bComp.case.name}** — **${bComp.case.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${bComp.case.specs}\n` +
+      `8. **Tản nhiệt (Cooling)**: **${bComp.cooling.name}** — **${bComp.cooling.price > 0 ? bComp.cooling.price.toLocaleString('vi-VN') + '₫' : 'Kèm theo CPU'}**\n   • *Thông số*: ${bComp.cooling.specs}\n\n` +
+      `⚙️ **Đánh giá tương thích & Khả năng vận hành toàn diện:**\n` +
+      `• **Chuẩn Socket & Bus RAM**: Khớp 100%, không bị thắt cổ chai (bottleneck) ở bất kỳ linh kiện nào.\n` +
+      `• **Điện áp & Nhiệt độ**: Nguồn Gold công suất thực và tản nhiệt tối ưu giữ máy hoạt động mát mẻ, êm ái khi chạy tải nặng liên tục.\n` +
+      `• **Chính sách**: Bảo hành 24 - 36 tháng chính hãng 1 đổi 1, hỗ trợ lắp ráp, đi dây thẩm mỹ và test máy miễn phí tại PCHub.\n\n` +
       `👉 Bạn có thể xem các linh kiện đề xuất bên dưới để thêm vào giỏ hàng hoặc mở công cụ **Build PC** để tinh chỉnh theo ý thích!`;
   }
 

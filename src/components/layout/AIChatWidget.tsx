@@ -4,7 +4,74 @@ import { FormEvent, useState, useRef, useEffect } from 'react';
 import { Bot, ChevronDown, MessageCircle, Send, X, Loader2, Sparkles, RefreshCw, ShoppingCart, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUIStore, useCartStore } from '@/lib/store';
-import { matchPresetKeyFromText, AI_BUILD_PRESETS, reconcileBuildComponents } from '@/lib/buildPresets';
+import { matchPresetKeyFromText, AI_BUILD_PRESETS, reconcileBuildComponents, balanceSystemComponents } from '@/lib/buildPresets';
+
+const DEFAULT_SLOT_IMAGES: Record<string, string> = {
+  cpu: '/images/cpu-box.jpg',
+  mainboard: '/images/cat-mainboard.jpg',
+  ram: '/images/ram-rgb.jpg',
+  gpu: '/images/gpu-strix.jpg',
+  storage: '/images/ssd-nvme.jpg',
+  psu: '/images/cat-psu.jpg',
+  case: '/images/hero-pc.jpg',
+  cooling: '/images/hero-pc.jpg',
+};
+
+export function extractBuildComponentsFromText(text: string): Record<string, any> {
+  const compMap: Record<string, any> = {};
+  if (!text) return compMap;
+
+  const lines = text.split('\n');
+  let currentKey = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Pattern matches: "1. CPU (Bộ vi xử lý): Intel Core i9-14900K... — 13.990.000₫"
+    const match = line.match(/^\d+\.\s*\*{0,2}(CPU|Mainboard|VGA|RAM|Ổ cứng|Nguồn|Vỏ Case|Tản nhiệt)[^:]*\*{0,2}:\s*\*{0,2}(.*?)\*{0,2}\s*[—–-]\s*\*{0,2}([\d\.,]+)\s*₫/i);
+    if (match) {
+      const label = match[1].toLowerCase();
+      const rawName = match[2].trim().replace(/\*+/g, '');
+      const rawPrice = match[3].replace(/[\.,]/g, '');
+      const price = parseInt(rawPrice, 10) || 0;
+
+      let key = '';
+      if (label.includes('cpu')) key = 'cpu';
+      else if (label.includes('mainboard')) key = 'mainboard';
+      else if (label.includes('vga')) key = 'gpu';
+      else if (label.includes('ram')) key = 'ram';
+      else if (label.includes('ổ cứng')) key = 'storage';
+      else if (label.includes('nguồn')) key = 'psu';
+      else if (label.includes('vỏ') || label.includes('case')) key = 'case';
+      else if (label.includes('tản')) key = 'cooling';
+
+      if (key) {
+        currentKey = key;
+        compMap[key] = {
+          key,
+          id: `ai-parsed-${key}-${Date.now()}`,
+          name: rawName,
+          price,
+          tdp: key === 'cpu' ? 125 : key === 'gpu' ? 250 : key === 'mainboard' ? 40 : 15,
+          specs: '',
+          image: DEFAULT_SLOT_IMAGES[key] || '/images/hero-pc.jpg',
+          slug: '',
+        };
+      }
+    } else if (currentKey && compMap[currentKey] && (line.includes('Thông số') || line.includes('•'))) {
+      const specText = line.replace(/^[\s•\*\-]+/, '').replace(/^Thông số\*?:\s*/i, '').trim();
+      compMap[currentKey].specs = specText;
+      if (currentKey === 'cpu') {
+        const tdpMatch = specText.match(/(\d+)w/i);
+        if (tdpMatch) compMap[currentKey].tdp = parseInt(tdpMatch[1], 10);
+      }
+      currentKey = '';
+    }
+  }
+
+  return compMap;
+}
 
 type RecommendedProduct = {
   id: string;
@@ -92,8 +159,11 @@ export default function AIChatWidget() {
   };
 
   const handleApplyBuild = (text: string, products?: RecommendedProduct[]) => {
-    const componentsMap: Record<string, any> = {};
+    // 1. Direct high-fidelity extraction of all 8 components from the AI Advisor recommendation text
+    const textComponents = extractBuildComponentsFromText(text);
+    const componentsMap: Record<string, any> = { ...textComponents };
 
+    // 2. Supplement from recommended products if any slot was not captured by text parser
     if (products && products.length > 0) {
       products.forEach(p => {
         const nameLower = p.name.toLowerCase();
@@ -116,29 +186,37 @@ export default function AIChatWidget() {
             id: p.id,
             name: p.name,
             price: Number(p.price) || 0,
-            tdp: slotKey === 'cpu' ? 65 : slotKey === 'gpu' ? 170 : 15,
+            tdp: slotKey === 'cpu' ? 125 : slotKey === 'gpu' ? 250 : slotKey === 'mainboard' ? 40 : 15,
             specs: p.category_name || 'Khớp từ tư vấn AI',
-            image: p.image_url,
+            image: p.image_url || DEFAULT_SLOT_IMAGES[slotKey],
             slug: p.slug,
           };
         }
       });
     }
 
+    // 3. Fallback to matched balanced preset for any component still missing
     const key = matchPresetKeyFromText(text);
-    const fallbackPreset = AI_BUILD_PRESETS[key] || AI_BUILD_PRESETS['25m'];
+    const rawFallbackPreset = AI_BUILD_PRESETS[key] || AI_BUILD_PRESETS['25m'];
+    const lowerText = text.toLowerCase();
+    const targetGpu = (lowerText.match(/(rtx\s*\d+|4090|4080|4070|4060|3060)/) || [])[0];
+    const targetRam = (lowerText.match(/(16gb|32gb|64gb|128gb|\d+\s*gb)/) || [])[0];
+    const targetStorage = (lowerText.match(/(1tb|2tb|4tb|\d+\s*tb)/) || [])[0];
+    const aesthetic = lowerText.includes('trắng') || lowerText.includes('white') ? 'white' : undefined;
+    const fallbackPreset = balanceSystemComponents(rawFallbackPreset, { targetGpu, targetRam, targetStorage, aesthetic });
+
     Object.keys(fallbackPreset.components).forEach(slotKey => {
       if (!componentsMap[slotKey]) {
         componentsMap[slotKey] = fallbackPreset.components[slotKey];
       }
     });
 
-    // Enforce 100% hardware compatibility (CPU socket matching, RAM DDR generation & PSU capacity)
+    // 4. Enforce 100% hardware compatibility (CPU socket matching, RAM DDR generation & PSU capacity)
     const reconciledComponents = reconcileBuildComponents(componentsMap);
 
     const dynamicPreset = {
       id: `custom-ai-${Date.now()}`,
-      title: 'Cấu hình gợi ý từ AI Advisor',
+      title: 'Cấu hình tối ưu từ PCHub AI Advisor',
       budgetLabel: fallbackPreset.budgetLabel,
       totalPrice: Object.values(reconciledComponents).reduce((acc: number, c: any) => acc + (c.price || 0), 0),
       components: reconciledComponents,

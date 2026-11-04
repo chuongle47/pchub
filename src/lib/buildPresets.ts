@@ -908,59 +908,73 @@ export function matchPresetKeyFromText(text: string, pastPresetKey?: string): st
 
   let baseKey = '25m';
 
-  // Extract explicit budget numbers if present (e.g. 10, 15, 20, 25, 30, 35, 50, 100)
-  const budgetMatch = lower.match(/(\d+)\s*(triệu|tr|m|củ)/);
-  if (budgetMatch) {
-    const val = parseInt(budgetMatch[1], 10);
+  // 1. Explicit Vietnamese full currency numbers (e.g. 50.000.000, 83.730.000, 30.000.000)
+  const explicitMillionMatch = lower.match(/(\d{1,3})\.[\d]{3}\.[\d]{3}/);
+  if (explicitMillionMatch) {
+    const val = parseInt(explicitMillionMatch[1], 10);
     if (val < 13) baseKey = '10m';
     else if (val >= 13 && val < 20) baseKey = '15m';
     else if (val >= 20 && val < 28) baseKey = '25m';
     else if (val >= 28 && val < 33) baseKey = '30m';
     else if (val >= 33 && val < 45) baseKey = '35m';
     else baseKey = '50m';
-  } else if (
-    lower.includes('cao nhất') ||
-    lower.includes('mạnh nhất') ||
-    lower.includes('khủng nhất') ||
-    lower.includes('đỉnh nhất') ||
-    lower.includes('tốt nhất') ||
-    lower.includes('max setting') ||
-    lower.includes('max cấu hình') ||
-    lower.includes('cấu hình max') ||
-    lower.includes('flagship') ||
-    lower.includes('top tier') ||
-    lower.includes('vô địch') ||
-    lower.includes('không giới hạn') ||
-    lower.includes('hết nấc') ||
-    lower.includes('kịch kim') ||
-    lower.includes('50tr') ||
-    lower.includes('100tr') ||
-    lower.includes('khủng') ||
-    lower.includes('cao cấp')
-  ) {
-    baseKey = '50m';
-  } else if (
-    lower.includes('rẻ nhất') ||
-    lower.includes('thấp nhất') ||
-    lower.includes('tiết kiệm nhất') ||
-    lower.includes('10tr') ||
-    lower.includes('10 triệu') ||
-    lower.includes('8tr') ||
-    lower.includes('văn phòng') ||
-    lower.includes('học tập')
-  ) {
-    baseKey = '10m';
-  } else if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('12tr')) {
-    baseKey = '15m';
-  } else if (lower.includes('20tr') || lower.includes('25tr') || lower.includes('20 triệu') || lower.includes('25 triệu')) {
-    baseKey = '25m';
-  } else if (lower.includes('30tr') || lower.includes('30 triệu')) {
-    baseKey = '30m';
-  } else if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu') || lower.includes('đồ họa')) {
-    baseKey = '35m';
-  } else if (pastPresetKey) {
-    // Inherit past preset base key if no budget was specified in the current turn
-    baseKey = pastPresetKey.replace('_amd', '');
+  } else {
+    // 2. Extract budget numbers with explicit text unit (e.g. 10 triệu, 15tr, 30 củ, 50m)
+    // NOTE: MUST NOT match "36mb cache", "32mb", "16gb", etc. Use word boundary \b!
+    const budgetMatch = lower.match(/(?:ngân sách|tầm|khoảng|giá|với|tầm giá|cấu hình|pc)?\s*(\d+)\s*(triệu|tr\b|củ\b|\s+m\b)/)
+      || lower.match(/(\d+)\s*(triệu|tr\b|củ\b)/);
+    if (budgetMatch) {
+      const val = parseInt(budgetMatch[1], 10);
+      if (val < 13) baseKey = '10m';
+      else if (val >= 13 && val < 20) baseKey = '15m';
+      else if (val >= 20 && val < 28) baseKey = '25m';
+      else if (val >= 28 && val < 33) baseKey = '30m';
+      else if (val >= 33 && val < 45) baseKey = '35m';
+      else baseKey = '50m';
+    } else if (
+      lower.includes('cao nhất') ||
+      lower.includes('mạnh nhất') ||
+      lower.includes('khủng nhất') ||
+      lower.includes('đỉnh nhất') ||
+      lower.includes('tốt nhất') ||
+      lower.includes('max setting') ||
+      lower.includes('max cấu hình') ||
+      lower.includes('cấu hình max') ||
+      lower.includes('flagship') ||
+      lower.includes('top tier') ||
+      lower.includes('vô địch') ||
+      lower.includes('không giới hạn') ||
+      lower.includes('hết nấc') ||
+      lower.includes('kịch kim') ||
+      lower.includes('50tr') ||
+      lower.includes('100tr') ||
+      lower.includes('khủng') ||
+      lower.includes('cao cấp')
+    ) {
+      baseKey = '50m';
+    } else if (
+      lower.includes('rẻ nhất') ||
+      lower.includes('thấp nhất') ||
+      lower.includes('tiết kiệm nhất') ||
+      lower.includes('10tr') ||
+      lower.includes('10 triệu') ||
+      lower.includes('8tr') ||
+      lower.includes('văn phòng') ||
+      lower.includes('học tập')
+    ) {
+      baseKey = '10m';
+    } else if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('12tr')) {
+      baseKey = '15m';
+    } else if (lower.includes('20tr') || lower.includes('25tr') || lower.includes('20 triệu') || lower.includes('25 triệu')) {
+      baseKey = '25m';
+    } else if (lower.includes('30tr') || lower.includes('30 triệu')) {
+      baseKey = '30m';
+    } else if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu') || lower.includes('đồ họa')) {
+      baseKey = '35m';
+    } else if (pastPresetKey) {
+      // Inherit past preset base key if no budget was specified in the current turn
+      baseKey = pastPresetKey.replace('_amd', '');
+    }
   }
 
   // Determine if AMD variant should be used
@@ -1287,7 +1301,11 @@ export function reconcileBuildComponents(
   const activeMbStr = activeMb ? `${activeMb.name} ${activeMb.specs || ''}`.toLowerCase() : '';
   const activeRamStr = activeRam ? `${activeRam.name} ${activeRam.specs || ''}`.toLowerCase() : '';
 
-  const mbIsDdr5 = activeMbStr.includes('ddr5') || activeMbStr.includes('d5') || activeMbStr.includes('b650') || activeMbStr.includes('x670') || activeMbStr.includes('am5');
+  const mbIsDdr5 = activeMbStr.includes('ddr5') || activeMbStr.includes('d5') ||
+    activeMbStr.includes('b650') || activeMbStr.includes('x670') || activeMbStr.includes('am5') ||
+    activeMbStr.includes('z790') || activeMbStr.includes('z890') || activeMbStr.includes('b860') ||
+    activeMbStr.includes('x870') || activeMbStr.includes('b850') ||
+    (activeMbStr.includes('b760') && !activeMbStr.includes('d4') && !activeMbStr.includes('ddr4'));
   const ramIsDdr5 = activeRamStr.includes('ddr5');
 
   if (mbIsDdr5 && !ramIsDdr5) {
@@ -1366,5 +1384,163 @@ export function reconcileBuildComponents(
     };
   }
 
+  return result;
+}
+
+
+/**
+ * Automatically balances and adapts ALL system components when any single part or workload is changed
+ * (e.g. Upgrading GPU to RTX 4090 automatically bumps PSU to 1000W Gold and ensures large case;
+ * Changing to 3D Render / Video Editing bumps RAM to 32GB/64GB and ensures fast NVMe SSD;
+ * Changing aesthetic to White updates Case & Cooler to White editions).
+ */
+export function balanceSystemComponents(
+  basePreset: BuildPreset,
+  options: {
+    targetGpu?: string;
+    targetRam?: string;
+    targetStorage?: string;
+    aesthetic?: 'white' | 'black' | 'rgb';
+    workload?: string;
+  }
+): BuildPreset {
+  const result: BuildPreset = JSON.parse(JSON.stringify(basePreset));
+  const comp = result.components;
+  let title = result.title;
+
+  // 1. GPU Modification & Automatic PSU/Case Scaling
+  if (options.targetGpu) {
+    const gLower = options.targetGpu.toLowerCase();
+    if (gLower.includes('4090')) {
+      comp.gpu = {
+        key: 'gpu',
+        id: 'p-gpu-rtx4090-24g',
+        name: 'VGA ASUS ROG Strix GeForce RTX 4090 24GB GDDR6X OC Edition',
+        price: 52990000,
+        tdp: 450,
+        specs: '24GB GDDR6X | 384-bit | Vua đồ họa & AI | Triple Fan 3.5 slot',
+        image: '/images/gpu-strix.jpg',
+        slug: 'asus-rog-strix-rtx-4090-24g'
+      };
+      // Auto-bump PSU to 1000W / 1200W Gold ATX 3.0
+      comp.psu = {
+        key: 'psu',
+        id: 'd1000000-0000-0000-0000-000000000006',
+        name: 'Nguồn Corsair RM1000x 1000W 80 Plus Gold Full Modular (ATX 3.0 / PCIe 5.0)',
+        price: 4390000,
+        tdp: 0,
+        specs: '1000W | 80 Plus Gold | Cáp 12VHPWR 600W chuyên dụng',
+        image: '/images/cat-psu.jpg',
+        slug: 'corsair-rm1000x'
+      };
+      title += ' (Nâng cấp RTX 4090 24GB)';
+    } else if (gLower.includes('4070')) {
+      comp.gpu = {
+        key: 'gpu',
+        id: 'p-gpu-rtx4070-12g',
+        name: 'VGA GIGABYTE GeForce RTX 4070 WINDFORCE OC 12G GDDR6X',
+        price: 15490000,
+        tdp: 200,
+        specs: '12GB GDDR6X | 192-bit | DLSS 3 | Triple Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'gigabyte-rtx-4070-windforce-oc'
+      };
+      if (comp.psu.price < 2000000) {
+        comp.psu = {
+          key: 'psu',
+          id: 'p-psu-msi-a750gl',
+          name: 'Nguồn MSI MAG A750GL PCIE5 750W 80 Plus Gold',
+          price: 2490000,
+          tdp: 0,
+          specs: '750W | 80 Plus Gold | Chuẩn ATX 3.0 PCIe 5.0',
+          image: '/images/cat-psu.jpg',
+          slug: 'msi-mag-a750gl-pcie5'
+        };
+      }
+    }
+  }
+
+  // 2. RAM Scaling
+  if (options.targetRam) {
+    const rLower = options.targetRam.toLowerCase();
+    if (rLower.includes('64') || rLower.includes('64gb')) {
+      comp.ram = {
+        key: 'ram',
+        id: 'p-ram-64g-d5-custom',
+        name: 'RAM G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6000MHz',
+        price: 6290000,
+        tdp: 15,
+        specs: '2x32GB | DDR5 | 6000MHz | Chuyên Render & Máy ảo',
+        image: '/images/ram-rgb.jpg',
+        slug: 'gskill-trident-z5-64gb'
+      };
+    } else if (rLower.includes('32') || rLower.includes('32gb')) {
+      comp.ram = {
+        key: 'ram',
+        id: 'p-ram-32g-corsair-d5',
+        name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz',
+        price: 2890000,
+        tdp: 15,
+        specs: '2x16GB | DDR5 | 6000MHz | Dual-Channel',
+        image: '/images/ram-rgb.jpg',
+        slug: 'corsair-vengeance-32gb-d5'
+      };
+    }
+  }
+
+  // 3. Storage Scaling
+  if (options.targetStorage) {
+    const sLower = options.targetStorage.toLowerCase();
+    if (sLower.includes('2t') || sLower.includes('2tb')) {
+      comp.storage = {
+        key: 'storage',
+        id: 'd1000000-0000-0000-0000-000000000004',
+        name: 'Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2 (7450MB/s)',
+        price: 4890000,
+        tdp: 10,
+        specs: '2TB | Đọc 7450MB/s - Ghi 6900MB/s | Chuẩn Workstation',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'samsung-990-pro-2tb'
+      };
+    }
+  }
+
+  // 4. Aesthetic Adaptation (White Edition)
+  if (options.aesthetic === 'white') {
+    comp.case = {
+      key: 'case',
+      id: 'p-case-h9-flow-white',
+      name: 'Vỏ Case NZXT H9 Flow RGB Dual-Chamber White (Mặt kính bể cá)',
+      price: 4390000,
+      tdp: 0,
+      specs: 'Màu Trắng Tuyết | Kính góc rộng Panoramic | Kèm 4 Fan RGB White',
+      image: '/images/hero-pc.jpg',
+      slug: 'nzxt-h9-flow-white'
+    };
+    comp.cooling = {
+      key: 'cooling',
+      id: 'p-cooling-kraken-white',
+      name: 'Tản Nhiệt Nước NZXT Kraken Elite 360 RGB White Liquid Cooler',
+      price: 6990000,
+      tdp: 25,
+      specs: 'AIO 360mm White | Màn hình LCD | 3 Fan RGB White',
+      image: '/images/hero-pc.jpg',
+      slug: 'nzxt-kraken-elite-360-white'
+    };
+    title += ' [Phiên bản Full Trắng Bạch Mã]';
+  }
+
+  // 5. Workload Specialization
+  if (options.workload === 'render_3d' || options.workload === 'video_editing') {
+    title = title.replace(/Gaming/g, 'Đồ Họa & Render 3D').replace(/Văn Phòng/g, 'Thiết Kế Đồ Họa');
+  } else if (options.workload === 'ai_dev') {
+    title = title.replace(/Gaming/g, 'AI Deep Learning & Lập Trình');
+  } else if (options.workload === 'streaming') {
+    title += ' (Tối ưu Live Stream)';
+  }
+
+  // Recalculate total price
+  result.title = title;
+  result.totalPrice = Object.values(comp).reduce((acc, c) => acc + (c.price || 0), 0);
   return result;
 }
