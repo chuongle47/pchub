@@ -70,6 +70,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          order_id: order.id,
           orderId: order.id,
           wooOrderId: order.wooOrderId,
           reason: finalReason
