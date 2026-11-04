@@ -268,7 +268,22 @@ function getSmartLocalAdvisorReply(
   // Always prioritize full PC configuration over brand queries
   // =========================================================================
   if (isRealPcBuild) {
-    const presetKey = matchPresetKeyFromText(message);
+    // Extract past preset key from history if available
+    let pastPresetKey: string | undefined = undefined;
+    if (Array.isArray(history) && history.length > 0) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        const hText = (history[i].content || '').toLowerCase();
+        if (hText) {
+          const matched = matchPresetKeyFromText(hText);
+          if (matched) {
+            pastPresetKey = matched;
+            break;
+          }
+        }
+      }
+    }
+
+    const presetKey = matchPresetKeyFromText(message, pastPresetKey);
     const preset = AI_BUILD_PRESETS[presetKey] || AI_BUILD_PRESETS['25m'];
     const comp = preset.components;
 
@@ -280,17 +295,36 @@ function getSmartLocalAdvisorReply(
       lowerMsg.includes('flagship') ||
       lowerMsg.includes('max setting') ||
       lowerMsg.includes('max cấu hình') ||
-      lowerMsg.includes('cấu hình max');
+      lowerMsg.includes('cấu hình max') ||
+      (presetKey.includes('50m') && !pastPresetKey);
 
-    const displayTitle = isSuperlative
-      ? 'Cấu hình PC Flagship Đỉnh Cao Nhất Hiện Tại (Top-Tier Workstation & Gaming 4K/8K)'
-      : preset.title;
+    const isAmdRequest = lowerMsg.includes('amd') || lowerMsg.includes('ryzen');
+    const isIntelRequest = lowerMsg.includes('intel') || lowerMsg.includes('core i');
 
-    const displayPurpose = isSuperlative
+    let swapNote = '';
+    if (isAmdRequest && presetKey.includes('_amd')) {
+      swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
+        `• Đã chuyển đổi CPU sang: **${comp.cpu.name}**.\n` +
+        `• Tự động đồng bộ Bo mạch chủ tương thích sang Socket **AM5 (${comp.mainboard.name})** cùng RAM DDR5 **AMD EXPO** đảm bảo 100% tương thích phần cứng!\n\n`;
+    } else if (isIntelRequest && !presetKey.includes('_amd')) {
+      swapNote = `🔄 **PCHub AI Advisor đã cập nhật cấu hình theo yêu cầu của bạn:**\n` +
+        `• Đã chuyển đổi CPU sang: **${comp.cpu.name}**.\n` +
+        `• Tự động đồng bộ Bo mạch chủ Intel (${comp.mainboard.name})!\n\n`;
+    }
+
+    let displayTitle = preset.title;
+    if (presetKey.includes('50m')) {
+      displayTitle = presetKey.includes('_amd')
+        ? 'Cấu hình PC Flagship Đỉnh Cao AMD Ryzen 9 7950X3D (Top-Tier Workstation & Gaming 4K/8K)'
+        : 'Cấu hình PC Flagship Đỉnh Cao Nhất Hiện Tại (Top-Tier Workstation & Gaming 4K/8K)';
+    }
+
+    const displayPurpose = (presetKey.includes('50m') || isSuperlative)
       ? 'Chiến mọi tựa game AAA Max Setting 4K/8K, Render 3D nặng, Dựng phim 8K & Huấn luyện AI'
       : 'Chơi game mượt mà, Làm việc đa nhiệm & Đồ họa';
 
     return `📌 **${displayTitle} (${preset.budgetLabel}) — Đề xuất từ PCHub AI Advisor:**\n\n` +
+      swapNote +
       `- **Mục đích**: ${displayPurpose}\n` +
       `- **Tổng chi phí dự kiến**: **${preset.totalPrice.toLocaleString('vi-VN')}₫**\n` +
       `- **Tiêu chuẩn**: 100% linh kiện chính hãng, tương thích socket 100%, nguồn công suất thực đệm tải an toàn >30%\n\n` +

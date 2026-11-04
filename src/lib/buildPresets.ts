@@ -546,25 +546,379 @@ export const AI_BUILD_PRESETS: Record<string, BuildPreset> = {
       },
     },
   },
+  '50m_amd': {
+    id: 'preset-50m-amd',
+    title: 'PC Gaming 4K & Workstation Đỉnh Cao AMD - 50+ Triệu',
+    budgetLabel: '50.000.000đ+',
+    totalPrice: 86930000,
+    components: {
+      cpu: {
+        key: 'cpu',
+        id: 'p-cpu-7950x3d',
+        name: 'CPU AMD Ryzen 9 7950X3D (4.2GHz - 5.7GHz, 16 Nhân 32 Luồng, 144MB V-Cache)',
+        price: 15490000,
+        tdp: 120,
+        specs: 'Socket AM5 | 144MB V-Cache | 120W TDP | Vua Gaming & Render',
+        image: '/images/cpu-box.jpg',
+        slug: 'amd-ryzen-9-7950x3d',
+      },
+      mainboard: {
+        key: 'mainboard',
+        id: 'p-mb-x670e-e',
+        name: 'Mainboard ASUS ROG STRIX X670E-E GAMING WIFI',
+        price: 12990000,
+        tdp: 50,
+        specs: 'Socket AM5 | 4x DDR5 | PCIe 5.0 | Wi-Fi 6E | ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-rog-strix-x670e-e',
+      },
+      ram: {
+        key: 'ram',
+        id: 'p-ram-64g-d5-neo',
+        name: 'RAM G.Skill Trident Z5 Neo RGB 64GB (2x32GB) DDR5 6000MHz AMD EXPO',
+        price: 6490000,
+        tdp: 15,
+        specs: '2x32GB | DDR5 | 6000MHz | AMD EXPO Chuyên dụng',
+        image: '/images/ram-rgb.jpg',
+        slug: 'gskill-trident-z5-neo-64gb',
+      },
+      gpu: {
+        key: 'gpu',
+        id: 'd1000000-0000-0000-0000-000000000002',
+        name: 'ASUS ROG Strix GeForce RTX 4080 SUPER 16GB GDDR6X',
+        price: 31490000,
+        tdp: 320,
+        specs: '16GB GDDR6X | 256-bit | Triple Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'asus-rog-strix-rtx-4080-super',
+      },
+      storage: {
+        key: 'storage',
+        id: 'd1000000-0000-0000-0000-000000000004',
+        name: 'Samsung 990 Pro 2TB PCIe Gen 4.0 x4 NVMe M.2',
+        price: 4890000,
+        tdp: 10,
+        specs: '2TB | Đọc 7450MB/s - Ghi 6900MB/s',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'samsung-990-pro-2tb',
+      },
+      psu: {
+        key: 'psu',
+        id: 'd1000000-0000-0000-0000-000000000006',
+        name: 'Corsair RM1000x 1000W 80 Plus Gold Full Modular',
+        price: 4390000,
+        tdp: 0,
+        specs: '1000W | 80 Plus Gold | Full Modular',
+        image: '/images/cat-psu.jpg',
+        slug: 'corsair-rm1000x',
+      },
+      case: {
+        key: 'case',
+        id: 'd1000000-0000-0000-0000-000000000007',
+        name: 'NZXT H9 Flow RGB Dual-Chamber Mid-Tower Black',
+        price: 4290000,
+        tdp: 0,
+        specs: 'Hỗ trợ GPU 435mm | Tản nước 360mm',
+        image: '/images/hero-pc.jpg',
+        slug: 'nzxt-h9-flow-black',
+      },
+      cooling: {
+        key: 'cooling',
+        id: 'd1000000-0000-0000-0000-000000000008',
+        name: 'NZXT Kraken Elite 360 RGB Black Liquid Cooler',
+        price: 6890000,
+        tdp: 25,
+        specs: 'AIO 360mm | Socket AM5 / LGA1700 | Màn hình LCD',
+        image: '/images/hero-pc.jpg',
+        slug: 'nzxt-kraken-elite-360',
+      },
+    },
+  },
+  '30m_amd': {
+    id: 'preset-30m-amd',
+    title: 'PC Gaming & Đồ Họa AMD Ryzen 7 - 30 Triệu',
+    budgetLabel: '30.000.000đ',
+    totalPrice: 30730000,
+    components: {
+      cpu: {
+        key: 'cpu',
+        id: 'p-cpu-7700x',
+        name: 'CPU AMD Ryzen 7 7700X (Up to 5.4GHz, 8 Nhân 16 Luồng, 32MB Cache)',
+        price: 7490000,
+        tdp: 105,
+        specs: 'Socket AM5 | 8C/16T | 5.4GHz Max Boost | PCIe 5.0',
+        image: '/images/cpu-box.jpg',
+        slug: 'amd-ryzen-7-7700x',
+      },
+      mainboard: {
+        key: 'mainboard',
+        id: 'p-mb-b650-tomahawk',
+        name: 'Mainboard MSI MAG B650 TOMAHAWK WIFI DDR5',
+        price: 5290000,
+        tdp: 45,
+        specs: 'Socket AM5 | 4x DDR5 | PCIe 5.0 M.2 | Wi-Fi 6E',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'msi-mag-b650-tomahawk-wifi',
+      },
+      ram: {
+        key: 'ram',
+        id: 'p-ram-32g-expo',
+        name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz AMD EXPO',
+        price: 2990000,
+        tdp: 15,
+        specs: '2x16GB | DDR5 | 6000MHz | AMD EXPO Tối ưu',
+        image: '/images/ram-rgb.jpg',
+        slug: 'corsair-vengeance-32gb-expo',
+      },
+      gpu: {
+        key: 'gpu',
+        id: 'p-gpu-rtx4070-12g',
+        name: 'VGA GIGABYTE GeForce RTX 4070 WINDFORCE OC 12G GDDR6X',
+        price: 15490000,
+        tdp: 200,
+        specs: '12GB GDDR6X | 192-bit | DLSS 3 | Triple Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'gigabyte-rtx-4070-windforce-oc',
+      },
+      storage: {
+        key: 'storage',
+        id: 'p-ssd-kc3000-1tb',
+        name: 'SSD Kingston KC3000 1TB PCIe 4.0 NVMe M.2 (7000MB/s)',
+        price: 2290000,
+        tdp: 8,
+        specs: '1TB | Đọc 7000MB/s - Ghi 6000MB/s | 3D TLC',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'kingston-kc3000-1tb',
+      },
+      psu: {
+        key: 'psu',
+        id: 'p-psu-msi-a750gl',
+        name: 'Nguồn MSI MAG A750GL PCIE5 750W 80 Plus Gold Full Modular',
+        price: 2490000,
+        tdp: 0,
+        specs: '750W | 80 Plus Gold | Chuẩn ATX 3.0 PCIe 5.0',
+        image: '/images/cat-psu.jpg',
+        slug: 'msi-mag-a750gl-pcie5',
+      },
+      case: {
+        key: 'case',
+        id: 'p-case-montech-903',
+        name: 'Vỏ Case Montech AIR 903 MAX Black (4 Fan ARGB 140mm)',
+        price: 1390000,
+        tdp: 0,
+        specs: 'Mid Tower | Hỗ trợ main E-ATX | Kính cường lực',
+        image: '/images/hero-pc.jpg',
+        slug: 'montech-air-903-max',
+      },
+      cooling: {
+        key: 'cooling',
+        id: 'p-cooling-deepcool-lt520',
+        name: 'Tản Nhiệt Nước DeepCool LT520 240mm ARGB AIO Liquid Cooler',
+        price: 1790000,
+        tdp: 20,
+        specs: 'Radiator 240mm | Socket AM5 / LGA1700 | Fan FK120',
+        image: '/images/hero-pc.jpg',
+        slug: 'deepcool-lt520-240mm',
+      },
+    },
+  },
+  '25m_amd': {
+    id: 'preset-25m-amd',
+    title: 'PC Gaming 2K AMD Ryzen 5 - 25 Triệu',
+    budgetLabel: '25.000.000đ',
+    totalPrice: 24830000,
+    components: {
+      cpu: {
+        key: 'cpu',
+        id: 'p-cpu-7600',
+        name: 'CPU AMD Ryzen 5 7600 (Up to 5.1GHz, 6 Nhân 12 Luồng, 32MB Cache)',
+        price: 4990000,
+        tdp: 65,
+        specs: 'Socket AM5 | 6C/12T | 5.1GHz Max Boost | PCIe 5.0',
+        image: '/images/cpu-box.jpg',
+        slug: 'amd-ryzen-5-7600',
+      },
+      mainboard: {
+        key: 'mainboard',
+        id: 'p-mb-b650m-plus',
+        name: 'Mainboard ASUS TUF GAMING B650M-PLUS WIFI DDR5',
+        price: 4190000,
+        tdp: 40,
+        specs: 'Socket AM5 | 4x DDR5 | PCIe 5.0 M.2 | Wi-Fi 6',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-tuf-b650m-plus',
+      },
+      ram: {
+        key: 'ram',
+        id: 'p-ram-32g-corsair-d5',
+        name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz',
+        price: 2890000,
+        tdp: 15,
+        specs: '2x16GB | DDR5 | 6000MHz',
+        image: '/images/ram-rgb.jpg',
+        slug: 'corsair-vengeance-32gb-d5',
+      },
+      gpu: {
+        key: 'gpu',
+        id: 'd1000000-0000-0000-0000-000000000010',
+        name: 'VGA ASUS Dual GeForce RTX 4060 Ti OC Edition 8GB GDDR6',
+        price: 10990000,
+        tdp: 160,
+        specs: '8GB GDDR6 | DLSS 3 | Dual Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'asus-dual-rtx-4060-ti-8gb',
+      },
+      storage: {
+        key: 'storage',
+        id: 'd1000000-0000-0000-0000-000000000012',
+        name: 'Kingston NV2 1TB PCIe 4.0 NVMe M.2',
+        price: 1590000,
+        tdp: 5,
+        specs: '1TB | Đọc 3500MB/s - Ghi 2100MB/s',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'kingston-nv2-1tb',
+      },
+      psu: {
+        key: 'psu',
+        id: 'd1000000-0000-0000-0000-000000000013',
+        name: 'Deepcool PK650D 650W 80 Plus Bronze',
+        price: 1290000,
+        tdp: 0,
+        specs: '650W | 80 Plus Bronze | Active PFC',
+        image: '/images/cat-psu.jpg',
+        slug: 'deepcool-pk650d',
+      },
+      case: {
+        key: 'case',
+        id: 'd1000000-0000-0000-0000-000000000014',
+        name: 'Xigmatek Aqua M (Kính cường lực / Mặt lưới thoáng khí)',
+        price: 890000,
+        tdp: 0,
+        specs: 'Mini Tower | Mặt kính view bể cá | Hỗ trợ tản 240mm',
+        image: '/images/hero-pc.jpg',
+        slug: 'xigmatek-aqua-m',
+      },
+      cooling: {
+        key: 'cooling',
+        id: 'd1000000-0000-0000-0000-000000000015',
+        name: 'DeepCool AG400 ARGB Single-Tower CPU Cooler',
+        price: 490000,
+        tdp: 15,
+        specs: 'Tản tháp 4 ống đồng | Socket AM5 / LGA1700 | Fan 120mm RGB',
+        image: '/images/hero-pc.jpg',
+        slug: 'deepcool-ag400-argb',
+      },
+    },
+  },
+  '15m_amd': {
+    id: 'preset-15m-amd',
+    title: 'PC Gaming AMD Ryzen 5 - 15 Triệu',
+    budgetLabel: '15.000.000đ',
+    totalPrice: 13940000,
+    components: {
+      cpu: {
+        key: 'cpu',
+        id: 'p-cpu-5600',
+        name: 'CPU AMD Ryzen 5 5600 (3.5GHz - 4.4GHz, 6 Nhân 12 Luồng, 32MB Cache)',
+        price: 2890000,
+        tdp: 65,
+        specs: 'Socket AM4 | 6C/12T | 32MB Cache | Kèm tản Wraith Stealth',
+        image: '/images/cpu-box.jpg',
+        slug: 'amd-ryzen-5-5600',
+      },
+      mainboard: {
+        key: 'mainboard',
+        id: 'p-mb-b550m-a',
+        name: 'Mainboard ASUS PRIME B550M-A WIFI II',
+        price: 2490000,
+        tdp: 35,
+        specs: 'Socket AM4 | 4x DDR4 | PCIe 4.0 | Wi-Fi 6 | Micro-ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-prime-b550m-a-wifi',
+      },
+      ram: {
+        key: 'ram',
+        id: 'p-ram-16g-d4',
+        name: 'RAM Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz',
+        price: 1090000,
+        tdp: 10,
+        specs: '2x8GB | DDR4 | 3200MHz | Dual-Channel',
+        image: '/images/ram-rgb.jpg',
+        slug: 'kingston-fury-beast-16gb',
+      },
+      gpu: {
+        key: 'gpu',
+        id: 'p-gpu-gtx1650',
+        name: 'VGA ASUS Dual GeForce RTX 3050 6GB GDDR6',
+        price: 4990000,
+        tdp: 70,
+        specs: '6GB GDDR6 | Ray Tracing | DLSS | Dual Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'asus-dual-rtx-3050-6gb',
+      },
+      storage: {
+        key: 'storage',
+        id: 'p-ssd-500g-nv2',
+        name: 'SSD Kingston NV2 500GB PCIe 4.0 NVMe M.2',
+        price: 890000,
+        tdp: 5,
+        specs: '500GB | Đọc 3500MB/s - Ghi 2100MB/s',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'kingston-nv2-500gb',
+      },
+      psu: {
+        key: 'psu',
+        id: 'p-psu-550w',
+        name: 'Nguồn Deepcool PF550 550W 80 Plus Standard',
+        price: 890000,
+        tdp: 0,
+        specs: '550W | 80 Plus | Active PFC',
+        image: '/images/cat-psu.jpg',
+        slug: 'deepcool-pf550',
+      },
+      case: {
+        key: 'case',
+        id: 'p-case-xigmatek-nyx',
+        name: 'Vỏ Case Xigmatek NYX Air 3F (Kèm 3 Fan RGB)',
+        price: 690000,
+        tdp: 0,
+        specs: 'Mini Tower | Kính cường lực | Mặt lưới thoáng khí',
+        image: '/images/hero-pc.jpg',
+        slug: 'xigmatek-nyx-air-3f',
+      },
+      cooling: {
+        key: 'cooling',
+        id: 'p-cooling-wraith',
+        name: 'Tản Nhiệt Khí AMD Wraith Stealth Socket AM4',
+        price: 0,
+        tdp: 0,
+        specs: 'Tản nhiệt chính hãng kèm CPU AMD',
+        image: '/images/hero-pc.jpg',
+        slug: 'amd-wraith-stealth',
+      },
+    },
+  },
 };
 
-export function matchPresetKeyFromText(text: string): string {
+export function matchPresetKeyFromText(text: string, pastPresetKey?: string): string {
   const lower = text.toLowerCase();
   
+  const wantsAmd = lower.includes('amd') || lower.includes('ryzen');
+  const wantsIntel = lower.includes('intel') || lower.includes('core i');
+
+  let baseKey = '25m';
+
   // Extract explicit budget numbers if present (e.g. 10, 15, 20, 25, 30, 35, 50, 100)
   const budgetMatch = lower.match(/(\d+)\s*(triệu|tr|m|củ)/);
   if (budgetMatch) {
     const val = parseInt(budgetMatch[1], 10);
-    if (val < 13) return '10m';
-    if (val >= 13 && val < 20) return '15m';
-    if (val >= 20 && val < 28) return '25m';
-    if (val >= 28 && val < 33) return '30m';
-    if (val >= 33 && val < 45) return '35m';
-    return '50m';
-  }
-
-  // 1. Explicit MAX / TOP-TIER / SUPERLATIVE requests (e.g. "cao nhất", "mạnh nhất", "khủng nhất", "flagship")
-  if (
+    if (val < 13) baseKey = '10m';
+    else if (val >= 13 && val < 20) baseKey = '15m';
+    else if (val >= 20 && val < 28) baseKey = '25m';
+    else if (val >= 28 && val < 33) baseKey = '30m';
+    else if (val >= 33 && val < 45) baseKey = '35m';
+    else baseKey = '50m';
+  } else if (
     lower.includes('cao nhất') ||
     lower.includes('mạnh nhất') ||
     lower.includes('khủng nhất') ||
@@ -584,11 +938,8 @@ export function matchPresetKeyFromText(text: string): string {
     lower.includes('khủng') ||
     lower.includes('cao cấp')
   ) {
-    return '50m';
-  }
-
-  // 2. Budget / Entry-level requests
-  if (
+    baseKey = '50m';
+  } else if (
     lower.includes('rẻ nhất') ||
     lower.includes('thấp nhất') ||
     lower.includes('tiết kiệm nhất') ||
@@ -598,15 +949,39 @@ export function matchPresetKeyFromText(text: string): string {
     lower.includes('văn phòng') ||
     lower.includes('học tập')
   ) {
-    return '10m';
+    baseKey = '10m';
+  } else if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('12tr')) {
+    baseKey = '15m';
+  } else if (lower.includes('20tr') || lower.includes('25tr') || lower.includes('20 triệu') || lower.includes('25 triệu')) {
+    baseKey = '25m';
+  } else if (lower.includes('30tr') || lower.includes('30 triệu')) {
+    baseKey = '30m';
+  } else if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu') || lower.includes('đồ họa')) {
+    baseKey = '35m';
+  } else if (pastPresetKey) {
+    // Inherit past preset base key if no budget was specified in the current turn
+    baseKey = pastPresetKey.replace('_amd', '');
   }
 
-  if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('12tr')) return '15m';
-  if (lower.includes('20tr') || lower.includes('25tr') || lower.includes('20 triệu') || lower.includes('25 triệu')) return '25m';
-  if (lower.includes('30tr') || lower.includes('30 triệu')) return '30m';
-  if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu') || lower.includes('đồ họa')) return '35m';
+  // Determine if AMD variant should be used
+  if (wantsAmd) {
+    const amdKey = `${baseKey}_amd`;
+    if (AI_BUILD_PRESETS[amdKey]) return amdKey;
+    if (AI_BUILD_PRESETS['50m_amd'] && baseKey === '50m') return '50m_amd';
+    return baseKey;
+  }
 
-  return '25m'; // default fallback
+  if (wantsIntel) {
+    return baseKey.replace('_amd', '');
+  }
+
+  // If past was AMD and user didn't request Intel, preserve AMD platform
+  if (pastPresetKey && pastPresetKey.includes('_amd') && !wantsIntel) {
+    const amdKey = `${baseKey}_amd`;
+    if (AI_BUILD_PRESETS[amdKey]) return amdKey;
+  }
+
+  return baseKey;
 }
 
 export type HardwarePlatform = 'INTEL_LGA1851' | 'INTEL_LGA1700' | 'INTEL_LGA1200' | 'INTEL_LGA1151' | 'AMD_AM5' | 'AMD_AM4' | 'UNKNOWN';

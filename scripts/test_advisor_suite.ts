@@ -143,6 +143,71 @@ async function runTests() {
   assert('Sequential reply produces 30M PC build instead of Logitech mice', 
     sequentialReply.text.includes('30 Triệu') && !sequentialReply.text.includes('Tư vấn sản phẩm thương hiệu Logitech'));
 
+  // -----------------------------------------------------------------
+  // Test 5: Multi-turn Component Swap & Platform Auto-Reconciliation
+  // -----------------------------------------------------------------
+  console.log('\n--- Test Group 5: Multi-turn Component Swap & AM5 Reconciliation ---');
+  // Turn 1: User asked for best PC -> Got Flagship 50M
+  const historyTurn1: ChatMessage[] = [
+    { role: 'user', content: 'build pc cấu hình tốt nhất' },
+    { role: 'model', content: '📌 Cấu hình PC Flagship Đỉnh Cao Nhất Hiện Tại (Top-Tier Workstation & Gaming 4K/8K) (50.000.000đ+) — Đề xuất từ PCHub AI Advisor:\n1. CPU: Intel Core i9-14900K...' }
+  ];
+
+  // Turn 2: User says: "muốn chip amd"
+  const turn2Message = 'muốn chip amd';
+  
+  // Test route-level intent detection for swap
+  const lowerMsg2 = turn2Message.trim().toLowerCase();
+  let hadPastBuild2 = false;
+  let pastPresetKey2: string | undefined = undefined;
+
+  for (let i = historyTurn1.length - 1; i >= 0; i--) {
+    const turnText = historyTurn1[i].content;
+    const pastIntent = parseUserHardwareIntent(turnText);
+    if (pastIntent.isPcBuild || turnText.toLowerCase().includes('cấu hình') || turnText.toLowerCase().includes('bảng cấu hình')) {
+      hadPastBuild2 = true;
+      pastPresetKey2 = matchPresetKeyFromText(turnText);
+      break;
+    }
+  }
+
+  const isComponentSwap2 = hadPastBuild2 && (
+    lowerMsg2.includes('muốn') || lowerMsg2.includes('đổi') || lowerMsg2.includes('thay') || lowerMsg2.includes('chuyển') ||
+    lowerMsg2.includes('amd') || lowerMsg2.includes('ryzen') || lowerMsg2.includes('intel')
+  );
+
+  assert('Turn 2 "muốn chip amd" detected as active build customization', isComponentSwap2 === true);
+  assert('Turn 2 past preset correctly recognized as "50m"', pastPresetKey2 === '50m');
+
+  const resolvedPresetKey2 = matchPresetKeyFromText(turn2Message, pastPresetKey2);
+  assert('Turn 2 mapped to "50m_amd" preset', resolvedPresetKey2 === '50m_amd');
+
+  const resolvedIntent2 = {
+    ...parseUserHardwareIntent(turn2Message),
+    category: 'pc_build' as const,
+    categoryName: 'PC Trọn Bộ',
+    brand: undefined,
+    brandSlug: undefined,
+    isPcBuild: true,
+  };
+
+  const swapReply = await askGeminiPCHubAdvisor(turn2Message, historyTurn1, dummyCatalog, resolvedIntent2);
+  assert('Turn 2 maintains PC Build intent (not single CPU list)', swapReply.text.includes('Bảng cấu hình linh kiện chi tiết'));
+  assert('Turn 2 swaps CPU to AMD Ryzen 9 7950X3D', swapReply.text.includes('Ryzen 9 7950X3D'));
+  assert('Turn 2 automatically reconciles Mainboard to Socket AM5 (X670E)', swapReply.text.includes('X670E') || swapReply.text.includes('AM5'));
+  assert('Turn 2 keeps Flagship RTX 4080 SUPER and other top-tier parts', swapReply.text.includes('RTX 4080 SUPER'));
+  assert('Turn 2 DOES NOT regress into Ryzen 3 4100 office CPU', !swapReply.text.includes('Ryzen 3 4100'));
+
+  // Turn 3: User says "đổi lại chip intel"
+  const turn3Message = 'đổi lại chip intel';
+  const historyTurn2: ChatMessage[] = [
+    ...historyTurn1,
+    { role: 'user', content: turn2Message },
+    { role: 'model', content: swapReply.text }
+  ];
+  const resolvedPresetKey3 = matchPresetKeyFromText(turn3Message, resolvedPresetKey2);
+  assert('Turn 3 "đổi lại chip intel" switches back to "50m" Intel', resolvedPresetKey3 === '50m');
+
   console.log('\n====================================================');
   console.log(`🏁 TEST RESULTS: ${passedTests}/${totalTests} TESTS PASSED (${((passedTests / totalTests) * 100).toFixed(1)}%)`);
   console.log('====================================================\n');

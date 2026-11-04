@@ -16,21 +16,76 @@ export async function POST(request: NextRequest) {
 
     const currentIntent = parseUserHardwareIntent(message.trim());
 
-    // Sequential Conversational Memory:
-    // Only inherit context (category, brand, isPcBuild) if the current query is an implicit follow-up
-    // (i.e. does not explicitly change the intent, category, or brand).
-    const isCurrentExplicitBuild = currentIntent.isPcBuild || currentIntent.category === 'pc_build';
-    const hasCurrentExplicitCat = Boolean(currentIntent.category && currentIntent.category !== 'pc_build');
-    const hasCurrentExplicitBrand = Boolean(currentIntent.brand);
+    // Sequential Conversational Memory & Multi-turn Build Customization:
+    const lowerMessage = message.trim().toLowerCase();
 
-    let inheritedCategory = currentIntent.category;
-    let inheritedCategoryName = currentIntent.categoryName;
-    let inheritedBrand = currentIntent.brand;
-    let inheritedBrandSlug = currentIntent.brandSlug;
+    // Check if there is an active PC build in history
+    let hadPastBuild = false;
+    let pastPresetKey: string | undefined = undefined;
+
+    if (Array.isArray(history) && history.length > 0) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        const turn = history[i];
+        const turnText = typeof turn.content === 'string' ? turn.content : typeof turn.text === 'string' ? turn.text : '';
+        if (turnText) {
+          const pastIntent = parseUserHardwareIntent(turnText);
+          if (pastIntent.isPcBuild || turnText.toLowerCase().includes('cấu hình') || turnText.toLowerCase().includes('bảng cấu hình') || turnText.includes('build-pc')) {
+            hadPastBuild = true;
+            pastPresetKey = matchPresetKeyFromText(turnText);
+            break;
+          }
+        }
+      }
+    }
+
+    // Detect if the user is customizing an existing PC build
+    // (e.g. "muốn chip amd", "đổi sang ryzen", "thay card rtx 4090", "đổi vỏ màu trắng", "hạ xuống 30 triệu")
+    const isComponentSwapOrCustomization = hadPastBuild && (
+      lowerMessage.includes('muốn') ||
+      lowerMessage.includes('đổi') ||
+      lowerMessage.includes('thay') ||
+      lowerMessage.includes('chuyển') ||
+      lowerMessage.includes('lấy') ||
+      lowerMessage.includes('dùng') ||
+      lowerMessage.includes('nâng') ||
+      lowerMessage.includes('hạ') ||
+      lowerMessage.includes('thêm') ||
+      lowerMessage.includes('bớt') ||
+      lowerMessage.includes('chọn') ||
+      lowerMessage.includes('amd') ||
+      lowerMessage.includes('intel') ||
+      lowerMessage.includes('ryzen') ||
+      lowerMessage.includes('nvidia') ||
+      lowerMessage.includes('rtx') ||
+      lowerMessage.includes('vỏ') ||
+      lowerMessage.includes('case') ||
+      lowerMessage.includes('tản') ||
+      lowerMessage.includes('nguồn') ||
+      lowerMessage.includes('ram') ||
+      lowerMessage.includes('ssd') ||
+      lowerMessage.includes('main') ||
+      lowerMessage.includes('trắng') ||
+      lowerMessage.includes('đen') ||
+      lowerMessage.includes('triệu') ||
+      lowerMessage.includes('tr')
+    ) && !(
+      // Do not treat standalone peripheral shopping as PC build customization
+      (lowerMessage.includes('chuột') || lowerMessage.includes('bàn phím') || lowerMessage.includes('tai nghe') || lowerMessage.includes('loa')) &&
+      !lowerMessage.includes('cấu hình') && !lowerMessage.includes('pc') && !lowerMessage.includes('máy')
+    );
+
+    const isCurrentExplicitBuild = currentIntent.isPcBuild || currentIntent.category === 'pc_build' || isComponentSwapOrCustomization;
+    const hasCurrentExplicitCat = Boolean(currentIntent.category && currentIntent.category !== 'pc_build') && !isComponentSwapOrCustomization;
+    const hasCurrentExplicitBrand = Boolean(currentIntent.brand) && !isComponentSwapOrCustomization;
+
+    let inheritedCategory = isComponentSwapOrCustomization ? 'pc_build' : currentIntent.category;
+    let inheritedCategoryName = isComponentSwapOrCustomization ? 'PC Trọn Bộ' : currentIntent.categoryName;
+    let inheritedBrand = isComponentSwapOrCustomization ? undefined : currentIntent.brand;
+    let inheritedBrandSlug = isComponentSwapOrCustomization ? undefined : currentIntent.brandSlug;
     let isPcBuild = isCurrentExplicitBuild;
 
     // Only inspect history if current message is missing category/brand or is an implicit build follow-up
-    if ((!hasCurrentExplicitCat || !hasCurrentExplicitBrand || !isPcBuild) && Array.isArray(history) && history.length > 0) {
+    if (!isComponentSwapOrCustomization && (!hasCurrentExplicitCat || !hasCurrentExplicitBrand || !isPcBuild) && Array.isArray(history) && history.length > 0) {
       for (let i = history.length - 1; i >= 0; i--) {
         const turn = history[i];
         const turnText = typeof turn.content === 'string' ? turn.content : typeof turn.text === 'string' ? turn.text : '';
@@ -71,8 +126,8 @@ export async function POST(request: NextRequest) {
       ...currentIntent,
       category: isCurrentExplicitBuild ? 'pc_build' : (inheritedCategory || currentIntent.category),
       categoryName: isCurrentExplicitBuild ? 'PC Trọn Bộ' : (inheritedCategoryName || currentIntent.categoryName),
-      brand: isCurrentExplicitBuild ? currentIntent.brand : (currentIntent.brand || inheritedBrand),
-      brandSlug: isCurrentExplicitBuild ? currentIntent.brandSlug : (currentIntent.brandSlug || inheritedBrandSlug),
+      brand: isCurrentExplicitBuild ? undefined : (currentIntent.brand || inheritedBrand),
+      brandSlug: isCurrentExplicitBuild ? undefined : (currentIntent.brandSlug || inheritedBrandSlug),
       isPcBuild: isCurrentExplicitBuild || isPcBuild,
     };
 
@@ -292,7 +347,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // For PC Build queries: Prioritize components from the matched preset and dynamic catalog
-      const matchedPresetKey = matchPresetKeyFromText(message);
+      const matchedPresetKey = matchPresetKeyFromText(message, pastPresetKey);
       const matchedPreset = AI_BUILD_PRESETS[matchedPresetKey] || AI_BUILD_PRESETS['25m'];
       const presetCompList = Object.values(matchedPreset.components);
 
