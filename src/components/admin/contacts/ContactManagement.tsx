@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -222,7 +222,7 @@ export function ContactManagement({ initialContacts, initialSubscribers }: Props
               />
             </div>
 
-            <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
+            <div className="flex items-center gap-1.5 rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
               {(['all', 'new', 'read', 'replied'] as const).map((st) => (
                 <button
                   key={st}
@@ -339,7 +339,7 @@ export function ContactManagement({ initialContacts, initialSubscribers }: Props
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
+              <div className="flex items-center gap-1.5 rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
                 {(['all', 'sent', 'pending'] as const).map((vt) => (
                   <button
                     key={vt}

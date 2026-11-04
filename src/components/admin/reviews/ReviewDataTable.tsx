@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -185,7 +185,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
+          <div className="flex items-center gap-1.5 rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
             {(['all', 'pending', 'approved', 'hidden'] as const).map((st) => (
               <button
                 key={st}

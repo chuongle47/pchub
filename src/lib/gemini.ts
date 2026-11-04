@@ -52,15 +52,16 @@ import { parseUserHardwareIntent, ParsedUserIntent, KNOWN_BRANDS_CONFIG } from '
 export async function askGeminiPCHubAdvisor(
   message: string,
   history: ChatMessage[] = [],
-  catalogContext: string = ''
+  catalogContext: string = '',
+  preParsedIntent?: ParsedUserIntent
 ): Promise<{ text: string; modelUsed: string }> {
   const apiKey = getGeminiApiKey();
-  const intent = parseUserHardwareIntent(message);
+  const intent = preParsedIntent || parseUserHardwareIntent(message);
 
   // If no API key is configured, return the intelligent local rule advisor immediately without network lag
   if (!apiKey) {
     return {
-      text: getSmartLocalAdvisorReply(message, catalogContext, intent),
+      text: getSmartLocalAdvisorReply(message, catalogContext, intent, history),
       modelUsed: 'local-rule-advisor'
     };
   }
@@ -116,14 +117,13 @@ ${catalogContext}
 `;
 
   const candidateModels = [
-    'gemini-flash-lite-latest',
-    'gemini-3.5-flash-lite',
+    'gemini-2.5-flash-lite',
     'gemini-3.5-flash',
-    'gemini-3.6-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-latest',
   ];
 
   const contents = [
-    { parts: [{ text: systemInstruction }] },
     ...history.slice(-6).map(h => ({
       role: h.role === 'user' ? 'user' : 'model',
       parts: [{ text: h.content }]
@@ -138,6 +138,9 @@ ${catalogContext}
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: systemInstruction }]
+          },
           contents,
           generationConfig: {
             temperature: 0.7,
@@ -167,7 +170,7 @@ ${catalogContext}
 
   // Smart local fallback response if Gemini API fails
   return {
-    text: getSmartLocalAdvisorReply(message, catalogContext, intent),
+    text: getSmartLocalAdvisorReply(message, catalogContext, intent, history),
     modelUsed: 'local-rule-advisor'
   };
 }
@@ -241,7 +244,8 @@ function parseCatalogLine(line: string): ParsedCatalogItem {
 function getSmartLocalAdvisorReply(
   message: string,
   catalogContext: string = '',
-  preParsedIntent?: ParsedUserIntent
+  preParsedIntent?: ParsedUserIntent,
+  history?: ChatMessage[]
 ): string {
   const intent = preParsedIntent || parseUserHardwareIntent(message);
 

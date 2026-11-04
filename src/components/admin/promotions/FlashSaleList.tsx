@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -50,7 +50,7 @@ export function FlashSaleList({ sales }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-amber-400" />
@@ -63,7 +63,7 @@ export function FlashSaleList({ sales }: Props) {
 
         <Link
           href="/admin/flash-sales/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer flex-shrink-0 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Tạo chiến dịch Flash Sale</span>
@@ -81,7 +81,14 @@ export function FlashSaleList({ sales }: Props) {
             >
               {sale.banner_url ? (
                 <div className="h-36 w-full overflow-hidden relative">
-                  <img src={sale.banner_url} alt={sale.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <img
+                    src={sale.banner_url}
+                    alt={sale.name}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/images/hero-pc.jpg';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                   <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${status.class}`}>
                     {status.label}
                   </span>

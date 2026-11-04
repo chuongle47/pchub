@@ -13,7 +13,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nội dung câu hỏi không được để trống' }, { status: 400 });
     }
 
-    const intent = parseUserHardwareIntent(message.trim());
+    const currentIntent = parseUserHardwareIntent(message.trim());
+
+    // Sequential Conversational Memory: If current message is a follow-up, inherit category & brand from recent turns
+    let inheritedCategory = currentIntent.category;
+    let inheritedCategoryName = currentIntent.categoryName;
+    let inheritedBrand = currentIntent.brand;
+    let inheritedBrandSlug = currentIntent.brandSlug;
+    let isPcBuild = currentIntent.isPcBuild;
+
+    if (Array.isArray(history) && history.length > 0) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        const turn = history[i];
+        const turnText = typeof turn.content === 'string' ? turn.content : typeof turn.text === 'string' ? turn.text : '';
+        if (turnText) {
+          const pastIntent = parseUserHardwareIntent(turnText);
+          if (!inheritedCategory && pastIntent.category) {
+            inheritedCategory = pastIntent.category;
+            inheritedCategoryName = pastIntent.categoryName;
+          }
+          if (!inheritedBrand && pastIntent.brand) {
+            inheritedBrand = pastIntent.brand;
+            inheritedBrandSlug = pastIntent.brandSlug;
+          }
+          if (!isPcBuild && pastIntent.isPcBuild) {
+            isPcBuild = pastIntent.isPcBuild;
+          }
+        }
+      }
+    }
+
+    const intent = {
+      ...currentIntent,
+      category: inheritedCategory,
+      categoryName: inheritedCategoryName,
+      brand: currentIntent.brand || inheritedBrand,
+      brandSlug: currentIntent.brandSlug || inheritedBrandSlug,
+      isPcBuild: currentIntent.isPcBuild || isPcBuild,
+    };
 
     // Build rich dynamic catalog context from database based on user query + full Sbuy product catalog
     let catalogContext = '';
@@ -29,19 +66,19 @@ export async function POST(request: NextRequest) {
       let searchMatched: any[] = [];
       const searchTerms: string[] = [];
 
-      // Add category terms
-      if (userText.includes('màn hình') || userText.includes('monitor') || userText.includes('màn')) searchTerms.push('màn');
-      if (userText.includes('bàn phím') || userText.includes('keyboard') || userText.includes('phím')) searchTerms.push('phím');
-      if (userText.includes('chuột') || userText.includes('mouse') || userText.includes('lót chuột') || userText.includes('pad')) searchTerms.push('chuột');
-      if (userText.includes('tai nghe') || userText.includes('headset') || userText.includes('audio')) searchTerms.push('tai nghe');
-      if (userText.includes('loa') || userText.includes('speaker')) searchTerms.push('loa');
-      if (userText.includes('vga') || userText.includes('card') || userText.includes('gpu') || userText.includes('rtx')) searchTerms.push('rtx', 'vga');
-      if (userText.includes('cpu') || userText.includes('chip') || userText.includes('intel') || userText.includes('ryzen')) searchTerms.push('intel', 'ryzen');
-      if (userText.includes('ram')) searchTerms.push('ram');
-      if (userText.includes('ssd') || userText.includes('hdd') || userText.includes('ổ cứng')) searchTerms.push('ssd');
-      if (userText.includes('tản') || userText.includes('aio') || userText.includes('cooling')) searchTerms.push('tản');
-      if (userText.includes('nguồn') || userText.includes('psu')) searchTerms.push('nguồn');
-      if (userText.includes('case') || userText.includes('vỏ')) searchTerms.push('case');
+      // Add category terms based on query or inherited intent
+      if (userText.includes('màn hình') || userText.includes('monitor') || userText.includes('màn') || intent.category === 'monitor') searchTerms.push('màn');
+      if (userText.includes('bàn phím') || userText.includes('keyboard') || userText.includes('phím') || intent.category === 'keyboard') searchTerms.push('phím');
+      if (userText.includes('chuột') || userText.includes('mouse') || userText.includes('lót chuột') || userText.includes('pad') || intent.category === 'mouse') searchTerms.push('chuột');
+      if (userText.includes('tai nghe') || userText.includes('headset') || userText.includes('audio') || intent.category === 'headset') searchTerms.push('tai nghe');
+      if (userText.includes('loa') || userText.includes('speaker') || intent.category === 'speaker') searchTerms.push('loa');
+      if (userText.includes('vga') || userText.includes('card') || userText.includes('gpu') || userText.includes('rtx') || intent.category === 'gpu') searchTerms.push('rtx', 'vga');
+      if (userText.includes('cpu') || userText.includes('chip') || userText.includes('intel') || userText.includes('ryzen') || intent.category === 'cpu') searchTerms.push('intel', 'ryzen');
+      if (userText.includes('ram') || intent.category === 'ram') searchTerms.push('ram');
+      if (userText.includes('ssd') || userText.includes('hdd') || userText.includes('ổ cứng') || intent.category === 'storage') searchTerms.push('ssd');
+      if (userText.includes('tản') || userText.includes('aio') || userText.includes('cooling') || intent.category === 'cooling') searchTerms.push('tản');
+      if (userText.includes('nguồn') || userText.includes('psu') || intent.category === 'psu') searchTerms.push('nguồn');
+      if (userText.includes('case') || userText.includes('vỏ') || intent.category === 'case') searchTerms.push('case');
 
       // Add detected brand term
       if (intent.brand) {
@@ -92,7 +129,7 @@ export async function POST(request: NextRequest) {
       console.warn('[PCHub AI Chat] Failed to load dynamic catalog context:', err);
     }
 
-    const advisorResult = await askGeminiPCHubAdvisor(message.trim(), history, catalogContext);
+    const advisorResult = await askGeminiPCHubAdvisor(message.trim(), history, catalogContext, intent);
 
     // Smart matching of real products to Gemini reply recommendations
     const userText = message.toLowerCase();

@@ -62,7 +62,7 @@ export function AdminHeader({
   const userRole = userProfile?.role || 'staff';
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between">
+    <header className="sticky top-0 z-40 h-16 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between">
       {/* Left section: mobile hamburger & search shortcut */}
       <div className="flex items-center gap-3">
         <button

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { QuoteDataTable } from '@/components/admin/quotes/QuoteDataTable';
 
@@ -23,25 +23,46 @@ export default async function AdminQuotesPage({ searchParams }: Props) {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  let query = supabase
-    .from('quotes')
-    .select(
-      'id, code, customer_name, phone, email, total, status, created_at, assigned_profile:profiles!assigned_to(full_name)',
-      { count: 'exact' }
-    );
+  let quotes: any[] = [];
+  let totalCount = 0;
 
-  if (q) {
-    query = query.or(`code.ilike.%${q}%,customer_name.ilike.%${q}%,phone.ilike.%${q}%`);
-  }
-  if (status) {
-    query = query.eq('status', status);
-  }
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_admin_quotes', {
+      p_search: q,
+      p_status: status,
+      p_limit: pageSize,
+      p_offset: from,
+    });
 
-  query = query.order('created_at', { ascending: false }).range(from, to);
+    if (!rpcError && rpcData) {
+      quotes = rpcData.quotes || [];
+      totalCount = rpcData.total || 0;
+    } else {
+      let query = supabase
+        .from('quotes')
+        .select(
+          'id, code, customer_name, phone, email, total, status, created_at, assigned_profile:profiles!assigned_to(full_name)',
+          { count: 'exact' }
+        );
 
-  const { data: quotes, count: totalCount, error } = await query;
-  if (error) {
-    console.error('Error fetching admin quotes:', error);
+      if (q) {
+        query = query.or(`code.ilike.%${q}%,customer_name.ilike.%${q}%,phone.ilike.%${q}%`);
+      }
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      query = query.order('created_at', { ascending: false }).range(from, to);
+
+      const { data: fallbackQuotes, count: fallbackCount, error } = await query;
+      if (error) {
+        console.error('Error fetching admin quotes:', error);
+      }
+      quotes = fallbackQuotes || [];
+      totalCount = fallbackCount || 0;
+    }
+  } catch (err) {
+    console.error('Error in AdminQuotesPage:', err);
   }
 
   const formattedQuotes = (quotes || []).map((q: any) => ({

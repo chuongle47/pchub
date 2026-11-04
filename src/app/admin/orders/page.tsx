@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { OrderDataTable } from '@/components/admin/orders/OrderDataTable';
 
@@ -25,28 +25,50 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  let query = supabase
-    .from('orders')
-    .select(
-      'id, code, customer_name, phone, email, total, payment_method, payment_status, status, created_at',
-      { count: 'exact' }
-    );
+  let orders: any[] = [];
+  let totalCount = 0;
 
-  if (q) {
-    query = query.or(`code.ilike.%${q}%,customer_name.ilike.%${q}%,phone.ilike.%${q}%`);
-  }
-  if (status) {
-    query = query.eq('status', status);
-  }
-  if (payment) {
-    query = query.eq('payment_status', payment);
-  }
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_admin_orders', {
+      p_search: q,
+      p_status: status,
+      p_payment: payment,
+      p_limit: pageSize,
+      p_offset: from,
+    });
 
-  query = query.order('created_at', { ascending: false }).range(from, to);
+    if (!rpcError && rpcData) {
+      orders = rpcData.orders || [];
+      totalCount = rpcData.total || 0;
+    } else {
+      let query = supabase
+        .from('orders')
+        .select(
+          'id, code, customer_name, phone, email, total, payment_method, payment_status, status, created_at',
+          { count: 'exact' }
+        );
 
-  const { data: orders, count: totalCount, error } = await query;
-  if (error) {
-    console.error('Error fetching admin orders:', error);
+      if (q) {
+        query = query.or(`code.ilike.%${q}%,customer_name.ilike.%${q}%,phone.ilike.%${q}%`);
+      }
+      if (status) {
+        query = query.eq('status', status);
+      }
+      if (payment) {
+        query = query.eq('payment_status', payment);
+      }
+
+      query = query.order('created_at', { ascending: false }).range(from, to);
+
+      const { data: fallbackOrders, count: fallbackCount, error } = await query;
+      if (error) {
+        console.error('Error fetching admin orders:', error);
+      }
+      orders = fallbackOrders || [];
+      totalCount = fallbackCount || 0;
+    }
+  } catch (err) {
+    console.error('Error in AdminOrdersPage:', err);
   }
 
   return (

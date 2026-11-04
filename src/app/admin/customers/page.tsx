@@ -22,7 +22,7 @@ export default async function AdminCustomersPage() {
 
   const { data: orders, error: oError } = await supabase
     .from('orders')
-    .select('id, order_number, user_id, customer_email, total_amount, status, created_at')
+    .select('id, code, user_id, email, total, status, created_at')
     .order('created_at', { ascending: false });
 
   if (oError) {
@@ -32,16 +32,16 @@ export default async function AdminCustomersPage() {
   const userOrdersMap = new Map<string, any[]>();
   const emailOrdersMap = new Map<string, any[]>();
 
-  (orders || []).forEach((o) => {
+  (orders || []).forEach((o: any) => {
     if (o.user_id) {
       const arr = userOrdersMap.get(o.user_id) || [];
       arr.push(o);
       userOrdersMap.set(o.user_id, arr);
     }
-    if (o.customer_email) {
-      const arr = emailOrdersMap.get(o.customer_email.toLowerCase()) || [];
+    if (o.email) {
+      const arr = emailOrdersMap.get(o.email.toLowerCase()) || [];
       arr.push(o);
-      emailOrdersMap.set(o.customer_email.toLowerCase(), arr);
+      emailOrdersMap.set(o.email.toLowerCase(), arr);
     }
   });
 
@@ -50,7 +50,7 @@ export default async function AdminCustomersPage() {
     
     const total_spent = userOrders
       .filter((o) => o.status !== 'cancelled')
-      .reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0);
+      .reduce((acc, o) => acc + (Number(o.total || o.total_amount) || 0), 0);
 
     return {
       id: p.id,
