@@ -179,8 +179,16 @@ export function parseUserHardwareIntent(query: string): ParsedUserIntent {
     }
   }
 
-  const isBudget = lower.includes('giá rẻ') || lower.includes('tiết kiệm') || lower.includes('bình dân') || lower.includes('sinh viên');
-  const isPremium = lower.includes('cao cấp') || lower.includes('xịn') || lower.includes('flagship') || lower.includes('tốt nhất');
+  const isBudget = lower.includes('giá rẻ') || lower.includes('tiết kiệm') || lower.includes('bình dân') || lower.includes('sinh viên') || lower.includes('rẻ nhất') || lower.includes('thấp nhất');
+  const isPremium = lower.includes('cao cấp') || lower.includes('xịn') || lower.includes('flagship') || lower.includes('tốt nhất') || lower.includes('cao nhất') || lower.includes('mạnh nhất') || lower.includes('khủng nhất') || lower.includes('đỉnh nhất') || lower.includes('max setting') || lower.includes('top tier');
+
+  if (isPremium && !targetPrice && !minPrice) {
+    targetPrice = 50000000;
+    minPrice = 45000000;
+  } else if (isBudget && !targetPrice && !maxPrice) {
+    targetPrice = 10000000;
+    maxPrice = 12000000;
+  }
 
   return {
     category: detectedCategory,

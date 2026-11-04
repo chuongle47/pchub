@@ -42,11 +42,19 @@ async function runTests() {
   const p4 = parseUserHardwareIntent('VGA RTX 4060 tầm 8 - 10 triệu');
   assert('Query "VGA RTX 4060" category is gpu', p4.category === 'gpu');
 
+  const p5 = parseUserHardwareIntent('build pc cao nhất hiện tại');
+  assert('Query "build pc cao nhất hiện tại" is recognized as isPcBuild', p5.isPcBuild === true);
+  assert('Query "build pc cao nhất hiện tại" is recognized as isPremium', p5.isPremium === true);
+  assert('Query "build pc cao nhất hiện tại" targetPrice is high-end', (p5.targetPrice || 0) >= 40000000);
+
   // -----------------------------------------------------------------
   // Test 2: Build Presets budget matcher
   // -----------------------------------------------------------------
   console.log('\n--- Test Group 2: Build Presets Budget Matcher ---');
   assert('matchPresetKeyFromText("build cấu hình với 30 triệu") === "30m"', matchPresetKeyFromText('build cấu hình với 30 triệu') === '30m');
+  assert('matchPresetKeyFromText("build pc cao nhất hiện tại") === "50m"', matchPresetKeyFromText('build pc cao nhất hiện tại') === '50m');
+  assert('matchPresetKeyFromText("pc mạnh nhất") === "50m"', matchPresetKeyFromText('pc mạnh nhất') === '50m');
+  assert('matchPresetKeyFromText("cấu hình khủng nhất") === "50m"', matchPresetKeyFromText('cấu hình khủng nhất') === '50m');
   assert('matchPresetKeyFromText("cấu hình 10 triệu") === "10m"', matchPresetKeyFromText('cấu hình 10 triệu') === '10m');
   assert('matchPresetKeyFromText("pc 15 triệu") === "15m"', matchPresetKeyFromText('pc 15 triệu') === '15m');
   assert('matchPresetKeyFromText("dàn pc 25tr") === "25m"', matchPresetKeyFromText('dàn pc 25tr') === '25m');
@@ -79,6 +87,12 @@ async function runTests() {
   assert('Response contains Mainboard', replyDirect.text.includes('Mainboard') && replyDirect.text.includes('B760'));
   assert('Response contains VGA RTX 4070', replyDirect.text.includes('RTX 4070'));
   assert('Response DOES NOT misroute to Logitech brand overview', !replyDirect.text.includes('Tư vấn sản phẩm thương hiệu Logitech'));
+
+  const replyMax = await askGeminiPCHubAdvisor('build pc cao nhất hiện tại', [], dummyCatalog);
+  assert('Query "build pc cao nhất hiện tại" returns Flagship / 50+ Triệu build', replyMax.text.includes('Flagship') || replyMax.text.includes('Đỉnh Cao') || replyMax.text.includes('50+ Triệu') || replyMax.text.includes('83.730.000'));
+  assert('Query "build pc cao nhất hiện tại" contains i9-14900K', replyMax.text.includes('14900K'));
+  assert('Query "build pc cao nhất hiện tại" contains RTX 4080 SUPER', replyMax.text.includes('RTX 4080 SUPER'));
+  assert('Query "build pc cao nhất hiện tại" DOES NOT return 25 Triệu i5-13400F', !replyMax.text.includes('24.730.000') && !replyMax.text.includes('i5-13400F'));
 
   // -----------------------------------------------------------------
   // Test 4: Sequential Context & Turn-switch Verification

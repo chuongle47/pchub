@@ -563,12 +563,48 @@ export function matchPresetKeyFromText(text: string): string {
     return '50m';
   }
 
-  if (lower.includes('10tr') || lower.includes('10 triệu') || lower.includes('8tr') || lower.includes('văn phòng')) return '10m';
+  // 1. Explicit MAX / TOP-TIER / SUPERLATIVE requests (e.g. "cao nhất", "mạnh nhất", "khủng nhất", "flagship")
+  if (
+    lower.includes('cao nhất') ||
+    lower.includes('mạnh nhất') ||
+    lower.includes('khủng nhất') ||
+    lower.includes('đỉnh nhất') ||
+    lower.includes('tốt nhất') ||
+    lower.includes('max setting') ||
+    lower.includes('max cấu hình') ||
+    lower.includes('cấu hình max') ||
+    lower.includes('flagship') ||
+    lower.includes('top tier') ||
+    lower.includes('vô địch') ||
+    lower.includes('không giới hạn') ||
+    lower.includes('hết nấc') ||
+    lower.includes('kịch kim') ||
+    lower.includes('50tr') ||
+    lower.includes('100tr') ||
+    lower.includes('khủng') ||
+    lower.includes('cao cấp')
+  ) {
+    return '50m';
+  }
+
+  // 2. Budget / Entry-level requests
+  if (
+    lower.includes('rẻ nhất') ||
+    lower.includes('thấp nhất') ||
+    lower.includes('tiết kiệm nhất') ||
+    lower.includes('10tr') ||
+    lower.includes('10 triệu') ||
+    lower.includes('8tr') ||
+    lower.includes('văn phòng') ||
+    lower.includes('học tập')
+  ) {
+    return '10m';
+  }
+
   if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('12tr')) return '15m';
   if (lower.includes('20tr') || lower.includes('25tr') || lower.includes('20 triệu') || lower.includes('25 triệu')) return '25m';
   if (lower.includes('30tr') || lower.includes('30 triệu')) return '30m';
-  if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu')) return '35m';
-  if (lower.includes('50tr') || lower.includes('100tr') || lower.includes('khủng') || lower.includes('cao cấp')) return '50m';
+  if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu') || lower.includes('đồ họa')) return '35m';
 
   return '25m'; // default fallback
 }

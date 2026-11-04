@@ -272,8 +272,26 @@ function getSmartLocalAdvisorReply(
     const preset = AI_BUILD_PRESETS[presetKey] || AI_BUILD_PRESETS['25m'];
     const comp = preset.components;
 
-    return `📌 **Cấu hình ${preset.title} (${preset.budgetLabel}) — Đề xuất từ PCHub AI Advisor:**\n\n` +
-      `- **Mục đích**: Chơi game mượt mà, Làm việc đa nhiệm & Đồ họa\n` +
+    const isSuperlative = lowerMsg.includes('cao nhất') ||
+      lowerMsg.includes('mạnh nhất') ||
+      lowerMsg.includes('khủng nhất') ||
+      lowerMsg.includes('đỉnh nhất') ||
+      lowerMsg.includes('tốt nhất') ||
+      lowerMsg.includes('flagship') ||
+      lowerMsg.includes('max setting') ||
+      lowerMsg.includes('max cấu hình') ||
+      lowerMsg.includes('cấu hình max');
+
+    const displayTitle = isSuperlative
+      ? 'Cấu hình PC Flagship Đỉnh Cao Nhất Hiện Tại (Top-Tier Workstation & Gaming 4K/8K)'
+      : preset.title;
+
+    const displayPurpose = isSuperlative
+      ? 'Chiến mọi tựa game AAA Max Setting 4K/8K, Render 3D nặng, Dựng phim 8K & Huấn luyện AI'
+      : 'Chơi game mượt mà, Làm việc đa nhiệm & Đồ họa';
+
+    return `📌 **${displayTitle} (${preset.budgetLabel}) — Đề xuất từ PCHub AI Advisor:**\n\n` +
+      `- **Mục đích**: ${displayPurpose}\n` +
       `- **Tổng chi phí dự kiến**: **${preset.totalPrice.toLocaleString('vi-VN')}₫**\n` +
       `- **Tiêu chuẩn**: 100% linh kiện chính hãng, tương thích socket 100%, nguồn công suất thực đệm tải an toàn >30%\n\n` +
       `🛒 **Bảng cấu hình linh kiện chi tiết:**\n` +
