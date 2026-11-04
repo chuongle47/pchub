@@ -14,7 +14,7 @@ export default function StorefrontShell({ children }: { children: React.ReactNod
   // If inside Admin portal, render clean dark shell without storefront chrome
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+      <div className="dark min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
         {children}
       </div>
     );

@@ -68,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning className="dark">
+    <html lang="vi" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -82,7 +82,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
-      <body suppressHydrationWarning className="bg-slate-950 font-sans text-slate-100 min-h-screen">
+      <body suppressHydrationWarning className="font-sans antialiased text-slate-900 bg-[#f8fafc] min-h-screen">
         <StorefrontShell>{children}</StorefrontShell>
       </body>
     </html>

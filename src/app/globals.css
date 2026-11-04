@@ -227,6 +227,26 @@ a:hover {
   opacity: 0.8;
 }
 
+/* Universal Form Input Contrast & High-Visibility Text */
+input, textarea, select {
+  color: #0f172a;
+}
+.dark input:not(.ai-chat-input):not([style*="color"]), 
+.dark textarea:not([style*="color"]), 
+.dark select:not([style*="color"]) {
+  color: #f8fafc;
+}
+
+.ai-chat-input {
+  color: #0f172a !important;
+  caret-color: #2563eb !important;
+  background-color: #ffffff !important;
+}
+.ai-chat-input::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
 .form-label {
   display: block;
   font-size: var(--font-size-xs);

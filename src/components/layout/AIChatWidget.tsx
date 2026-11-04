@@ -638,6 +638,9 @@ export default function AIChatWidget() {
 
               <form onSubmit={submit} style={{ display: 'flex', gap: '8px' }}>
                 <input
+                  type="text"
+                  className="ai-chat-input"
+                  autoComplete="off"
                   value={input}
                   onChange={event => setInput(event.target.value)}
                   placeholder="Hỏi AI về CPU, VGA, PSU, tư vấn cấu hình PC theo ngân sách..."
@@ -651,7 +654,9 @@ export default function AIChatWidget() {
                     padding: '12px 16px',
                     fontSize: '13.5px',
                     outline: 'none',
-                    background: loading ? '#f8fafc' : '#fff',
+                    color: '#0f172a',
+                    caretColor: '#2563eb',
+                    background: loading ? '#f8fafc' : '#ffffff',
                     boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)',
                   }}
                   onFocus={e => e.currentTarget.style.borderColor = '#2563eb'}
