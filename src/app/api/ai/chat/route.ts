@@ -3,6 +3,7 @@ import { askGeminiPCHubAdvisor } from '@/lib/gemini';
 import { getProducts } from '@/lib/db';
 import { getProductImage } from '@/lib/product-ui';
 import { parseUserHardwareIntent, KNOWN_BRANDS_CONFIG } from '@/lib/ai-query-parser';
+import { matchPresetKeyFromText, AI_BUILD_PRESETS } from '@/lib/buildPresets';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,28 +16,51 @@ export async function POST(request: NextRequest) {
 
     const currentIntent = parseUserHardwareIntent(message.trim());
 
-    // Sequential Conversational Memory: If current message is a follow-up, inherit category & brand from recent turns
+    // Sequential Conversational Memory:
+    // Only inherit context (category, brand, isPcBuild) if the current query is an implicit follow-up
+    // (i.e. does not explicitly change the intent, category, or brand).
+    const isCurrentExplicitBuild = currentIntent.isPcBuild || currentIntent.category === 'pc_build';
+    const hasCurrentExplicitCat = Boolean(currentIntent.category && currentIntent.category !== 'pc_build');
+    const hasCurrentExplicitBrand = Boolean(currentIntent.brand);
+
     let inheritedCategory = currentIntent.category;
     let inheritedCategoryName = currentIntent.categoryName;
     let inheritedBrand = currentIntent.brand;
     let inheritedBrandSlug = currentIntent.brandSlug;
-    let isPcBuild = currentIntent.isPcBuild;
+    let isPcBuild = isCurrentExplicitBuild;
 
-    if (Array.isArray(history) && history.length > 0) {
+    // Only inspect history if current message is missing category/brand or is an implicit build follow-up
+    if ((!hasCurrentExplicitCat || !hasCurrentExplicitBrand || !isPcBuild) && Array.isArray(history) && history.length > 0) {
       for (let i = history.length - 1; i >= 0; i--) {
         const turn = history[i];
         const turnText = typeof turn.content === 'string' ? turn.content : typeof turn.text === 'string' ? turn.text : '';
         if (turnText) {
           const pastIntent = parseUserHardwareIntent(turnText);
-          if (!inheritedCategory && pastIntent.category) {
+
+          // If current is an explicit PC build, DO NOT inherit peripheral brands (e.g. Logitech) or peripheral categories
+          if (isCurrentExplicitBuild) {
+            break;
+          }
+
+          // If current has an explicit category, DO NOT inherit past categories or past build intent
+          if (hasCurrentExplicitCat) {
+            break;
+          }
+
+          // Inherit category if not present in current query
+          if (!inheritedCategory && pastIntent.category && pastIntent.category !== 'pc_build') {
             inheritedCategory = pastIntent.category;
             inheritedCategoryName = pastIntent.categoryName;
           }
+
+          // Inherit brand if not present and not an explicit build
           if (!inheritedBrand && pastIntent.brand) {
             inheritedBrand = pastIntent.brand;
             inheritedBrandSlug = pastIntent.brandSlug;
           }
-          if (!isPcBuild && pastIntent.isPcBuild) {
+
+          // Inherit isPcBuild if current query did not specify another category
+          if (!isPcBuild && pastIntent.isPcBuild && !hasCurrentExplicitCat) {
             isPcBuild = pastIntent.isPcBuild;
           }
         }
@@ -45,11 +69,11 @@ export async function POST(request: NextRequest) {
 
     const intent = {
       ...currentIntent,
-      category: inheritedCategory,
-      categoryName: inheritedCategoryName,
-      brand: currentIntent.brand || inheritedBrand,
-      brandSlug: currentIntent.brandSlug || inheritedBrandSlug,
-      isPcBuild: currentIntent.isPcBuild || isPcBuild,
+      category: isCurrentExplicitBuild ? 'pc_build' : (inheritedCategory || currentIntent.category),
+      categoryName: isCurrentExplicitBuild ? 'PC Trọn Bộ' : (inheritedCategoryName || currentIntent.categoryName),
+      brand: isCurrentExplicitBuild ? currentIntent.brand : (currentIntent.brand || inheritedBrand),
+      brandSlug: isCurrentExplicitBuild ? currentIntent.brandSlug : (currentIntent.brandSlug || inheritedBrandSlug),
+      isPcBuild: isCurrentExplicitBuild || isPcBuild,
     };
 
     // Build rich dynamic catalog context from database based on user query + full Sbuy product catalog
@@ -267,11 +291,47 @@ export async function POST(request: NextRequest) {
         if (recMap.size >= 4) break;
       }
     } else {
-      // For PC Build queries: Balanced unique hardware categories
+      // For PC Build queries: Prioritize components from the matched preset and dynamic catalog
+      const matchedPresetKey = matchPresetKeyFromText(message);
+      const matchedPreset = AI_BUILD_PRESETS[matchedPresetKey] || AI_BUILD_PRESETS['25m'];
+      const presetCompList = Object.values(matchedPreset.components);
+
+      // Add preset components first
+      presetCompList.forEach(comp => {
+        // Try to find matching real product in catalog
+        const realProd = finalProductList.find(p => (p.name || '').toLowerCase().includes(comp.name.toLowerCase().slice(0, 15)));
+        const itemToAdd = realProd || {
+          id: comp.id,
+          name: comp.name,
+          slug: comp.slug,
+          price: comp.price,
+          original_price: Math.round(comp.price * 1.1),
+          image_url: comp.image,
+          category_name: comp.key.toUpperCase(),
+          category_slug: comp.key,
+          brand_name: 'Chính hãng',
+        };
+        if (!recMap.has(itemToAdd.name)) {
+          recMap.set(itemToAdd.name, {
+            id: String(itemToAdd.id),
+            name: itemToAdd.name,
+            slug: itemToAdd.slug,
+            price: Number(itemToAdd.price) || 0,
+            original_price: Number(itemToAdd.original_price || itemToAdd.originalPrice || 0),
+            image_url: getProductImage({ name: itemToAdd.name, category_name: itemToAdd.category_name, category_slug: itemToAdd.category_slug, brand_name: itemToAdd.brand_name, image_url: itemToAdd.image_url || itemToAdd.image }),
+            category_name: itemToAdd.category_name || 'Linh kiện',
+            category_slug: itemToAdd.category_slug,
+            brand_name: itemToAdd.brand_name || 'Chính hãng',
+          });
+        }
+      });
+
+      // Fill with other high-scored hardware components if space permits
       const usedCatOrders = new Set<number>();
       for (const item of scoredProducts) {
+        if (recMap.size >= 8) break;
         const p = item.product;
-        if (!recMap.has(p.name) && (!usedCatOrders.has(item.catOrder) || recMap.size >= 5)) {
+        if (!recMap.has(p.name) && !usedCatOrders.has(item.catOrder)) {
           usedCatOrders.add(item.catOrder);
           recMap.set(p.name, {
             id: String(p.id),
@@ -284,28 +344,6 @@ export async function POST(request: NextRequest) {
             category_slug: p.category_slug,
             brand_name: p.brand_name || 'Chính hãng',
           });
-        }
-        if (recMap.size >= 6) break;
-      }
-
-      // Fill remaining if needed
-      if (recMap.size < 6) {
-        for (const item of scoredProducts) {
-          const p = item.product;
-          if (!recMap.has(p.name)) {
-            recMap.set(p.name, {
-              id: String(p.id),
-              name: p.name,
-              slug: p.slug,
-              price: Number(p.price) || 0,
-              original_price: Number(p.original_price || p.originalPrice || 0),
-              image_url: getProductImage({ name: p.name, category_name: p.category_name, category_slug: p.category_slug, brand_name: p.brand_name, image_url: p.image_url || p.image }),
-              category_name: p.category_name || 'Linh kiện',
-              category_slug: p.category_slug,
-              brand_name: p.brand_name || 'Chính hãng',
-            });
-          }
-          if (recMap.size >= 6) break;
         }
       }
     }

@@ -18,6 +18,182 @@ export interface BuildPreset {
 }
 
 export const AI_BUILD_PRESETS: Record<string, BuildPreset> = {
+  '10m': {
+    id: 'preset-10m',
+    title: 'PC Văn Phòng & Học Tập - 10 Triệu',
+    budgetLabel: '10.000.000đ',
+    totalPrice: 9840000,
+    components: {
+      cpu: {
+        key: 'cpu',
+        id: 'p-cpu-12100',
+        name: 'CPU Intel Core i3-12100 (3.3GHz - 4.3GHz, 4 Nhân 8 Luồng, Đồ Họa UHD 730)',
+        price: 2490000,
+        tdp: 60,
+        specs: 'LGA1700 | 12MB Cache | Intel UHD Graphics 730',
+        image: '/images/cpu-box.jpg',
+        slug: 'intel-core-i3-12100',
+      },
+      mainboard: {
+        key: 'mainboard',
+        id: 'p-mb-h610m',
+        name: 'Mainboard ASUS PRIME H610M-K D4',
+        price: 1890000,
+        tdp: 30,
+        specs: 'LGA1700 | 2x DDR4 | M.2 NVMe | Micro-ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-prime-h610m-k-d4',
+      },
+      ram: {
+        key: 'ram',
+        id: 'p-ram-16g-d4',
+        name: 'RAM Kingston FURY Beast 16GB (2x8GB) DDR4 3200MHz',
+        price: 1090000,
+        tdp: 10,
+        specs: '2x8GB | DDR4 | 3200MHz | Dual-Channel',
+        image: '/images/ram-rgb.jpg',
+        slug: 'kingston-fury-beast-16gb',
+      },
+      gpu: {
+        key: 'gpu',
+        id: 'p-gpu-gtx1650',
+        name: 'VGA ASUS Dual GeForce GTX 1650 OC 4GB GDDR6',
+        price: 3390000,
+        tdp: 75,
+        specs: '4GB GDDR6 | 128-bit | Compact Dual Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'asus-dual-gtx-1650-oc',
+      },
+      storage: {
+        key: 'storage',
+        id: 'p-ssd-500g-nv2',
+        name: 'SSD Kingston NV2 500GB PCIe 4.0 NVMe M.2',
+        price: 890000,
+        tdp: 5,
+        specs: '500GB | Đọc 3500MB/s - Ghi 2100MB/s',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'kingston-nv2-500gb',
+      },
+      psu: {
+        key: 'psu',
+        id: 'p-psu-550w',
+        name: 'Nguồn Deepcool PF550 550W 80 Plus Standard',
+        price: 890000,
+        tdp: 0,
+        specs: '550W | 80 Plus | Active PFC',
+        image: '/images/cat-psu.jpg',
+        slug: 'deepcool-pf550',
+      },
+      case: {
+        key: 'case',
+        id: 'p-case-xigmatek-nyx',
+        name: 'Vỏ Case Xigmatek NYX Air 3F (Kèm 3 Fan RGB)',
+        price: 690000,
+        tdp: 0,
+        specs: 'Mini Tower | Kính cường lực | Mặt lưới thoáng khí',
+        image: '/images/hero-pc.jpg',
+        slug: 'xigmatek-nyx-air-3f',
+      },
+      cooling: {
+        key: 'cooling',
+        id: 'p-cooling-stock',
+        name: 'Tản Nhiệt Khí Intel Laminar RM1 Socket LGA1700',
+        price: 0,
+        tdp: 0,
+        specs: 'Tản nhiệt chính hãng kèm CPU | Lõi đồng êm ái',
+        image: '/images/hero-pc.jpg',
+        slug: 'intel-laminar-rm1',
+      },
+    },
+  },
+  '30m': {
+    id: 'preset-30m',
+    title: 'PC Gaming Cao Cấp & Streamer - 30 Triệu',
+    budgetLabel: '30.000.000đ',
+    totalPrice: 29930000,
+    components: {
+      cpu: {
+        key: 'cpu',
+        id: 'p-cpu-14600kf',
+        name: 'CPU Intel Core i5-14600KF (Up to 5.3GHz, 14 Nhân 20 Luồng)',
+        price: 6290000,
+        tdp: 181,
+        specs: 'LGA1700 | 24MB Cache | 125W-181W Max Turbo',
+        image: '/images/cpu-box.jpg',
+        slug: 'intel-core-i5-14600kf',
+      },
+      mainboard: {
+        key: 'mainboard',
+        id: 'p-mb-b760-plus-d5',
+        name: 'Mainboard ASUS TUF GAMING B760-PLUS WIFI DDR5',
+        price: 4590000,
+        tdp: 45,
+        specs: 'LGA1700 | 4x DDR5 | PCIe 5.0 | Wi-Fi 6E | ATX',
+        image: '/images/cat-mainboard.jpg',
+        slug: 'asus-tuf-b760-plus-d5',
+      },
+      ram: {
+        key: 'ram',
+        id: 'p-ram-32g-corsair-d5',
+        name: 'RAM Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz',
+        price: 2890000,
+        tdp: 15,
+        specs: '2x16GB | DDR5 | 6000MHz | Intel XMP 3.0',
+        image: '/images/ram-rgb.jpg',
+        slug: 'corsair-vengeance-32gb-d5',
+      },
+      gpu: {
+        key: 'gpu',
+        id: 'p-gpu-rtx4070-12g',
+        name: 'VGA GIGABYTE GeForce RTX 4070 WINDFORCE OC 12G GDDR6X',
+        price: 15490000,
+        tdp: 200,
+        specs: '12GB GDDR6X | 192-bit | DLSS 3 | Triple Fan',
+        image: '/images/gpu-strix.jpg',
+        slug: 'gigabyte-rtx-4070-windforce-oc',
+      },
+      storage: {
+        key: 'storage',
+        id: 'p-ssd-kc3000-1tb',
+        name: 'SSD Kingston KC3000 1TB PCIe 4.0 NVMe M.2 (7000MB/s)',
+        price: 2290000,
+        tdp: 8,
+        specs: '1TB | Đọc 7000MB/s - Ghi 6000MB/s | 3D TLC',
+        image: '/images/ssd-nvme.jpg',
+        slug: 'kingston-kc3000-1tb',
+      },
+      psu: {
+        key: 'psu',
+        id: 'p-psu-msi-a750gl',
+        name: 'Nguồn MSI MAG A750GL PCIE5 750W 80 Plus Gold Full Modular',
+        price: 2490000,
+        tdp: 0,
+        specs: '750W | 80 Plus Gold | Chuẩn ATX 3.0 PCIe 5.0',
+        image: '/images/cat-psu.jpg',
+        slug: 'msi-mag-a750gl-pcie5',
+      },
+      case: {
+        key: 'case',
+        id: 'p-case-montech-903',
+        name: 'Vỏ Case Montech AIR 903 MAX Black (4 Fan ARGB 140mm)',
+        price: 1390000,
+        tdp: 0,
+        specs: 'Mid Tower | Hỗ trợ main E-ATX | Kính cường lực',
+        image: '/images/hero-pc.jpg',
+        slug: 'montech-air-903-max',
+      },
+      cooling: {
+        key: 'cooling',
+        id: 'p-cooling-deepcool-lt520',
+        name: 'Tản Nhiệt Nước DeepCool LT520 240mm ARGB AIO Liquid Cooler',
+        price: 1790000,
+        tdp: 20,
+        specs: 'Radiator 240mm | Bơm đa chiều thế hệ 4 | Fan FK120',
+        image: '/images/hero-pc.jpg',
+        slug: 'deepcool-lt520-240mm',
+      },
+    },
+  },
   '15m': {
     id: 'preset-15m',
     title: 'PC Gaming & Học Tập - 15 Triệu',
@@ -375,19 +551,23 @@ export const AI_BUILD_PRESETS: Record<string, BuildPreset> = {
 export function matchPresetKeyFromText(text: string): string {
   const lower = text.toLowerCase();
   
-  // Extract explicit budget numbers if present (e.g. 15, 20, 25, 30, 35, 50, 100)
-  const budgetMatch = lower.match(/(\d+)\s*(triệu|tr|m)/);
+  // Extract explicit budget numbers if present (e.g. 10, 15, 20, 25, 30, 35, 50, 100)
+  const budgetMatch = lower.match(/(\d+)\s*(triệu|tr|m|củ)/);
   if (budgetMatch) {
     const val = parseInt(budgetMatch[1], 10);
-    if (val < 20) return '15m';
-    if (val >= 20 && val < 30) return '25m';
-    if (val >= 30 && val < 45) return '35m';
+    if (val < 13) return '10m';
+    if (val >= 13 && val < 20) return '15m';
+    if (val >= 20 && val < 28) return '25m';
+    if (val >= 28 && val < 33) return '30m';
+    if (val >= 33 && val < 45) return '35m';
     return '50m';
   }
 
-  if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('10tr') || lower.includes('12tr')) return '15m';
+  if (lower.includes('10tr') || lower.includes('10 triệu') || lower.includes('8tr') || lower.includes('văn phòng')) return '10m';
+  if (lower.includes('15tr') || lower.includes('15 triệu') || lower.includes('12tr')) return '15m';
   if (lower.includes('20tr') || lower.includes('25tr') || lower.includes('20 triệu') || lower.includes('25 triệu')) return '25m';
-  if (lower.includes('30tr') || lower.includes('35tr') || lower.includes('40tr') || lower.includes('30 triệu')) return '35m';
+  if (lower.includes('30tr') || lower.includes('30 triệu')) return '30m';
+  if (lower.includes('35tr') || lower.includes('40tr') || lower.includes('35 triệu') || lower.includes('40 triệu')) return '35m';
   if (lower.includes('50tr') || lower.includes('100tr') || lower.includes('khủng') || lower.includes('cao cấp')) return '50m';
 
   return '25m'; // default fallback

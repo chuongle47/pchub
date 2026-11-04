@@ -67,15 +67,21 @@ export function parseUserHardwareIntent(query: string): ParsedUserIntent {
   const lower = query.toLowerCase().trim();
 
   // 1. Detect PC Build intent vs single component/peripheral intent
-  const isPcBuild = lower.includes('build pc') ||
-    lower.includes('cấu hình pc') ||
-    lower.includes('cấu hình máy') ||
+  const hasBuildKeyword =
+    lower.includes('build') ||
+    lower.includes('cấu hình') ||
     lower.includes('dàn pc') ||
     lower.includes('dàn máy') ||
     lower.includes('bộ máy tính') ||
     lower.includes('lắp pc') ||
     lower.includes('lắp máy') ||
-    (lower.includes('build') && !lower.includes('chuột') && !lower.includes('phím') && !lower.includes('màn') && !lower.includes('tai nghe'));
+    lower.includes('thùng máy') ||
+    lower.includes('máy tính để bàn') ||
+    (/\b(?:pc|máy tính)\b/.test(lower) && (lower.includes('triệu') || lower.includes('tr') || lower.includes('củ') || lower.includes('gaming') || lower.includes('văn phòng') || lower.includes('đồ họa') || lower.includes('chơi game')));
+
+  const isSinglePeripheral = (lower.includes('chuột') || lower.includes('bàn phím') || lower.includes('tai nghe') || lower.includes('loa')) && !lower.includes('build') && !lower.includes('cấu hình');
+
+  const isPcBuild = hasBuildKeyword && !isSinglePeripheral;
 
   let detectedCategory: ParsedUserIntent['category'] = undefined;
   let detectedCategoryName: string | undefined = undefined;

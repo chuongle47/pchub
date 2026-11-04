@@ -42,6 +42,20 @@ export async function POST(req: Request) {
       console.warn('Lỗi kiểm tra coupons Supabase:', dbError.message);
     }
 
+    // Kiểm tra danh mục sản phẩm hợp lệ (restricted categories / eligible items)
+    const restrictedCatIds = coupon?.restricted_categories || [];
+    const isItemEligible = (item: CartItemInput) => {
+      if (!restrictedCatIds || restrictedCatIds.length === 0) return true;
+      const itemCat = String(item.category || item.product?.category_id || '');
+      return !restrictedCatIds.includes(itemCat);
+    };
+    const eligibleItems = Array.isArray(items) && items.length > 0
+      ? (items as CartItemInput[]).filter(isItemEligible)
+      : [];
+    const eligibleSubtotal = eligibleItems.length > 0
+      ? eligibleItems.reduce((acc, it) => acc + (Number(it.price || 0) * (it.quantity || 1)), 0)
+      : orderTotal;
+
     if (coupon) {
       const now = new Date();
 
@@ -85,12 +99,15 @@ export async function POST(req: Request) {
       let label = '';
 
       if (coupon.type === 'percent') {
-        const rawDiscount = Math.round((orderTotal * val) / 100);
+        const rawDiscount = Math.round((eligibleSubtotal * val) / 100);
         discount = maxDiscount && rawDiscount > maxDiscount ? maxDiscount : rawDiscount;
         label = `Giảm ${val}%${maxDiscount ? ` (tối đa ${maxDiscount.toLocaleString('vi-VN')}₫)` : ''}`;
-      } else if (coupon.type === 'fixed') {
+      } else if (coupon.type === 'fixed' || coupon.type === 'fixed_cart') {
         discount = Math.min(val, orderTotal);
         label = `Giảm ${val.toLocaleString('vi-VN')}₫`;
+      } else if (coupon.type === 'fixed_product') {
+        discount = Math.min(val, eligibleSubtotal);
+        label = `Giảm ${val.toLocaleString('vi-VN')}₫ cho sản phẩm đủ điều kiện`;
       } else if (coupon.type === 'freeship') {
         discount = ship > 0 ? ship : 30000;
         label = `Miễn phí vận chuyển (${discount.toLocaleString('vi-VN')}₫)`;
@@ -140,9 +157,8 @@ export async function POST(req: Request) {
       success: false,
       error: 'Mã giảm giá không tồn tại hoặc đã hết hạn'
     }, { status: 404 });
-
   } catch (error: any) {
-    console.error('Lỗi API kiểm tra voucher:', error);
+    console.error('Lỗi API validate voucher:', error);
     return NextResponse.json({
       success: false,
       error: 'Có lỗi xảy ra khi kiểm tra mã giảm giá'

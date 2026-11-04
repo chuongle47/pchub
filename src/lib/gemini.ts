@@ -48,6 +48,7 @@ export interface ChatMessage {
  * AI PC Hardware & Product Advisor Chat Helper using Gemini API
  */
 import { parseUserHardwareIntent, ParsedUserIntent, KNOWN_BRANDS_CONFIG } from './ai-query-parser';
+import { AI_BUILD_PRESETS, matchPresetKeyFromText } from './buildPresets';
 
 export async function askGeminiPCHubAdvisor(
   message: string,
@@ -248,6 +249,48 @@ function getSmartLocalAdvisorReply(
   history?: ChatMessage[]
 ): string {
   const intent = preParsedIntent || parseUserHardwareIntent(message);
+  const lowerMsg = message.toLowerCase();
+
+  const isRealPcBuild = intent.isPcBuild ||
+    intent.category === 'pc_build' ||
+    lowerMsg.includes('build') ||
+    lowerMsg.includes('cấu hình') ||
+    lowerMsg.includes('dàn pc') ||
+    lowerMsg.includes('dàn máy') ||
+    lowerMsg.includes('bộ máy tính') ||
+    lowerMsg.includes('lắp máy') ||
+    lowerMsg.includes('thùng máy') ||
+    lowerMsg.includes('máy tính để bàn') ||
+    (lowerMsg.includes('pc') && (lowerMsg.includes('triệu') || lowerMsg.includes('tr') || lowerMsg.includes('củ') || lowerMsg.includes('gaming') || lowerMsg.includes('văn phòng') || lowerMsg.includes('đồ họa') || lowerMsg.includes('chơi game')));
+
+  // =========================================================================
+  // CASE 1: FULL PC BUILD WITH BUDGET (HIGHEST PRIORITY)
+  // Always prioritize full PC configuration over brand queries
+  // =========================================================================
+  if (isRealPcBuild) {
+    const presetKey = matchPresetKeyFromText(message);
+    const preset = AI_BUILD_PRESETS[presetKey] || AI_BUILD_PRESETS['25m'];
+    const comp = preset.components;
+
+    return `📌 **Cấu hình ${preset.title} (${preset.budgetLabel}) — Đề xuất từ PCHub AI Advisor:**\n\n` +
+      `- **Mục đích**: Chơi game mượt mà, Làm việc đa nhiệm & Đồ họa\n` +
+      `- **Tổng chi phí dự kiến**: **${preset.totalPrice.toLocaleString('vi-VN')}₫**\n` +
+      `- **Tiêu chuẩn**: 100% linh kiện chính hãng, tương thích socket 100%, nguồn công suất thực đệm tải an toàn >30%\n\n` +
+      `🛒 **Bảng cấu hình linh kiện chi tiết:**\n` +
+      `1. **CPU**: **${comp.cpu.name}** — **${comp.cpu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.cpu.specs}\n` +
+      `2. **Mainboard**: **${comp.mainboard.name}** — **${comp.mainboard.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.mainboard.specs}\n` +
+      `3. **VGA (Card đồ họa)**: **${comp.gpu.name}** — **${comp.gpu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.gpu.specs}\n` +
+      `4. **RAM**: **${comp.ram.name}** — **${comp.ram.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.ram.specs}\n` +
+      `5. **Ổ cứng (SSD)**: **${comp.storage.name}** — **${comp.storage.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.storage.specs}\n` +
+      `6. **Nguồn (PSU)**: **${comp.psu.name}** — **${comp.psu.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.psu.specs}\n` +
+      `7. **Vỏ Case**: **${comp.case.name}** — **${comp.case.price.toLocaleString('vi-VN')}₫**\n   • *Thông số*: ${comp.case.specs}\n` +
+      `8. **Tản nhiệt**: **${comp.cooling.name}** — **${comp.cooling.price > 0 ? comp.cooling.price.toLocaleString('vi-VN') + '₫' : 'Kèm theo CPU'}**\n   • *Thông số*: ${comp.cooling.specs}\n\n` +
+      `⚙️ **Đánh giá tương thích & Khả năng vận hành:**\n` +
+      `• **Socket & Chuẩn kết nối**: Khớp 100%, bus RAM và băng thông PCIe tối ưu hiệu năng tối đa.\n` +
+      `• **Điện năng & Nhiệt độ**: Hệ thống nguồn và tản nhiệt đảm bảo máy hoạt động mát mẻ, êm ái khi chạy tải nặng liên tục.\n` +
+      `• **Chính sách**: Bảo hành 24 - 36 tháng chính hãng 1 đổi 1, hỗ trợ lắp ráp và test máy miễn phí tại PCHub.\n\n` +
+      `👉 Bạn có thể xem các linh kiện đề xuất bên dưới để thêm vào giỏ hàng hoặc mở công cụ **Build PC** để tinh chỉnh theo ý thích!`;
+  }
 
   const catalogLines = catalogContext
     .split('\n')
@@ -257,7 +300,7 @@ function getSmartLocalAdvisorReply(
   const catalogItems: ParsedCatalogItem[] = catalogLines.map(parseCatalogLine);
 
   // =========================================================================
-  // CASE 1: Specific Component / Peripheral / Laptop
+  // CASE 2: Specific Component / Peripheral / Laptop
   // =========================================================================
   if (intent.category && intent.category !== 'pc_build' && catalogItems.length > 0) {
     const catNameLower = (intent.categoryName || '').toLowerCase();
@@ -394,9 +437,9 @@ function getSmartLocalAdvisorReply(
   }
 
   // =========================================================================
-  // CASE 2: Brand-only Query (e.g. "thương hiệu Dell", "đồ Logitech")
+  // CASE 3: Brand-only Query (e.g. "thương hiệu Dell", "đồ Logitech")
   // =========================================================================
-  if (intent.brand && catalogItems.length > 0) {
+  if (intent.brand && !isRealPcBuild && catalogItems.length > 0) {
     const bLower = intent.brand.toLowerCase();
     const brandProducts = catalogItems.filter(p => p.brand.toLowerCase() === bLower || p.name.toLowerCase().includes(bLower));
 
@@ -410,45 +453,6 @@ function getSmartLocalAdvisorReply(
         topBrand.map((item, idx) => `${idx + 1}. **${item.name}** — **${item.priceStr}** [${item.category}]`).join('\n') +
         `\n\n💡 Bạn có thể nêu mức giá dự kiến (ví dụ: *"dưới 1 triệu"*, *"tầm 5 - 10 triệu"*) hoặc danh mục cụ thể (chuột, bàn phím, màn hình) để mình lọc chính xác nhất nhé!`;
     }
-  }
-
-  // =========================================================================
-  // CASE 3: Full PC Build with Budget (e.g. "Build PC gaming 20 triệu")
-  // =========================================================================
-  const lowerMsg = message.toLowerCase();
-  const isRealPcBuild = intent.isPcBuild || lowerMsg.includes('build') || lowerMsg.includes('cấu hình') || lowerMsg.includes('dàn pc') || lowerMsg.includes('bộ máy tính') || (lowerMsg.includes('pc') && (lowerMsg.includes('triệu') || lowerMsg.includes('tr')));
-
-  if (isRealPcBuild && catalogItems.length > 0) {
-    const budgetVal = intent.targetPrice ? (intent.targetPrice / 1000000).toFixed(0) : '20';
-
-    const cpus = catalogItems.filter(p => p.name.toLowerCase().includes('cpu') || p.name.toLowerCase().includes('intel') || p.name.toLowerCase().includes('ryzen'));
-    const gpus = catalogItems.filter(p => p.name.toLowerCase().includes('vga') || p.name.toLowerCase().includes('rtx') || p.name.toLowerCase().includes('gtx') || p.name.toLowerCase().includes('card'));
-    const rams = catalogItems.filter(p => p.name.toLowerCase().includes('ram') || p.name.toLowerCase().includes('ddr4') || p.name.toLowerCase().includes('ddr5'));
-    const ssds = catalogItems.filter(p => p.name.toLowerCase().includes('ssd') || p.name.toLowerCase().includes('nvme'));
-    const mains = catalogItems.filter(p => p.name.toLowerCase().includes('mainboard') || p.name.toLowerCase().includes('b760') || p.name.toLowerCase().includes('z790') || p.name.toLowerCase().includes('b650') || p.name.toLowerCase().includes('h610'));
-    const psus = catalogItems.filter(p => p.name.toLowerCase().includes('nguồn') || p.name.toLowerCase().includes('psu'));
-    const cases = catalogItems.filter(p => p.name.toLowerCase().includes('case') || p.name.toLowerCase().includes('vỏ'));
-
-    const getFormattedItem = (list: ParsedCatalogItem[], fallbackName: string, fallbackPrice: string) => {
-      if (list.length > 0) {
-        return `**${list[0].name}** — **${list[0].priceStr || fallbackPrice}**`;
-      }
-      return `**${fallbackName}** — **${fallbackPrice}**`;
-    };
-
-    return `📌 **Cấu hình PC đề xuất từ PCHub AI Advisor (~${budgetVal} Triệu VNĐ):**\n` +
-      `- **Mục đích**: Gaming mượt mà, Làm việc đa nhiệm & Thiết kế đồ họa\n` +
-      `- **Tiêu chuẩn**: 100% linh kiện chính hãng, tương thích socket, nguồn đủ đệm tải an toàn\n\n` +
-      `🛒 **Bảng cấu hình linh kiện tối ưu:**\n` +
-      `1. **CPU**: ${getFormattedItem(cpus, 'Intel Core i5-13400F', '4.890.000₫')} — *10 nhân 16 luồng, đa nhiệm mượt mà.*\n` +
-      `2. **Mainboard**: ${getFormattedItem(mains, 'Mainboard B760M DDR5', '2.890.000₫')} — *VRM ổn định, hỗ trợ M.2 PCIe 4.0 tốc độ cao.*\n` +
-      `3. **VGA**: ${getFormattedItem(gpus, 'NVIDIA GeForce RTX 4060 8GB', '8.490.000₫')} — *Chiến tốt các tựa game AAA ở thiết lập High/Ultra, hỗ trợ DLSS 3.*\n` +
-      `4. **RAM**: ${getFormattedItem(rams, 'Kingston FURY Beast 16GB DDR5', '1.290.000₫')} — *Băng thông cao, mở hàng chục tab trình duyệt không lo tràn RAM.*\n` +
-      `5. **SSD**: ${getFormattedItem(ssds, 'SSD NVMe PCIe 500GB Gen4', '990.000₫')} — *Tốc độ đọc >3500MB/s giúp nạp game và Windows cực nhanh.*\n` +
-      `6. **Nguồn PSU**: ${getFormattedItem(psus, 'Nguồn 650W 80 Plus Bronze', '1.190.000₫')} — *Công suất thực, ổn định dòng điện lâu dài.*\n` +
-      `7. **Case**: ${getFormattedItem(cases, 'Case Mid-Tower Kính Cường Lực', '750.000₫')} — *Mặt lưới thoáng khí, luồng gió mát mẻ.*\n\n` +
-      `⚙️ **Đánh giá tương thích**: Socket khớp 100%, nguồn 650W đệm tải an toàn >40%, kích thước card lắp vừa vặn trong case.\n\n` +
-      `👉 Bạn có thể bấm nút **⚡ Áp Dụng Cấu Hình Này Vào PC Builder** bên dưới để tinh chỉnh chi tiết từng linh kiện nhé!`;
   }
 
   // =========================================================================
