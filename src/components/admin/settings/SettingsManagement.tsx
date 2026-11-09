@@ -184,19 +184,19 @@ export function SettingsManagement({
   return (
     <div className="space-y-6">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-900/90 border border-slate-800/80 rounded-2xl shadow-xl backdrop-blur-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white border border-slate-200/90 rounded-2xl shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 shrink-0 border border-blue-400/30">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20 shrink-0">
             <Building2 className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white tracking-tight">Cài đặt hệ thống</h1>
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/30">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cài đặt hệ thống</h1>
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                 PCHUB RETAIL
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Cấu hình thương hiệu, tối ưu SEO tìm kiếm và phân quyền ban quản trị.
             </p>
           </div>
@@ -204,14 +204,14 @@ export function SettingsManagement({
 
         {/* Tab switcher & Primary Action Button */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center p-1 bg-slate-950/80 border border-slate-800 rounded-xl">
+          <div className="flex items-center p-1 bg-slate-100 border border-slate-200 rounded-xl">
             <button
               type="button"
               onClick={() => handleTabChange('general')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'general'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Store className="w-3.5 h-3.5" />
@@ -222,8 +222,8 @@ export function SettingsManagement({
               onClick={() => handleTabChange('seo')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'seo'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
@@ -234,8 +234,8 @@ export function SettingsManagement({
               onClick={() => handleTabChange('staff')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'staff'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
@@ -248,7 +248,7 @@ export function SettingsManagement({
               type="button"
               onClick={activeTab === 'general' ? handleSaveGeneral : handleSaveSeo}
               disabled={isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/25 transition-all cursor-pointer shrink-0"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 transition-all cursor-pointer shrink-0"
             >
               {isPending ? (
                 <>
@@ -295,32 +295,32 @@ export function SettingsManagement({
           {/* Main Column (8 cols): Identity & Showroom */}
           <div className="lg:col-span-8 space-y-6">
             {/* Identity Card */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-800">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
                 <div className="p-2 rounded-lg bg-blue-600/15 text-blue-400 border border-blue-500/20">
                   <Building2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Nhận diện thương hiệu & Logo</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Nhận diện thương hiệu & Logo</h3>
                   <p className="text-xs text-slate-400">Hiển thị ở đầu trang, chân trang và tiêu đề hóa đơn</p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Tên thương hiệu cửa hàng *</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Tên thương hiệu cửa hàng *</label>
                   <input
                     type="text"
                     value={generalForm.store_name}
                     onChange={(e) => setGeneralForm({ ...generalForm, store_name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Đường dẫn Logo cửa hàng (URL ảnh PNG / SVG)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Đường dẫn Logo cửa hàng (URL ảnh PNG / SVG)</label>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                       {generalForm.logo_url ? (
                         <img src={generalForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
@@ -332,7 +332,7 @@ export function SettingsManagement({
                       value={generalForm.logo_url || ''}
                       onChange={(e) => setGeneralForm({ ...generalForm, logo_url: e.target.value })}
                       placeholder="https://domain.com/logo.png"
-                      className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -340,20 +340,20 @@ export function SettingsManagement({
             </div>
 
             {/* Contact & Showroom Card */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-800">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
                 <div className="p-2 rounded-lg bg-emerald-600/15 text-emerald-400 border border-emerald-500/20">
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Kênh hỗ trợ & Địa chỉ Showroom</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Kênh hỗ trợ & Địa chỉ Showroom</h3>
                   <p className="text-xs text-slate-400">Thông tin liên lạc tư vấn trực tiếp cho khách mua hàng</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-blue-400" />
                     <span>Tổng đài Hotline bán hàng *</span>
                   </label>
@@ -361,12 +361,12 @@ export function SettingsManagement({
                     type="text"
                     value={generalForm.hotline}
                     onChange={(e) => setGeneralForm({ ...generalForm, hotline: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
                     <span className="text-xs font-bold text-blue-400">@</span>
                     <span>Số Zalo tư vấn kỹ thuật *</span>
                   </label>
@@ -374,12 +374,12 @@ export function SettingsManagement({
                     type="text"
                     value={generalForm.zalo}
                     onChange={(e) => setGeneralForm({ ...generalForm, zalo: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-blue-400" />
                     <span>Hòm thư tiếp nhận hỗ trợ *</span>
                   </label>
@@ -387,12 +387,12 @@ export function SettingsManagement({
                     type="email"
                     value={generalForm.email}
                     onChange={(e) => setGeneralForm({ ...generalForm, email: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-blue-400" />
                     <span>Thời gian phục vụ *</span>
                   </label>
@@ -400,13 +400,13 @@ export function SettingsManagement({
                     type="text"
                     value={generalForm.opening_hours}
                     onChange={(e) => setGeneralForm({ ...generalForm, opening_hours: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-rose-400" />
                   <span>Địa chỉ Showroom trưng bày *</span>
                 </label>
@@ -414,7 +414,7 @@ export function SettingsManagement({
                   type="text"
                   value={generalForm.address}
                   onChange={(e) => setGeneralForm({ ...generalForm, address: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                 />
               </div>
             </div>
@@ -423,8 +423,8 @@ export function SettingsManagement({
           {/* Side Column (4 cols): Operations & Social */}
           <div className="lg:col-span-4 space-y-6">
             {/* Maintenance Mode Card */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-800">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
                 <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/20">
                   <AlertTriangle className="w-4 h-4" />
                 </div>
@@ -470,8 +470,8 @@ export function SettingsManagement({
             </div>
 
             {/* Social Channels Card */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-800">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
                 <div className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
                   <Share2 className="w-4 h-4" />
                 </div>
@@ -482,32 +482,32 @@ export function SettingsManagement({
 
               <div className="space-y-3.5">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">Fanpage Facebook</label>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Fanpage Facebook</label>
                   <input
                     type="text"
                     value={generalForm.facebook_url || ''}
                     onChange={(e) => setGeneralForm({ ...generalForm, facebook_url: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">Kênh TikTok</label>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Kênh TikTok</label>
                   <input
                     type="text"
                     value={generalForm.tiktok_url || ''}
                     onChange={(e) => setGeneralForm({ ...generalForm, tiktok_url: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">Kênh YouTube</label>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Kênh YouTube</label>
                   <input
                     type="text"
                     value={generalForm.youtube_url || ''}
                     onChange={(e) => setGeneralForm({ ...generalForm, youtube_url: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               </div>
@@ -531,13 +531,13 @@ export function SettingsManagement({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Inputs Column (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-800">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
                 <div className="p-2 rounded-lg bg-blue-600/15 text-blue-400 border border-blue-500/20">
                   <Globe className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Thẻ Meta tiêu đề & Mô tả tìm kiếm</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Thẻ Meta tiêu đề & Mô tả tìm kiếm</h3>
                   <p className="text-xs text-slate-400">Hiển thị khi người dùng tìm kiếm trên Google & Bing</p>
                 </div>
               </div>
@@ -554,7 +554,7 @@ export function SettingsManagement({
                     type="text"
                     value={seoForm.site_title}
                     onChange={(e) => setSeoForm({ ...seoForm, site_title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
 
@@ -569,27 +569,27 @@ export function SettingsManagement({
                     rows={3}
                     value={seoForm.site_description}
                     onChange={(e) => setSeoForm({ ...seoForm, site_description: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Từ khóa tìm kiếm chính (cách nhau bằng dấu phẩy)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Từ khóa tìm kiếm chính (cách nhau bằng dấu phẩy)</label>
                   <input
                     type="text"
                     value={seoForm.keywords}
                     onChange={(e) => setSeoForm({ ...seoForm, keywords: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Ảnh chia sẻ Facebook / Zalo (OpenGraph Image URL)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Ảnh chia sẻ Facebook / Zalo (OpenGraph Image URL)</label>
                   <input
                     type="text"
                     value={seoForm.og_image_url || ''}
                     onChange={(e) => setSeoForm({ ...seoForm, og_image_url: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
               </div>
@@ -599,8 +599,8 @@ export function SettingsManagement({
           {/* Previews Column (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             {/* Google Search Snippet Preview */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2 pb-3 mb-3 border-b border-slate-800 text-xs font-bold text-white uppercase tracking-wider">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100 text-xs font-bold text-white uppercase tracking-wider">
                 <Search className="w-3.5 h-3.5 text-blue-400" />
                 <span>Mô phỏng kết quả Google Tìm Kiếm</span>
               </div>
@@ -620,8 +620,8 @@ export function SettingsManagement({
             </div>
 
             {/* Social Media Card Preview */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-2 pb-3 mb-3 border-b border-slate-800 text-xs font-bold text-white uppercase tracking-wider">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100 text-xs font-bold text-white uppercase tracking-wider">
                 <Share2 className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Mô phỏng chia sẻ Facebook / Zalo</span>
               </div>
@@ -653,7 +653,7 @@ export function SettingsManagement({
           {/* Quick Invite Bar */}
           <div className="p-5 bg-slate-900/80 border border-slate-800/80 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md">
             <div>
-              <h3 className="text-sm font-bold text-white">Quản lý tài khoản Ban Quản Trị</h3>
+              <h3 className="text-sm font-bold text-slate-900">Quản lý tài khoản Ban Quản Trị</h3>
               <p className="text-xs text-slate-400 mt-0.5">Phân quyền chặt chẽ theo vai trò (Role-Based Access Control - RBAC)</p>
             </div>
             <div className="flex items-center gap-3">
@@ -662,12 +662,12 @@ export function SettingsManagement({
                 value={newStaffEmail}
                 onChange={(e) => setNewStaffEmail(e.target.value)}
                 placeholder="nhanvien@pchub.vn"
-                className="px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
               <select
                 value={newStaffRole}
                 onChange={(e) => setNewStaffRole(e.target.value as any)}
-                className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
               >
                 <option value="admin">Admin (Toàn quyền)</option>
                 <option value="manager">Manager (Quản lý)</option>
@@ -690,7 +690,7 @@ export function SettingsManagement({
           <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl backdrop-blur-md">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950/70 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                <thead className="bg-slate-950/70 border-b border-slate-100 text-slate-400 uppercase tracking-wider font-semibold">
                   <tr>
                     <th className="py-3 px-4">Thành viên</th>
                     <th className="py-3 px-4">Vai trò quản trị</th>

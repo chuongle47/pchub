@@ -8,16 +8,9 @@ import {
   Filter,
   Download,
   Eye,
-  Clock,
-  CheckCircle,
-  Truck,
-  XCircle,
-  RotateCcw,
-  CreditCard,
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Calendar,
 } from 'lucide-react';
 
 interface OrderItem {
@@ -42,19 +35,19 @@ interface Props {
 }
 
 const statusBadge: Record<string, { label: string; class: string }> = {
-  pending: { label: 'Chờ duyệt', class: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  confirmed: { label: 'Đã xác nhận', class: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  processing: { label: 'Đang chuẩn bị', class: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30' },
-  shipping: { label: 'Đang giao', class: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
-  completed: { label: 'Hoàn thành', class: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  cancelled: { label: 'Đã hủy', class: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
+  pending: { label: 'Chờ duyệt', class: 'bg-amber-50 text-amber-700 border-amber-200' },
+  confirmed: { label: 'Đã xác nhận', class: 'bg-blue-50 text-blue-700 border-blue-200' },
+  processing: { label: 'Đang chuẩn bị', class: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  shipping: { label: 'Đang giao', class: 'bg-sky-50 text-sky-700 border-sky-200' },
+  completed: { label: 'Hoàn thành', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  cancelled: { label: 'Đã hủy', class: 'bg-rose-50 text-rose-700 border-rose-200' },
 };
 
 const paymentBadge: Record<string, { label: string; class: string }> = {
-  pending: { label: 'Chưa thanh toán', class: 'text-slate-400 border-slate-700 bg-slate-800/60' },
-  paid: { label: 'Đã thanh toán', class: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
-  failed: { label: 'Thất bại', class: 'text-rose-400 border-rose-500/30 bg-rose-500/10' },
-  refunded: { label: 'Đã hoàn tiền', class: 'text-purple-400 border-purple-500/30 bg-purple-500/10' },
+  pending: { label: 'Chưa thanh toán', class: 'text-slate-600 border-slate-200 bg-slate-100' },
+  paid: { label: 'Đã thanh toán', class: 'text-emerald-700 border-emerald-200 bg-emerald-50' },
+  failed: { label: 'Thất bại', class: 'text-rose-700 border-rose-200 bg-rose-50' },
+  refunded: { label: 'Đã hoàn tiền', class: 'text-purple-700 border-purple-200 bg-purple-50' },
 };
 
 export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
@@ -110,23 +103,23 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Quản lý Đơn Hàng</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Tổng số: <span className="font-semibold text-blue-400">{totalCount}</span> đơn hàng trong hệ thống
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Quản lý Đơn Hàng</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Tổng số: <span className="font-semibold text-blue-600">{totalCount}</span> đơn hàng trong hệ thống
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-sm transition-colors cursor-pointer"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-3.5 h-3.5 text-slate-500" />
           <span>Xuất danh sách CSV</span>
         </button>
       </div>
 
       {/* Filter and Search */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+      <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Search */}
           <div className="lg:col-span-2 relative">
@@ -136,8 +129,8 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-              placeholder="Tìm theo mã đơn (PCH-...), tên khách, SĐT..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              placeholder="Tìm theo mã đơn (ORD-...), tên khách, SĐT..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             />
           </div>
 
@@ -146,7 +139,7 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ duyệt (Mới)</option>
@@ -163,7 +156,7 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
             <select
               value={paymentStatus}
               onChange={(e) => setPaymentStatus(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             >
               <option value="">Tất cả thanh toán</option>
               <option value="pending">Chưa thanh toán</option>
@@ -174,11 +167,11 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end pt-2 border-t border-slate-800/80">
+        <div className="flex items-center justify-end pt-2 border-t border-slate-100">
           <button
             onClick={applyFilters}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
           >
             {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Filter className="w-3.5 h-3.5" />}
             <span>Lọc đơn hàng</span>
@@ -187,37 +180,37 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+      <div className="rounded-xl bg-white border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200">
               <tr>
-                <th className="p-4">Mã đơn & Thời gian</th>
-                <th className="p-4">Khách hàng</th>
-                <th className="p-4">Tổng tiền</th>
-                <th className="p-4">Phương thức</th>
-                <th className="p-4 text-center">Thanh toán</th>
-                <th className="p-4 text-center">Trạng thái</th>
-                <th className="p-4 text-right">Chi tiết</th>
+                <th className="p-4 min-w-[150px]">Mã đơn & Thời gian</th>
+                <th className="p-4 min-w-[180px]">Khách hàng</th>
+                <th className="p-4 min-w-[130px]">Tổng tiền</th>
+                <th className="p-4 min-w-[120px]">Phương thức</th>
+                <th className="p-4 text-center min-w-[130px]">Thanh toán</th>
+                <th className="p-4 text-center min-w-[130px]">Trạng thái</th>
+                <th className="p-4 text-right min-w-[100px]">Chi tiết</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {orders.length > 0 ? (
                 orders.map((o) => {
-                  const sInfo = statusBadge[o.status] || { label: o.status, class: 'bg-slate-800 text-slate-400' };
-                  const pInfo = paymentBadge[o.payment_status] || { label: o.payment_status, class: 'text-slate-400' };
+                  const sInfo = statusBadge[o.status] || { label: o.status, class: 'bg-slate-100 text-slate-600 border-slate-200' };
+                  const pInfo = paymentBadge[o.payment_status] || { label: o.payment_status, class: 'bg-slate-100 text-slate-600 border-slate-200' };
 
                   return (
-                    <tr key={o.id} className="hover:bg-slate-800/40 transition-colors">
+                    <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
                       {/* Code & Date */}
                       <td className="p-4">
                         <Link
                           href={`/admin/orders/${o.id}`}
-                          className="font-bold text-blue-400 hover:text-blue-300 font-mono text-xs block"
+                          className="font-bold text-blue-600 hover:underline font-mono text-xs block"
                         >
                           {o.code}
                         </Link>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-slate-400 mt-0.5">
                           {new Date(o.created_at).toLocaleString('vi-VN', {
                             day: '2-digit',
                             month: '2-digit',
@@ -230,39 +223,39 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
 
                       {/* Customer */}
                       <td className="p-4">
-                        <div className="font-semibold text-white">{o.customer_name}</div>
-                        <div className="text-[11px] text-slate-400">{o.phone}</div>
+                        <div className="font-semibold text-slate-900">{o.customer_name}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">{o.phone}</div>
                       </td>
 
                       {/* Total */}
-                      <td className="p-4 font-bold text-white text-xs">
+                      <td className="p-4 font-bold text-slate-900 text-xs sm:text-sm">
                         {Number(o.total).toLocaleString('vi-VN')} ₫
                       </td>
 
                       {/* Payment method */}
-                      <td className="p-4 text-[11px] text-slate-300 uppercase font-mono">
+                      <td className="p-4 text-[11px] text-slate-600 uppercase font-mono font-semibold">
                         {o.payment_method}
                       </td>
 
                       {/* Payment status */}
                       <td className="p-4 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${pInfo.class}`}>
+                        <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold border ${pInfo.class}`}>
                           {pInfo.label}
                         </span>
                       </td>
 
                       {/* Order status */}
                       <td className="p-4 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${sInfo.class}`}>
+                        <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold border ${sInfo.class}`}>
                           {sInfo.label}
                         </span>
                       </td>
 
-                      {/* Actions */}
+                      {/* Details */}
                       <td className="p-4 text-right">
                         <Link
                           href={`/admin/orders/${o.id}`}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-blue-600 border border-slate-200 transition-colors text-xs font-semibold"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Xem</span>
@@ -273,8 +266,8 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
-                    Không tìm thấy đơn hàng nào phù hợp với điều kiện tìm kiếm.
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    Không tìm thấy đơn hàng nào.
                   </td>
                 </tr>
               )}
@@ -282,17 +275,17 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination footer */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 text-xs text-slate-500">
             <div>
-              Trang <span className="font-bold text-white">{page}</span> / {totalPages} (Tổng số {totalCount} đơn)
+              Trang <span className="font-bold text-slate-800">{page}</span> / {totalPages} (Tổng số {totalCount} đơn hàng)
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Link
                 href={`/admin/orders?page=${Math.max(page - 1, 1)}`}
-                className={`p-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors ${
+                className={`p-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-colors ${
                   page <= 1 ? 'pointer-events-none opacity-40' : ''
                 }`}
               >
@@ -300,7 +293,7 @@ export function OrderDataTable({ orders, totalCount, page, pageSize }: Props) {
               </Link>
               <Link
                 href={`/admin/orders?page=${Math.min(page + 1, totalPages)}`}
-                className={`p-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors ${
+                className={`p-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-colors ${
                   page >= totalPages ? 'pointer-events-none opacity-40' : ''
                 }`}
               >

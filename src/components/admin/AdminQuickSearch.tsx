@@ -113,11 +113,11 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
       <div
-        className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden text-slate-200"
+        className="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden text-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input bar */}
-        <div className="flex items-center px-4 border-b border-slate-800 gap-3">
+        <div className="flex items-center px-4 border-b border-slate-100 gap-3">
           <Search className="w-5 h-5 text-slate-400" />
           <input
             autoFocus
@@ -125,19 +125,19 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm theo mã đơn, khách hàng, tên sản phẩm, SKU... (phím tắt Esc để đóng)"
-            className="w-full bg-transparent py-4 text-sm text-white placeholder-slate-500 focus:outline-none"
+            className="w-full bg-transparent py-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-slate-400 hover:text-white"
+              className="p-1 text-slate-400 hover:text-slate-700"
             >
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-2 py-1 text-xs text-slate-400 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700"
+            className="px-2 py-1 text-xs text-slate-500 bg-slate-100 rounded border border-slate-200 hover:bg-slate-200"
           >
             ESC
           </button>
@@ -157,10 +157,10 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
                     <button
                       key={i}
                       onClick={() => navigateTo(item.href)}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-left transition-colors border border-slate-800/80 hover:border-slate-700"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-blue-50/60 text-left transition-colors border border-slate-200/80 hover:border-blue-200"
                     >
                       <Icon className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                      <span className="text-xs font-medium text-slate-200 truncate">{item.label}</span>
+                      <span className="text-xs font-medium text-slate-700 truncate">{item.label}</span>
                       <ArrowRight className="w-3.5 h-3.5 text-slate-500 ml-auto" />
                     </button>
                   );
@@ -188,10 +188,10 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
                       <button
                         key={o.id}
                         onClick={() => navigateTo(`/admin/orders/${o.id}`)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800 text-left transition-colors"
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
                       >
                         <div>
-                          <div className="text-xs font-semibold text-white">#{o.order_number}</div>
+                          <div className="text-xs font-semibold text-slate-900">#{o.order_number}</div>
                           <div className="text-[11px] text-slate-400">{o.customer_name}</div>
                         </div>
                         <div className="text-right">
@@ -217,10 +217,10 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
                       <button
                         key={p.id}
                         onClick={() => navigateTo(`/admin/products/${p.id}`)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800 text-left transition-colors"
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
                       >
                         <div className="pr-4 truncate">
-                          <div className="text-xs font-medium text-white truncate">{p.name}</div>
+                          <div className="text-xs font-medium text-slate-900 truncate">{p.name}</div>
                           <div className="text-[10px] text-slate-500 font-mono">SKU: {p.sku || (p.id ? `PCH-${p.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'PCH-PROD')}</div>
                         </div>
                         <div className="text-xs font-semibold text-emerald-400 whitespace-nowrap">
@@ -243,10 +243,10 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
                       <button
                         key={q.id}
                         onClick={() => navigateTo(`/admin/quotes/${q.id}`)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800 text-left transition-colors"
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
                       >
                         <div>
-                          <div className="text-xs font-semibold text-white">#{q.code}</div>
+                          <div className="text-xs font-semibold text-slate-900">#{q.code}</div>
                           <div className="text-[11px] text-slate-400">{q.customer_name}</div>
                         </div>
                         <div className="text-right">

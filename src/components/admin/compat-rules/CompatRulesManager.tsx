@@ -146,23 +146,24 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Bộ Luật Tương Thích & Build PC Simulator
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <Cpu className="w-6 h-6 text-blue-600" />
+            <span>Bộ Luật Tương Thích & Build PC Simulator</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Quy tắc kiểm tra tự động giữa CPU - Mainboard - RAM - GPU - Nguồn và duyệt cấu hình cộng đồng
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <button
           onClick={() => setTab('simulator')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             tab === 'simulator'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Play className="w-3.5 h-3.5" />
@@ -171,10 +172,10 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
         <button
           onClick={() => setTab('rules')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             tab === 'rules'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Sliders className="w-3.5 h-3.5" />
@@ -183,10 +184,10 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
         <button
           onClick={() => setTab('community')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             tab === 'community'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Share2 className="w-3.5 h-3.5" />
@@ -197,18 +198,18 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
       {/* TAB 1: SIMULATOR */}
       {tab === 'simulator' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-blue-400" />
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-4">
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-blue-600" />
               <span>Chọn cấu hình kiểm tra</span>
             </h2>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">1. Vi xử lý (CPU)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">1. Vi xử lý (CPU)</label>
               <select
                 value={selectedCpu}
                 onChange={(e) => setSelectedCpu(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
               >
                 <option value="">-- Chọn CPU --</option>
                 {cpus.map((p) => (
@@ -220,11 +221,11 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">2. Bo mạch chủ (Mainboard)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">2. Bo mạch chủ (Mainboard)</label>
               <select
                 value={selectedMain}
                 onChange={(e) => setSelectedMain(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
               >
                 <option value="">-- Chọn Mainboard --</option>
                 {mains.map((p) => (
@@ -236,11 +237,11 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">3. Bộ nhớ trong (RAM)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">3. Bộ nhớ trong (RAM)</label>
               <select
                 value={selectedRam}
                 onChange={(e) => setSelectedRam(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
               >
                 <option value="">-- Chọn RAM --</option>
                 {rams.map((p) => (
@@ -252,11 +253,11 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">4. Card đồ họa (VGA)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">4. Card đồ họa (VGA)</label>
               <select
                 value={selectedGpu}
                 onChange={(e) => setSelectedGpu(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
               >
                 <option value="">-- Chọn VGA --</option>
                 {gpus.map((p) => (
@@ -268,11 +269,11 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">5. Nguồn máy tính (PSU)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">5. Nguồn máy tính (PSU)</label>
               <select
                 value={selectedPsu}
                 onChange={(e) => setSelectedPsu(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
               >
                 <option value="">-- Chọn Nguồn --</option>
                 {psus.map((p) => (
@@ -285,7 +286,7 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
             <button
               onClick={runSimulation}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all cursor-pointer mt-2"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all cursor-pointer mt-2"
             >
               <Sparkles className="w-4 h-4" />
               <span>Chạy kiểm tra tương thích AI</span>
@@ -293,8 +294,8 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
           </div>
 
           {/* Simulator Result */}
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-4">
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
               Kết quả đánh giá tương thích
             </h2>
 
@@ -303,14 +304,14 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
                 <div
                   className={`p-4 rounded-xl flex items-center gap-3 ${
                     simResult.compatible
-                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-500/15 border border-rose-500/30 text-rose-300'
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border border-rose-200 text-rose-800'
                   }`}
                 >
                   {simResult.compatible ? (
-                    <CheckCircle className="w-6 h-6 flex-shrink-0 text-emerald-400" />
+                    <CheckCircle className="w-6 h-6 flex-shrink-0 text-emerald-600" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 flex-shrink-0 text-rose-400" />
+                    <AlertTriangle className="w-6 h-6 flex-shrink-0 text-rose-600" />
                   )}
                   <div>
                     <div className="font-bold text-sm">
@@ -326,11 +327,11 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
                 {simResult.passed.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-xs font-semibold text-emerald-400">Điểm tương thích đạt:</div>
-                    <ul className="space-y-1.5 text-xs text-slate-300">
+                    <div className="text-xs font-bold text-emerald-700">Điểm tương thích đạt:</div>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
                       {simResult.passed.map((p, i) => (
                         <li key={i} className="flex items-center gap-2">
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
                           <span>{p}</span>
                         </li>
                       ))}
@@ -340,11 +341,11 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
                 {simResult.issues.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-xs font-semibold text-rose-400">Cảnh báo lỗi:</div>
-                    <ul className="space-y-1.5 text-xs text-slate-300">
+                    <div className="text-xs font-bold text-rose-700">Cảnh báo lỗi:</div>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
                       {simResult.issues.map((err, i) => (
                         <li key={i} className="flex items-start gap-2">
-                          <X className="w-3.5 h-3.5 text-rose-400 mt-0.5" />
+                          <X className="w-3.5 h-3.5 text-rose-600 mt-0.5" />
                           <span>{err}</span>
                         </li>
                       ))}
@@ -353,7 +354,7 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
                 )}
               </div>
             ) : (
-              <div className="py-16 text-center text-xs text-slate-500">
+              <div className="py-16 text-center text-xs text-slate-400">
                 Chọn linh kiện ở bảng bên trái và bấm "Chạy kiểm tra tương thích AI" để xem báo cáo.
               </div>
             )}
@@ -363,28 +364,28 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
       {/* TAB 2: RULES LIST */}
       {tab === 'rules' && (
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <div className="rounded-2xl bg-white border border-slate-200/90 shadow-sm overflow-hidden">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-slate-50 text-slate-600 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200">
               <tr>
-                <th className="p-4">Loại luật</th>
-                <th className="p-4">Áp dụng giữa</th>
-                <th className="p-4">Mô tả quy tắc</th>
-                <th className="p-4 text-center">Trạng thái</th>
+                <th className="px-5 py-3.5">Loại luật</th>
+                <th className="px-5 py-3.5">Áp dụng giữa</th>
+                <th className="px-5 py-3.5">Mô tả quy tắc</th>
+                <th className="px-5 py-3.5 text-center">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {rules.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="p-4 font-bold text-white font-mono text-xs">{r.rule_type}</td>
-                  <td className="p-4 text-blue-400 font-semibold uppercase">
+                <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-5 py-4 font-bold text-slate-900 font-mono text-xs">{r.rule_type}</td>
+                  <td className="px-5 py-4 text-blue-600 font-semibold uppercase">
                     {r.source_category} ⟷ {r.target_category}
                   </td>
-                  <td className="p-4 text-slate-300">
+                  <td className="px-5 py-4 text-slate-700">
                     {r.config?.description || JSON.stringify(r.config)}
                   </td>
-                  <td className="p-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <td className="px-5 py-4 text-center">
+                    <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                       Đang bật
                     </span>
                   </td>
@@ -397,45 +398,45 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
 
       {/* TAB 3: COMMUNITY BUILDS */}
       {tab === 'community' && (
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+        <div className="rounded-2xl bg-white border border-slate-200/90 shadow-sm overflow-hidden">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-slate-50 text-slate-600 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200">
               <tr>
-                <th className="p-4">Tên cấu hình</th>
-                <th className="p-4">Tác giả</th>
-                <th className="p-4">Tổng chi phí</th>
-                <th className="p-4 text-center">Lượt thích</th>
-                <th className="p-4 text-center">Trạng thái</th>
-                <th className="p-4 text-right">Duyệt</th>
+                <th className="px-5 py-3.5">Tên cấu hình</th>
+                <th className="px-5 py-3.5">Tác giả</th>
+                <th className="px-5 py-3.5">Tổng chi phí</th>
+                <th className="px-5 py-3.5 text-center">Lượt thích</th>
+                <th className="px-5 py-3.5 text-center">Trạng thái</th>
+                <th className="px-5 py-3.5 text-right">Duyệt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {builds.length > 0 ? (
                 builds.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-semibold text-white">{b.title}</td>
-                    <td className="p-4 text-slate-300">{b.author_name || 'Khách vãng lai'}</td>
-                    <td className="p-4 font-bold text-amber-400">
+                  <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-4 font-bold text-slate-900 text-sm">{b.title}</td>
+                    <td className="px-5 py-4 text-slate-600">{b.author_name || 'Khách vãng lai'}</td>
+                    <td className="px-5 py-4 font-bold text-blue-600">
                       {Number(b.total_price).toLocaleString('vi-VN')} ₫
                     </td>
-                    <td className="p-4 text-center text-slate-400">{b.likes_count}</td>
-                    <td className="p-4 text-center">
+                    <td className="px-5 py-4 text-center text-slate-500 font-semibold">{b.likes_count}</td>
+                    <td className="px-5 py-4 text-center">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                        className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold ${
                           b.status === 'approved'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200/60'
                         }`}
                       >
                         {b.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {b.status !== 'approved' && (
                           <button
                             onClick={() => handleModerateBuild(b.id, 'approved')}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px]"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs cursor-pointer transition-colors"
                           >
                             Duyệt
                           </button>
@@ -443,7 +444,7 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
                         {b.status !== 'hidden' && (
                           <button
                             onClick={() => handleModerateBuild(b.id, 'hidden')}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white font-semibold text-[11px]"
+                            className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 font-semibold text-xs cursor-pointer transition-colors"
                           >
                             Ẩn
                           </button>
@@ -454,7 +455,7 @@ export function CompatRulesManager({ rules, builds, products }: Props) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     Chưa có cấu hình PC cộng đồng nào chờ duyệt.
                   </td>
                 </tr>

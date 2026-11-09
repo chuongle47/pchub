@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
@@ -8,20 +8,14 @@ import {
   Filter,
   Plus,
   Trash2,
-  Eye,
-  EyeOff,
   Copy,
   Pencil,
   Download,
-  Upload,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
   CheckSquare,
   Square,
-  AlertTriangle,
-  Loader2,
   Package,
 } from 'lucide-react';
 import {
@@ -66,27 +60,26 @@ export function ProductDataTable({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Search & Filter state from URL
+  // Local Filter States
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [selectedCat, setSelectedCat] = useState(searchParams.get('cat') || '');
   const [selectedBrand, setSelectedBrand] = useState(searchParams.get('brand') || '');
-  const [stockFilter, setStockFilter] = useState(searchParams.get('stock') || '');
-  const [saleFilter, setSaleFilter] = useState(searchParams.get('sale') === 'true');
+  const [selectedStock, setSelectedStock] = useState(searchParams.get('stock') || '');
+  const [isSaleOnly, setIsSaleOnly] = useState(searchParams.get('sale') === 'true');
 
-  // Selected checkboxes for bulk actions
+  // Bulk Selection States
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Apply filters to URL
   const applyFilters = () => {
     const params = new URLSearchParams();
     if (searchTerm.trim()) params.set('q', searchTerm.trim());
     if (selectedCat) params.set('cat', selectedCat);
     if (selectedBrand) params.set('brand', selectedBrand);
-    if (stockFilter) params.set('stock', stockFilter);
-    if (saleFilter) params.set('sale', 'true');
+    if (selectedStock) params.set('stock', selectedStock);
+    if (isSaleOnly) params.set('sale', 'true');
     params.set('page', '1');
 
     startTransition(() => {
@@ -94,7 +87,19 @@ export function ProductDataTable({
     });
   };
 
-  const handleSelectAll = () => {
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedCat('');
+    setSelectedBrand('');
+    setSelectedStock('');
+    setIsSaleOnly(false);
+    startTransition(() => {
+      router.push('/admin/products');
+    });
+  };
+
+  // Bulk Selection
+  const toggleSelectAll = () => {
     if (selectedIds.length === products.length) {
       setSelectedIds([]);
     } else {
@@ -190,24 +195,24 @@ export function ProductDataTable({
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Quản lý Sản Phẩm</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Tổng cộng: <span className="font-semibold text-blue-400">{totalCount}</span> linh kiện trong hệ thống
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Quản lý Sản Phẩm</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Tổng cộng: <span className="font-semibold text-blue-600">{totalCount}</span> linh kiện trong hệ thống
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-sm transition-colors cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Xuất CSV</span>
           </button>
 
           <Link
             href="/admin/products/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Thêm sản phẩm</span>
@@ -216,7 +221,7 @@ export function ProductDataTable({
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+      <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Keyword Search */}
           <div className="lg:col-span-2 relative">
@@ -227,7 +232,7 @@ export function ProductDataTable({
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
               placeholder="Tìm theo tên sản phẩm, SKU..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             />
           </div>
 
@@ -236,7 +241,7 @@ export function ProductDataTable({
             <select
               value={selectedCat}
               onChange={(e) => setSelectedCat(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             >
               <option value="">Tất cả danh mục</option>
               {categories.map((c) => (
@@ -252,7 +257,7 @@ export function ProductDataTable({
             <select
               value={selectedBrand}
               onChange={(e) => setSelectedBrand(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             >
               <option value="">Tất cả hãng</option>
               {brands.map((b) => (
@@ -266,9 +271,9 @@ export function ProductDataTable({
           {/* Stock Filter */}
           <div>
             <select
-              value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+              value={selectedStock}
+              onChange={(e) => setSelectedStock(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             >
               <option value="">Tất cả tồn kho</option>
               <option value="in_stock">Còn hàng (&gt; 0)</option>
@@ -278,85 +283,103 @@ export function ProductDataTable({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
-          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+        {/* Second Row: Sale checkbox & Filter Action Buttons */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-slate-700 font-medium">
             <input
               type="checkbox"
-              checked={saleFilter}
-              onChange={(e) => setSaleFilter(e.target.checked)}
-              className="w-3.5 h-3.5 rounded text-amber-500 bg-slate-950 border-slate-700"
+              checked={isSaleOnly}
+              onChange={(e) => setIsSaleOnly(e.target.checked)}
+              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
             />
             <span>Chỉ hiện sản phẩm đang Sale</span>
           </label>
 
-          <button
-            onClick={applyFilters}
-            disabled={isPending}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-colors disabled:opacity-50"
-          >
-            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Filter className="w-3.5 h-3.5" />}
-            <span>Áp dụng bộ lọc</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {(searchTerm || selectedCat || selectedBrand || selectedStock || isSaleOnly) && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={applyFilters}
+              disabled={isPending}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all cursor-pointer shadow-sm"
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span>{isPending ? 'Đang lọc...' : 'Áp dụng bộ lọc'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Bulk Actions Banner (Visible when items selected) */}
+      {/* Bulk Action Bar (When items are selected) */}
       {selectedIds.length > 0 && (
-        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white bg-blue-600 px-2 py-0.5 rounded-md text-[11px]">
-              {selectedIds.length}
-            </span>
-            <span>sản phẩm đã chọn</span>
+        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-800">
+            <span>Đã chọn {selectedIds.length} sản phẩm</span>
           </div>
-
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleBulkAction('activate')}
-              className="px-2.5 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/30 font-semibold text-[11px]"
+              disabled={actionLoading === 'bulk'}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              Hiện tất cả
+              Hiển thị
             </button>
             <button
               onClick={() => handleBulkAction('deactivate')}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-[11px]"
+              disabled={actionLoading === 'bulk'}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              Ẩn tất cả
+              Ẩn đi
             </button>
             <button
               onClick={() => handleBulkAction('delete')}
-              className="px-2.5 py-1.5 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/30 font-semibold text-[11px]"
+              disabled={actionLoading === 'bulk'}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors flex items-center gap-1"
             >
-              Xóa đã chọn
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Xóa đã chọn</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Data Table */}
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+      {/* Products Data Table */}
+      <div className="rounded-xl bg-white border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200">
               <tr>
-                <th className="p-4 w-10 text-center">
-                  <button onClick={handleSelectAll} className="p-1 text-slate-400 hover:text-white">
+                <th className="p-4 w-12 text-center">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="p-1 text-slate-400 hover:text-slate-700"
+                    title="Chọn tất cả"
+                  >
                     {selectedIds.length === products.length && products.length > 0 ? (
-                      <CheckSquare className="w-4 h-4 text-blue-500" />
+                      <CheckSquare className="w-4 h-4 text-blue-600" />
                     ) : (
                       <Square className="w-4 h-4" />
                     )}
                   </button>
                 </th>
-                <th className="p-4">Sản phẩm</th>
-                <th className="p-4">Danh mục & Hãng</th>
-                <th className="p-4">Giá bán</th>
-                <th className="p-4 text-center">Tồn kho</th>
-                <th className="p-4 text-center">Trạng thái</th>
-                <th className="p-4 text-right">Thao tác</th>
+                <th className="p-4 min-w-[320px]">Sản phẩm</th>
+                <th className="p-4 min-w-[160px]">Danh mục & Hãng</th>
+                <th className="p-4 min-w-[130px]">Giá bán</th>
+                <th className="p-4 text-center min-w-[100px]">Tồn kho</th>
+                <th className="p-4 text-center min-w-[100px]">Trạng thái</th>
+                <th className="p-4 text-right min-w-[120px]">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {products.length > 0 ? (
                 products.map((p) => {
                   const isSelected = selectedIds.includes(p.id);
@@ -365,52 +388,53 @@ export function ProductDataTable({
                   return (
                     <tr
                       key={p.id}
-                      className={`hover:bg-slate-800/40 transition-colors ${
-                        isSelected ? 'bg-blue-950/20' : ''
+                      className={`hover:bg-slate-50/70 transition-colors ${
+                        isSelected ? 'bg-blue-50/40' : ''
                       }`}
                     >
                       {/* Checkbox */}
                       <td className="p-4 text-center">
                         <button
                           onClick={() => toggleSelectOne(p.id)}
-                          className="p-1 text-slate-400 hover:text-white"
+                          className="p-1 text-slate-400 hover:text-slate-700"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-blue-500" />
+                            <CheckSquare className="w-4 h-4 text-blue-600" />
                           ) : (
                             <Square className="w-4 h-4" />
                           )}
                         </button>
                       </td>
 
-                      {/* Product Name & SKU */}
+                      {/* Product Name & Large Spacious Image */}
                       <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200/80 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-xs">
                             {p.images && p.images[0] ? (
                               <img
                                 src={p.images[0]}
                                 alt={p.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                               />
                             ) : (
-                              <Package className="w-5 h-5 text-slate-600" />
+                              <Package className="w-6 h-6 text-slate-400" />
                             )}
                           </div>
-                          <div className="min-w-0 max-w-sm">
+                          <div className="min-w-0 max-w-md">
                             <Link
                               href={`/admin/products/${p.id}`}
-                              className="font-semibold text-white hover:text-blue-400 transition-colors truncate block text-xs"
+                              className="font-semibold text-slate-900 hover:text-blue-600 transition-colors text-xs sm:text-sm line-clamp-2 leading-snug"
+                              title={p.name}
                             >
                               {p.name}
                             </Link>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-slate-400 font-mono">
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              <span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                 SKU: {p.sku || (p.id ? `PCH-${p.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'PCH-PROD')}
                               </span>
                               {p.is_hot && (
-                                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-bold">
-                                  HOT
+                                <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">
+                                  🔥 HOT
                                 </span>
                               )}
                             </div>
@@ -420,10 +444,10 @@ export function ProductDataTable({
 
                       {/* Category & Brand */}
                       <td className="p-4">
-                        <div className="font-medium text-slate-200">
+                        <div className="font-semibold text-slate-800">
                           {p.category?.name || 'Chưa phân loại'}
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
+                        <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
                           {p.brand?.name || 'Khác'}
                         </div>
                       </td>
@@ -432,15 +456,15 @@ export function ProductDataTable({
                       <td className="p-4">
                         {p.sale_price && p.sale_price < p.price ? (
                           <div>
-                            <div className="font-bold text-amber-400 text-xs">
+                            <div className="font-bold text-amber-600 text-xs sm:text-sm">
                               {Number(p.sale_price).toLocaleString('vi-VN')} ₫
                             </div>
-                            <div className="text-[10px] text-slate-500 line-through">
+                            <div className="text-[10px] text-slate-400 line-through mt-0.5">
                               {Number(p.price).toLocaleString('vi-VN')} ₫
                             </div>
                           </div>
                         ) : (
-                          <div className="font-bold text-white text-xs">
+                          <div className="font-bold text-slate-900 text-xs sm:text-sm">
                             {Number(p.price).toLocaleString('vi-VN')} ₫
                           </div>
                         )}
@@ -449,12 +473,12 @@ export function ProductDataTable({
                       {/* Stock */}
                       <td className="p-4 text-center">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                             p.stock === 0
-                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
                               : p.stock <= 5
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           }`}
                         >
                           {p.stock === 0 ? 'Hết hàng' : `Còn ${p.stock}`}
@@ -464,10 +488,10 @@ export function ProductDataTable({
                       {/* Active Status */}
                       <td className="p-4 text-center">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
                             p.is_active
-                              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                              : 'bg-slate-800 text-slate-400 border border-slate-700'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
                           }`}
                         >
                           {p.is_active ? 'Hiển thị' : 'Ẩn'}
@@ -476,44 +500,44 @@ export function ProductDataTable({
 
                       {/* Actions */}
                       <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1">
                           {/* View on storefront */}
                           <Link
                             href={`/san-pham/${p.slug}`}
                             target="_blank"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-colors"
                             title="Xem trên Storefront"
                           >
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-4 h-4" />
                           </Link>
 
                           {/* Duplicate */}
                           <button
                             onClick={() => handleDuplicate(p.id)}
                             disabled={isActionLoading}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                             title="Nhân bản sản phẩm"
                           >
-                            <Copy className="w-3.5 h-3.5" />
+                            <Copy className="w-4 h-4" />
                           </button>
 
                           {/* Edit */}
                           <Link
                             href={`/admin/products/${p.id}`}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-slate-800 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-colors"
                             title="Chỉnh sửa"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Pencil className="w-4 h-4" />
                           </Link>
 
                           {/* Delete */}
                           <button
                             onClick={() => handleDelete(p.id, p.name)}
                             disabled={isActionLoading}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="Xóa"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -522,7 +546,7 @@ export function ProductDataTable({
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     Không tìm thấy sản phẩm nào phù hợp với bộ lọc.
                   </td>
                 </tr>
@@ -533,15 +557,15 @@ export function ProductDataTable({
 
         {/* Pagination footer */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 text-xs text-slate-500">
             <div>
-              Trang <span className="font-bold text-white">{page}</span> / {totalPages} (Tổng số {totalCount} sản phẩm)
+              Trang <span className="font-bold text-slate-800">{page}</span> / {totalPages} (Tổng số {totalCount} sản phẩm)
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Link
                 href={`/admin/products?page=${Math.max(page - 1, 1)}`}
-                className={`p-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors ${
+                className={`p-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-colors ${
                   page <= 1 ? 'pointer-events-none opacity-40' : ''
                 }`}
               >
@@ -549,7 +573,7 @@ export function ProductDataTable({
               </Link>
               <Link
                 href={`/admin/products?page=${Math.min(page + 1, totalPages)}`}
-                className={`p-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors ${
+                className={`p-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-colors ${
                   page >= totalPages ? 'pointer-events-none opacity-40' : ''
                 }`}
               >

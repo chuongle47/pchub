@@ -26,6 +26,7 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
   const [customReason, setCustomReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelMessage, setCancelMessage] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   // Close on Escape key
   useEffect(() => {
@@ -64,21 +65,24 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
   const handleConfirmCancel = async () => {
     setIsCancelling(true);
     setCancelMessage(null);
+    setCancelError(null);
     try {
       const finalReason = cancelReason === 'Khác' ? customReason : cancelReason;
+      const targetOrderId = order.id || order.order_id || order.code || '';
       const res = await fetch('/api/orders/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          order_id: order.id,
-          orderId: order.id,
-          wooOrderId: order.wooOrderId,
+          order_id: targetOrderId,
+          orderId: targetOrderId,
+          code: order.code || targetOrderId,
+          wooOrderId: order.wooOrderId || order.woo_order_id,
           reason: finalReason
         })
       });
       const data = await res.json();
       if (data.success) {
-        updateOrderStatus(order.id, 'cancelled', 'Đã hủy');
+        updateOrderStatus(targetOrderId, 'cancelled', 'Đã hủy');
         order.status = 'cancelled';
         order.statusLabel = 'Đã hủy';
 
@@ -90,8 +94,8 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
             const { useWalletStore } = await import('@/lib/wallet-store');
             useWalletStore.getState().addBalance(
               Number(order.total) || 0,
-              `Hoàn tiền hủy đơn hàng ${order.id}`,
-              `REF-${order.id}`,
+              `Hoàn tiền hủy đơn hàng ${targetOrderId}`,
+              `REF-${targetOrderId}`,
               'REFUND'
             );
           } catch (e) {
@@ -102,10 +106,10 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
         setShowCancelModal(false);
         setCancelMessage(`Đã hủy đơn hàng thành công!${isPaidByWallet ? ` Tiền (${(Number(order.total) || 0).toLocaleString('vi-VN')}₫) đã được hoàn lại vào Ví điện tử.` : ''}`);
       } else {
-        alert(data.error || 'Có lỗi khi hủy đơn');
+        setCancelError(data.error || 'Có lỗi khi hủy đơn hàng');
       }
     } catch (err: any) {
-      alert('Lỗi kết nối: ' + err.message);
+      setCancelError('Lỗi kết nối: ' + err.message);
     } finally {
       setIsCancelling(false);
     }
@@ -594,10 +598,24 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                     Xác nhận hủy đơn hàng
                   </h4>
                   <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
-                    Đơn hàng {order.id} sẽ được hủy.
+                    Đơn hàng {order.id || order.code} sẽ được hủy.
                   </p>
                 </div>
               </div>
+
+              {cancelError && (
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: '#fee2e2',
+                  color: '#b91c1c',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  border: '1px solid #fecaca',
+                }}>
+                  {cancelError}
+                </div>
+              )}
 
               <div>
                 <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>

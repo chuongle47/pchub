@@ -2752,3 +2752,8 @@ header.site-header,
 }
 
 
+
+@media (max-width: 640px) {
+  .ai-chat-backdrop { padding: 0 !important; }
+  .ai-chat-modal { width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; border: none !important; }
+}

@@ -3,17 +3,24 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bot, ArrowRight } from 'lucide-react';
+import { useUIStore } from '@/lib/store';
 
 export default function AIBuilderPreview() {
   const router = useRouter();
+  const setChatOpen = useUIStore((s) => s.setChatOpen);
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim()) {
-      router.push(`/search?ai=true&q=${encodeURIComponent(prompt.trim())}`);
+    const text = prompt.trim();
+    if (text) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('pchub:ai-chat-prompt', { detail: { prompt: text } }));
+      }
+      setChatOpen(true);
+      setPrompt('');
     } else {
-      router.push('/search?ai=true');
+      setChatOpen(true);
     }
   };
 

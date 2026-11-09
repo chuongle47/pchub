@@ -146,6 +146,21 @@ export default function AIChatWidget() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, setOpen]);
 
+  // Listen to external triggers to open chat with prompt (e.g. from Home page AI Builder)
+  useEffect(() => {
+    const handlePromptEvent = (e: any) => {
+      const promptText = e.detail?.prompt;
+      if (promptText) {
+        setOpen(true);
+        setTimeout(() => {
+          sendMessage(promptText);
+        }, 150);
+      }
+    };
+    window.addEventListener('pchub:ai-chat-prompt', handlePromptEvent);
+    return () => window.removeEventListener('pchub:ai-chat-prompt', handlePromptEvent);
+  }, []);
+
   const handleClearChat = () => {
     setMessages([INITIAL_MESSAGE]);
   };

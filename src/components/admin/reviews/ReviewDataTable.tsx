@@ -123,77 +123,80 @@ export function ReviewDataTable({ initialReviews }: Props) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Đánh giá sản phẩm</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-blue-600" />
+            <span>Đánh giá sản phẩm</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
             Kiểm duyệt phản hồi từ khách hàng và gửi câu trả lời chính thức từ PCHub.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Tổng đánh giá</div>
-            <div className="text-xl font-bold text-white mt-0.5">{stats.total}</div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tổng đánh giá</div>
+            <div className="text-xl font-bold text-slate-900 mt-0.5">{stats.total}</div>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
             <AlertCircle className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Chờ duyệt</div>
-            <div className="text-xl font-bold text-amber-400 mt-0.5">{stats.pending}</div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Chờ duyệt</div>
+            <div className="text-xl font-bold text-amber-600 mt-0.5">{stats.pending}</div>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
             <CheckCircle className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Đã hiển thị</div>
-            <div className="text-xl font-bold text-emerald-400 mt-0.5">{stats.approved}</div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Đã hiển thị</div>
+            <div className="text-xl font-bold text-emerald-600 mt-0.5">{stats.approved}</div>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-400">
-            <Star className="w-5 h-5 fill-yellow-400" />
+        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center text-yellow-600">
+            <Star className="w-5 h-5 fill-yellow-400 text-yellow-500" />
           </div>
           <div>
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Điểm trung bình</div>
-            <div className="text-xl font-bold text-white mt-0.5">{stats.avg} / 5.0</div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Điểm trung bình</div>
+            <div className="text-xl font-bold text-slate-900 mt-0.5">{stats.avg} / 5.0</div>
           </div>
         </div>
       </div>
 
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Tìm theo tên khách, sản phẩm, nội dung..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-950 p-1.5 border border-slate-800 text-xs font-medium">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-medium">
             {(['all', 'pending', 'approved', 'hidden'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-3.5 py-1.5 rounded-lg transition-all text-xs font-semibold whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-lg transition-all text-xs font-semibold whitespace-nowrap cursor-pointer ${
                   statusFilter === st
                     ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
                 {st === 'all'
@@ -210,7 +213,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
           <select
             value={ratingFilter}
             onChange={(e) => setRatingFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500"
           >
             <option value="all">Tất cả số sao</option>
             <option value="5">5 sao ★★★★★</option>
@@ -224,7 +227,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
 
       <div className="space-y-4">
         {filtered.length === 0 ? (
-          <div className="p-12 text-center rounded-xl bg-slate-900 border border-slate-800 text-slate-500 text-sm">
+          <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 text-slate-400 text-sm">
             Không có đánh giá nào phù hợp với bộ lọc.
           </div>
         ) : (
@@ -233,27 +236,27 @@ export function ReviewDataTable({ initialReviews }: Props) {
             return (
               <div
                 key={rev.id}
-                className="p-5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700/80 transition-all space-y-4 shadow-sm"
+                className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-blue-200 shadow-sm space-y-4 transition-all"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
                     {rev.product?.images?.[0] && (
                       <img
                         src={rev.product.images[0]}
                         alt=""
-                        className="w-10 h-10 object-contain rounded-lg bg-slate-950 p-1 border border-slate-800"
+                        className="w-12 h-12 object-contain rounded-xl bg-slate-50 p-1 border border-slate-200 shadow-xs flex-shrink-0"
                       />
                     )}
                     <div>
                       <Link
                         href={`/products/${rev.product?.slug || rev.product_id}`}
                         target="_blank"
-                        className="text-sm font-semibold text-white hover:text-red-400 transition-colors flex items-center gap-1.5"
+                        className="text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-1.5"
                       >
                         {rev.product?.name || 'Sản phẩm PCHub'}
-                        <ExternalLink className="w-3 h-3 text-slate-500" />
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                       </Link>
-                      <div className="text-xs text-slate-500 mt-0.5">
+                      <div className="text-xs text-slate-400 mt-0.5">
                         Ngày gửi: {new Date(rev.created_at).toLocaleString('vi-VN')}
                       </div>
                     </div>
@@ -263,10 +266,10 @@ export function ReviewDataTable({ initialReviews }: Props) {
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
                         rev.status === 'approved'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
                           : rev.status === 'hidden'
-                          ? 'bg-slate-800 text-slate-400 border-slate-700'
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          ? 'bg-slate-100 text-slate-600 border-slate-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200/60'
                       }`}
                     >
                       {rev.status === 'approved'
@@ -285,46 +288,46 @@ export function ReviewDataTable({ initialReviews }: Props) {
                         <Star
                           key={i}
                           className={`w-4 h-4 ${
-                            i < rev.rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-700'
+                            i < rev.rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-xs font-semibold text-slate-300">
+                    <span className="text-xs font-semibold text-slate-800">
                       {rev.customer_name || 'Khách hàng ẩn danh'}
                     </span>
                   </div>
 
-                  <p className="text-sm text-slate-200 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+                  <p className="text-sm text-slate-800 leading-relaxed bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80">
                     {rev.content}
                   </p>
                 </div>
 
                 {rev.reply && (
-                  <div className="ml-4 pl-3 border-l-2 border-red-500 bg-red-500/5 p-3 rounded-r-lg space-y-1">
-                    <div className="text-xs font-semibold text-red-400 flex items-center gap-1.5">
+                  <div className="ml-4 pl-3 border-l-4 border-blue-600 bg-blue-50/60 p-3.5 rounded-r-xl space-y-1">
+                    <div className="text-xs font-bold text-blue-700 flex items-center gap-1.5">
                       <CornerDownRight className="w-3.5 h-3.5" /> Phản hồi từ PCHub:
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{rev.reply}</p>
+                    <p className="text-xs text-slate-700 leading-relaxed">{rev.reply}</p>
                   </div>
                 )}
 
                 {activeReplyId === rev.id && (
-                  <div className="ml-4 pl-3 border-l-2 border-slate-700 space-y-2">
+                  <div className="ml-4 pl-3 border-l-4 border-slate-300 space-y-2">
                     <textarea
                       rows={2}
                       placeholder="Nhập nội dung phản hồi chính thức cho đánh giá này..."
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleSendReply(rev.id)}
                         disabled={savingReply || !replyText.trim()}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
-                        {savingReply ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                        {savingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                         Gửi phản hồi
                       </button>
                       <button
@@ -332,7 +335,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
                           setActiveReplyId(null);
                           setReplyText('');
                         }}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md text-xs font-medium transition-colors"
+                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                       >
                         Hủy
                       </button>
@@ -340,13 +343,13 @@ export function ReviewDataTable({ initialReviews }: Props) {
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/40 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
                   <div className="flex items-center gap-2">
                     {rev.status !== 'approved' && (
                       <button
                         disabled={isLoading}
                         onClick={() => handleModerate(rev.id, 'approved')}
-                        className="px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 font-medium flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Check className="w-3.5 h-3.5" /> Duyệt hiển thị
                       </button>
@@ -356,7 +359,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
                       <button
                         disabled={isLoading}
                         onClick={() => handleModerate(rev.id, 'hidden')}
-                        className="px-3 py-1.5 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 font-medium flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <EyeOff className="w-3.5 h-3.5" /> Ẩn đánh giá
                       </button>
@@ -367,7 +370,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
                         setActiveReplyId(activeReplyId === rev.id ? null : rev.id);
                         setReplyText(rev.reply || '');
                       }}
-                      className="px-3 py-1.5 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 font-medium flex items-center gap-1.5 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <MessageSquare className="w-3.5 h-3.5" /> {rev.reply ? 'Sửa phản hồi' : 'Viết phản hồi'}
                     </button>
@@ -376,7 +379,7 @@ export function ReviewDataTable({ initialReviews }: Props) {
                   <button
                     disabled={isLoading}
                     onClick={() => handleDelete(rev.id)}
-                    className="p-1.5 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                     title="Xóa vĩnh viễn"
                   >
                     <Trash2 className="w-4 h-4" />
