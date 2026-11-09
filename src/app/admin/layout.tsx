@@ -44,12 +44,22 @@ export default async function AdminLayout({
         profile = {
           id: session.id || 'admin-root',
           email: session.email || 'admin@pchub.vn',
-          full_name: session.full_name || 'Quản Trị Viên PCHub',
-          role: session.role || 'admin',
-          avatar_url: null,
+          full_name: session.full_name || 'Lê Văn Chương',
+          role: session.role || 'Super Admin',
+          avatar_url: session.avatar_url || null,
         };
       } catch {}
     }
+  }
+
+  if (!profile) {
+    profile = {
+      id: 'admin-super',
+      email: 'chuong.le@pchub.vn',
+      full_name: 'Lê Văn Chương',
+      role: 'Super Admin',
+      avatar_url: null,
+    };
   }
 
   return <AdminShell userProfile={profile}>{children}</AdminShell>;

@@ -79,28 +79,23 @@ export function FlashSaleList({ sales }: Props) {
               key={sale.id}
               className="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden flex flex-col justify-between group hover:border-slate-700 transition-all"
             >
-              {sale.banner_url ? (
-                <div className="h-36 w-full overflow-hidden relative">
-                  <img
-                    src={sale.banner_url}
-                    alt={sale.name}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/images/hero-pc.jpg';
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${status.class}`}>
-                    {status.label}
-                  </span>
-                </div>
-              ) : (
-                <div className="h-28 w-full bg-gradient-to-tr from-amber-600/20 via-slate-900 to-blue-600/20 p-4 flex items-start justify-between">
-                  <Zap className="w-7 h-7 text-amber-400" />
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${status.class}`}>
-                    {status.label}
-                  </span>
-                </div>
-              )}
+              <div className="h-36 w-full overflow-hidden relative bg-gradient-to-tr from-amber-600/20 via-slate-900 to-blue-600/20">
+                <img
+                  src={sale.banner_url?.trim() ? sale.banner_url : '/images/promo-wide.jpg'}
+                  alt={sale.name}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.dataset.fallback) {
+                      target.dataset.fallback = 'true';
+                      target.src = '/images/promo-wide.jpg';
+                    }
+                  }}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${status.class}`}>
+                  {status.label}
+                </span>
+              </div>
 
               <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                 <div>

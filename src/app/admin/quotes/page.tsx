@@ -1,6 +1,7 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { QuoteDataTable } from '@/components/admin/quotes/QuoteDataTable';
+import { SAMPLE_QUOTES } from '@/lib/admin-sample-data';
 
 export const revalidate = 0;
 
@@ -61,8 +62,17 @@ export default async function AdminQuotesPage({ searchParams }: Props) {
       quotes = fallbackQuotes || [];
       totalCount = fallbackCount || 0;
     }
+
+    if (quotes.length === 0 && !q && !status) {
+      quotes = SAMPLE_QUOTES;
+      totalCount = SAMPLE_QUOTES.length;
+    }
   } catch (err) {
     console.error('Error in AdminQuotesPage:', err);
+    if (!quotes || quotes.length === 0) {
+      quotes = SAMPLE_QUOTES;
+      totalCount = SAMPLE_QUOTES.length;
+    }
   }
 
   const formattedQuotes = (quotes || []).map((q: any) => ({

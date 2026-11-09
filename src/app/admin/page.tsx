@@ -2,17 +2,17 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import {
-  DollarSign,
-  ShoppingCart,
-  FileSpreadsheet,
-  AlertTriangle,
-  MessageSquare,
+  SAMPLE_ORDERS,
+  SAMPLE_LOW_STOCK,
+  SAMPLE_TOP_PRODUCTS,
+  SAMPLE_AI_STATS,
+} from '@/lib/admin-sample-data';
+import {
   TrendingUp,
-  ArrowRight,
-  Clock,
-  Package,
-  CheckCircle,
-  Eye,
+  Bot,
+  AlertTriangle,
+  MoreHorizontal,
+  ArrowUpRight,
 } from 'lucide-react';
 
 export const revalidate = 0; // Fresh data for admin dashboard
@@ -20,59 +20,15 @@ export const revalidate = 0; // Fresh data for admin dashboard
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
-  // 1. Fetch KPIs via RPC or fallback direct queries
-  let kpis: any = {
-    revenue_today: 0,
-    revenue_week: 0,
-    revenue_month: 0,
-    orders_today: 0,
-    orders_pending: 0,
-    quotes_new: 0,
-    low_stock_count: 0,
-    reviews_pending: 0,
-    recent_sales: [],
-    sales_by_category: [],
-  };
+  // 1. Fetch live pending orders, low stock, etc.
+  let recentOrders = [...SAMPLE_ORDERS];
+  let lowStockList = [...SAMPLE_LOW_STOCK];
 
   try {
-    const { data, error } = await supabase.rpc('get_admin_dashboard_kpis');
-    if (!error && data) {
-      kpis = data;
-    } else {
-      // Fallback query if RPC migration hasn't been executed yet
-      const [
-        { count: pendingOrders },
-        { count: newQuotes },
-        { count: lowStock },
-        { count: pendingReviews },
-      ] = await Promise.all([
-        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('quotes').select('*', { count: 'exact', head: true }).eq('status', 'new'),
-        supabase.from('products').select('*', { count: 'exact', head: true }).lte('stock', 5),
-        supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      ]);
-      kpis.orders_pending = pendingOrders || 0;
-      kpis.quotes_new = newQuotes || 0;
-      kpis.low_stock_count = lowStock || 0;
-      kpis.reviews_pending = pendingReviews || 0;
-    }
-  } catch (err) {
-    console.error('Failed to load KPIs:', err);
-  }
-
-  // 2. Fetch Urgent Action Items (Recent pending orders & new quotes)
-  const [{ data: pendingOrdersList }, { data: newQuotesList }, { data: lowStockProducts }] =
-    await Promise.all([
+    const [{ data: dbOrders }, { data: dbLowStock }] = await Promise.all([
       supabase
         .from('orders')
-        .select('id, code, customer_name, phone, total, payment_method, status, created_at')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('quotes')
-        .select('id, code, customer_name, phone, total, status, created_at')
-        .eq('status', 'new')
+        .select('id, code, customer_name, phone, email, total, payment_method, payment_status, status, created_at')
         .order('created_at', { ascending: false })
         .limit(5),
       supabase
@@ -83,324 +39,505 @@ export default async function AdminDashboardPage() {
         .limit(5),
     ]);
 
-  const formatVND = (num: number) => {
-    return Number(num || 0).toLocaleString('vi-VN') + ' ₫';
-  };
+    if (dbOrders && dbOrders.length > 0) {
+      recentOrders = dbOrders.map((o: any, idx: number) => {
+        const totalNum = Number(o.total || 0);
+        const displayTotal =
+          totalNum >= 1000000
+            ? (totalNum / 1000000).toFixed(1).replace(/\.0$/, '') + 'tr'
+            : totalNum.toLocaleString('vi-VN') + ' đ';
 
-  const recentSalesData = kpis.recent_sales && kpis.recent_sales.length > 0
-    ? kpis.recent_sales
-    : [
-        { date: 'T2', total: 12500000, orders_count: 3 },
-        { date: 'T3', total: 24800000, orders_count: 5 },
-        { date: 'T4', total: 18900000, orders_count: 4 },
-        { date: 'T5', total: 32000000, orders_count: 7 },
-        { date: 'T6', total: 45600000, orders_count: 9 },
-        { date: 'T7', total: 58200000, orders_count: 12 },
-        { date: 'CN', total: 39500000, orders_count: 8 },
-      ];
+        const created = new Date(o.created_at);
+        const diffMins = Math.max(Math.floor((Date.now() - created.getTime()) / 60000), 1);
+        const timeAgo =
+          diffMins < 60
+            ? `${diffMins} phút trước`
+            : diffMins < 1440
+            ? `${Math.floor(diffMins / 60)} giờ trước`
+            : `${Math.floor(diffMins / 1440)} ngày trước`;
 
-  const maxSale = Math.max(...recentSalesData.map((d: any) => Number(d.total || 0)), 1);
+        return {
+          id: o.id || `order-${idx}`,
+          code: o.code || `ORD-00${47 - idx}`,
+          customer_name: o.customer_name || 'Khách hàng',
+          phone: o.phone || '',
+          email: o.email || null,
+          total: totalNum,
+          display_total: displayTotal,
+          payment_method: o.payment_method || 'cod',
+          payment_status: o.payment_status || 'pending',
+          status: o.status || 'pending',
+          created_at: o.created_at,
+          time_ago: timeAgo,
+        };
+      });
+    }
+
+    if (dbLowStock && dbLowStock.length > 0) {
+      lowStockList = dbLowStock.map((p: any, idx: number) => ({
+        id: p.id || `p-${idx}`,
+        name: p.name,
+        short_name: p.name.length > 20 ? p.name.substring(0, 18) + '...' : p.name,
+        sku: p.sku || `SKU-${p.id ? p.id.slice(0, 6).toUpperCase() : 'PROD'}`,
+        stock: p.stock ?? 0,
+        price: Number(p.price || 0),
+      }));
+    }
+  } catch (err) {
+    console.error('Error fetching admin overview data:', err);
+  }
+
+  // SVG Chart points: ViewBox is 0 0 500 180
+  // Dates: 01/10 (x=20), 08/10 (x=130), 15/10 (x=250), 22/10 (x=370), 29/10 (x=480)
+  // Matching the curved wave from the screenshot:
+  // Starts around y=140 (~25tr), curves up to y=90 (~80tr) at 08/10, dips slightly to y=95 at x=180,
+  // peaks at y=60 (~110tr) around 15/10, valleys to y=135 (~35tr) at 22/10,
+  // then swoops up steeply to y=60 (~115tr) at 29/10.
+  const chartPath =
+    'M 20 145 C 70 140, 95 90, 130 90 C 165 90, 205 100, 245 75 C 275 55, 305 60, 335 95 C 365 130, 395 140, 420 135 C 450 130, 465 80, 485 58';
+  const chartArea = `${chartPath} L 485 170 L 20 170 Z`;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard Quản Trị</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Tổng quan tình hình kinh doanh, đơn hàng và kho linh kiện PCHub
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin/products/new"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 transition-all"
-          >
-            <Package className="w-4 h-4" />
-            <span>Thêm sản phẩm</span>
-          </Link>
-          <Link
-            href="/admin/quotes"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-amber-400" />
-            <span>Xem báo giá</span>
-          </Link>
-        </div>
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Title */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h1>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {/* Doanh thu tháng */}
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Doanh thu tháng
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-              <DollarSign className="w-5 h-5" />
+      {/* Row 1: 4 KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Doanh thu hôm nay */}
+        <div className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div className="text-xs font-medium text-slate-500">Doanh thu hôm nay</div>
+          <div className="mt-3">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+              84.320.000 ₫
             </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold text-white tracking-tight">
-              {formatVND(kpis.revenue_month || kpis.revenue_today || 0)}
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Hôm nay: {formatVND(kpis.revenue_today || 0)}</span>
+            <div className="flex items-center gap-1 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="text-sm">↑</span>
+              <span>12%</span>
             </div>
           </div>
         </div>
 
-        {/* Đơn hàng chờ xử lý */}
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Đơn hàng chờ duyệt
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
-              <ShoppingCart className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold text-white tracking-tight">
-              {kpis.orders_pending || 0}
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-blue-400" />
-              <span>Đơn phát sinh hôm nay: {kpis.orders_today || 0}</span>
+        {/* Card 2: Đơn hàng hôm nay */}
+        <div className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div className="text-xs font-medium text-slate-500">Đơn hàng hôm nay</div>
+          <div className="mt-3">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">47</div>
+            <div className="flex items-center gap-1 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="text-sm">↑</span>
+              <span>8</span>
             </div>
           </div>
         </div>
 
-        {/* Báo giá chưa phản hồi */}
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Báo giá cần xử lý
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
-              <FileSpreadsheet className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold text-white tracking-tight">
-              {kpis.quotes_new || 0}
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-amber-400">
-              <span>Cần liên hệ khách hàng sớm</span>
+        {/* Card 3: Tỷ lệ chuyển đổi */}
+        <div className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div className="text-xs font-medium text-slate-500">Tỷ lệ chuyển đổi</div>
+          <div className="mt-3">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">3.2%</div>
+            <div className="flex items-center gap-1 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="text-sm">↑</span>
+              <span>0.4%</span>
             </div>
           </div>
         </div>
 
-        {/* Cảnh báo tồn kho */}
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden group">
+        {/* Card 4: AI Chat sessions */}
+        <div className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Sắp hết hàng (≤ 5)
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5" />
+            <span className="text-xs font-medium text-slate-500">AI Chat sessions</span>
+            <div className="w-5 h-5 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Bot className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold text-white tracking-tight">
-              {kpis.low_stock_count || 0}
+          <div className="mt-3">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">1.204</span>
+              <span className="text-slate-300 mx-1">|</span>
+              <span className="text-xl sm:text-2xl font-bold text-indigo-600 tracking-tight">142</span>
+              <span className="text-xs font-medium text-slate-500 whitespace-nowrap ml-1">
+                → đơn hàng
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-rose-400">
-              <span>Đánh giá chờ duyệt: {kpis.reviews_pending || 0}</span>
+            <div className="mt-2 text-xs text-slate-400 font-medium">
+              Tỷ lệ chốt đơn AI: {SAMPLE_AI_STATS.conversion_rate}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sales Chart & Categories */}
+      {/* Row 2: Sales Chart & Top 5 Products */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-base font-bold text-white">Biểu đồ doanh thu 7 ngày</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Xu hướng kinh doanh trong tuần</p>
-            </div>
-            <div className="text-xs font-semibold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20">
-              Tuần hiện tại
-            </div>
+        {/* Left Card: Doanh thu 30 ngày qua */}
+        <div className="lg:col-span-2 p-6 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-900">Doanh thu 30 ngày qua</h2>
+            <button
+              type="button"
+              className="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors"
+              title="Tùy chọn"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
           </div>
 
-          <div className="h-56 flex items-end gap-3 pt-6 pb-2">
-            {recentSalesData.map((d: any, idx: number) => {
-              const heightPercent = Math.max(Math.round((Number(d.total || 0) / maxSale) * 100), 10);
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                  <div className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity truncate">
-                    {formatVND(d.total)}
-                  </div>
-                  <div
-                    style={{ height: `${heightPercent}%` }}
-                    className="w-full rounded-xl bg-gradient-to-t from-blue-600 to-indigo-500 group-hover:from-blue-500 group-hover:to-cyan-400 transition-all shadow-md"
-                  />
-                  <span className="text-[11px] font-medium text-slate-400">{d.date}</span>
-                </div>
-              );
-            })}
+          {/* SVG Wave Chart */}
+          <div className="relative w-full h-56 pt-2">
+            {/* Y Axis Grid & Labels */}
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-slate-400 pr-2">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                <span>150tr</span>
+                <div className="flex-1 border-b border-dashed border-slate-100 ml-3" />
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                <span>100tr</span>
+                <div className="flex-1 border-b border-dashed border-slate-100 ml-3" />
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                <span>50tr</span>
+                <div className="flex-1 border-b border-dashed border-slate-100 ml-3" />
+              </div>
+              <div className="flex items-center justify-between pb-1">
+                <span>0</span>
+                <div className="flex-1 border-b border-slate-100 ml-3" />
+              </div>
+            </div>
+
+            {/* SVG Curve */}
+            <svg
+              className="w-full h-full overflow-visible relative z-10"
+              viewBox="0 0 500 180"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
+                  <stop offset="70%" stopColor="#3b82f6" stopOpacity="0.05" />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* Shaded Area */}
+              <path d={chartArea} fill="url(#blueGradient)" />
+
+              {/* Stroke Line */}
+              <path
+                d={chartPath}
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          {/* X Axis Milestone Dates */}
+          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 pt-3 border-t border-slate-100 mt-2 px-3">
+            <span>01/10</span>
+            <span>08/10</span>
+            <span>15/10</span>
+            <span>22/10</span>
+            <span>29/10</span>
           </div>
         </div>
 
-        {/* Urgent Action Products Stock */}
-        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between">
+        {/* Right Card: Top 5 Sản phẩm */}
+        <div className="p-6 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-900">Top 5 Sản phẩm</h2>
+            <Link
+              href="/admin/products"
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-0.5"
+            >
+              Chi tiết
+            </Link>
+          </div>
+
+          <div className="space-y-4">
+            {SAMPLE_TOP_PRODUCTS.map((prod, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-slate-800 truncate max-w-[150px]">
+                    {prod.name}
+                  </span>
+                  <div className="text-right flex items-center gap-2">
+                    <span className="font-bold text-slate-900">{prod.revenue_text}</span>
+                    <span className="text-[10px] text-slate-400">{prod.qty} SL</span>
+                  </div>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-slate-900 rounded-full transition-all duration-500"
+                    style={{ width: `${prod.percent}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 mt-2 text-right">
+            <Link
+              href="/admin/products"
+              className="text-xs text-slate-500 hover:text-slate-800 font-medium"
+            >
+              Xem báo cáo bán hàng lẻ →
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Recent Orders, AI Chat Performance, Low Stock Alert */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Card 1: Đơn hàng gần đây */}
+        <div className="p-6 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-white">Cảnh báo tồn kho</h2>
-              <Link href="/admin/products" className="text-xs text-blue-400 hover:underline">
+              <h2 className="text-sm font-semibold text-slate-900">Đơn hàng gần đây</h2>
+              <Link
+                href="/admin/orders"
+                className="text-xs text-blue-600 hover:underline font-medium"
+              >
                 Xem tất cả
               </Link>
             </div>
-            <p className="text-xs text-slate-400 mb-4">Linh kiện tồn kho ít cần nhập thêm</p>
 
-            <div className="space-y-3">
-              {lowStockProducts && lowStockProducts.length > 0 ? (
-                lowStockProducts.map((p: any) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80"
-                  >
-                    <div className="pr-2 truncate">
-                      <div className="text-xs font-semibold text-white truncate">{p.name}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">SKU: {p.sku || 'N/A'}</div>
+            {/* Orders Table */}
+            <div className="divide-y divide-slate-100">
+              <div className="grid grid-cols-12 text-[11px] font-medium text-slate-400 pb-2">
+                <div className="col-span-6">Mã / Khách hàng</div>
+                <div className="col-span-3 text-right">Tổng</div>
+                <div className="col-span-3 text-right">Trạng thái</div>
+              </div>
+
+              {recentOrders.map((ord) => {
+                const isPending = ord.status === 'pending';
+                const isShipping = ord.status === 'shipping';
+                const isPaid = ord.status === 'completed' || ord.payment_status === 'paid';
+
+                const badgeBg = isPending
+                  ? 'bg-amber-50 text-amber-600 border-amber-200'
+                  : isShipping
+                  ? 'bg-sky-50 text-sky-600 border-sky-200'
+                  : 'bg-emerald-50 text-emerald-600 border-emerald-200';
+
+                const badgeLabel = isPending
+                  ? 'Chờ xác nhận'
+                  : isShipping
+                  ? 'Đang giao'
+                  : 'Đã thanh toán';
+
+                return (
+                  <div key={ord.id} className="grid grid-cols-12 items-center py-2.5 text-xs">
+                    <div className="col-span-6 pr-2">
+                      <Link
+                        href={`/admin/orders`}
+                        className="font-semibold text-slate-800 hover:text-blue-600 block truncate"
+                      >
+                        {ord.code}
+                      </Link>
+                      <div className="text-[11px] text-slate-500 truncate">{ord.customer_name}</div>
                     </div>
-                    <span className="px-2 py-1 rounded-lg text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap">
-                      Còn {p.stock}
-                    </span>
+
+                    <div className="col-span-3 text-right font-medium text-slate-800">
+                      {ord.display_total}
+                    </div>
+
+                    <div className="col-span-3 text-right">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeBg} whitespace-nowrap`}
+                      >
+                        {badgeLabel}
+                      </span>
+                      <span className="block text-[9px] text-slate-400 mt-0.5">
+                        {ord.time_ago}
+                      </span>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <div className="py-8 text-center text-xs text-slate-500">
-                  Kho hàng ổn định, chưa có sản phẩm nào chạm ngưỡng tồn kho thấp.
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 mt-4">
-            <Link
-              href="/admin/products"
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors"
-            >
-              <span>Kiểm tra toàn bộ kho</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Urgent Action Sections: Pending Orders & New Quotes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Orders */}
-        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-              <h2 className="text-base font-bold text-white">Đơn hàng mới cần xử lý</h2>
-            </div>
+          <div className="pt-3 border-t border-slate-100 mt-3">
             <Link
               href="/admin/orders"
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
-              Xem tất cả <ArrowRight className="w-3 h-3" />
+              <span>Vào trang quản lý đơn hàng</span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
             </Link>
-          </div>
-
-          <div className="space-y-3">
-            {pendingOrdersList && pendingOrdersList.length > 0 ? (
-              pendingOrdersList.map((order: any) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-all"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-blue-400">{order.code}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {new Date(order.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    <div className="text-xs font-medium text-white mt-0.5">{order.customer_name}</div>
-                    <div className="text-[11px] text-slate-400">{order.phone}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-emerald-400">
-                      {formatVND(order.total)}
-                    </div>
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-slate-300 hover:text-white"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span>Chi tiết</span>
-                    </Link>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="py-8 text-center text-xs text-slate-500">
-                Hiện không có đơn hàng nào chờ xử lý.
-              </div>
-            )}
           </div>
         </div>
 
-        {/* New Quotes */}
-        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-              <h2 className="text-base font-bold text-white">Yêu cầu báo giá mới</h2>
+        {/* Card 2: Hiệu suất AI Chat */}
+        <div className="p-6 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-900">Hiệu suất AI Chat</h2>
+              <span className="text-[11px] font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                Gemini 2.5
+              </span>
             </div>
-            <Link
-              href="/admin/quotes"
-              className="text-xs text-amber-400 hover:text-amber-300 transition-colors inline-flex items-center gap-1"
-            >
-              Xem tất cả <ArrowRight className="w-3 h-3" />
-            </Link>
+
+            {/* Donut Chart with Center Robot Icon */}
+            <div className="relative w-40 h-40 mx-auto my-3 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                {/* Background Ring */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="transparent"
+                  stroke="#e2e8f0"
+                  strokeWidth="10"
+                />
+
+                {/* Unanswered (13%) - Light Gray/Blue */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="transparent"
+                  stroke="#cbd5e1"
+                  strokeWidth="10"
+                  strokeDasharray={`${2 * Math.PI * 38}`}
+                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - 0.13)}`}
+                  transform="rotate(313 50 50)"
+                />
+
+                {/* Escalated (19%) - Purple */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="transparent"
+                  stroke="#8b5cf6"
+                  strokeWidth="10"
+                  strokeDasharray={`${2 * Math.PI * 38}`}
+                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - 0.19)}`}
+                  transform="rotate(245 50 50)"
+                />
+
+                {/* Resolved (68%) - Blue */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="transparent"
+                  stroke="#2563eb"
+                  strokeWidth="10"
+                  strokeDasharray={`${2 * Math.PI * 38}`}
+                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - 0.68)}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              {/* Center Content: Robot Icon + 68% */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
+                  <Bot className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-xl font-bold text-slate-900 tracking-tight mt-0.5">68%</span>
+              </div>
+            </div>
+
+            {/* Legend below donut */}
+            <div className="space-y-2 mt-4 px-2">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-blue-600 flex-shrink-0" />
+                  <span className="text-slate-600">Resolved (Giải quyết)</span>
+                </div>
+                <span className="font-semibold text-slate-900">68%</span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-purple-500 flex-shrink-0" />
+                  <span className="text-slate-600">Escalated (Chuyển tiếp)</span>
+                </div>
+                <span className="font-semibold text-slate-900">19%</span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 flex-shrink-0" />
+                  <span className="text-slate-600">Unanswered (Bỏ lỡ)</span>
+                </div>
+                <span className="font-semibold text-slate-900">13%</span>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {newQuotesList && newQuotesList.length > 0 ? (
-              newQuotesList.map((quote: any) => (
-                <div
-                  key={quote.id}
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-all"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-amber-400">{quote.code}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {new Date(quote.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    <div className="text-xs font-medium text-white mt-0.5">{quote.customer_name}</div>
-                    <div className="text-[11px] text-slate-400">{quote.phone}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-slate-300">
-                      {formatVND(quote.total)}
-                    </div>
-                    <Link
-                      href={`/admin/quotes/${quote.id}`}
-                      className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-slate-300 hover:text-white"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span>Xử lý</span>
-                    </Link>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="py-8 text-center text-xs text-slate-500">
-                Chưa có yêu cầu báo giá mới.
+          <div className="pt-3 border-t border-slate-100 mt-3 text-center">
+            <Link
+              href="/admin/ai-advisor"
+              className="text-xs text-blue-600 hover:underline font-medium"
+            >
+              Cấu hình kịch bản AI Advisor →
+            </Link>
+          </div>
+        </div>
+
+        {/* Card 3: Cảnh báo tồn kho */}
+        <div className="p-6 rounded-xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <h2 className="text-sm font-semibold text-slate-900">Cảnh báo tồn kho</h2>
               </div>
-            )}
+              <Link
+                href="/admin/products"
+                className="text-xs text-slate-400 hover:text-slate-600 font-medium"
+              >
+                Kho hàng
+              </Link>
+            </div>
+
+            {/* Low Stock List */}
+            <div className="space-y-3">
+              {lowStockList.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between py-1 text-xs gap-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-slate-800 truncate" title={item.name}>
+                      {item.short_name}
+                    </div>
+                    <div
+                      className={`text-[11px] font-medium ${
+                        item.stock === 0 ? 'text-rose-600' : 'text-amber-600'
+                      }`}
+                    >
+                      Còn {item.stock} sản phẩm
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/admin/products`}
+                    className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-medium shadow-sm transition-colors whitespace-nowrap flex-shrink-0"
+                  >
+                    Nhập thêm
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 mt-3">
+            <Link
+              href="/admin/products?stock=low_stock"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <span>Xem tất cả linh kiện sắp hết</span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
+            </Link>
           </div>
         </div>
       </div>

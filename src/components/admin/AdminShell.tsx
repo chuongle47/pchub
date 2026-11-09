@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
 import { AdminQuickSearch } from './AdminQuickSearch';
@@ -82,17 +83,18 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex antialiased">
       {/* Sidebar */}
       <AdminSidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
+        userProfile={userProfile}
       />
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
         <AdminHeader
           onOpenMobileSidebar={() => setMobileOpen(true)}
           onOpenSearch={() => setSearchOpen(true)}
@@ -102,6 +104,22 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-7xl w-full mx-auto relative z-0">
           {children}
         </main>
+
+        {/* Footer matching screenshot */}
+        <footer className="px-4 py-4 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+          <div>
+            © 2024 PCHub Admin Panel - System Version 2.4.0
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/admin/settings" className="hover:text-slate-600 transition-colors">
+              Documentation
+            </Link>
+            <span>•</span>
+            <Link href="/admin/contacts" className="hover:text-slate-600 transition-colors">
+              Support
+            </Link>
+          </div>
+        </footer>
       </div>
 
       {/* Quick Search Dialog */}
@@ -112,21 +130,21 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
 
       {/* Live Realtime Notification Pop */}
       {liveNotice && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 p-4 rounded-2xl bg-slate-900/95 border border-blue-500/40 shadow-2xl backdrop-blur-md max-w-sm animate-in slide-in-from-bottom-5">
-          <div className="w-9 h-9 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 p-4 rounded-2xl bg-white border border-blue-500/40 shadow-2xl backdrop-blur-md max-w-sm animate-in slide-in-from-bottom-5">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
             {liveNotice.type === 'order' ? (
-              <ShoppingCart className="w-5 h-5 text-blue-400" />
+              <ShoppingCart className="w-5 h-5 text-blue-600" />
             ) : (
-              <FileSpreadsheet className="w-5 h-5 text-amber-400" />
+              <FileSpreadsheet className="w-5 h-5 text-amber-600" />
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-bold text-white">{liveNotice.title}</h4>
-            <p className="text-xs text-slate-300 mt-0.5 truncate">{liveNotice.description}</p>
+            <h4 className="text-xs font-bold text-slate-900">{liveNotice.title}</h4>
+            <p className="text-xs text-slate-600 mt-0.5 truncate">{liveNotice.description}</p>
           </div>
           <button
             onClick={() => setLiveNotice(null)}
-            className="text-slate-400 hover:text-white p-1"
+            className="text-slate-400 hover:text-slate-700 p-1"
           >
             <X className="w-4 h-4" />
           </button>

@@ -221,7 +221,7 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
                       >
                         <div className="pr-4 truncate">
                           <div className="text-xs font-medium text-white truncate">{p.name}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">SKU: {p.sku || 'N/A'}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">SKU: {p.sku || (p.id ? `PCH-${p.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'PCH-PROD')}</div>
                         </div>
                         <div className="text-xs font-semibold text-emerald-400 whitespace-nowrap">
                           {Number(p.price).toLocaleString('vi-VN')} ₫

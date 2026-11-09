@@ -222,15 +222,15 @@ export function ContactManagement({ initialContacts, initialSubscribers }: Props
               />
             </div>
 
-            <div className="flex items-center gap-1.5 rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs font-medium">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-950 p-1.5 border border-slate-800 text-xs font-medium">
               {(['all', 'new', 'read', 'replied'] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                  className={`px-3.5 py-1.5 rounded-lg transition-all text-xs font-semibold whitespace-nowrap ${
                     statusFilter === st
-                      ? 'bg-slate-800 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                   }`}
                 >
                   {st === 'all'

@@ -107,6 +107,12 @@
       "name": "Seasonic",
       "slug": "seasonic",
       "is_active": true
+    },
+    {
+      "id": "b1000000-0000-0000-0000-000000000019",
+      "name": "Razer",
+      "slug": "razer",
+      "is_active": true
     }
   ],
   "categories": [

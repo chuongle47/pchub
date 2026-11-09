@@ -406,7 +406,7 @@ export function ProductDataTable({
                             </Link>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-slate-400 font-mono">
-                                SKU: {p.sku || 'N/A'}
+                                SKU: {p.sku || (p.id ? `PCH-${p.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'PCH-PROD')}
                               </span>
                               {p.is_hot && (
                                 <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-bold">

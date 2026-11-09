@@ -180,7 +180,7 @@ export function OrderDetailView({ order, items, history }: Props) {
                   <div className="min-w-0">
                     <div className="text-xs font-semibold text-white truncate">{item.name_snapshot}</div>
                     <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-400">
-                      <span className="font-mono">SKU: {item.sku_snapshot || 'N/A'}</span>
+                      <span className="font-mono">SKU: {item.sku_snapshot || 'PCH-PROD'}</span>
                       <span>Đơn giá: {Number(item.price_snapshot).toLocaleString('vi-VN')} ₫</span>
                       <span className="font-bold text-white">Số lượng: x{item.quantity}</span>
                     </div>

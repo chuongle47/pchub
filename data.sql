@@ -57,7 +57,8 @@ INSERT INTO brands (id, name, slug) VALUES
 ('b1000000-0000-0000-0000-000000000015', 'Noctua', 'noctua'),
 ('b1000000-0000-0000-0000-000000000016', 'Zotac', 'zotac'),
 ('b1000000-0000-0000-0000-000000000017', 'Sapphire', 'sapphire'),
-('b1000000-0000-0000-0000-000000000018', 'Seasonic', 'seasonic')
+('b1000000-0000-0000-0000-000000000018', 'Seasonic', 'seasonic'),
+('b1000000-0000-0000-0000-000000000019', 'Razer', 'razer')
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name;
 
 -- CATEGORIES
@@ -126,7 +127,7 @@ INSERT INTO products (name, slug, category_id, brand_id, sku, price, stock, spec
 ('Noctua NH-D15 chromax.black Dual-Tower Air Cooler', 'noctua-nh-d15-chromax-black', 'c1000000-0000-0000-0000-000000000008', 'b1000000-0000-0000-0000-000000000015', 'NH-D15-CH-BK', 2990000, 35, '{"cooling_type":"Air","radiator_size_mm":140,"supported_sockets":["LGA1700","AM5","AM4"],"tdp_capacity_watt":220}'::jsonb, '/images/hero-pc.jpg'),
 ('Thermalright Peerless Assassin 120 SE ARGB Air Cooler', 'thermalright-peerless-assassin-120-se', 'c1000000-0000-0000-0000-000000000008', 'b1000000-0000-0000-0000-000000000014', 'PA120-SE-ARGB', 890000, 100, '{"cooling_type":"Air","radiator_size_mm":120,"supported_sockets":["LGA1700","AM5","AM4"],"tdp_capacity_watt":240}'::jsonb, '/images/hero-pc.jpg'),
 ('ASUS ROG Swift OLED PG34WCDM 34" Curved 240Hz Gaming Monitor', 'asus-rog-swift-oled-pg34wcdm-34in', 'c1000000-0000-0000-0000-000000000009', 'b1000000-0000-0000-0000-000000000003', 'PG34WCDM', 28990000, 25, '{"screen_size":"34 inch","panel":"OLED Curved","refresh_rate":"240Hz"}'::jsonb, '/images/cat-monitor.jpg'),
-('Razer BlackWidow V4 Pro Mechanical Gaming Keyboard', 'razer-blackwidow-v4-pro-keyboard', 'c1000000-0000-0000-0000-000000000010', 'b1000000-0000-0000-0000-000000000007', 'RZ03-04680100', 5890000, 40, '{"switch":"Razer Green","layout":"Full Size"}'::jsonb, '/images/cat-gear.jpg'),
+('Razer BlackWidow V4 Pro Mechanical Gaming Keyboard', 'razer-blackwidow-v4-pro-keyboard', 'c1000000-0000-0000-0000-000000000010', 'b1000000-0000-0000-0000-000000000019', 'RZ03-04680100', 5890000, 40, '{"switch":"Razer Green","layout":"Full Size"}'::jsonb, '/images/cat-gear.jpg'),
 ('Logitech G PRO X 2 LIGHTSPEED Wireless Gaming Headset', 'logitech-g-pro-x-2-lightspeed-headset', 'c1000000-0000-0000-0000-000000000011', 'b1000000-0000-0000-0000-000000000007', '981-001263', 4990000, 30, '{"driver":"50mm Graphene","battery_hours":50}'::jsonb, '/images/cat-headset.jpg')
 ON CONFLICT (slug) DO NOTHING;
 -- =============================================================================

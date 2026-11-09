@@ -16,5 +16,36 @@ export default async function AdminCategoriesPage() {
     console.error('Error fetching categories:', error);
   }
 
-  return <CategoryManagement categories={categories || []} />;
+  // Deduplicate categories to prevent duplicate storage categories (BUG-03)
+  const uniqueCategories: any[] = [];
+  const seenSlugs = new Set<string>();
+  const seenStorage = new Set<string>();
+
+  for (const cat of categories || []) {
+    const isStorage =
+      cat.slug === 'storage' ||
+      cat.slug === 'ssd-hdd' ||
+      cat.slug === 'ssd' ||
+      cat.slug === 'hdd' ||
+      (cat.name && (cat.name.includes('Ổ Đĩa Cứng') || cat.name.includes('Ổ Cứng')));
+
+    if (isStorage) {
+      if (seenStorage.has('storage')) continue;
+      seenStorage.add('storage');
+      uniqueCategories.push({
+        ...cat,
+        name: 'SSD / HDD - Ổ Đĩa Cứng',
+        slug: 'storage',
+      });
+      seenSlugs.add(cat.slug);
+      continue;
+    }
+
+    if (!seenSlugs.has(cat.slug)) {
+      seenSlugs.add(cat.slug);
+      uniqueCategories.push(cat);
+    }
+  }
+
+  return <CategoryManagement categories={uniqueCategories} />;
 }
