@@ -74,6 +74,23 @@ export function AdminSidebar({
 }: SidebarProps) {
   const pathname = usePathname();
 
+  // Remember collapsed state in localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('pchub_admin_sidebar_collapsed');
+      if (saved !== null) {
+        setCollapsed(saved === 'true');
+      }
+    } catch {}
+  }, [setCollapsed]);
+
+  const handleToggleCollapse = (val: boolean) => {
+    setCollapsed(val);
+    try {
+      localStorage.setItem('pchub_admin_sidebar_collapsed', String(val));
+    } catch {}
+  };
+
   const navGroups: NavGroup[] = [
     {
       id: 'dashboard',
@@ -116,7 +133,7 @@ export function AdminSidebar({
     },
     {
       id: 'marketing',
-      name: 'Marketing & Sale',
+      name: 'Marketing & Khuyến mãi',
       icon: Zap,
       children: [
         { name: 'Chiến dịch Flash Sale', href: '/admin/flash-sales', icon: Zap },
@@ -125,7 +142,7 @@ export function AdminSidebar({
     },
     {
       id: 'content-ai',
-      name: 'Nội dung & AI Tool',
+      name: 'Nội dung & Công cụ AI',
       icon: Bot,
       children: [
         { name: 'Bài viết & Cẩm nang', href: '/admin/posts', icon: Newspaper },
@@ -135,7 +152,7 @@ export function AdminSidebar({
     },
     {
       id: 'system',
-      name: 'Hệ thống & Cấu hình',
+      name: 'Hệ thống & Cài đặt',
       icon: Settings,
       children: [
         { name: 'Vận chuyển & Thuế', href: '/admin/shipping', icon: Truck },
@@ -145,7 +162,7 @@ export function AdminSidebar({
     },
   ];
 
-  // Auto expand group that contains current pathname
+  // Auto expand group containing current route
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = { products: true, orders: true };
     navGroups.forEach((g) => {
@@ -168,16 +185,24 @@ export function AdminSidebar({
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const userName = userProfile?.full_name || 'Lê Văn Chương';
-  const userRole = userProfile?.role === 'admin' ? 'Super Admin' : userProfile?.role || 'Super Admin';
+  const displayName = userProfile?.full_name || 'Quản Trị Viên';
+  const initialLetter = displayName.trim().charAt(0).toUpperCase() || 'A';
+  const displayRole =
+    userProfile?.role === 'admin'
+      ? 'Quản trị viên cấp cao'
+      : userProfile?.role === 'manager'
+      ? 'Quản lý cửa hàng'
+      : userProfile?.role === 'support'
+      ? 'Nhân viên hỗ trợ'
+      : 'Quản trị viên cấp cao';
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0d1527] border-r border-slate-800/80 text-slate-300 select-none">
+    <div className="flex flex-col h-full bg-[#0d1527] border-r border-slate-800 text-slate-300 select-none admin-sidebar">
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/60">
-        <Link href="/admin" className="flex items-center gap-2.5 overflow-hidden group">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white flex-shrink-0 shadow-md shadow-blue-500/25">
-            <LayoutDashboard className="w-4 h-4 text-white" />
+      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
+        <Link href="/admin" className="flex items-center gap-3 overflow-hidden group">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-blue-500/25">
+            <LayoutDashboard className="w-5 h-5 text-white" />
           </div>
           {!collapsed && (
             <div className="flex flex-col min-w-0">
@@ -185,81 +210,90 @@ export function AdminSidebar({
                 PCHub Admin
               </span>
               <span className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase">
-                Enterprise Portal
+                Hệ thống quản trị
               </span>
             </div>
           )}
         </Link>
         <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
-          title={collapsed ? 'Mở rộng sidebar' : 'Thu nhỏ sidebar'}
+          onClick={() => handleToggleCollapse(!collapsed)}
+          className="hidden md:flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          title={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu nhỏ thanh điều hướng'}
+          aria-label={collapsed ? 'Mở rộng' : 'Thu nhỏ'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
       {/* Navigation List */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-800">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800">
         {navGroups.map((group) => {
           const Icon = group.icon;
-
-          // Single direct link (e.g. Dashboard)
-          if (!group.children) {
-            const isActive = group.exact
-              ? pathname === group.href
-              : pathname.startsWith(group.href!);
-
-            return (
-              <div key={group.id}>
-                <Link
-                  href={group.href!}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all relative ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                  }`}
-                  title={collapsed ? group.name : undefined}
-                >
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                  {!collapsed && <span className="truncate flex-1">{group.name}</span>}
-                </Link>
-              </div>
-            );
-          }
-
-          // Expandable Group
+          const isDirect = Boolean(group.href);
+          const isActiveDirect = isDirect && (group.exact ? pathname === group.href : pathname.startsWith(group.href!));
+          const hasChildren = Boolean(group.children && group.children.length > 0);
           const isOpen = Boolean(openGroups[group.id]);
-          const isGroupActive = group.children.some((c) =>
-            c.href === '/admin' ? pathname === '/admin' : pathname.startsWith(c.href)
-          );
+          const isChildActive = hasChildren && group.children!.some((c) => pathname.startsWith(c.href));
 
-          return (
-            <div key={group.id} className="pt-1">
-              <button
-                type="button"
-                onClick={() => toggleGroup(group.id)}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                  isGroupActive
-                    ? 'text-white bg-slate-800/50'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
+          if (isDirect) {
+            return (
+              <Link
+                key={group.id}
+                href={group.href!}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center h-10 px-3 rounded-xl text-xs font-medium transition-all group relative ${
+                  isActiveDirect
+                    ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-[3px] border-blue-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`}
                 title={collapsed ? group.name : undefined}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Icon
-                    className={`w-4 h-4 flex-shrink-0 ${
-                      isGroupActive ? 'text-blue-400' : 'text-slate-400'
-                    }`}
-                  />
-                  {!collapsed && <span className="truncate">{group.name}</span>}
-                </div>
-
+                <Icon
+                  className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isActiveDirect ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
+                  }`}
+                />
                 {!collapsed && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {Boolean(group.badge && group.badge > 0) && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-blue-600/30 text-blue-400 border border-blue-500/30">
+                  <span className="ml-3 truncate flex-1">{group.name}</span>
+                )}
+                {!collapsed && group.badge && group.badge > 0 && (
+                  <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300">
+                    {group.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={group.id} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (collapsed) {
+                    handleToggleCollapse(false);
+                    setOpenGroups((prev) => ({ ...prev, [group.id]: true }));
+                  } else {
+                    toggleGroup(group.id);
+                  }
+                }}
+                className={`w-full flex items-center h-10 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer group ${
+                  isChildActive
+                    ? 'text-slate-100 bg-slate-800/50'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+                title={collapsed ? group.name : undefined}
+              >
+                <Icon
+                  className={`w-[18px] h-[18px] shrink-0 ${
+                    isChildActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-300'
+                  }`}
+                />
+                {!collapsed && (
+                  <>
+                    <span className="ml-3 truncate flex-1 text-left">{group.name}</span>
+                    {group.badge && group.badge > 0 && (
+                      <span className="mr-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300">
                         {group.badge}
                       </span>
                     )}
@@ -268,48 +302,36 @@ export function AdminSidebar({
                         isOpen ? 'rotate-180 text-slate-300' : ''
                       }`}
                     />
-                  </div>
+                  </>
                 )}
               </button>
 
-              {/* Sub items dropdown */}
-              {!collapsed && isOpen && (
-                <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-slate-800 ml-4 my-1">
+              {!collapsed && isOpen && group.children && (
+                <div className="pl-7 pr-1 py-0.5 space-y-1 border-l border-slate-800/80 ml-5">
                   {group.children.map((sub) => {
                     const SubIcon = sub.icon;
-                    const isSubActive =
-                      sub.href === '/admin'
-                        ? pathname === '/admin'
-                        : pathname === sub.href || pathname.startsWith(sub.href + '/');
-
+                    const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/');
                     return (
                       <Link
                         key={sub.href}
                         href={sub.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                        className={`flex items-center h-8 px-2.5 rounded-lg text-xs transition-all ${
                           isSubActive
-                            ? 'text-blue-400 bg-blue-950/40 font-semibold'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                            ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                         }`}
                       >
-                        <div className="flex items-center gap-2 truncate">
-                          {SubIcon ? (
-                            <SubIcon className={`w-3.5 h-3.5 flex-shrink-0 ${isSubActive ? 'text-blue-400' : 'text-slate-500'}`} />
-                          ) : (
-                            <span className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-blue-400' : 'bg-slate-600'}`} />
-                          )}
-                          <span className="truncate">{sub.name}</span>
-                        </div>
-
-                        {Boolean(sub.badge && sub.badge > 0) && (
-                          <span
-                            className={`px-1.5 py-0.5 text-[9px] font-bold rounded-full flex-shrink-0 ${
-                              isSubActive
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-800 text-slate-300'
+                        {SubIcon && (
+                          <SubIcon
+                            className={`w-3.5 h-3.5 mr-2 shrink-0 ${
+                              isSubActive ? 'text-blue-400' : 'text-slate-500'
                             }`}
-                          >
+                          />
+                        )}
+                        <span className="truncate flex-1">{sub.name}</span>
+                        {sub.badge && sub.badge > 0 && (
+                          <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300">
                             {sub.badge}
                           </span>
                         )}
@@ -323,41 +345,37 @@ export function AdminSidebar({
         })}
       </div>
 
-      {/* Storefront Link */}
-      <div className="px-3 py-2 border-t border-slate-800/60">
+      {/* Quick Storefront Link */}
+      <div className="p-3 border-t border-slate-800/80">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors group"
         >
-          <Store className="w-4 h-4 flex-shrink-0 text-blue-400" />
+          <Store className="w-4 h-4 text-slate-400 group-hover:text-blue-400 shrink-0" />
           {!collapsed && (
             <>
-              <span className="truncate flex-1">Xem Website Store</span>
+              <span className="truncate flex-1">Xem Cửa hàng PCHub</span>
               <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
             </>
           )}
         </Link>
       </div>
 
-      {/* User Profile Card */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#090f1d]/70">
-        <div className="flex items-center gap-2.5 px-2 py-1">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ring-2 ring-blue-500/30">
-            {userProfile?.avatar_url ? (
-              <img
-                src={userProfile.avatar_url}
-                alt={userName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span>LC</span>
-            )}
+      {/* Admin User Footer Card */}
+      <div className="p-3 border-t border-slate-800/80 bg-slate-950/40">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-inner">
+            {initialLetter}
           </div>
           {!collapsed && (
-            <div className="min-w-0 flex-1 leading-tight">
-              <div className="text-xs font-semibold text-white truncate">{userName}</div>
-              <div className="text-[10px] text-slate-400 truncate mt-0.5">{userRole}</div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-slate-200 truncate">
+                {displayName}
+              </span>
+              <span className="text-[10px] text-slate-400 truncate">
+                Vai trò: {displayRole}
+              </span>
             </div>
           )}
         </div>
@@ -367,28 +385,39 @@ export function AdminSidebar({
 
   return (
     <>
-      {mobileOpen && (
+      {/* Desktop Persistent Sidebar */}
+      <aside
+        className={`hidden md:block transition-all duration-300 z-30 shrink-0 ${
+          collapsed ? 'w-[72px]' : 'w-[260px]'
+        }`}
+      >
+        <div className={`fixed top-0 bottom-0 left-0 transition-all duration-300 z-30 ${
+          collapsed ? 'w-[72px]' : 'w-[260px]'
+        }`}>
+          {sidebarContent}
+        </div>
+      </aside>
+
+      {/* Mobile Drawer (Left Slide-in) */}
+      <div
+        className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ${
+          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Backdrop */}
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
         />
-      )}
-
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out md:hidden ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {sidebarContent}
+        {/* Drawer Panel */}
+        <div
+          className={`absolute top-0 bottom-0 left-0 w-[280px] transition-transform duration-300 transform ${
+            mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          {sidebarContent}
+        </div>
       </div>
-
-      <aside
-        className={`hidden md:block flex-shrink-0 transition-all duration-300 sticky top-0 h-screen ${
-          collapsed ? 'w-20' : 'w-64'
-        }`}
-      >
-        {sidebarContent}
-      </aside>
     </>
   );
 }

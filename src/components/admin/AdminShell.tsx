@@ -82,8 +82,10 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
     return <>{children}</>;
   }
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex antialiased">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex antialiased admin-shell overflow-x-clip">
       {/* Sidebar */}
       <AdminSidebar
         collapsed={collapsed}
@@ -94,35 +96,36 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
       />
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc] overflow-x-clip">
         <AdminHeader
           onOpenMobileSidebar={() => setMobileOpen(true)}
           onOpenSearch={() => setSearchOpen(true)}
           userProfile={userProfile}
         />
 
-        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-7xl w-full mx-auto relative z-0">
+        {/* Main Content Area (Max width 1440px, padding 24px desktop / 16px mobile) */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] w-full mx-auto min-w-0 relative z-0 overflow-x-clip">
           {children}
         </main>
 
-        {/* Footer matching screenshot */}
-        <footer className="px-4 py-4 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+        {/* Global Admin Footer */}
+        <footer className="px-4 py-4 sm:px-6 lg:px-8 max-w-[1440px] w-full mx-auto border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
           <div>
-            © 2024 PCHub Admin Panel - System Version 2.4.0
+            © {currentYear} PCHub Retail System. Phiên bản quản trị 2.4.0
           </div>
           <div className="flex items-center gap-4">
             <Link href="/admin/settings" className="hover:text-slate-600 transition-colors">
-              Documentation
+              Tài liệu hướng dẫn
             </Link>
             <span>•</span>
             <Link href="/admin/contacts" className="hover:text-slate-600 transition-colors">
-              Support
+              Hỗ trợ kỹ thuật
             </Link>
           </div>
         </footer>
       </div>
 
-      {/* Quick Search Dialog */}
+      {/* Quick Search Dialog (⌘K) */}
       <AdminQuickSearch
         isOpen={searchOpen}
         onClose={() => setSearchOpen(false)}
@@ -131,7 +134,7 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
       {/* Live Realtime Notification Pop */}
       {liveNotice && (
         <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 p-4 rounded-2xl bg-white border border-blue-500/40 shadow-2xl backdrop-blur-md max-w-sm animate-in slide-in-from-bottom-5">
-          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
             {liveNotice.type === 'order' ? (
               <ShoppingCart className="w-5 h-5 text-blue-600" />
             ) : (
@@ -144,7 +147,8 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
           </div>
           <button
             onClick={() => setLiveNotice(null)}
-            className="text-slate-400 hover:text-slate-700 p-1"
+            className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+            aria-label="Đóng thông báo"
           >
             <X className="w-4 h-4" />
           </button>

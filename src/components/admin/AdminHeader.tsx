@@ -8,9 +8,9 @@ import {
   Search,
   Bell,
   LogOut,
-  User,
   Shield,
-  ChevronDown,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -34,6 +34,7 @@ export function AdminHeader({
   const router = useRouter();
   const supabase = createClient();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -44,44 +45,75 @@ export function AdminHeader({
     router.refresh();
   };
 
-  const userName = userProfile?.full_name || 'Lê Văn Chương';
-  const userRole = userProfile?.role === 'admin' ? 'Super Admin' : userProfile?.role || 'Super Admin';
+  const userName = userProfile?.full_name || 'Quản Trị Viên';
+  const initialLetter = userName.trim().charAt(0).toUpperCase() || 'A';
+  const userRole =
+    userProfile?.role === 'admin'
+      ? 'Quản trị viên cấp cao'
+      : userProfile?.role === 'manager'
+      ? 'Quản lý cửa hàng'
+      : userProfile?.role === 'support'
+      ? 'Nhân viên hỗ trợ'
+      : 'Quản trị viên cấp cao';
+
+  const toggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 px-4 sm:px-6 flex items-center justify-between shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+    <header className="sticky top-0 z-20 h-16 bg-white border-b border-slate-200/90 px-4 sm:px-6 flex items-center justify-between shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
       {/* Left section: mobile hamburger & search bar */}
-      <div className="flex items-center gap-3 flex-1 max-w-md">
+      <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           onClick={onOpenMobileSidebar}
-          className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-          aria-label="Mở menu"
+          className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+          aria-label="Mở danh mục điều hướng"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Search Input matching screenshot */}
-        <div className="relative w-full max-w-xs sm:max-w-sm">
+        {/* Global Search Bar (Min-width 360px on desktop) */}
+        <div className="w-full max-w-[360px] sm:max-w-[420px]">
           <button
             type="button"
             onClick={onOpenSearch}
-            className="w-full flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-400 text-left transition-colors shadow-inner"
+            className="w-full flex items-center h-10 px-3.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200 rounded-xl text-xs text-slate-400 text-left transition-all shadow-inner group cursor-pointer"
           >
-            <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-            <span className="truncate flex-1">Tìm kiếm...</span>
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white rounded border border-slate-200">
+            <Search className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0" />
+            <span className="truncate flex-1 ml-2.5 text-slate-400 group-hover:text-slate-600">
+              Tìm kiếm đơn hàng, sản phẩm, báo giá...
+            </span>
+            <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-medium text-slate-400 bg-white rounded-md border border-slate-200 shadow-xs shrink-0">
               ⌘K
             </kbd>
           </button>
         </div>
       </div>
 
-      {/* Right section: notifications & user profile */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      {/* Right section: theme toggle, notifications & user profile */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Dark / Light Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+          title={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
+          aria-label="Đổi giao diện"
+        >
+          {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4" />}
+        </button>
+
         {/* Notification Bell */}
         <button
           onClick={onOpenSearch}
-          className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors relative"
-          title="Thông báo"
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors relative cursor-pointer"
+          title="Thông báo hệ thống"
+          aria-label="Xem thông báo"
         >
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
@@ -89,23 +121,16 @@ export function AdminHeader({
           )}
         </button>
 
-        {/* User Profile */}
+        {/* User Profile Dropdown */}
         <div className="relative">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-            title="Tài khoản"
+            className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Tài khoản cá nhân"
+            aria-label="Menu tài khoản"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-semibold overflow-hidden border border-slate-300">
-              {userProfile?.avatar_url ? (
-                <img
-                  src={userProfile.avatar_url}
-                  alt={userName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-4 h-4 text-slate-600" />
-              )}
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+              {initialLetter}
             </div>
           </button>
 
@@ -115,15 +140,15 @@ export function AdminHeader({
                 className="fixed inset-0 z-30"
                 onClick={() => setProfileOpen(false)}
               />
-              <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-xl py-2 z-40 text-slate-700 animate-in fade-in zoom-in-95">
-                <div className="px-4 py-2.5 border-b border-slate-100">
+              <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white border border-slate-200 shadow-2xl py-2 z-40 text-slate-700 animate-in fade-in zoom-in-95">
+                <div className="px-4 py-3 border-b border-slate-100">
                   <div className="text-xs font-bold text-slate-900 truncate">
                     {userName}
                   </div>
                   <div className="text-[11px] text-slate-500 truncate mt-0.5">
                     {userProfile?.email || 'admin@pchub.vn'}
                   </div>
-                  <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-600 border border-blue-200">
+                  <span className="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                     {userRole}
                   </span>
                 </div>
@@ -134,9 +159,9 @@ export function AdminHeader({
                       setProfileOpen(false);
                       router.push('/admin/settings');
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left cursor-pointer"
                   >
-                    <Shield className="w-3.5 h-3.5 text-slate-400" />
+                    <Shield className="w-4 h-4 text-slate-400" />
                     <span>Cài đặt hệ thống</span>
                   </button>
                 </div>
@@ -144,9 +169,9 @@ export function AdminHeader({
                 <div className="pt-1 border-t border-slate-100">
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors text-left font-medium"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors text-left font-medium cursor-pointer"
                   >
-                    <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                    <LogOut className="w-4 h-4 text-rose-500" />
                     <span>Đăng xuất</span>
                   </button>
                 </div>
