@@ -108,18 +108,17 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
           {children}
         </main>
 
-        {/* Global Admin Footer */}
-        <footer className="px-4 py-4 sm:px-6 lg:px-8 max-w-[1440px] w-full mx-auto border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+        {/* Global Admin Footer - Matches Stitch Mockup */}
+        <footer className="px-4 py-6 sm:px-6 lg:px-8 max-w-[1440px] w-full mx-auto border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
           <div>
-            © {currentYear} PCHub Retail System. Phiên bản quản trị 2.4.0
+            © 2024 PCHub Admin Panel - System Version 2.4.0
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Link href="/admin/settings" className="hover:text-slate-600 transition-colors">
-              Tài liệu hướng dẫn
+              Documentation
             </Link>
-            <span>•</span>
             <Link href="/admin/contacts" className="hover:text-slate-600 transition-colors">
-              Hỗ trợ kỹ thuật
+              Support
             </Link>
           </div>
         </footer>
