@@ -35,6 +35,11 @@ function AdminLoginForm() {
   const [timestamp, setTimestamp] = useState('');
 
   useEffect(() => {
+    // Ensure login page is always in clean light theme (remove any dark mode class)
+    try {
+      document.documentElement.classList.remove('dark');
+    } catch {}
+
     const updateTime = () => {
       const now = new Date();
       const pad = (n: number) => String(n).padStart(2, '0');
@@ -114,7 +119,8 @@ function AdminLoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Please enter username"
-              className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/20 transition-all"
+              style={{ color: '#0f172a', backgroundColor: '#ffffff', caretColor: '#0284c7' }}
+              className="directadmin-input w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/20 transition-all font-medium"
             />
           </div>
 
@@ -131,7 +137,8 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Please enter your password"
-                className="flex-1 h-full bg-transparent border-0 outline-none p-0 text-sm text-slate-800 placeholder:text-slate-400 focus:ring-0"
+                style={{ color: '#0f172a', backgroundColor: '#ffffff', caretColor: '#0284c7' }}
+                className="directadmin-input flex-1 h-full bg-transparent border-0 outline-none p-0 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0 font-medium font-mono"
               />
               <button
                 type="button"

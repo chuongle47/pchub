@@ -2758,8 +2758,25 @@ header.site-header,
   .ai-chat-modal { width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; border: none !important; }
 }
 
-/* Admin Login Autofill */
-.admin-login-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #020617 inset !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important; }
+/* DirectAdmin & Control Panel Login Inputs - High Contrast Black Text */
+.directadmin-input,
+.directadmin-input input,
+input.directadmin-input {
+  color: #0f172a !important;
+  caret-color: #0284c7 !important;
+  background-color: #ffffff !important;
+}
+
+.directadmin-input:-webkit-autofill,
+.directadmin-input:-webkit-autofill:hover,
+.directadmin-input:-webkit-autofill:focus,
+.directadmin-input:-webkit-autofill:active,
+input.directadmin-input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0284c7 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
 
 /* Scoped Admin Layout & Link Styling */
 .admin-shell a:not([class*="text-"]) {
