@@ -12,3 +12,4 @@ CREATE INDEX IF NOT EXISTS idx_orders_is_test ON public.orders(is_test);
 -- UPDATE public.orders 
 -- SET is_test = true 
 -- WHERE code LIKE '%TEST%' OR customer_name ILIKE '%test%' OR email ILIKE '%test%';
+

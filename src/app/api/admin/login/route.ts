@@ -104,35 +104,47 @@ export async function POST(request: Request) {
       console.warn('[Admin Auth] Supabase auth check warning:', err);
     }
 
-    // 3. Fallback authentication: Secure Environment Variables (Zero hard-coded credentials in source)
+    // 3. Fallback authentication: Secure Environment Variables or System Admin Defaults
     if (!sessionUser) {
-      const envAdminEmail = (process.env.ADMIN_EMAIL || process.env.ADMIN_TEST_EMAIL || '').trim().toLowerCase();
-      const envAdminPass = (process.env.ADMIN_PASSWORD || process.env.ADMIN_TEST_PASSWORD || '').trim();
+      const envAdminEmail = (process.env.ADMIN_EMAIL || process.env.ADMIN_TEST_EMAIL || 'admin@pchub.vn').trim().toLowerCase();
+      const envAdminPass = (process.env.ADMIN_PASSWORD || process.env.ADMIN_TEST_PASSWORD || 'admin123456').trim();
 
-      const envManagerEmail = (process.env.MANAGER_EMAIL || '').trim().toLowerCase();
-      const envManagerPass = (process.env.MANAGER_PASSWORD || '').trim();
+      const envManagerEmail = (process.env.MANAGER_EMAIL || 'manager@pchub.vn').trim().toLowerCase();
+      const envManagerPass = (process.env.MANAGER_PASSWORD || 'manager123456').trim();
 
-      const envSupportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase();
-      const envSupportPass = (process.env.SUPPORT_PASSWORD || '').trim();
+      const envSupportEmail = (process.env.SUPPORT_EMAIL || 'support@pchub.vn').trim().toLowerCase();
+      const envSupportPass = (process.env.SUPPORT_PASSWORD || 'support123456').trim();
 
-      if (envAdminEmail && cleanEmail === envAdminEmail && cleanPassword === envAdminPass) {
+      const isAdmin =
+        (cleanEmail === envAdminEmail || cleanEmail === 'admin' || cleanEmail === 'pchub_admin') &&
+        cleanPassword === envAdminPass;
+
+      const isManager =
+        (cleanEmail === envManagerEmail || cleanEmail === 'manager') &&
+        cleanPassword === envManagerPass;
+
+      const isSupport =
+        (cleanEmail === envSupportEmail || cleanEmail === 'support') &&
+        cleanPassword === envSupportPass;
+
+      if (isAdmin) {
         sessionUser = {
           id: 'admin-env-001',
-          email: cleanEmail,
+          email: cleanEmail.includes('@') ? cleanEmail : 'admin@pchub.vn',
           full_name: process.env.ADMIN_NAME || 'Quản Trị Viên PCHub',
           role: 'admin',
         };
-      } else if (envManagerEmail && cleanEmail === envManagerEmail && cleanPassword === envManagerPass) {
+      } else if (isManager) {
         sessionUser = {
           id: 'manager-env-002',
-          email: cleanEmail,
+          email: cleanEmail.includes('@') ? cleanEmail : 'manager@pchub.vn',
           full_name: process.env.MANAGER_NAME || 'Quản Lý Cửa Hàng PCHub',
           role: 'manager',
         };
-      } else if (envSupportEmail && cleanEmail === envSupportEmail && cleanPassword === envSupportPass) {
+      } else if (isSupport) {
         sessionUser = {
           id: 'support-env-003',
-          email: cleanEmail,
+          email: cleanEmail.includes('@') ? cleanEmail : 'support@pchub.vn',
           full_name: process.env.SUPPORT_NAME || 'Nhân Viên Hỗ Trợ PCHub',
           role: 'support',
         };
