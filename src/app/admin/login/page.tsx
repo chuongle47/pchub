@@ -28,7 +28,7 @@ function AdminLoginForm() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(
     urlError === 'forbidden'
-      ? 'Tài khoản của bạn không có quyền truy cập quản trị (chỉ dành cho nhân sự được ủy quyền).'
+      ? 'Tài khoản của bạn không có quyền truy cập quản trị (chỉ dành cho nhân sự được phân quyền).'
       : null
   );
   const [loading, setLoading] = useState(false);
@@ -60,7 +60,7 @@ function AdminLoginForm() {
   };
 
   return (
-    <div className="w-full max-w-[440px] relative z-10">
+    <div className="w-full max-w-[420px] relative z-10 mx-auto">
       {/* Brand & Security Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-xl shadow-blue-500/25 mb-4 border border-blue-400/30">
@@ -73,14 +73,14 @@ function AdminLoginForm() {
           Cổng quản trị & vận hành bán lẻ linh kiện PC
         </p>
 
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <div className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           Hệ thống bảo mật RBAC & SSL 256-bit
         </div>
       </div>
 
       {/* Main Login Card */}
-      <div className="bg-slate-900/95 backdrop-blur-2xl border border-slate-800/90 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-black/70">
+      <div className="bg-slate-900/95 backdrop-blur-2xl border border-slate-700/80 rounded-2xl p-7 sm:p-8 shadow-2xl shadow-black/80">
         {error && (
           <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
@@ -89,13 +89,13 @@ function AdminLoginForm() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* Email field */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+          {/* Email field with flex layout - icon can NEVER overlap text */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
               Email quản trị viên
             </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="flex items-center w-full h-12 rounded-xl bg-slate-950 border border-slate-700/80 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 px-3.5 gap-3 transition-all">
+              <Mail className="w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
               <input
                 type="email"
                 required
@@ -103,20 +103,21 @@ function AdminLoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@pchub.vn"
-                className="w-full h-11 sm:h-12 bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                style={{ padding: 0, margin: 0, background: 'transparent', color: '#ffffff' }}
+                className="flex-1 h-full bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-500 admin-login-input focus:ring-0 focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Password field */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          {/* Password field with flex layout and eye toggle */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Mật khẩu
               </label>
             </div>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="flex items-center w-full h-12 rounded-xl bg-slate-950 border border-slate-700/80 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 px-3.5 gap-3 transition-all">
+              <Lock className="w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
@@ -124,12 +125,14 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Nhập mật khẩu..."
-                className="w-full h-11 sm:h-12 bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-11 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+                style={{ padding: 0, margin: 0, background: 'transparent', color: '#ffffff' }}
+                className="flex-1 h-full bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-500 font-mono tracking-wider admin-login-input focus:ring-0 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                className="text-slate-400 hover:text-slate-200 transition-colors p-1 shrink-0 focus:outline-none cursor-pointer"
+                title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -144,7 +147,7 @@ function AdminLoginForm() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-blue-500/30 focus:ring-offset-0 cursor-pointer"
+                className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
               />
               <span className="text-xs text-slate-400 hover:text-slate-300">
                 Ghi nhớ đăng nhập
@@ -180,7 +183,7 @@ function AdminLoginForm() {
         </form>
 
         {/* Return to store link */}
-        <div className="mt-7 pt-5 border-t border-slate-800/80 text-center">
+        <div className="mt-6 pt-5 border-t border-slate-800 text-center">
           <Link
             href="/"
             className="text-xs text-slate-400 hover:text-slate-200 transition-colors inline-flex items-center gap-1.5 group"
@@ -193,7 +196,7 @@ function AdminLoginForm() {
 
       {/* Security Disclaimer */}
       <div className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500 mt-6">
-        <Shield className="w-3.5 h-3.5 text-slate-600" />
+        <Shield className="w-3.5 h-3.5 text-slate-600 shrink-0" />
         <span>© 2026 PCHub Management Portal. Truy cập chỉ dành cho nhân sự được phân quyền.</span>
       </div>
     </div>
@@ -202,11 +205,11 @@ function AdminLoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0e17] text-slate-100 p-4 relative overflow-hidden selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen flex items-center justify-center bg-[#070b14] text-slate-100 p-4 relative overflow-hidden selection:bg-blue-600 selection:text-white">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-blue-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[150px] pointer-events-none" />
 
       <Suspense
         fallback={

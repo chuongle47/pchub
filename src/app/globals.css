@@ -2757,3 +2757,6 @@ header.site-header,
   .ai-chat-backdrop { padding: 0 !important; }
   .ai-chat-modal { width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; border: none !important; }
 }
+
+/* Admin Login Autofill */
+.admin-login-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #020617 inset !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important; }
