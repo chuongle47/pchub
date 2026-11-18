@@ -11,13 +11,9 @@ export default function StorefrontShell({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
 
-  // If inside Admin portal, render clean dark shell without storefront chrome
+  // If inside Admin portal, render directly without storefront chrome and without forcing .dark class
   if (isAdmin) {
-    return (
-      <div className="dark min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
-        {children}
-      </div>
-    );
+    return <>{children}</>;
   }
 
   // Otherwise render storefront chrome with Header, Footer, and floating widgets

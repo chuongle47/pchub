@@ -231,10 +231,18 @@ a:hover {
 input, textarea, select {
   color: #0f172a;
 }
-.dark input:not(.ai-chat-input):not([style*="color"]), 
-.dark textarea:not([style*="color"]), 
-.dark select:not([style*="color"]) {
+.dark :not(.admin-shell) input:not(.ai-chat-input):not([style*="color"]), 
+.dark :not(.admin-shell) textarea:not([style*="color"]), 
+.dark :not(.admin-shell) select:not([style*="color"]) {
   color: #f8fafc;
+}
+
+/* Scoped Admin Layout: Form fields are ALWAYS visible in high-contrast #0f172a */
+.admin-shell input:not([class*="text-white"]):not([class*="text-slate-100"]):not([type="checkbox"]):not([type="radio"]),
+.admin-shell textarea:not([class*="text-white"]):not([class*="text-slate-100"]),
+.admin-shell select:not([class*="text-white"]):not([class*="text-slate-100"]) {
+  color: #0f172a !important;
+  caret-color: #2563eb !important;
 }
 
 .ai-chat-input {
@@ -2784,5 +2792,12 @@ input.directadmin-input:-webkit-autofill {
 }
 .admin-sidebar a {
   color: inherit;
+}
+
+.admin-shell input:-webkit-autofill,
+.admin-shell textarea:-webkit-autofill,
+.admin-shell select:-webkit-autofill {
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #2563eb !important;
 }
 

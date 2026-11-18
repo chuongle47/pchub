@@ -31,6 +31,11 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
   // If on /admin/login, render without sidebar & header
   const isLoginPage = pathname === '/admin/login';
 
+  // Ensure .dark class from storefront does not leak into Admin Dashboard
+  useEffect(() => {
+    document.documentElement.classList.remove('dark');
+  }, []);
+
   // Listen to Supabase Realtime channel for new Orders and Quotes
   useEffect(() => {
     if (isLoginPage) return;

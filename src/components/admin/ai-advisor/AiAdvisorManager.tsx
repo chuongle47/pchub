@@ -192,6 +192,7 @@ export function AiAdvisorManager({ initialSettings, initialConversations }: Prop
                   value={systemPrompt}
                   onChange={(e) => setSystemPrompt(e.target.value)}
                   placeholder="Nhập hướng dẫn chi tiết cho Gemini AI..."
+                  style={{ color: '#0f172a', backgroundColor: '#f8fafc' }}
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 font-mono leading-relaxed focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                 />
               </div>
@@ -225,6 +226,7 @@ export function AiAdvisorManager({ initialSettings, initialConversations }: Prop
                   <select
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
+                    style={{ color: '#0f172a', backgroundColor: '#f8fafc' }}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="gemini-1.5-flash">Google Gemini 1.5 Flash (Tốc độ cao, tối ưu chi phí)</option>
@@ -241,6 +243,7 @@ export function AiAdvisorManager({ initialSettings, initialConversations }: Prop
                     onChange={(e) => setDailyTokenLimit(Number(e.target.value))}
                     min={10000}
                     step={50000}
+                    style={{ color: '#0f172a', backgroundColor: '#f8fafc' }}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
                   <p className="text-[11px] text-slate-400">
