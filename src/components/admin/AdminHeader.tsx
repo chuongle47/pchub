@@ -78,18 +78,18 @@ export function AdminHeader({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Global Search Bar - Matches Stitch Mockup */}
-        <div className="w-full max-w-[340px]">
+        {/* Global Search Bar (Min-width 360px on desktop) */}
+        <div className="w-full max-w-[360px] sm:max-w-[420px]">
           <button
             type="button"
             onClick={onOpenSearch}
-            className="w-full flex items-center h-9 px-3.5 bg-slate-50/80 hover:bg-slate-100 border border-slate-200/90 rounded-lg text-xs text-slate-400 text-left transition-all group cursor-pointer"
+            className="w-full flex items-center h-10 px-3.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200 rounded-xl text-xs text-slate-400 text-left transition-all shadow-inner group cursor-pointer"
           >
-            <Search className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
+            <Search className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0" />
             <span className="truncate flex-1 ml-2.5 text-slate-400 group-hover:text-slate-600">
-              Tìm kiếm...
+              Tìm kiếm đơn hàng, sản phẩm, báo giá...
             </span>
-            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white rounded border border-slate-200 shrink-0">
+            <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-medium text-slate-400 bg-white rounded-md border border-slate-200 shadow-xs shrink-0">
               ⌘K
             </kbd>
           </button>
