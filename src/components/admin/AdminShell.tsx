@@ -28,6 +28,7 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
   } | null>(null);
 
   const supabase = createClient();
+  const currentYear = new Date().getFullYear();
 
   // If on /admin/login, render without sidebar & header
   const isLoginPage = pathname === '/admin/login';
@@ -107,22 +108,22 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
             userProfile={userProfile}
           />
 
-          {/* Main Content Area */}
-          <main className="flex-1 p-6 sm:p-8 max-w-[1400px] w-full mx-auto min-w-0 relative z-0 overflow-x-clip">
+          {/* Main Content Area - Normalized Padding & Max-Width */}
+          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1440px] w-full mx-auto min-w-0 relative z-0 overflow-x-clip">
             {children}
           </main>
 
-          {/* Footer matching Stitch design */}
-          <footer className="px-6 sm:px-8 py-5 border-t border-slate-200/80 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          {/* Footer - Dynamic Year & Responsive */}
+          <footer className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-t border-slate-200/80 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div>
-              © 2024 PCHub Admin Panel - System Version 2.4.0
+              © {currentYear} PCHub Admin Panel — Hệ thống Quản trị v2.4.0
             </div>
             <div className="flex items-center gap-6 text-slate-500">
-              <Link href="/admin/settings" className="hover:text-slate-900 transition-colors">
-                Documentation
+              <Link href="/admin/settings" className="hover:text-blue-600 transition-colors">
+                Tài liệu hướng dẫn
               </Link>
-              <Link href="/admin/contacts" className="hover:text-slate-900 transition-colors">
-                Support
+              <Link href="/admin/contacts" className="hover:text-blue-600 transition-colors">
+                Hỗ trợ kỹ thuật
               </Link>
             </div>
           </footer>
@@ -164,8 +165,10 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setLiveNotice(null)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                aria-label="Đóng thông báo"
               >
                 <X className="w-4 h-4" />
               </button>
