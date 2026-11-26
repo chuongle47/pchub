@@ -152,23 +152,22 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Row 1: 4 Modern KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      {/* Row 1: 4 Clean KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Doanh thu hôm nay */}
-        <div className="relative p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition-all duration-200 group overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Doanh thu hôm nay</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center transition-transform group-hover:scale-110">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <CreditCard className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900 tracking-tight whitespace-nowrap">
+            <div className="text-2xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
               84.320.000 ₫
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
                 <TrendingUp className="w-3 h-3" />
                 +12%
               </span>
@@ -178,18 +177,17 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Card 2: Đơn hàng hôm nay */}
-        <div className="relative p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition-all duration-200 group overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đơn hàng mới</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
+            <div className="w-8 h-8 rounded-xl bg-slate-50 text-slate-700 flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900 tracking-tight">47 <span className="text-sm font-normal text-slate-400">đơn</span></div>
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">47 <span className="text-sm font-normal text-slate-400">đơn</span></div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
                 <TrendingUp className="w-3 h-3" />
                 +8 đơn
               </span>
@@ -199,18 +197,17 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Card 3: Tỷ lệ chuyển đổi */}
-        <div className="relative p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition-all duration-200 group overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tỷ lệ chuyển đổi</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center transition-transform group-hover:scale-110">
+            <div className="w-8 h-8 rounded-xl bg-slate-50 text-slate-700 flex items-center justify-center">
               <Percent className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900 tracking-tight">3.2%</div>
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">3.2%</div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
                 <TrendingUp className="w-3 h-3" />
                 +0.4%
               </span>
@@ -219,25 +216,24 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Card 4: AI Chat Sessions */}
-        <div className="relative p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition-all duration-200 group overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-indigo-500" />
+        {/* Card 4: AI Tư Vấn PC */}
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Tư Vấn PC</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center transition-transform group-hover:scale-110">
+            <div className="w-8 h-8 rounded-xl bg-slate-50 text-slate-700 flex items-center justify-center">
               <Bot className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="text-2xl font-black text-slate-900 tracking-tight">1.204</span>
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">1.204</span>
               <span className="text-slate-300 mx-0.5">/</span>
-              <span className="text-xl font-bold text-indigo-600 tracking-tight">142</span>
+              <span className="text-xl font-semibold text-blue-600 tracking-tight">142</span>
               <span className="text-xs font-medium text-slate-500 ml-0.5">đơn chốt</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-                <Sparkles className="w-3 h-3 text-purple-600" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
+                <Sparkles className="w-3 h-3 text-blue-600" />
                 Chốt: {SAMPLE_AI_STATS.conversion_rate}
               </span>
               <span className="text-[11px] text-slate-400">Gemini 2.5</span>
@@ -257,7 +253,7 @@ export default async function AdminDashboardPage() {
                 <p className="text-xs text-slate-500 mt-0.5">Biểu đồ biến động doanh số theo các mốc thời gian trong tháng</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
                   Tháng hiện tại
                 </span>
                 <button
@@ -270,41 +266,25 @@ export default async function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Quick Metrics Banner inside Chart */}
-            <div className="grid grid-cols-3 gap-3 p-3 mb-4 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-              <div>
-                <span className="text-slate-400 text-[11px] block">Tổng doanh thu</span>
-                <span className="font-bold text-slate-900 text-sm">1.482.000.000 ₫</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[11px] block">Đơn trung bình</span>
-                <span className="font-bold text-slate-900 text-sm">31.500.000 ₫</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[11px] block">Ngày cao điểm</span>
-                <span className="font-bold text-blue-600 text-sm">115tr (29/10)</span>
-              </div>
-            </div>
-
             {/* SVG Wave Chart */}
             <div className="relative w-full h-56 pt-2">
               {/* Y Axis Grid & Labels */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-slate-400 pr-2">
-                <div className="flex items-center justify-between border-b border-slate-100/90 pb-1">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
                   <span>150tr</span>
-                  <div className="flex-1 border-b border-dashed border-slate-200/60 ml-3" />
+                  <div className="flex-1 border-b border-dashed border-slate-100 ml-3" />
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-100/90 pb-1">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
                   <span>100tr</span>
-                  <div className="flex-1 border-b border-dashed border-slate-200/60 ml-3" />
+                  <div className="flex-1 border-b border-dashed border-slate-100 ml-3" />
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-100/90 pb-1">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
                   <span>50tr</span>
-                  <div className="flex-1 border-b border-dashed border-slate-200/60 ml-3" />
+                  <div className="flex-1 border-b border-dashed border-slate-100 ml-3" />
                 </div>
                 <div className="flex items-center justify-between pb-1">
                   <span>0</span>
-                  <div className="flex-1 border-b border-dashed border-slate-200/60 ml-3" />
+                  <div className="flex-1 border-b border-slate-100 ml-3" />
                 </div>
               </div>
 
@@ -316,9 +296,8 @@ export default async function AdminDashboardPage() {
               >
                 <defs>
                   <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.28" />
-                    <stop offset="70%" stopColor="#3b82f6" stopOpacity="0.08" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
                   </linearGradient>
                 </defs>
 
@@ -330,15 +309,15 @@ export default async function AdminDashboardPage() {
                   d={chartPath}
                   fill="none"
                   stroke="#2563eb"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
 
                 {/* Milestone Points */}
-                <circle cx="130" cy="90" r="4" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-                <circle cx="245" cy="75" r="4" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-                <circle cx="485" cy="58" r="5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" className="animate-pulse" />
+                <circle cx="130" cy="90" r="3.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+                <circle cx="245" cy="75" r="3.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+                <circle cx="485" cy="58" r="4.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
               </svg>
             </div>
 
@@ -370,44 +349,31 @@ export default async function AdminDashboardPage() {
             </div>
 
             <div className="space-y-4">
-              {SAMPLE_TOP_PRODUCTS.map((prod, idx) => {
-                const rankColor =
-                  idx === 0
-                    ? 'bg-amber-100 text-amber-800 border-amber-300'
-                    : idx === 1
-                    ? 'bg-slate-100 text-slate-700 border-slate-300'
-                    : idx === 2
-                    ? 'bg-orange-100 text-orange-800 border-orange-300'
-                    : 'bg-slate-50 text-slate-500 border-slate-200';
-
-                return (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${rankColor} shrink-0`}
-                        >
-                          {idx + 1}
-                        </span>
-                        <span className="font-semibold text-slate-800 truncate" title={prod.name}>
-                          {prod.name}
-                        </span>
-                      </div>
-                      <div className="text-right flex items-center gap-2 shrink-0">
-                        <span className="font-bold text-slate-900">{prod.revenue_text}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">{prod.qty} SL</span>
-                      </div>
+              {SAMPLE_TOP_PRODUCTS.map((prod, idx) => (
+                <div key={idx} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-600 shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span className="font-medium text-slate-800 truncate" title={prod.name}>
+                        {prod.name}
+                      </span>
                     </div>
-                    {/* Progress bar */}
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500"
-                        style={{ width: `${prod.percent}%` }}
-                      />
+                    <div className="text-right flex items-center gap-2 shrink-0">
+                      <span className="font-semibold text-slate-900">{prod.revenue_text}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{prod.qty} SL</span>
                     </div>
                   </div>
-                );
-              })}
+                  {/* Subtle Progress bar */}
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-slate-700 rounded-full"
+                      style={{ width: `${prod.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -423,10 +389,10 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Row 3: Recent Orders, AI Chat Performance, Low Stock Alert */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Card 1: Đơn hàng gần đây */}
-        <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+      {/* Row 3: Recent Orders (2 cols) & Low Stock Alert (1 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Card 1: Đơn hàng gần đây (Span 2 cols) */}
+        <div className="lg:col-span-2 p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -444,9 +410,9 @@ export default async function AdminDashboardPage() {
             {/* Orders Table */}
             <div className="divide-y divide-slate-100">
               <div className="grid grid-cols-12 text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-2.5">
-                <div className="col-span-6">Mã / Khách hàng</div>
-                <div className="col-span-3 text-right">Tổng</div>
-                <div className="col-span-3 text-right">Trạng thái</div>
+                <div className="col-span-5">Mã / Khách hàng</div>
+                <div className="col-span-3 text-right">Tổng tiền</div>
+                <div className="col-span-4 text-right">Trạng thái</div>
               </div>
 
               {recentOrders.map((ord) => {
@@ -467,23 +433,23 @@ export default async function AdminDashboardPage() {
 
                 return (
                   <div key={ord.id} className="grid grid-cols-12 items-center py-2.5 text-xs hover:bg-slate-50/70 -mx-2 px-2 rounded-xl transition-colors">
-                    <div className="col-span-6 pr-2">
+                    <div className="col-span-5 pr-2">
                       <Link
                         href={`/admin/orders`}
-                        className="font-bold text-slate-900 hover:text-blue-600 block truncate transition-colors"
+                        className="font-semibold text-slate-900 hover:text-blue-600 block truncate transition-colors"
                       >
                         {ord.code}
                       </Link>
                       <div className="text-[11px] text-slate-500 truncate mt-0.5">{ord.customer_name}</div>
                     </div>
 
-                    <div className="col-span-3 text-right font-bold text-slate-900">
+                    <div className="col-span-3 text-right font-semibold text-slate-900">
                       {ord.display_total}
                     </div>
 
-                    <div className="col-span-3 text-right">
+                    <div className="col-span-4 text-right">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeBg} whitespace-nowrap shadow-2xs`}
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${badgeBg} whitespace-nowrap`}
                       >
                         {badgeLabel}
                       </span>
@@ -508,123 +474,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Card 2: Hiệu suất AI Chat */}
-        <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">Hiệu suất AI Chat</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Tỷ lệ xử lý tự động của bot</p>
-              </div>
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200/80 px-2.5 py-0.5 rounded-full">
-                <Sparkles className="w-3 h-3 text-purple-600" />
-                Gemini 2.5
-              </span>
-            </div>
-
-            {/* Donut Chart with Center Robot Icon */}
-            <div className="relative w-40 h-40 mx-auto my-3 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                {/* Background Ring */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  fill="transparent"
-                  stroke="#f1f5f9"
-                  strokeWidth="10"
-                />
-
-                {/* Unanswered (13%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  fill="transparent"
-                  stroke="#cbd5e1"
-                  strokeWidth="10"
-                  strokeDasharray={`${2 * Math.PI * 38}`}
-                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - 0.13)}`}
-                  transform="rotate(313 50 50)"
-                />
-
-                {/* Escalated (19%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  fill="transparent"
-                  stroke="#8b5cf6"
-                  strokeWidth="10"
-                  strokeDasharray={`${2 * Math.PI * 38}`}
-                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - 0.19)}`}
-                  transform="rotate(245 50 50)"
-                />
-
-                {/* Resolved (68%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  fill="transparent"
-                  stroke="#2563eb"
-                  strokeWidth="10"
-                  strokeDasharray={`${2 * Math.PI * 38}`}
-                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - 0.68)}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-
-              {/* Center Content: Robot Icon + 68% */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
-                  <Bot className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-xl font-extrabold text-slate-900 tracking-tight mt-1">68%</span>
-                <span className="text-[10px] text-slate-400 font-medium">Tự động giải quyết</span>
-              </div>
-            </div>
-
-            {/* Legend below donut */}
-            <div className="space-y-2 mt-4 px-2">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 flex-shrink-0" />
-                  <span className="text-slate-600 font-medium">Resolved (Tự giải quyết)</span>
-                </div>
-                <span className="font-bold text-slate-900">68%</span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 flex-shrink-0" />
-                  <span className="text-slate-600 font-medium">Escalated (Chuyển nhân viên)</span>
-                </div>
-                <span className="font-bold text-slate-900">19%</span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-300 flex-shrink-0" />
-                  <span className="text-slate-600 font-medium">Unanswered (Bỏ lỡ)</span>
-                </div>
-                <span className="font-bold text-slate-900">13%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 mt-3 text-center">
-            <Link
-              href="/admin/ai-advisor"
-              className="text-xs text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center gap-1"
-            >
-              <span>Cấu hình kịch bản AI Advisor</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Card 3: Cảnh báo tồn kho */}
+        {/* Card 2: Cảnh báo tồn kho (1 col) */}
         <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -634,7 +484,7 @@ export default async function AdminDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-900 tracking-tight">Cảnh báo tồn kho</h2>
-                  <p className="text-xs text-slate-500">Linh kiện sắp hết hàng</p>
+                  <p className="text-xs text-slate-500">Linh kiện sắp hết</p>
                 </div>
               </div>
               <Link
@@ -646,22 +496,21 @@ export default async function AdminDashboardPage() {
             </div>
 
             {/* Low Stock List */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {lowStockList.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 transition-colors text-xs gap-2"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 transition-colors text-xs gap-2"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-slate-800 truncate" title={item.name}>
                       {item.short_name}
                     </div>
                     <div
-                      className={`text-[11px] font-bold mt-0.5 flex items-center gap-1 ${
+                      className={`text-[11px] font-medium mt-0.5 ${
                         item.stock === 0 ? 'text-rose-600' : 'text-amber-600'
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${item.stock === 0 ? 'bg-rose-500' : 'bg-amber-500'}`} />
                       {item.stock === 0 ? 'Hết hàng' : `Còn lại: ${item.stock} cái`}
                     </div>
                   </div>

@@ -231,8 +231,8 @@ export function AdminSidebar({
       </div>
 
       {/* Navigation List */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800">
-        {navGroups.map((group, groupIdx) => {
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-thin scrollbar-thumb-slate-800">
+        {navGroups.map((group) => {
           const Icon = group.icon;
           const isDirect = Boolean(group.href);
           const isActiveDirect = isDirect && (group.exact ? pathname === group.href : pathname.startsWith(group.href!));
@@ -240,175 +240,114 @@ export function AdminSidebar({
           const isOpen = Boolean(openGroups[group.id]);
           const isChildActive = hasChildren && group.children!.some((c) => pathname.startsWith(c.href));
 
-          // Category divider headers
-          let sectionLabel = null;
-          if (!collapsed) {
-            if (group.id === 'products') sectionLabel = 'QUẢN LÝ BÁN HÀNG';
-            if (group.id === 'customers') sectionLabel = 'KHÁCH HÀNG & MARKETING';
-            if (group.id === 'content-ai') sectionLabel = 'CÔNG CỤ & HỆ THỐNG';
-          }
-
           if (isDirect) {
             return (
-              <React.Fragment key={group.id}>
-                {sectionLabel && (
-                  <div className="pt-3 pb-1 px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
-                    {sectionLabel}
-                  </div>
-                )}
-                <Link
-                  href={group.href!}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center h-10 px-3 rounded-xl text-xs font-medium transition-all group relative ${
-                    isActiveDirect
-                      ? 'bg-gradient-to-r from-blue-600/25 to-indigo-600/10 text-white font-semibold shadow-sm border-l-[3px] border-blue-500'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+              <Link
+                key={group.id}
+                href={group.href!}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center h-10 px-3 rounded-xl text-xs font-medium transition-all group relative ${
+                  isActiveDirect
+                    ? 'bg-blue-600/20 text-white font-semibold border-l-[3px] border-blue-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                }`}
+                title={collapsed ? group.name : undefined}
+              >
+                <Icon
+                  className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isActiveDirect ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
                   }`}
-                  title={collapsed ? group.name : undefined}
-                >
-                  <Icon
-                    className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isActiveDirect ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
-                    }`}
-                  />
-                  {!collapsed && (
-                    <span className="ml-3 truncate flex-1">{group.name}</span>
-                  )}
-                  {!collapsed && group.badge && group.badge > 0 && (
-                    <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/25 text-blue-300 border border-blue-500/30">
-                      {group.badge}
-                    </span>
-                  )}
-                </Link>
-              </React.Fragment>
+                />
+                {!collapsed && (
+                  <span className="ml-3 truncate flex-1">{group.name}</span>
+                )}
+                {!collapsed && group.badge && group.badge > 0 && (
+                  <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/25 text-blue-300 border border-blue-500/30">
+                    {group.badge}
+                  </span>
+                )}
+              </Link>
             );
           }
 
           return (
-            <React.Fragment key={group.id}>
-              {sectionLabel && (
-                <div className="pt-3 pb-1 px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
-                  {sectionLabel}
+            <div key={group.id} className="space-y-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (collapsed) {
+                    handleToggleCollapse(false);
+                    setOpenGroups((prev) => ({ ...prev, [group.id]: true }));
+                  } else {
+                    toggleGroup(group.id);
+                  }
+                }}
+                className={`w-full flex items-center h-10 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer group ${
+                  isChildActive
+                    ? 'text-slate-100 bg-slate-800/60 font-semibold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+                title={collapsed ? group.name : undefined}
+              >
+                <Icon
+                  className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isChildActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-300'
+                  }`}
+                />
+                {!collapsed && (
+                  <>
+                    <span className="ml-3 truncate flex-1 text-left">{group.name}</span>
+                    {group.badge && group.badge > 0 && (
+                      <span className="mr-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/25 text-blue-300 border border-blue-500/30">
+                        {group.badge}
+                      </span>
+                    )}
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-slate-300' : ''
+                      }`}
+                    />
+                  </>
+                )}
+              </button>
+
+              {!collapsed && isOpen && group.children && (
+                <div className="pl-6 pr-1 py-0.5 space-y-0.5 border-l border-slate-800/80 ml-5">
+                  {group.children.map((sub) => {
+                    const SubIcon = sub.icon;
+                    const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/');
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center h-8 px-2.5 rounded-lg text-xs transition-all ${
+                          isSubActive
+                            ? 'bg-blue-600/20 text-blue-400 font-semibold border-l-2 border-blue-500'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                        }`}
+                      >
+                        {SubIcon && (
+                          <SubIcon
+                            className={`w-3.5 h-3.5 mr-2 shrink-0 ${
+                              isSubActive ? 'text-blue-400' : 'text-slate-500'
+                            }`}
+                          />
+                        )}
+                        <span className="truncate flex-1">{sub.name}</span>
+                        {sub.badge && sub.badge > 0 && (
+                          <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-500/25 text-blue-300 border border-blue-500/30">
+                            {sub.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (collapsed) {
-                      handleToggleCollapse(false);
-                      setOpenGroups((prev) => ({ ...prev, [group.id]: true }));
-                    } else {
-                      toggleGroup(group.id);
-                    }
-                  }}
-                  className={`w-full flex items-center h-10 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer group ${
-                    isChildActive
-                      ? 'text-slate-100 bg-slate-800/60 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-                  }`}
-                  title={collapsed ? group.name : undefined}
-                >
-                  <Icon
-                    className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isChildActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-300'
-                    }`}
-                  />
-                  {!collapsed && (
-                    <>
-                      <span className="ml-3 truncate flex-1 text-left">{group.name}</span>
-                      {group.badge && group.badge > 0 && (
-                        <span className="mr-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/25 text-blue-300 border border-blue-500/30">
-                          {group.badge}
-                        </span>
-                      )}
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
-                          isOpen ? 'rotate-180 text-slate-300' : ''
-                        }`}
-                      />
-                    </>
-                  )}
-                </button>
-
-                {!collapsed && isOpen && group.children && (
-                  <div className="pl-6 pr-1 py-1 space-y-1 border-l border-slate-800/80 ml-5">
-                    {group.children.map((sub) => {
-                      const SubIcon = sub.icon;
-                      const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/');
-                      return (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          onClick={() => setMobileOpen(false)}
-                          className={`flex items-center h-8 px-2.5 rounded-lg text-xs transition-all ${
-                            isSubActive
-                              ? 'bg-blue-600/20 text-blue-400 font-semibold border-l-2 border-blue-500'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                          }`}
-                        >
-                          {SubIcon && (
-                            <SubIcon
-                              className={`w-3.5 h-3.5 mr-2 shrink-0 ${
-                                isSubActive ? 'text-blue-400' : 'text-slate-500'
-                              }`}
-                            />
-                          )}
-                          <span className="truncate flex-1">{sub.name}</span>
-                          {sub.badge && sub.badge > 0 && (
-                            <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-500/25 text-blue-300 border border-blue-500/30">
-                              {sub.badge}
-                            </span>
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </React.Fragment>
+            </div>
           );
         })}
-      </div>
-
-      {/* Quick Storefront Link */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#0a0f1d]/30">
-        <Link
-          href="/"
-          target="_blank"
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/70 border border-slate-800/60 hover:border-slate-700 transition-all group shadow-2xs"
-        >
-          <Store className="w-4 h-4 text-slate-400 group-hover:text-blue-400 shrink-0 transition-colors" />
-          {!collapsed && (
-            <>
-              <span className="truncate flex-1 font-medium">Xem Cửa Hàng PCHub</span>
-              <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-colors" />
-            </>
-          )}
-        </Link>
-      </div>
-
-      {/* Admin User Footer Card */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-blue-600/20 ring-1 ring-white/10">
-              {initialLetter}
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0a0f1d]" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-slate-200 truncate">
-                {displayName}
-              </span>
-              <span className="text-[10px] text-slate-400 truncate flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                {displayRole}
-              </span>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

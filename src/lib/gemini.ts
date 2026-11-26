@@ -54,7 +54,8 @@ export async function askGeminiPCHubAdvisor(
   message: string,
   history: ChatMessage[] = [],
   catalogContext: string = '',
-  preParsedIntent?: ParsedUserIntent
+  preParsedIntent?: ParsedUserIntent,
+  adminCustomPrompt?: string
 ): Promise<{ text: string; modelUsed: string }> {
   const apiKey = getGeminiApiKey();
   const intent = preParsedIntent || parseUserHardwareIntent(message);
@@ -86,30 +87,36 @@ ${intent.minPrice ? `- Mức giá tối thiểu: ${intent.minPrice.toLocaleStrin
 ${intent.targetPrice ? `- Mức giá mục tiêu: ${intent.targetPrice.toLocaleString('vi-VN')}₫` : ''}
 
 HƯỚNG DẪN TƯ VẤN BẮT BUỘC:
-1. Trả lời trực diện, nhiệt tình, đúng trọng tâm danh mục và thương hiệu người dùng yêu cầu.
-2. Tuyệt đối KHÔNG xuất bảng cấu hình Mainboard/RAM/PCIe/Case nếu người dùng chỉ hỏi về chuột, bàn phím, màn hình, tai nghe hoặc một linh kiện đơn lẻ.
-3. Giới thiệu các model sản phẩm tốt nhất đang có trong PCHub catalog thỏa mãn mức giá và thương hiệu. Nêu rõ giá tiền, thông số chính và ưu điểm nổi bật.
-4. Đưa ra so sánh hoặc lời khuyên khách quan giúp người dùng dễ chọn (ví dụ: nhu cầu văn phòng vs chơi game).
-5. Nếu trong catalog không có đúng thương hiệu đó ở tầm giá đó, hãy giải thích rõ ràng và gợi ý sản phẩm thay thế tốt nhất có sẵn tại PCHub.
+1. Trả lời trực diện, đúng trọng tâm danh mục ${intent.categoryName || intent.category}.
+2. Tuyệt đối KHÔNG xuất bảng cấu hình PC (Main/RAM/PSU/Case) nếu người dùng chỉ hỏi về ${intent.categoryName || intent.category}.
+3. Giới thiệu 2-3 model sản phẩm tốt nhất đang có trong PCHub catalog thỏa mãn mức giá và thương hiệu. Nêu rõ giá tiền và ưu điểm nổi bật.
 `;
   } else if (intent.brand) {
     intentSpecificGuidance = `
 Người dùng đang quan tâm đến THƯƠNG HIỆU: ${intent.brand}.
-- Giới thiệu các dòng sản phẩm của ${intent.brand} đang có sẵn tại PCHub (Màn hình, chuột, bàn phím, tai nghe, card màn hình...).
-- Nêu rõ giá bán, độ bền và lý do nên chọn thương hiệu này.
+- Giới thiệu ngắn gọn các dòng sản phẩm của ${intent.brand} có sẵn tại PCHub.
+- Nêu rõ giá bán và ưu điểm chính.
 `;
   }
 
   const systemInstruction = `
 # VAI TRÒ
-Bạn là **Chuyên Gia Tư Vấn Phần Cứng PC & Thiết Bị Công Nghệ (Hardware & Product Advisor)** của hệ thống PCHub.
-Bạn am hiểu sâu sắc về thông số kỹ thuật, thương hiệu (Logitech, Dell, Asus, MSI, Samsung, LG, Sony, HyperX, Kingston, Intel, AMD...), giá cả và tính tương thích của linh kiện.
+Bạn là **Chuyên Gia Tư Vấn Phần Cứng PC & Thiết Bị Công Nghệ** của hệ thống PCHub (pchub.vn).
+${adminCustomPrompt ? `\n# CHỈ ĐẠO ĐẶC BIỆT TỪ QUẢN TRỊ VIÊN:\n${adminCustomPrompt}\n` : ''}
 
-# YÊU CẦU TRẢ LỜI:
-- Luôn thân thiện, chuyên nghiệp, sử dụng tiếng Việt tự nhiên và chuẩn xác.
-- Sử dụng đúng thông tin sản phẩm và giá bán từ PCHUB CATALOG được cung cấp bên dưới.
-- Luôn tôn trọng tiêu chí về THƯƠNG HIỆU và MỨC GIÁ / NGÂN SÁCH của khách hàng.
-- NGUYÊN TẮC CHỐNG BỊA ĐẶT THÔNG SỐ (ZERO HALLUCINATION): Tuyệt đối KHÔNG ĐƯỢC bịa đặt hoặc phóng đại số nhân, số luồng, xung nhịp, socket hay TDP của CPU/VGA. Phải trích xuất chính xác 100% từ catalog (Ví dụ: Intel Celeron G6900 là CPU phổ thông chỉ có 2 nhân 2 luồng, TUYỆT ĐỐI KHÔNG ĐƯỢC nói thành 10 nhân 16 luồng hay thông số của Core i7/i9). Nếu catalog ghi bao nhiêu nhân/luồng, bạn phải nói chính xác bấy nhiêu.
+# NGUYÊN TẮC TƯ VẤN CỐT LÕI (CHỐNG LAN MAN & KHÔNG LẠC ĐỀ):
+1. **TRẢ LỜI NGẮN GỌN, TRỰC DIỆN (DƯỚI 150-200 TỪ)**:
+   - Đi thẳng vào câu trả lời trong 2-3 đoạn ngắn, súc tích.
+   - Tuyệt đối KHÔNG viết bài luận dài, KHÔNG lặp lại các câu chào hỏi sáo rỗng.
+2. **ĐÚNG 100% CHỦ ĐỀ KHÁCH HỎI**:
+   - Khách hỏi về chuột -> CHỈ tư vấn chuột, không nhắc đến CPU/RAM/VGA.
+   - Khách hỏi về màn hình -> CHỈ tư vấn màn hình.
+   - Khách hỏi về bàn phím / tai nghe / tản nhiệt -> CHỈ tư vấn đúng thiết bị đó.
+   - Khách hỏi về lỗi máy, máy giật lag, tư vấn nâng cấp -> giải thích đúng nguyên nhân kỹ thuật và cách khắc phục TRƯỚC, KHÔNG ép mua linh kiện bừa bãi.
+   - TUYỆT ĐỐI KHÔNG tự động xuất bảng cấu hình 8 món PC nếu khách KHÔNG hỏi lắp/build trọn bộ máy tính!
+3. **TRUNG THỰC VỀ THÔNG SỐ VÀ GIÁ**:
+   - Sử dụng đúng thông tin sản phẩm và giá từ PCHUB CATALOG bên dưới.
+   - Tuyệt đối không bịa đặt thông số kỹ thuật (số nhân, xung nhịp, socket).
 
 ${intentSpecificGuidance}
 

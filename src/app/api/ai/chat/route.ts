@@ -4,6 +4,7 @@ import { getProducts } from '@/lib/db';
 import { getProductImage } from '@/lib/product-ui';
 import { parseUserHardwareIntent, KNOWN_BRANDS_CONFIG } from '@/lib/ai-query-parser';
 import { matchPresetKeyFromText, AI_BUILD_PRESETS, balanceSystemComponents } from '@/lib/buildPresets';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,27 @@ export async function POST(request: NextRequest) {
 
     if (!message || typeof message !== 'string' || !message.trim()) {
       return NextResponse.json({ error: 'Nội dung câu hỏi không được để trống' }, { status: 400 });
+    }
+
+    // Load AI Settings from Supabase if configured by Admin
+    let adminCustomPrompt = '';
+    let isAiEnabled = true;
+    try {
+      const supabase = await createClient();
+      const { data: aiSettings } = await supabase.from('ai_settings').select('*').eq('id', 1).maybeSingle();
+      if (aiSettings) {
+        if (aiSettings.enabled === false) isAiEnabled = false;
+        if (aiSettings.system_prompt) adminCustomPrompt = aiSettings.system_prompt;
+      }
+    } catch {}
+
+    if (!isAiEnabled) {
+      return NextResponse.json({
+        reply: 'Trợ lý AI PCHub hiện đang được bảo trì để nâng cấp dữ liệu. Quý khách vui lòng liên hệ hotline hoặc nhân viên tư vấn để được hỗ trợ trực tiếp.',
+        modelUsed: 'system',
+        recommendedProducts: [],
+        timestamp: new Date().toISOString()
+      });
     }
 
     const currentIntent = parseUserHardwareIntent(message.trim());
@@ -329,6 +351,7 @@ export async function POST(request: NextRequest) {
     // For single category / specific queries: Pick the top scored products directly
     if (intent.category && intent.category !== 'pc_build') {
       for (const item of scoredProducts) {
+        if (item.score < 80) continue;
         const p = item.product;
         if (!recMap.has(p.name)) {
           recMap.set(p.name, {
@@ -345,8 +368,8 @@ export async function POST(request: NextRequest) {
         }
         if (recMap.size >= 4) break;
       }
-    } else {
-      // For PC Build queries: Prioritize components from the matched preset and dynamic catalog
+    } else if (isBuildQuery) {
+      // ONLY for explicit PC Build queries: Prioritize components from the matched preset and dynamic catalog
       const matchedPresetKey = matchPresetKeyFromText(message, pastPresetKey);
       const rawPreset = AI_BUILD_PRESETS[matchedPresetKey] || AI_BUILD_PRESETS['25m'];
       const targetGpu = (userText.match(/(rtx\s*\d+|4090|4080|4070|4060|3060)/) || [])[0];
@@ -436,6 +459,27 @@ export async function POST(request: NextRequest) {
             brand_name: p.brand_name || 'Chính hãng',
           });
         }
+      }
+    } else {
+      // General question / troubleshooting / brand questions without explicit PC build intent:
+      // Only include specific products if they scored strongly in relation to the reply (score >= 120)
+      for (const item of scoredProducts) {
+        if (item.score < 120) continue;
+        const p = item.product;
+        if (!recMap.has(p.name)) {
+          recMap.set(p.name, {
+            id: String(p.id),
+            name: p.name,
+            slug: p.slug,
+            price: Number(p.price) || 0,
+            original_price: Number(p.original_price || p.originalPrice || 0),
+            image_url: getProductImage({ name: p.name, category_name: p.category_name, category_slug: p.category_slug, brand_name: p.brand_name, image_url: p.image_url || p.image }),
+            category_name: p.category_name || 'Linh kiện',
+            category_slug: p.category_slug,
+            brand_name: p.brand_name || 'Chính hãng',
+          });
+        }
+        if (recMap.size >= 3) break;
       }
     }
 

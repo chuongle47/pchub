@@ -18,7 +18,7 @@ const NAV_LINKS: NavLink[] = [
   { label: 'Build PC', href: '/build-pc', highlight: true },
   { label: 'Báo giá', href: '/bao-gia' },
   { label: 'Góc Build PC', href: '/community' },
-  { label: 'Khuyến mãi', href: '/search?sale=true' },
+  { label: 'Khuyến mãi', href: '/khuyen-mai' },
   { label: 'Liên hệ', href: '/lien-he' },
 ];
 
