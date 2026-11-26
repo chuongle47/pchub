@@ -88,13 +88,13 @@ export function AdminHeader({
           <button
             type="button"
             onClick={onOpenSearch}
-            className="w-full flex items-center h-10 px-3.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 hover:border-blue-400/60 rounded-xl text-xs text-slate-400 text-left transition-all shadow-2xs group cursor-pointer"
+            className="w-full flex items-center h-10 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-full text-xs text-slate-400 text-left transition-all shadow-2xs group cursor-pointer"
           >
-            <Search className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0" />
-            <span className="truncate flex-1 ml-2.5 text-slate-400 group-hover:text-slate-700 font-normal">
+            <Search className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
+            <span className="truncate flex-1 ml-2.5 text-slate-400 group-hover:text-slate-600 font-normal">
               Tìm nhanh đơn hàng, sản phẩm, báo giá...
             </span>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-medium text-slate-500 bg-white rounded-md border border-slate-200 shadow-2xs shrink-0 group-hover:border-slate-300">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-medium text-slate-400 bg-white rounded-full border border-slate-200 shadow-2xs shrink-0">
               <span className="text-[11px]">⌘</span>K
             </kbd>
           </button>
