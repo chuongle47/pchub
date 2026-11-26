@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Calendar, TrendingUp, Info } from 'lucide-react';
+import { Calendar, TrendingUp } from 'lucide-react';
 
 export interface DataPoint {
   date: string; // DD/MM
@@ -13,32 +13,29 @@ export interface DataPoint {
 interface RevenueChartProps {
   initialData?: DataPoint[];
   isLoading?: boolean;
-  timeRange?: 'today' | '7days' | '30days';
-  onTimeRangeChange?: (range: 'today' | '7days' | '30days') => void;
 }
 
 export function RevenueChart({
   initialData,
   isLoading = false,
-  timeRange = '30days',
-  onTimeRangeChange,
 }: RevenueChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [activeRange, setActiveRange] = useState<'today' | '7days' | '30days'>('30days');
 
-  // Generate 30 days of realistic trend data if initialData is not provided
+  // Generate trend data based on activeRange
   const points = useMemo<DataPoint[]>(() => {
-    if (initialData && initialData.length > 0) return initialData;
+    if (initialData && initialData.length > 0 && activeRange === '30days') return initialData;
 
     const list: DataPoint[] = [];
     const now = new Date();
-    const count = timeRange === 'today' ? 12 : timeRange === '7days' ? 7 : 30;
+    const count = activeRange === 'today' ? 12 : activeRange === '7days' ? 7 : 30;
 
     for (let i = count - 1; i >= 0; i--) {
       const d = new Date(now);
-      if (timeRange === 'today') {
+      if (activeRange === 'today') {
         const hour = 8 + (12 - i);
         d.setHours(hour, 0, 0, 0);
-        const rev = Math.round((3000000 + Math.sin(i * 0.8) * 2000000 + Math.random() * 1500000) / 100000) * 100000;
+        const rev = Math.round((4500000 + Math.sin(i * 0.8) * 2800000 + (12 - i) * 600000) / 100000) * 100000;
         list.push({
           date: `${String(hour).padStart(2, '0')}:00`,
           fullDate: `Hôm nay lúc ${hour}:00`,
@@ -49,24 +46,30 @@ export function RevenueChart({
         d.setDate(d.getDate() - i);
         const dayStr = String(d.getDate()).padStart(2, '0');
         const monthStr = String(d.getMonth() + 1).padStart(2, '0');
-        const rev = Math.round((45000000 + Math.sin(i * 0.5) * 25000000 + (count - i) * 1200000 + Math.random() * 8000000) / 100000) * 100000;
+        // Deterministic curve fitting nicely within 0 - 150M range without hydration mismatch
+        const rev = Math.round((52000000 + Math.sin(i * 0.45) * 35000000 + Math.cos(i * 1.3) * 3000000 + (count - i) * 1200000) / 100000) * 100000;
         list.push({
           date: `${dayStr}/${monthStr}`,
           fullDate: `${dayStr}/${monthStr}/${d.getFullYear()}`,
-          revenue: rev,
+          revenue: Math.min(rev, 145000000),
           ordersCount: Math.max(5, Math.round(rev / 1800000)),
         });
       }
     }
     return list;
-  }, [initialData, timeRange]);
+  }, [initialData, activeRange]);
 
+  // Round maxRevenue to clean milestone 150M or multiples of 50M
   const maxRevenue = useMemo(() => {
-    const max = Math.max(...points.map((p) => p.revenue), 100000000);
-    return Math.ceil(max / 50000000) * 50000000;
-  }, [points]);
+    const rawMax = Math.max(...points.map((p) => p.revenue), 10000000);
+    if (activeRange === 'today') {
+      return Math.ceil(rawMax / 5000000) * 5000000; // e.g. 15M
+    }
+    // Round to 150M or 200M
+    return Math.max(150000000, Math.ceil(rawMax / 50000000) * 50000000);
+  }, [points, activeRange]);
 
-  // Coordinate math for SVG viewBox: 0 0 600 200
+  // SVG dimensions
   const width = 600;
   const height = 180;
   const paddingX = 20;
@@ -84,7 +87,7 @@ export function RevenueChart({
     });
   }, [points, maxRevenue, innerWidth, innerHeight, paddingTop, paddingX]);
 
-  // Generate smooth SVG Bézier curve path
+  // Generate smooth Bézier curve
   const { pathD, areaD } = useMemo(() => {
     if (coords.length === 0) return { pathD: '', areaD: '' };
     if (coords.length === 1) {
@@ -114,43 +117,42 @@ export function RevenueChart({
     return { pathD: d, areaD: area };
   }, [coords, height, paddingBottom]);
 
-  // Loading skeleton
   if (isLoading) {
     return (
-      <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs animate-pulse">
+      <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs animate-pulse">
         <div className="h-5 w-40 bg-slate-200 rounded-md mb-6" />
         <div className="h-56 w-full bg-slate-100 rounded-xl" />
       </div>
     );
   }
 
-  // Empty state
-  if (points.length === 0) {
-    return (
-      <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
-          <Calendar className="w-6 h-6" />
-        </div>
-        <h3 className="text-sm font-bold text-slate-800">Chưa có dữ liệu doanh thu</h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-sm">
-          Hệ thống chưa ghi nhận đơn hàng nào trong khoảng thời gian đã chọn.
-        </p>
-      </div>
-    );
-  }
-
   const activePoint = hoveredIndex !== null && coords[hoveredIndex] ? coords[hoveredIndex] : null;
 
+  // Round Y milestone labels: 150tr / 100tr / 50tr / 0
+  const yLabels = activeRange === 'today'
+    ? [
+        `${(maxRevenue / 1000000).toFixed(0)}tr`,
+        `${((maxRevenue * 2) / 3 / 1000000).toFixed(1)}tr`,
+        `${(maxRevenue / 3 / 1000000).toFixed(1)}tr`,
+        '0',
+      ]
+    : [
+        `${(maxRevenue / 1000000).toFixed(0)}tr`,
+        `${((maxRevenue * 2) / 3 / 1000000).toFixed(0)}tr`,
+        `${(maxRevenue / 3 / 1000000).toFixed(0)}tr`,
+        '0',
+      ];
+
   return (
-    <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between relative group">
-      {/* Card Header & Controls */}
+    <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between relative group">
+      {/* Card Header & Segmented Control */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900 tracking-tight">
-              Biểu Đồ Doanh Thu
+            <h2 className="text-[17px] font-semibold text-slate-800 tracking-tight">
+              Biểu đồ doanh thu
             </h2>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
               <TrendingUp className="w-3 h-3" />
               +12.4%
             </span>
@@ -160,51 +162,60 @@ export function RevenueChart({
           </p>
         </div>
 
-        {/* Time Filter Pills */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-          {(['today', '7days', '30days'] as const).map((range) => (
-            <button
-              key={range}
-              type="button"
-              onClick={() => onTimeRangeChange && onTimeRangeChange(range)}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                timeRange === range
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              {range === 'today' ? 'Hôm nay' : range === '7days' ? '7 ngày' : '30 ngày'}
-            </button>
-          ))}
+        {/* Segmented Control with clear active state and aria-pressed */}
+        <div
+          role="group"
+          aria-label="Chọn khoảng thời gian"
+          className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/80 self-start sm:self-auto"
+        >
+          {(['today', '7days', '30days'] as const).map((range) => {
+            const isSelected = activeRange === range;
+            const label = range === 'today' ? 'Hôm nay' : range === '7days' ? '7 ngày' : '30 ngày';
+            return (
+              <button
+                key={range}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setActiveRange(range)}
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-white text-blue-600 shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Interactive SVG Chart Area */}
+      {/* Interactive SVG Chart Area with Clean Round Milestones */}
       <div className="relative w-full h-56 sm:h-64 pt-2 select-none">
-        {/* Y Axis Grid Lines & Numeric Scale */}
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-slate-400 pr-2">
-          <div className="flex items-center justify-between border-b border-slate-100/90 pb-0.5">
-            <span>{(maxRevenue / 1000000).toFixed(0)}Tr</span>
+        {/* Y Axis Grid Lines & Round Labels: 150tr / 100tr / 50tr / 0 */}
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[11px] font-medium text-slate-400 pr-2">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-0.5">
+            <span>{yLabels[0]}</span>
           </div>
-          <div className="flex items-center justify-between border-b border-slate-100/90 pb-0.5">
-            <span>{((maxRevenue * 0.66) / 1000000).toFixed(0)}Tr</span>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-0.5">
+            <span>{yLabels[1]}</span>
           </div>
-          <div className="flex items-center justify-between border-b border-slate-100/90 pb-0.5">
-            <span>{((maxRevenue * 0.33) / 1000000).toFixed(0)}Tr</span>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-0.5">
+            <span>{yLabels[2]}</span>
           </div>
-          <div className="flex items-center justify-between border-b border-slate-100/90 pb-0.5">
-            <span>0</span>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-0.5">
+            <span>{yLabels[3]}</span>
           </div>
         </div>
 
         {/* SVG Curve with Area Gradient */}
         <svg
-          className="w-full h-full overflow-visible relative z-10"
+          className="w-full h-full relative z-10 overflow-visible"
           viewBox={`0 0 ${width} ${height}`}
           preserveAspectRatio="none"
         >
           <defs>
-            <linearGradient id="revenueBlueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="revenueAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#2563eb" stopOpacity="0.22" />
               <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.06" />
               <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
@@ -212,7 +223,7 @@ export function RevenueChart({
           </defs>
 
           {/* Area fill */}
-          <path d={areaD} fill="url(#revenueBlueGrad)" />
+          <path d={areaD} fill="url(#revenueAreaGrad)" />
 
           {/* Smooth line */}
           <path
@@ -227,7 +238,6 @@ export function RevenueChart({
           {/* Crosshair & Active Point on Hover */}
           {activePoint && (
             <g>
-              {/* Vertical dotted guide */}
               <line
                 x1={activePoint.x}
                 y1={paddingTop}
@@ -237,7 +247,6 @@ export function RevenueChart({
                 strokeWidth="1"
                 strokeDasharray="3 3"
               />
-              {/* Glow circle */}
               <circle
                 cx={activePoint.x}
                 cy={activePoint.y}
@@ -245,7 +254,6 @@ export function RevenueChart({
                 fill="#2563eb"
                 fillOpacity="0.2"
               />
-              {/* Inner dot */}
               <circle
                 cx={activePoint.x}
                 cy={activePoint.y}
@@ -258,7 +266,7 @@ export function RevenueChart({
           )}
         </svg>
 
-        {/* Hover Capture Slices */}
+        {/* Hover Slices */}
         <div className="absolute inset-0 z-20 flex">
           {coords.map((c, idx) => (
             <div
@@ -270,7 +278,7 @@ export function RevenueChart({
           ))}
         </div>
 
-        {/* Dynamic Tooltip */}
+        {/* Interactive Tooltip */}
         {activePoint && (
           <div
             className="absolute z-30 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3 transition-transform duration-75"
@@ -294,7 +302,7 @@ export function RevenueChart({
         )}
       </div>
 
-      {/* X Axis Milestone Dates (Actual Vietnam Dates) */}
+      {/* X Axis Milestone Dates */}
       <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-100 mt-2 px-1">
         {coords.length > 0 && (
           <>
