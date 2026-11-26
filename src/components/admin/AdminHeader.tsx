@@ -8,7 +8,6 @@ import {
   Menu,
   Search,
   Bell,
-  User,
   LogOut,
   ExternalLink,
   ShieldCheck,
@@ -63,36 +62,37 @@ export function AdminHeader({
 
   return (
     <header className="sticky top-0 z-20 h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors shadow-2xs">
-      {/* Left: Mobile hamburger & Clean Search Input */}
-      <div className="flex items-center gap-3 flex-1 max-w-lg">
+      {/* Left: Mobile hamburger & Clean Search Input with guaranteed non-overlapping icon */}
+      <div className="flex items-center gap-3 flex-1 max-w-md">
         <button
           type="button"
           onClick={onOpenMobileSidebar}
-          className="md:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+          className="md:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
           aria-label="Mở menu quản trị"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Search input with proper icon padding and shortcut badge */}
-        <div className="w-full relative flex items-center">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+        {/* Search input with verified padding and shortcut badge */}
+        <div className="admin-search-wrapper relative flex items-center w-full">
+          <Search className="admin-search-icon w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none shrink-0 z-10" />
           <input
             type="text"
             onClick={onOpenSearch}
-            placeholder="Tìm đơn hàng, sản phẩm, khách hàng..."
+            placeholder="Tìm kiếm..."
             readOnly
-            className="w-full h-10 pl-10 pr-16 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all"
+            style={{ paddingLeft: '44px', paddingRight: '72px' }}
+            className="admin-search-input w-full h-10 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all"
             aria-label="Tìm kiếm trong hệ thống (nhấn Ctrl+K)"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 absolute right-3 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-400 bg-white border border-slate-200 pointer-events-none shadow-2xs">
+          <kbd className="admin-search-kbd hidden sm:inline-flex items-center absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-md text-[10px] font-semibold text-slate-400 bg-white border border-slate-200 pointer-events-none shadow-2xs">
             Ctrl K
           </kbd>
         </div>
       </div>
 
       {/* Right: Actions, Notifications & User profile */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Link to live storefront */}
         <Link
           href="/"

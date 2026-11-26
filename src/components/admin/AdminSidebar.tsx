@@ -18,7 +18,6 @@ import {
   Zap,
   Ticket,
   X,
-  Layers,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -53,7 +52,6 @@ export function AdminSidebar({
     pathname.startsWith('/admin/coupons')
   );
 
-  // Remember collapsed state in localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('pchub_admin_sidebar_collapsed');
@@ -98,7 +96,7 @@ export function AdminSidebar({
       icon: Megaphone,
       subItems: [
         { name: 'Khuyến mãi & Banner', href: '/admin/promotions', icon: Tag },
-        { name: 'Flash Sale Giờ vàng', href: '/admin/flash-sales', icon: Zap },
+        { name: 'Flash Sale giờ vàng', href: '/admin/flash-sales', icon: Zap },
         { name: 'Mã giảm giá (Coupon)', href: '/admin/coupons', icon: Ticket },
       ],
     },
@@ -122,8 +120,8 @@ export function AdminSidebar({
 
   const content = (
     <div className="flex flex-col h-full bg-[#0f172a] text-slate-300 select-none admin-sidebar border-r border-slate-800/80">
-      {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-5 sm:px-6 border-b border-slate-800/80">
+      {/* Brand Header with standard left padding */}
+      <div className="h-16 flex items-center justify-between px-4 sm:px-5 border-b border-slate-800/80">
         <Link href="/admin" className="flex items-center gap-2.5 overflow-hidden group">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-sm shadow-blue-500/20 group-hover:bg-blue-500 transition-colors">
             PC
@@ -162,19 +160,19 @@ export function AdminSidebar({
         </button>
       </div>
 
-      {/* Navigation Menu */}
-      <div className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-5 space-y-1.5 scrollbar-none">
+      {/* Navigation Menu with uniform left alignment for ALL items */}
+      <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5 scrollbar-none">
         {navItems.map((item) => {
           const Icon = item.icon;
           const hasSubItems = item.subItems && item.subItems.length > 0;
           const isItemActive = item.exact
             ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + '/');
+            : pathname === item.href || (pathname.startsWith(item.href + '/') && !hasSubItems);
           const isChildActive = hasSubItems && item.subItems?.some((sub) => pathname.startsWith(sub.href));
 
           if (hasSubItems && !collapsed) {
             return (
-              <div key={item.name} className="space-y-1">
+              <div key={item.name} className="space-y-1.5">
                 <button
                   type="button"
                   onClick={() => setMarketingOpen(!marketingOpen)}
@@ -201,8 +199,9 @@ export function AdminSidebar({
                   />
                 </button>
 
+                {/* Sub-items sharing the EXACT SAME LEFT ALIGNMENT */}
                 {marketingOpen && (
-                  <div className="pl-6 pr-1 space-y-1 pt-0.5">
+                  <div className="space-y-1.5 pt-0.5">
                     {item.subItems.map((sub) => {
                       const SubIcon = sub.icon;
                       const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/');
@@ -211,13 +210,13 @@ export function AdminSidebar({
                           key={sub.href}
                           href={sub.href}
                           onClick={() => setMobileOpen(false)}
-                          className={`flex items-center gap-2.5 h-9 px-3 rounded-lg text-xs font-medium transition-all group ${
+                          className={`flex items-center gap-3 h-10 px-3.5 rounded-xl text-xs font-medium transition-all group ${
                             isSubActive
-                              ? 'bg-blue-600/20 text-blue-400 font-semibold border-l-2 border-blue-500'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                              ? 'bg-blue-600 text-white font-semibold shadow-sm'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                           }`}
                         >
-                          <SubIcon className="w-3.5 h-3.5 shrink-0" />
+                          <SubIcon className={`w-4 h-4 shrink-0 ${isSubActive ? 'text-white' : 'text-slate-400'}`} />
                           <span className="truncate">{sub.name}</span>
                         </Link>
                       );
@@ -235,7 +234,7 @@ export function AdminSidebar({
               onClick={() => setMobileOpen(false)}
               className={`flex items-center h-11 px-3.5 rounded-xl text-sm font-medium transition-all group ${
                 isItemActive
-                  ? 'bg-slate-800/90 text-white font-semibold shadow-2xs'
+                  ? 'bg-slate-800/90 text-white font-semibold shadow-2xs border-l-2 border-blue-500'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
               }`}
               title={collapsed ? item.name : undefined}
@@ -245,7 +244,7 @@ export function AdminSidebar({
                   isItemActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
                 }`}
               />
-              {!collapsed && <span className="ml-3.5 truncate">{item.name}</span>}
+              {!collapsed && <span className="ml-3 truncate">{item.name}</span>}
             </Link>
           );
         })}

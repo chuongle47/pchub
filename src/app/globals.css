@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap&subset=vietnamese,latin-ext');
 @import "tailwindcss";
+@source "../components";
+@source "../lib";
+@source "../app";
 
 :root {
   /* Font Family & Typography */
@@ -2822,4 +2825,96 @@ input.directadmin-input:-webkit-autofill {
     max-width: 100% !important;
   }
 }
+
+/* ==========================================================================
+   PCHub Admin Dashboard — Deterministic Layout Spacing & Search Bar Styles
+   ========================================================================== */
+.admin-shell main {
+  padding: 28px 32px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+}
+@media (max-width: 1024px) {
+  .admin-shell main {
+    padding: 20px 24px !important;
+  }
+}
+@media (max-width: 640px) {
+  .admin-shell main {
+    padding: 16px !important;
+  }
+}
+
+.admin-search-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+.admin-search-icon {
+  position: absolute !important;
+  left: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+  color: #94a3b8 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+.admin-search-input {
+  width: 100% !important;
+  height: 40px !important;
+  padding-left: 42px !important;
+  padding-right: 68px !important;
+  box-sizing: border-box !important;
+}
+.admin-search-kbd {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
+.admin-kpi-card {
+  padding: 22px 24px !important;
+  border-radius: 16px !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-sizing: border-box !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+.admin-segmented-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px !important;
+  background-color: #f1f5f9 !important;
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+.admin-segmented-btn {
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: transparent !important;
+  color: #64748b !important;
+}
+.admin-segmented-btn[aria-pressed="true"] {
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
 

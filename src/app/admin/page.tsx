@@ -12,22 +12,18 @@ import {
   Bot,
   AlertTriangle,
   ArrowUpRight,
-  ArrowDownRight,
-  ExternalLink,
   ChevronRight,
   TrendingUp,
-  Clock,
-  Sparkles,
 } from 'lucide-react';
 
-export const revalidate = 0; // Fresh live data for admin overview
+export const revalidate = 0; // Fresh data for admin overview
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
-  // Initial fallbacks
+  // Initial data fallbacks
   let recentOrders = [...SAMPLE_ORDERS];
   let lowStockList = [...SAMPLE_LOW_STOCK];
   let todayRevenue = 84320000;
@@ -103,7 +99,7 @@ export default async function AdminDashboardPage() {
       if (sum > 0) todayRevenue = sum;
     }
 
-    // Map Low Stock List (Strictly sorted by most severe: 0 first)
+    // Map Low Stock List (Strictly sorted by lowest stock: 0 first)
     if (dbLowStock && dbLowStock.length > 0) {
       lowStockList = dbLowStock
         .map((p: any, idx: number) => ({
@@ -120,40 +116,39 @@ export default async function AdminDashboardPage() {
     console.error('Error fetching admin live overview:', err);
   }
 
-  // Format today's revenue in vi-VN
   const formattedRevenue = todayRevenue.toLocaleString('vi-VN');
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-7 animate-in fade-in duration-300">
       {/* ========================================================================= */}
-      {/* 1. DASHBOARD HEADER (Title, Subtitle & Status Indicator)                  */}
+      {/* 1. DASHBOARD HEADER (Title 24-28px, Subtitle & Live Status)               */}
       {/* ========================================================================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-[26px] font-bold tracking-tight text-slate-900 leading-tight">
             Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Tổng quan tình hình kinh doanh, doanh số và vận hành hệ thống PCHub
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 text-xs text-slate-600 bg-white border border-slate-200/90 rounded-full px-4 py-2 shadow-2xs self-start md:self-auto">
+        <div className="flex items-center gap-2 text-xs text-slate-600 bg-white border border-slate-200/90 rounded-full px-3.5 py-1.5 shadow-2xs self-start md:self-auto">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          <span className="font-semibold text-slate-700">Dữ liệu thời gian thực</span>
+          <span className="font-semibold text-slate-700">Thời gian thực</span>
           <span className="text-slate-300">|</span>
           <span className="text-slate-500">Hôm nay: {now.toLocaleDateString('vi-VN')}</span>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. ROW 1: 4 EQUAL-HEIGHT KPI CARDS                                        */}
+      {/* 2. ROW 1: 4 EQUAL-HEIGHT KPI CARDS (Sentence Casing & Prominent Numbers) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
         {/* KPI 1: Doanh thu hôm nay */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500">
               Doanh thu hôm nay
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -162,8 +157,8 @@ export default async function AdminDashboardPage() {
             </span>
           </div>
 
-          <div className="my-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" title={`${formattedRevenue} ₫`}>
+          <div className="my-2.5">
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight" title={`${formattedRevenue} ₫`}>
               {formattedRevenue} <span className="underline decoration-slate-400 font-semibold text-xl">đ</span>
             </div>
           </div>
@@ -177,7 +172,7 @@ export default async function AdminDashboardPage() {
         {/* KPI 2: Đơn hàng hôm nay */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500">
               Đơn hàng hôm nay
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -186,14 +181,14 @@ export default async function AdminDashboardPage() {
             </span>
           </div>
 
-          <div className="my-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <div className="my-2.5">
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
               {todayOrdersCount} <span className="text-base font-semibold text-slate-500">đơn</span>
             </div>
           </div>
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-            <span>Đang chờ duyệt xử lý</span>
+            <span>Đang chờ duyệt</span>
             <span className="text-amber-600 font-bold">5 đơn</span>
           </div>
         </div>
@@ -201,7 +196,7 @@ export default async function AdminDashboardPage() {
         {/* KPI 3: Tỷ lệ chuyển đổi */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500">
               Tỷ lệ chuyển đổi
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -210,8 +205,8 @@ export default async function AdminDashboardPage() {
             </span>
           </div>
 
-          <div className="my-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <div className="my-2.5">
+            <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
               3.2%
             </div>
           </div>
@@ -222,31 +217,31 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* KPI 4: AI Chat sessions (Clear, no hanging text) */}
+        {/* KPI 4: AI Chat sessions (Clear, responsive, no clipped text) */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between h-full">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
                 🤖
               </span>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-500">
                 AI Chat sessions
               </span>
             </div>
-            <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+            <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 shrink-0">
               Gemini 2.5
             </span>
           </div>
 
-          <div className="my-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <div className="my-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
               {SAMPLE_AI_STATS.sessions.toLocaleString('vi-VN')}
             </span>
             <span className="text-xs text-slate-400">lượt tư vấn</span>
           </div>
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500">Đơn hàng từ AI:</span>
+            <span className="text-slate-500">Đơn từ AI:</span>
             <span className="text-indigo-600 font-bold">
               {SAMPLE_AI_STATS.converted_orders} đơn ({SAMPLE_AI_STATS.conversion_rate})
             </span>
@@ -255,20 +250,20 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. ROW 2: INTERACTIVE REVENUE CHART (2 COLS) & TOP 5 PRODUCTS (1 COL)     */}
+      {/* 3. ROW 2: BIỂU ĐỒ DOANH THU (2 COLS) & TOP 5 BÁN CHẠY (1 COL)             */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
         {/* Left: Interactive Revenue Chart (Span 2 cols) */}
         <div className="lg:col-span-2">
-          <RevenueChart timeRange="30days" />
+          <RevenueChart />
         </div>
 
-        {/* Right: Top 5 Bán Chạy (Aliged labels, inline revenue & sales count) */}
+        {/* Right: Top 5 bán chạy (Card Title 16-18px, Clean Alignment) */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Top 5 Bán Chạy
+              <h2 className="text-[17px] font-semibold text-slate-800 tracking-tight">
+                Top 5 bán chạy
               </h2>
               <Link
                 href="/admin/products"
@@ -299,7 +294,7 @@ export default async function AdminDashboardPage() {
                   {/* Clean Slim Progress Bar */}
                   <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-slate-900 rounded-full transition-all duration-500"
+                      className="h-full bg-blue-600 rounded-full transition-all duration-500"
                       style={{ width: `${prod.percent}%` }}
                     />
                   </div>
@@ -322,12 +317,12 @@ export default async function AdminDashboardPage() {
       {/* ========================================================================= */}
       {/* 4. ROW 3: 3 EQUAL-WIDTH COLUMNS (Recent Orders, AI Donut, Low Stock)       */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
         {/* Col 1: Đơn hàng gần đây */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              <h2 className="text-[17px] font-semibold text-slate-800 tracking-tight">
                 Đơn hàng gần đây
               </h2>
               <Link
@@ -345,7 +340,7 @@ export default async function AdminDashboardPage() {
               <div className="col-span-4 text-right">TRẠNG THÁI</div>
             </div>
 
-            {/* Table Rows with Hover */}
+            {/* Table Rows without horizontal overflow */}
             <div className="divide-y divide-slate-100">
               {recentOrders.map((ord) => {
                 const isPending = ord.status === 'pending';
@@ -371,7 +366,7 @@ export default async function AdminDashboardPage() {
                 return (
                   <div
                     key={ord.id}
-                    className="grid grid-cols-12 items-center py-3 text-xs hover:bg-slate-50/80 -mx-2 px-2 rounded-lg transition-colors"
+                    className="grid grid-cols-12 items-center py-2.5 text-xs hover:bg-slate-50/80 px-1 rounded-lg transition-colors"
                   >
                     <div className="col-span-5 pr-1 min-w-0">
                       <Link
@@ -406,10 +401,10 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Col 2: Hiệu suất AI Chat (Donut Chart) */}
+        {/* Col 2: Hiệu suất AI Chat */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between items-center text-center">
           <div className="w-full text-left mb-2">
-            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+            <h2 className="text-[17px] font-semibold text-slate-800 tracking-tight">
               Hiệu suất AI Chat
             </h2>
           </div>
@@ -501,12 +496,12 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Col 3: Cảnh báo tồn kho (Contrast Compliant Buttons, Severest First) */}
+        {/* Col 3: Cảnh báo tồn kho */}
         <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              <h2 className="text-[17px] font-semibold text-slate-800 tracking-tight">
                 Cảnh báo tồn kho
               </h2>
             </div>
@@ -517,7 +512,7 @@ export default async function AdminDashboardPage() {
                 return (
                   <div
                     key={item.id}
-                    className="py-3 flex items-center justify-between gap-2 text-xs hover:bg-slate-50/80 -mx-2 px-2 rounded-lg transition-colors"
+                    className="py-2.5 flex items-center justify-between gap-2 text-xs hover:bg-slate-50/80 px-1 rounded-lg transition-colors"
                   >
                     <div className="min-w-0 flex-1">
                       <span
@@ -540,7 +535,6 @@ export default async function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* WCAG AA Compliant Outline / Light Button */}
                     <Link
                       href="/admin/products"
                       className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-semibold border border-slate-200 transition-colors shrink-0 shadow-2xs cursor-pointer"

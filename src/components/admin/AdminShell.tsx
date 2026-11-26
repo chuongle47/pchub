@@ -90,7 +90,7 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
 
   return (
     <AdminToastProvider>
-      <div className="min-h-screen bg-[#f8f9fa] text-slate-900 flex antialiased admin-shell overflow-x-clip">
+      <div className="min-h-screen bg-[#f8f9fa] text-slate-900 flex antialiased admin-shell overflow-x-hidden">
         {/* Sidebar matching Stitch */}
         <AdminSidebar
           collapsed={collapsed}
@@ -100,16 +100,19 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
           userProfile={userProfile}
         />
 
-        {/* Main Container */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fa] overflow-x-clip">
+        {/* Main Content Column */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fa] overflow-x-hidden">
           <AdminHeader
             onOpenMobileSidebar={() => setMobileOpen(true)}
             onOpenSearch={() => setSearchOpen(true)}
             userProfile={userProfile}
           />
 
-          {/* Main Content Area - Normalized Padding & Max-Width */}
-          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1440px] w-full mx-auto min-w-0 relative z-0 overflow-x-clip">
+          {/* Main Content Area - Guaranteed 24-32px padding (16px on mobile) from sidebar and right edge */}
+          <main
+            style={{ padding: '28px 32px' }}
+            className="flex-1 w-full min-w-0 relative z-0 admin-main-content"
+          >
             {children}
           </main>
 
