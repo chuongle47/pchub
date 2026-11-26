@@ -166,7 +166,16 @@ export function RevenueChart({
         <div
           role="group"
           aria-label="Chọn khoảng thời gian"
-          className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/80 self-start sm:self-auto"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '4px',
+            backgroundColor: '#f1f5f9',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            gap: '3px',
+          }}
+          className="self-start sm:self-auto"
         >
           {(['today', '7days', '30days'] as const).map((range) => {
             const isSelected = activeRange === range;
@@ -177,11 +186,18 @@ export function RevenueChart({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => setActiveRange(range)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-white text-blue-600 shadow-sm font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: isSelected ? 700 : 600,
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: isSelected ? '#ffffff' : 'transparent',
+                  color: isSelected ? '#2563eb' : '#64748b',
+                  boxShadow: isSelected ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
               >
                 {label}
               </button>
