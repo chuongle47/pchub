@@ -40,7 +40,11 @@ export default async function AdminLayout({
     const adminSessionCookie = cookieStore.get('pchub_admin_session')?.value;
     if (adminSessionCookie) {
       try {
-        const session = JSON.parse(adminSessionCookie);
+        let rawVal = adminSessionCookie;
+        try {
+          rawVal = decodeURIComponent(rawVal);
+        } catch {}
+        const session = JSON.parse(rawVal);
         profile = {
           id: session.id || 'admin-root',
           email: session.email || 'admin@pchub.vn',

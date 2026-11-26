@@ -49,7 +49,11 @@ export async function updateSession(request: NextRequest) {
     let adminSessionRole: UserRole | null = null;
     if (adminSessionCookie) {
       try {
-        const parsed = JSON.parse(adminSessionCookie);
+        let rawVal = adminSessionCookie;
+        try {
+          rawVal = decodeURIComponent(rawVal);
+        } catch {}
+        const parsed = JSON.parse(rawVal);
         if (parsed?.role && isStaff(parsed.role)) {
           adminSessionRole = parsed.role;
         }

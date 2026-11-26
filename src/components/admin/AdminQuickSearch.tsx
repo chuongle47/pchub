@@ -111,57 +111,65 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden text-slate-800"
+        className="w-full max-w-2xl bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden text-slate-800 animate-in zoom-in-95 duration-150 ring-1 ring-black/5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input bar */}
-        <div className="flex items-center px-4 border-b border-slate-100 gap-3">
-          <Search className="w-5 h-5 text-slate-400" />
+        <div className="flex items-center px-4 sm:px-5 border-b border-slate-100 gap-3 bg-slate-50/50">
+          <Search className="w-5 h-5 text-blue-600 shrink-0" />
           <input
             autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm theo mã đơn, khách hàng, tên sản phẩm, SKU... (phím tắt Esc để đóng)"
-            className="w-full bg-transparent py-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
+            placeholder="Tìm theo mã đơn, khách hàng, tên linh kiện, SKU..."
+            className="w-full bg-transparent py-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-medium"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-slate-400 hover:text-slate-700"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+              title="Xóa tìm kiếm"
             >
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-2 py-1 text-xs text-slate-500 bg-slate-100 rounded border border-slate-200 hover:bg-slate-200"
+            className="px-2 py-0.5 text-[11px] font-mono font-medium text-slate-500 bg-white rounded-md border border-slate-200 hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer"
           >
             ESC
           </button>
         </div>
 
         {/* Content list */}
-        <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+        <div className="max-h-[420px] overflow-y-auto p-4 sm:p-5 space-y-4">
           {!query && (
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Thao tác nhanh
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <span>Phím tắt & Thao tác nhanh</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {quickLinks.map((item, i) => {
                   const Icon = item.icon;
                   return (
                     <button
                       key={i}
                       onClick={() => navigateTo(item.href)}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-blue-50/60 text-left transition-colors border border-slate-200/80 hover:border-blue-200"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-blue-50/70 text-left transition-all border border-slate-200/70 hover:border-blue-200 group cursor-pointer"
                     >
-                      <Icon className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                      <span className="text-xs font-medium text-slate-700 truncate">{item.label}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-500 ml-auto" />
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 group-hover:bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 transition-colors">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-700 group-hover:text-blue-900 truncate flex-1">
+                        {item.label}
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all ml-auto shrink-0" />
                     </button>
                   );
                 })}
@@ -172,33 +180,36 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
           {query && (
             <>
               {loading && (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  Đang tìm kiếm dữ liệu...
+                <div className="py-10 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span>Đang tìm kiếm thông tin...</span>
                 </div>
               )}
 
               {!loading && results.orders.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <ShoppingCart className="w-3.5 h-3.5 text-blue-400" />
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <ShoppingCart className="w-3.5 h-3.5 text-blue-500" />
                     <span>Đơn hàng ({results.orders.length})</span>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {results.orders.map((o) => (
                       <button
                         key={o.id}
                         onClick={() => navigateTo(`/admin/orders/${o.id}`)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-blue-50/60 text-left transition-all border border-slate-100 hover:border-blue-200 group cursor-pointer"
                       >
                         <div>
-                          <div className="text-xs font-semibold text-slate-900">#{o.order_number}</div>
-                          <div className="text-[11px] text-slate-400">{o.customer_name}</div>
+                          <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600">
+                            #{o.order_number}
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">{o.customer_name}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xs font-semibold text-blue-400">
+                          <div className="text-xs font-bold text-blue-600">
                             {Number(o.total_amount).toLocaleString('vi-VN')} ₫
                           </div>
-                          <div className="text-[10px] text-slate-500 capitalize">{o.status}</div>
+                          <div className="text-[10px] text-slate-400 capitalize mt-0.5">{o.status}</div>
                         </div>
                       </button>
                     ))}
@@ -208,22 +219,26 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
 
               {!loading && results.products.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Sản phẩm ({results.products.length})</span>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Linh kiện & Sản phẩm ({results.products.length})</span>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {results.products.map((p) => (
                       <button
                         key={p.id}
                         onClick={() => navigateTo(`/admin/products/${p.id}`)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-emerald-50/60 text-left transition-all border border-slate-100 hover:border-emerald-200 group cursor-pointer"
                       >
-                        <div className="pr-4 truncate">
-                          <div className="text-xs font-medium text-slate-900 truncate">{p.name}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">SKU: {p.sku || (p.id ? `PCH-${p.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'PCH-PROD')}</div>
+                        <div className="pr-4 truncate flex-1">
+                          <div className="text-xs font-semibold text-slate-900 group-hover:text-emerald-700 truncate">
+                            {p.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            SKU: {p.sku || (p.id ? `PCH-${p.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'PCH-PROD')}
+                          </div>
                         </div>
-                        <div className="text-xs font-semibold text-emerald-400 whitespace-nowrap">
+                        <div className="text-xs font-bold text-emerald-600 whitespace-nowrap">
                           {Number(p.price).toLocaleString('vi-VN')} ₫
                         </div>
                       </button>
@@ -234,26 +249,28 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
 
               {!loading && results.quotes.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Báo giá PC ({results.quotes.length})</span>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-purple-500" />
+                    <span>Báo giá cấu hình PC ({results.quotes.length})</span>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {results.quotes.map((q) => (
                       <button
                         key={q.id}
                         onClick={() => navigateTo(`/admin/quotes/${q.id}`)}
-                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-purple-50/60 text-left transition-all border border-slate-100 hover:border-purple-200 group cursor-pointer"
                       >
                         <div>
-                          <div className="text-xs font-semibold text-slate-900">#{q.code}</div>
-                          <div className="text-[11px] text-slate-400">{q.customer_name}</div>
+                          <div className="text-xs font-bold text-slate-900 group-hover:text-purple-700">
+                            #{q.code}
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">{q.customer_name}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xs font-semibold text-purple-400">
+                          <div className="text-xs font-bold text-purple-600">
                             {Number(q.total_amount).toLocaleString('vi-VN')} ₫
                           </div>
-                          <div className="text-[10px] text-slate-500 capitalize">{q.status}</div>
+                          <div className="text-[10px] text-slate-400 capitalize mt-0.5">{q.status}</div>
                         </div>
                       </button>
                     ))}
@@ -265,12 +282,22 @@ export function AdminQuickSearch({ isOpen, onClose }: QuickSearchProps) {
                 results.orders.length === 0 &&
                 results.products.length === 0 &&
                 results.quotes.length === 0 && (
-                  <div className="py-8 text-center text-xs text-slate-500">
-                    Không tìm thấy kết quả nào phù hợp với "{query}".
+                  <div className="py-12 text-center text-xs text-slate-500">
+                    Không tìm thấy dữ liệu phù hợp với từ khóa "{query}".
                   </div>
                 )}
             </>
           )}
+        </div>
+
+        {/* Footer command bar */}
+        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+          <div className="flex items-center gap-3">
+            <span>Dùng phím <strong>ESC</strong> để đóng</span>
+            <span>•</span>
+            <span>Gõ từ khóa để tra cứu thời gian thực</span>
+          </div>
+          <span className="font-medium text-slate-500">PCHub QuickSearch</span>
         </div>
       </div>
     </div>

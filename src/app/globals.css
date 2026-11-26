@@ -2801,3 +2801,25 @@ input.directadmin-input:-webkit-autofill {
   caret-color: #2563eb !important;
 }
 
+/* Print Invoice Optimization for Retail Orders */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, footer, aside, .admin-sidebar, nav, .ai-chat-widget, .admin-shell > aside, .admin-shell > div > header, .admin-shell > div > footer {
+    display: none !important;
+  }
+  .admin-shell {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
