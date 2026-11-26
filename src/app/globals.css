@@ -2829,6 +2829,7 @@ input.directadmin-input:-webkit-autofill {
 /* ==========================================================================
    PCHub Admin Dashboard — Deterministic Layout Spacing & Search Bar Styles
    ========================================================================== */
+.admin-main-content,
 .admin-shell main {
   padding: 28px 32px !important;
   width: 100% !important;
@@ -2836,11 +2837,13 @@ input.directadmin-input:-webkit-autofill {
   min-width: 0 !important;
 }
 @media (max-width: 1024px) {
+  .admin-main-content,
   .admin-shell main {
     padding: 20px 24px !important;
   }
 }
 @media (max-width: 640px) {
+  .admin-main-content,
   .admin-shell main {
     padding: 16px !important;
   }

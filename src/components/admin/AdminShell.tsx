@@ -109,10 +109,7 @@ export function AdminShell({ children, userProfile }: AdminShellProps) {
           />
 
           {/* Main Content Area - Guaranteed 24-32px padding (16px on mobile) from sidebar and right edge */}
-          <main
-            style={{ padding: '28px 32px' }}
-            className="flex-1 w-full min-w-0 relative z-0 admin-main-content"
-          >
+          <main className="flex-1 w-full min-w-0 admin-main-content p-4 sm:p-6 lg:p-8 relative z-0">
             {children}
           </main>
 
